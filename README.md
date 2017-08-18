@@ -1,21 +1,53 @@
-# CldrUnits
+# Elixir Cldr: Units
+![Build Status](http://sweatbox.noexpectations.com.au:8080/buildStatus/icon?job=cldr_units)
+![Deps Status](https://beta.hexfaktor.org/badge/all/github/kipcole9/cldr_units.svg)
+[![Hex pm](http://img.shields.io/hexpm/v/ex_cldr.svg?style=flat)](https://hex.pm/packages/ex_cldr_units)
+[![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kipcole9/cldr_units/blob/master/LICENSE)
 
-**TODO: Add description**
+## Introduction
+
+`ex_cldr_units` is an addon library for [ex_cldr](https://hex.pm/packages/ex_cldr) that provides localisation and formatting for units such as weights, lengths, areas, volumes and so on.
+
+The primary api is `Cldr.Unit.to_string/2`.  The following examples demonstrate:
+
+```elixir
+iex> Cldr.Unit.to_string 123, :volume_gallon
+  "123 gallons"
+
+iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :long
+"1 thousand gallons"
+
+iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :short
+"1K gallons"
+
+iex> Cldr.Unit.to_string 1234, :frequency_megahertz
+"1,234 megahertz"
+```
+
+For help in `iex`:
+
+```elixir
+iex> h Cldr.Unit.to_string
+```
+
+## Documentation
+
+Primary documentation is available at https://hexdocs.pm/ex_cldr/1_getting_started.html#localizing-units
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `cldr_units` to your list of dependencies in `mix.exs`:
+Note that `:ex_cldr_units` requires Elixir 1.5 or later.
 
-```elixir
-def deps do
-  [
-    {:cldr_units, "~> 0.1.0"}
-  ]
-end
-```
+Add `ex_cldr_dates_time` as a dependency to your `mix` project:
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/cldr_units](https://hexdocs.pm/cldr_units).
+    defp deps do
+      [
+        {:ex_cldr_units, "~> 0.1.0"}
+      ]
+    end
+
+then retrieve `ex_cldr_units` from [hex](https://hex.pm/packages/ex_cldr_units):
+
+    mix deps.get
+    mix deps.compile
 

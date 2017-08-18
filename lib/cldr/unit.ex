@@ -36,31 +36,31 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.to_string 123, :volume_gallon
-      "123 gallons"
+      {:ok, "123 gallons"}
 
       iex> Cldr.Unit.to_string 1, :volume_gallon
-      "1 gallon"
+      {:ok, "1 gallon"}
 
       iex> Cldr.Unit.to_string 1, :volume_gallon, locale: "af"
-      "1 gelling"
+      {:ok, "1 gelling"}
 
       iex> Cldr.Unit.to_string 1, :volume_gallon, locale: "af-NA"
-      "1 gelling"
+      {:ok, "1 gelling"}
 
       iex> Cldr.Unit.to_string 1, :volume_gallon, locale: "bs"
-      "1 galona"
+      {:ok, "1 galona"}
 
       iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :long
-      "1 thousand gallons"
+      {:ok, "1 thousand gallons"}
 
       iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :short
-      "1K gallons"
+      {:ok, "1K gallons"}
 
       iex> Cldr.Unit.to_string 1234, :frequency_megahertz
-      "1,234 megahertz"
+      {:ok, "1,234 megahertz"}
 
       iex> Cldr.Unit.to_string 1234, :frequency_megahertz, style: :narrow
-      "1,234MHz"
+      {:ok, "1,234MHz"}
 
       Cldr.Unit.to_string 123, :digital_megabyte, locale: "en-XX"
       {:error, {Cldr.UnknownLocaleError, "The locale \"en-XX\" is not known."}}
@@ -70,27 +70,36 @@ defmodule Cldr.Unit do
   """
   @spec to_string(Cldr.Math.number_or_decimal, atom, Keyword.t) :: String.t | {:error, {atom, binary}}
   def to_string(number, unit, options \\ []) do
-    case normalize_options(options) do
-      {:error, {_exception, _message}} = error ->
-        error
-      {locale, style, options} ->
-        case result = to_string(number, unit, locale, style, options) do
-          {:error, _} -> result
-          _           -> :erlang.iolist_to_binary(result)
-        end
+    with {locale, style, options} <- normalize_options(options),
+      {:ok, unit} <- verify_unit(locale, style, unit)
+    do
+      {:ok, to_string(number, unit, locale, style, options)}
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
   @doc """
   Formats a list using `to_string/3` but raises if there is
   an error.
+
+  ## Examples
+
+      iex> Cldr.Unit.to_string! 123, :volume_gallon
+      "123 gallons"
+
+      iex> Cldr.Unit.to_string! 1, :volume_gallon
+      "1 gallon"
+
+      iex> Cldr.Unit.to_string! 1, :volume_gallon, locale: "af"
+      "1 gelling"
   """
   @spec to_string!(List.t, atom, Keyword.t) :: String.t | Exception.t
   def to_string!(number, unit, options \\ []) do
-    case string = to_string(number, unit, options) do
+    case to_string(number, unit, options) do
       {:error, {exception, message}} ->
         raise exception, message
-      _ ->
+      {:ok, string} ->
         string
     end
   end
@@ -100,8 +109,9 @@ defmodule Cldr.Unit do
     if patterns = pattern_for(locale, style, unit) do
       pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
       Substitution.substitute([number_string], pattern)
+      |> :erlang.iolist_to_binary
     else
-      verify_unit(locale, style, unit)
+      {:error, unit_error(unit)}
     end
   end
 
@@ -188,7 +198,7 @@ defmodule Cldr.Unit do
     options = Keyword.delete(options, :locale) |> Keyword.delete(:style)
 
     with {:ok, _} <- Cldr.valid_locale?(locale),
-         :ok <- verify_style(style)
+         {:ok, _} <- verify_style(style)
     do
       {locale, style, options}
     else
@@ -200,7 +210,7 @@ defmodule Cldr.Unit do
     if !pattern_for(locale, style, unit) do
       {:error, unit_error(unit)}
     else
-      :ok
+      {:ok, unit}
     end
   end
 
@@ -208,7 +218,7 @@ defmodule Cldr.Unit do
     if !(style in @unit_styles) do
       {:error, style_error(style)}
     else
-      :ok
+      {:ok, style}
     end
   end
 
