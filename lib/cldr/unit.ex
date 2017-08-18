@@ -12,6 +12,7 @@ defmodule Cldr.Unit do
 
   require Cldr
   alias Cldr.Substitution
+  alias Cldr.Locale
 
   @unit_styles [:long, :short, :narrow]
   @default_style :long
@@ -106,13 +107,13 @@ defmodule Cldr.Unit do
   end
 
   defp to_string(number, unit, locale, style, options) do
-    number_string = Cldr.Number.to_string(number, options ++ [locale: locale])
-    if patterns = pattern_for(locale, style, unit) do
+    with {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
+      {:ok, patterns} <- pattern_for(locale, style, unit)
+    do
       pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
-      Substitution.substitute([number_string], pattern)
-      |> :erlang.iolist_to_binary
+      Substitution.substitute([number_string], pattern) |> :erlang.iolist_to_binary
     else
-      {:error, unit_error(unit)}
+      {:error,reason} -> {:error, reason}
     end
   end
 
@@ -147,7 +148,7 @@ defmodule Cldr.Unit do
   """
   def available_units(locale \\ Cldr.get_current_locale(), style \\ @default_style)
 
-  defp pattern_for(locale \\ Cldr.get_current_locale(), style \\ @default_style, unit)
+  defp pattern_for(locale, style, unit)
 
   # Generate the functions that encapsulate the unit data from CDLR
   for locale <- Cldr.Config.known_locales() do
@@ -164,12 +165,14 @@ defmodule Cldr.Unit do
       end
 
       defp pattern_for(unquote(locale), unquote(style), unit) do
-        unquote(Macro.escape(units))
-        |> Map.get(unit)
+        {:ok, Map.get(unquote(Macro.escape(units)), unit)}
       end
     end
   end
 
+  defp pattern_for(locale, _style, _unit) do
+    {:error, Locale.locale_error(locale)}
+  end
 
   @doc """
   Returns the available styles for a unit localiation.
