@@ -19,8 +19,8 @@ defmodule CldrUnits.Mixfile do
 
   defp description do
     """
-    Unit formatting (volume, area, length, ...) functions for Common Locale Data Repository (CLDR).
-    (ex_cldr)[https://hex.pm/packages/ex_cldr] is a dependency.
+    Unit formatting (volume, area, length, ...) functions for the Common Locale Data Repository (CLDR)
+    package ex_cldr
     """
   end
 
