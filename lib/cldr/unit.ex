@@ -68,7 +68,8 @@ defmodule Cldr.Unit do
       Cldr.Unit.to_string 123, :digital_megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
   """
-  @spec to_string(Cldr.Math.number_or_decimal, atom, Keyword.t) :: String.t | {:error, {atom, binary}}
+  @spec to_string(Cldr.Math.number_or_decimal, atom, Keyword.t) ::
+    {:ok, String.t} | {:error, {atom, binary}}
   def to_string(number, unit, options \\ []) do
     with {locale, style, options} <- normalize_options(options),
       {:ok, unit} <- verify_unit(locale, style, unit)

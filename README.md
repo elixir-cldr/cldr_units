@@ -12,16 +12,16 @@ The primary api is `Cldr.Unit.to_string/2`.  The following examples demonstrate:
 
 ```elixir
 iex> Cldr.Unit.to_string 123, :volume_gallon
-  "123 gallons"
+{:ok, "123 gallons"}
 
 iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :long
-"1 thousand gallons"
+{:ok, "1 thousand gallons"}
 
 iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :short
-"1K gallons"
+{:ok, "1K gallons"}
 
 iex> Cldr.Unit.to_string 1234, :frequency_megahertz
-"1,234 megahertz"
+{:ok, "1,234 megahertz"}
 ```
 
 For help in `iex`:

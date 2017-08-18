@@ -32,7 +32,7 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, path: "../cldr"}
+      {:ex_cldr, "~> 0.5.0"}
     ]
   end
 
