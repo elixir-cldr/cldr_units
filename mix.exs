@@ -52,7 +52,7 @@ defmodule CldrUnits.Mixfile do
   def docs do
     [
       source_ref: "v#{@version}",
-      main: "README",
+      main: "readme",
       extras: ["README.md", "CHANGELOG.md"]
     ]
   end
