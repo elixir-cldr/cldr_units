@@ -1,4 +1,4 @@
-# Elixir Cldr for Units
+# Cldr for Units
 ![Build Status](http://sweatbox.noexpectations.com.au:8080/buildStatus/icon?job=cldr_units)
 ![Deps Status](https://beta.hexfaktor.org/badge/all/github/kipcole9/cldr_units.svg)
 [![Hex pm](http://img.shields.io/hexpm/v/ex_cldr_units.svg?style=flat)](https://hex.pm/packages/ex_cldr_units)
