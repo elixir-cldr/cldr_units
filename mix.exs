@@ -12,6 +12,7 @@ defmodule CldrUnits.Mixfile do
       source_url: "https://github.com/kipcole9/cldr_units",
       description: description(),
       package: package(),
+      docs: docs(),
       start_permanent: Mix.env == :prod,
       deps: deps()
     ]
@@ -45,6 +46,14 @@ defmodule CldrUnits.Mixfile do
       files: [
         "lib", "config", "mix.exs", "README*", "CHANGELOG*", "LICENSE*"
       ]
+    ]
+  end
+
+  def docs do
+    [
+      source_ref: "v#{@version}",
+      main: "README",
+      extras: ["README.md", "CHANGELOG.md"]
     ]
   end
 
