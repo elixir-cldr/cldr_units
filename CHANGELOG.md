@@ -1,5 +1,11 @@
 # Changelog
 
+## Cldr_Units v0.2.0 October 25th, 2017
+
+### Enhancements
+
+* Update to [ex_cldr](https://hex.pm/packages/ex_cldr) version 0.8.0 for compatibility with the new `%Cldr.LanguageTag{}` representation of a locale
+
 ## Cldr_Units v0.1.3 September 18th, 2017
 
 ### Enhancements

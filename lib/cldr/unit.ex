@@ -68,11 +68,13 @@ defmodule Cldr.Unit do
 
       Cldr.Unit.to_string 123, :digital_megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
+
   """
   @spec to_string(Cldr.Math.number_or_decimal, atom, Keyword.t) ::
     {:ok, String.t} | {:error, {atom, binary}}
   def to_string(number, unit, options \\ []) do
-    with {locale, style, options} <- normalize_options(options),
+    with \
+      {locale, style, options} <- normalize_options(options),
       {:ok, unit} <- verify_unit(locale, style, unit)
     do
       {:ok, to_string(number, unit, locale, style, options)}
@@ -95,6 +97,7 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.to_string! 1, :volume_gallon, locale: "af"
       "1 gelling"
+
   """
   @spec to_string!(List.t, atom, Keyword.t) :: String.t | Exception.t
   def to_string!(number, unit, options \\ []) do
@@ -107,8 +110,9 @@ defmodule Cldr.Unit do
   end
 
   defp to_string(number, unit, locale, style, options) do
-    with {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
-      {:ok, patterns} <- pattern_for(locale, style, unit)
+    with \
+      {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
+      {:ok, patterns} <- pattern_for(locale.cldr_locale_name, style, unit)
     do
       pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
       Substitution.substitute([number_string], pattern) |> :erlang.iolist_to_binary
@@ -145,33 +149,34 @@ defmodule Cldr.Unit do
        :duration_month, :duration_nanosecond, :duration_second, :duration_week,
        :duration_year, :electric_ampere, :electric_milliampere, :electric_ohm,
        :electric_volt, ...]
+
   """
   def available_units(locale \\ Cldr.get_current_locale(), style \\ @default_style)
 
   defp pattern_for(locale, style, unit)
 
   # Generate the functions that encapsulate the unit data from CDLR
-  for locale <- Cldr.Config.known_locales() do
+  for locale_name <- Cldr.Config.known_locales() do
     locale_data =
-      locale
+      locale_name
       |> Cldr.Config.get_locale
       |> Map.get(:units)
 
     for style <- @unit_styles do
       units = Map.get(locale_data, style)
 
-      def available_units(unquote(locale), unquote(style)) do
+      def available_units(unquote(locale_name), unquote(style)) do
         unquote(Map.keys(units) |> Enum.sort)
       end
 
-      defp pattern_for(unquote(locale), unquote(style), unit) do
+      defp pattern_for(unquote(locale_name), unquote(style), unit) do
         {:ok, Map.get(unquote(Macro.escape(units)), unit)}
       end
     end
   end
 
-  defp pattern_for(locale, _style, _unit) do
-    {:error, Locale.locale_error(locale)}
+  defp pattern_for(locale_name, _style, _unit) do
+    {:error, Locale.locale_error(locale_name)}
   end
 
   @doc """
@@ -201,8 +206,9 @@ defmodule Cldr.Unit do
     style = options[:style] || @default_style
     options = Keyword.delete(options, :locale) |> Keyword.delete(:style)
 
-    with {:ok, _} <- Cldr.valid_locale?(locale),
-         {:ok, _} <- verify_style(style)
+    with \
+      {:ok, locale} <- Cldr.validate_locale(locale),
+      {:ok, _} <- verify_style(style)
     do
       {locale, style, options}
     else
