@@ -33,7 +33,7 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, "~> 0.8.2"},
+      {:ex_cldr, "~> 0.8.3"},
       {:ex_cldr_numbers, "~> 0.2.0"},
       {:ex_doc, ">= 0.18.1", only: :dev}
     ]
