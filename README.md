@@ -11,38 +11,63 @@
 The primary api is `Cldr.Unit.to_string/2`.  The following examples demonstrate:
 
 ```elixir
-iex> Cldr.Unit.to_string 123, :volume_gallon
+iex> Cldr.Unit.to_string 123, :gallon
 {:ok, "123 gallons"}
 
-iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :long
+iex> Cldr.Unit.to_string 1234, :gallon, format: :long
 {:ok, "1 thousand gallons"}
 
-iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :short
+iex> Cldr.Unit.to_string 1234, :gallon, format: :short
 {:ok, "1K gallons"}
 
-iex> Cldr.Unit.to_string 1234, :frequency_megahertz
+iex> Cldr.Unit.to_string 1234, :megahertz
 {:ok, "1,234 megahertz"}
+```
+
+Available units can be retrieved by `Cldr.Unit.available_units/2`:
+
+```elixir
+iex> Cldr.Unit.available_units
+[:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
+ :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
+ :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
+ :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
+ :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
+ :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
+ :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
+ :hour, :inch, ...]
+```
+
+Known unit types cab be retrieved by `Cldr.Unit.available_unit_types/2`:
+
+```elixir
+iex> Cldr.Unit.available_unit_types
+[:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
+ :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
+ :pressure, :speed, :temperature, :volume]
 ```
 
 For help in `iex`:
 
 ```elixir
 iex> h Cldr.Unit.to_string
+iex> h Cldr.Unit.available_units
+iex> h Cldr.Unit.available_unit_types
 ```
 
 ## Documentation
 
-Primary documentation is available as part of the [hex documentation for ex_cldr](https://hexdocs.pm/ex_cldr/4_list_formats.html)
+Primary documentation is available as part of the [hex documentation for ex_cldr](https://hexdocs.pm/ex_cldr/6_units_formats.html)
 
 ## Installation
 
 Note that `:ex_cldr_units` requires Elixir 1.5 or later.
 
-Add `ex_cldr_dates_time` as a dependency to your `mix` project:
+Add `ex_cldr_units` as a dependency to your `mix` project:
 
     defp deps do
       [
-        {:ex_cldr_units, "~> 0.2.1"}
+        {:ex_cldr_units, "~> 0.3.0"}
       ]
     end
 

@@ -12,6 +12,7 @@ defmodule Cldr.Unit do
 
   require Cldr
   alias Cldr.Substitution
+  alias Cldr.LanguageTag
   alias Cldr.Locale
 
   @unit_styles [:long, :short, :narrow]
@@ -22,51 +23,51 @@ defmodule Cldr.Unit do
 
   * `number` is any number (integer, float or Decimal)
 
-  * `unit` is any unit returned by `Cldr.Unit.available_units/0`
+  * `unit` is any unit returned by `Cldr.Unit.available_units/2`
 
   * `options` are:
 
     * `locale` is any configured locale. See `Cldr.known_locales()`. The default
-    is `locale: Cldr.get_currenct_locale()`
+      is `locale: Cldr.get_currenct_locale()`
 
     * `style` is one of those returned by `Cldr.Unit.available_styles`.
-    THe current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
+      The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
 
     * Any other options are passed to `Cldr.Number.to_string/2` which is used to format the `number`
 
   ## Examples
 
-      iex> Cldr.Unit.to_string 123, :volume_gallon
+      iex> Cldr.Unit.to_string 123, :gallon
       {:ok, "123 gallons"}
 
-      iex> Cldr.Unit.to_string 1, :volume_gallon
+      iex> Cldr.Unit.to_string 1, :gallon
       {:ok, "1 gallon"}
 
-      iex> Cldr.Unit.to_string 1, :volume_gallon, locale: "af"
+      iex> Cldr.Unit.to_string 1, :gallon, locale: "af"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, :volume_gallon, locale: "af-NA"
+      iex> Cldr.Unit.to_string 1, :gallon, locale: "af-NA"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, :volume_gallon, locale: "bs"
+      iex> Cldr.Unit.to_string 1, :gallon, locale: "bs"
       {:ok, "1 galona"}
 
-      iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :long
+      iex> Cldr.Unit.to_string 1234, :gallon, format: :long
       {:ok, "1 thousand gallons"}
 
-      iex> Cldr.Unit.to_string 1234, :volume_gallon, format: :short
+      iex> Cldr.Unit.to_string 1234, :gallon, format: :short
       {:ok, "1K gallons"}
 
-      iex> Cldr.Unit.to_string 1234, :frequency_megahertz
+      iex> Cldr.Unit.to_string 1234, :megahertz
       {:ok, "1,234 megahertz"}
 
-      iex> Cldr.Unit.to_string 1234, :frequency_megahertz, style: :narrow
+      iex> Cldr.Unit.to_string 1234, :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
-      Cldr.Unit.to_string 123, :digital_megabyte, locale: "en-XX"
+      Cldr.Unit.to_string 123, :megabyte, locale: "en-XX"
       {:error, {Cldr.UnknownLocaleError, "The locale \"en-XX\" is not known."}}
 
-      Cldr.Unit.to_string 123, :digital_megabyte, locale: "en", style: :unknown
+      Cldr.Unit.to_string 123, :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
   """
@@ -89,13 +90,13 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string! 123, :volume_gallon
+      iex> Cldr.Unit.to_string! 123, :gallon
       "123 gallons"
 
-      iex> Cldr.Unit.to_string! 1, :volume_gallon
+      iex> Cldr.Unit.to_string! 1, :gallon
       "1 gallon"
 
-      iex> Cldr.Unit.to_string! 1, :volume_gallon, locale: "af"
+      iex> Cldr.Unit.to_string! 1, :gallon, locale: "af"
       "1 gelling"
 
   """
@@ -133,27 +134,47 @@ defmodule Cldr.Unit do
   ## Example
 
       Cldr.Unit.available_units
-      [:acceleration_g_force, :acceleration_meter_per_second_squared,
-       :angle_arc_minute, :angle_arc_second, :angle_degree, :angle_radian,
-       :angle_revolution, :area_acre, :area_hectare, :area_square_centimeter,
-       :area_square_foot, :area_square_inch, :area_square_kilometer,
-       :area_square_meter, :area_square_mile, :area_square_yard, :concentr_karat,
-       :concentr_milligram_per_deciliter, :concentr_millimole_per_liter,
-       :concentr_part_per_million, :consumption_liter_per_100kilometers,
-       :consumption_liter_per_kilometer, :consumption_mile_per_gallon,
-       :consumption_mile_per_gallon_imperial, :coordinate_unit, :digital_bit,
-       :digital_byte, :digital_gigabit, :digital_gigabyte, :digital_kilobit,
-       :digital_kilobyte, :digital_megabit, :digital_megabyte, :digital_terabit,
-       :digital_terabyte, :duration_century, :duration_day, :duration_hour,
-       :duration_microsecond, :duration_millisecond, :duration_minute,
-       :duration_month, :duration_nanosecond, :duration_second, :duration_week,
-       :duration_year, :electric_ampere, :electric_milliampere, :electric_ohm,
-       :electric_volt, ...]
+      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
+       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
+       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
+       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
+       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
+       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
+       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
+       :hour, :inch, ...]
 
   """
   def available_units(locale \\ Cldr.get_current_locale(), style \\ @default_style)
+  def available_units(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
+    available_units(cldr_locale_name, style)
+  end
 
-  defp pattern_for(locale, style, unit)
+  @doc """
+  Returns the available unit types for a given locale and style.
+
+  * `locale` is any configured locale. See `Cldr.known_locales()`. The default
+    is `locale: Cldr.get_current_locale()`
+
+  * `style` is one of those returned by `Cldr.Unit.available_styles`.
+    The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
+
+  ## Example
+
+      iex> Cldr.Unit.available_unit_types
+      [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
+       :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
+       :pressure, :speed, :temperature, :volume]
+
+  """
+  def available_unit_types(locale \\ Cldr.get_current_locale(), style \\ @default_style)
+  def available_unit_types(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
+    available_unit_types(cldr_locale_name, style)
+  end
+
+  def units_for(locale \\ Cldr.get_current_locale(), style \\ @default_style)
+  def units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
+    units_for(cldr_locale_name, style)
+  end
 
   # Generate the functions that encapsulate the unit data from CDLR
   for locale_name <- Cldr.Config.known_locales() do
@@ -163,20 +184,36 @@ defmodule Cldr.Unit do
       |> Map.get(:units)
 
     for style <- @unit_styles do
-      units = Map.get(locale_data, style)
+      units =
+        Map.get(locale_data, style)
+        |> Enum.map(fn {_k, v} -> v end)
+        |> Cldr.Map.merge_map_list
+        |> Enum.into(%{})
+
+      unit_types =
+        Map.get(locale_data, style)
+        |> Map.keys
+
+      def units_for(unquote(locale_name), unquote(style)) do
+        unquote(Macro.escape(units))
+      end
+
+      def available_unit_types(unquote(locale_name), unquote(style)) do
+        unquote(unit_types)
+      end
 
       def available_units(unquote(locale_name), unquote(style)) do
         unquote(Map.keys(units) |> Enum.sort)
       end
-
-      defp pattern_for(unquote(locale_name), unquote(style), unit) do
-        {:ok, Map.get(unquote(Macro.escape(units)), unit)}
-      end
     end
   end
 
-  defp pattern_for(locale_name, _style, _unit) do
-    {:error, Locale.locale_error(locale_name)}
+  defp pattern_for(locale_name, style, unit) do
+    if pattern = Map.get(units_for(locale_name, style), unit) do
+      {:ok, pattern}
+    else
+      {:error, Locale.locale_error(locale_name)}
+    end
   end
 
   @doc """

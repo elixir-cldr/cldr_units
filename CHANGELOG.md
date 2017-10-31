@@ -1,10 +1,18 @@
 # Changelog
 
+## Cldr_Units v0.3.0 October 31st, 2017
+
+### Breaking Change
+
+* The unit names are now shortened by removing the unit type prefix.  Where in previous releases it would be `:volume_gallon` the unit is now `:gallon`.  The unit types can be retrieved by `Cldr.Unit.available_unit_types/2`.
+
+* This change internally keeps a linkage between unit types (like `:volume`, `:mass` and so on) and the available units to support upcoming unit conversion.
+
 ## Cldr_Units v0.2.1 October 30th, 2017
 
 ### Enhancements
 
-* Move to `ex_cldr` 0.8.2 which changes Cldr.Number.PluralRule.plural_rule/3 implementation for Float so that it no longer casts to a Decimal nor delegates to the Decimal path".  This will have a small positive impact on performance
+* Move to `ex_cldr` 0.8.2 which changes Cldr.Number.PluralRule.plural_rule/3 implementation for Float so that it no longer casts to a Decimal nor delegates to the Decimal path.  This will have a small positive impact on performance
 
 ## Cldr_Units v0.2.0 October 25th, 2017
 
