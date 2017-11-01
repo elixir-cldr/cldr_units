@@ -1,5 +1,9 @@
 # Changelog
 
+## Cldr_Units v0.3.0 November 1st, 2017
+
+* Update to ex_cldr v0.9.0
+
 ## Cldr_Units v0.3.0 October 31st, 2017
 
 ### Breaking Change
