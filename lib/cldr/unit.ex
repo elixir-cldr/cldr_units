@@ -79,8 +79,6 @@ defmodule Cldr.Unit do
       {:ok, unit} <- verify_unit(locale, style, unit)
     do
       {:ok, to_string(number, unit, locale, style, options)}
-    else
-      {:error, reason} -> {:error, reason}
     end
   end
 
