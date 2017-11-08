@@ -64,9 +64,6 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string 1234, :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
-      iex> Cldr.Unit.to_string 123, :megabyte, locale: "en-XX"
-      {:error, {Cldr.UnknownLocaleError, "The locale \\"en-XX\\" is not known."}}
-
       iex> Cldr.Unit.to_string 123, :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
