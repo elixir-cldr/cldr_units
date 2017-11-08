@@ -2,6 +2,12 @@
 
 ## Cldr_Units v0.4.2 November 8th, 2017
 
+### Bug fixes
+
+* Fixes an error where an invalid unit would return an incorrect embedded `{:error, reason}`, for example `{:ok, {:error, {Cldr.UnknownLocaleError, "...."}}}`.  Closes #1.
+
+## Cldr_Units v0.4.2 November 8th, 2017
+
 ### Enhancements
 
 * Update to [ex_cldr](https://hex.pm/packages/ex_cldr) version 0.12.0

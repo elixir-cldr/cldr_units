@@ -67,7 +67,7 @@ Add `ex_cldr_units` as a dependency to your `mix` project:
 
     defp deps do
       [
-        {:ex_cldr_units, "~> 0.4.2"}
+        {:ex_cldr_units, "~> 0.4"}
       ]
     end
 

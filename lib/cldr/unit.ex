@@ -27,8 +27,8 @@ defmodule Cldr.Unit do
 
   * `options` are:
 
-    * `locale` is any configured locale. See `Cldr.known_locales()`. The default
-      is `locale: Cldr.get_currenct_locale()`
+    * `locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+      or a `Cldr.LanguageTag` struct
 
     * `style` is one of those returned by `Cldr.Unit.available_styles`.
       The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
@@ -64,11 +64,14 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string 1234, :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
-      Cldr.Unit.to_string 123, :megabyte, locale: "en-XX"
-      {:error, {Cldr.UnknownLocaleError, "The locale \"en-XX\" is not known."}}
+      iex> Cldr.Unit.to_string 123, :megabyte, locale: "en-XX"
+      {:error, {Cldr.UnknownLocaleError, "The locale \\"en-XX\\" is not known."}}
 
-      Cldr.Unit.to_string 123, :megabyte, locale: "en", style: :unknown
+      iex> Cldr.Unit.to_string 123, :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
+
+      iex> Cldr.Unit.to_string 123, :blabber, locale: "en"
+      {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
   @spec to_string(Cldr.Math.number_or_decimal, atom, Keyword.t) ::
@@ -76,7 +79,9 @@ defmodule Cldr.Unit do
   def to_string(number, unit, options \\ []) do
     with \
       {locale, style, options} <- normalize_options(options),
-      {:ok, unit} <- verify_unit(locale, style, unit)
+      {:ok, locale} <- Cldr.validate_locale(locale),
+      {:ok, style} <- validate_style(style),
+      {:ok, unit} <- validate_unit(locale, style, unit)
     do
       {:ok, to_string(number, unit, locale, style, options)}
     else
@@ -113,7 +118,7 @@ defmodule Cldr.Unit do
   defp to_string(number, unit, locale, style, options) do
     with \
       {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
-      {:ok, patterns} <- pattern_for(locale.cldr_locale_name, style, unit)
+      {:ok, patterns} <- pattern_for(locale, style, unit)
     do
       pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
       Substitution.substitute([number_string], pattern) |> :erlang.iolist_to_binary
@@ -125,8 +130,8 @@ defmodule Cldr.Unit do
   @doc """
   Returns the available units for a given locale and style.
 
-  * `locale` is any configured locale. See `Cldr.known_locales()`. The default
-    is `locale: Cldr.get_current_locale()`
+  * `locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct
 
   * `style` is one of those returned by `Cldr.Unit.available_styles`.
     The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
@@ -176,8 +181,19 @@ defmodule Cldr.Unit do
     units_for(cldr_locale_name, style)
   end
 
+  defp validate_style(style) when style in @unit_styles, do: {:ok, style}
+  defp validate_style(style), do: {:error, style_error(style)}
+
+  defp validate_unit(locale, style, unit) do
+    if unit in available_units(locale, style) do
+      {:ok, unit}
+    else
+      {:error, unit_error(unit)}
+    end
+  end
+
   # Generate the functions that encapsulate the unit data from CDLR
-  for locale_name <- Cldr.Config.known_locale_names() do
+  for locale_name <- Cldr.known_locale_names() do
     locale_data =
       locale_name
       |> Cldr.Config.get_locale
@@ -208,11 +224,16 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp pattern_for(locale_name, style, unit) do
-    if pattern = Map.get(units_for(locale_name, style), unit) do
+  defp pattern_for(locale, style, unit) do
+    pattern =
+      locale.cldr_locale_name
+      |> units_for(style)
+      |> Map.get(unit)
+
+    if pattern do
       {:ok, pattern}
     else
-      {:error, Locale.locale_error(locale_name)}
+      {:error, Locale.locale_error(locale)}
     end
   end
 
@@ -223,9 +244,22 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.available_styles
       [:long, :short, :narrow]
+
   """
   def available_styles do
     @unit_styles
+  end
+
+  defp normalize_options(options) do
+    locale = options[:locale] || Cldr.get_current_locale()
+    style = options[:style] || @default_style
+
+    options =
+      options
+      |> Keyword.delete(:locale)
+      |> Keyword.delete(:style)
+
+    {locale, style, options}
   end
 
   @doc false
@@ -233,40 +267,9 @@ defmodule Cldr.Unit do
     {Cldr.UnknownUnitError, "The unit #{inspect unit} is not known."}
   end
 
+  @doc false
   def style_error(style) do
     {Cldr.UnknownFormatError, "The unit style #{inspect style} is not known."}
-  end
-
-
-  defp normalize_options(options) do
-    locale = options[:locale] || Cldr.get_current_locale()
-    style = options[:style] || @default_style
-    options = Keyword.delete(options, :locale) |> Keyword.delete(:style)
-
-    with \
-      {:ok, locale} <- Cldr.validate_locale(locale),
-      {:ok, _} <- verify_style(style)
-    do
-      {locale, style, options}
-    else
-      {:error, _} = error -> error
-    end
-  end
-
-  defp verify_unit(locale, style, unit) do
-    if !pattern_for(locale, style, unit) do
-      {:error, unit_error(unit)}
-    else
-      {:ok, unit}
-    end
-  end
-
-  defp verify_style(style) do
-    if !(style in @unit_styles) do
-      {:error, style_error(style)}
-    else
-      {:ok, style}
-    end
   end
 
 end
