@@ -1,6 +1,12 @@
 # Changelog
 
-## Cldr_Units v0.4.2 November 8th, 2017
+## Cldr_Units v0.4.4 November 13th, 2017
+
+### Enhancements
+
+* Update to [ex_cldr](https://hex.pm/packages/ex_cldr) version 0.13.0
+
+## Cldr_Units v0.4.3 November 8th, 2017
 
 ### Bug fixes
 
