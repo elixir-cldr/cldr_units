@@ -55,9 +55,23 @@ iex> h Cldr.Unit.available_units
 iex> h Cldr.Unit.available_unit_types
 ```
 
-## Documentation
+## Localizing Units
 
-Primary documentation is available as part of the [hex documentation for ex_cldr](https://hexdocs.pm/ex_cldr/6_units_formats.html)
+The primary public API, `Cldr.Unit.to_string/3`, supports three arguments:
+
+  * `number` is any number (integer, float or Decimal)
+
+  * `unit` is any unit returned by `Cldr.Unit.available_units/0`
+
+  * `options` are:
+
+    * `locale` is any configured locale. See `Cldr.known_locales()`. The default
+    is `locale: Cldr.get_locale()`
+
+    * `style` is one of those returned by `Cldr.Unit.available_styles`.
+    THe current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
+
+    * Any other options are passed to `Cldr.Number.to_string/2` which is used to format the `number`
 
 ## Installation
 
@@ -67,7 +81,7 @@ Add `ex_cldr_units` as a dependency to your `mix` project:
 
     defp deps do
       [
-        {:ex_cldr_units, "~> 0.4"}
+        {:ex_cldr_units, "~> 1.0"}
       ]
     end
 
