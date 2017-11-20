@@ -31,9 +31,37 @@ defmodule Cldr.Unit do
   defdelegate div(unit_1, unit_2),  to: Cldr.Unit.Math
   defdelegate convert(unit_1, unit_2), to: Cldr.Unit.Conversion
 
+  @doc """
+  Returns a new `%Unit{}` struct.
+
+  ## Options
+
+  * `value` is any float, integer or `Decimal`
+
+  * `unit` is any unit returned by `Cldr.Unit.units`
+
+  ## Returns
+
+  * `unit` or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.new(23, :gallon)
+      #Unit<:gallon, 23>
+
+      iex> Cldr.Unit.new(:gallon, 23)
+      #Unit<:gallon, 23>
+
+      iex> Cldr.Unit.new(14, :gadzoots)
+      {:error, {Cldr.UnknownUnitError,
+        "The unit :gadzoots is not known."}}
+
+  """
   def new(value, unit) when is_number(value) do
     with {:ok, unit} <- validate_unit(unit) do
-      {:ok, %Cldr.Unit{unit: unit, value: value}}
+      %Unit{unit: unit, value: value}
     end
   end
 
@@ -43,7 +71,7 @@ defmodule Cldr.Unit do
 
   def new(%Decimal{} = value, unit) do
     with {:ok, unit} <- validate_unit(unit) do
-      {:ok, %Cldr.Unit{unit: unit, value: value}}
+      %Unit{unit: unit, value: value}
     end
   end
 
@@ -51,17 +79,63 @@ defmodule Cldr.Unit do
     new(value, unit)
   end
 
+  @doc """
+  Returns a new `%Unit{}` struct or raises on error.
+
+  ## Options
+
+  * `value` is any float, integer or `Decimal`
+
+  * `unit` is any unit returned by `Cldr.Unit.units/0`
+
+  ## Returns
+
+  * `unit` or
+
+  * `raises an exception
+
+  ## Examples
+
+      iex> Cldr.Unit.new! 23, :gallon
+      #Unit<:gallon, 23>
+
+      Cldr.Unit.new! 14, :gadzoots
+      ** (Cldr.UnknownUnitError) The unit :gadzoots is not known.
+          (ex_cldr_units) lib/cldr/unit.ex:57: Cldr.Unit.new!/2
+
+  """
   def new!(unit, value) do
     case new(unit, value) do
-      {:ok, unit} -> unit
       {:error, {exception, message}} -> raise exception, message
+      unit -> unit
     end
   end
 
-  def compatible?(%Unit{} = unit_1, %Unit{} = unit_2) do
-    unit_type(unit_1) == unit_type(unit_2)
-  end
+  @doc """
+  Returns a boolean indicating if two units are
+  of the same unit type.
 
+  ## Options
+
+  * `unit_1` and `unit_2` are any units returned by
+    `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
+
+  ## Returns
+
+  * `true` or `false`
+
+  ## Examples
+
+      iex> Cldr.Unit.compatible? :foot, :meter
+      true
+
+      iex> Cldr.Unit.compatible? Cldr.Unit.new!(:foot, 23), :meter
+      true
+
+      iex> Cldr.Unit.compatible? :foot, :liter
+      false
+
+  """
   def compatible?(unit_1, unit_2) do
     with \
       {:ok, unit_1} <- validate_unit(unit_1),
@@ -75,6 +149,8 @@ defmodule Cldr.Unit do
 
   @doc """
   Formats a number into a string according to a unit definition for a locale.
+
+  ## Options
 
   * `number` is any number (integer, float or Decimal)
 
@@ -91,6 +167,12 @@ defmodule Cldr.Unit do
 
     * Any other options are passed to `Cldr.Number.to_string/2`
       which is used to format the `number`
+
+  ## Returns
+
+  * `{;ok, formatted_string}` or
+
+  * `{:error, {exception, message}}`
 
   ## Examples
 
@@ -152,15 +234,39 @@ defmodule Cldr.Unit do
   Formats a list using `to_string/3` but raises if there is
   an error.
 
+  ## Options
+
+  * `number` is any number (integer, float or Decimal)
+
+  * `unit` is any unit returned by `Cldr.Unit.units/2`
+
+  * `options` are:
+
+    * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+      or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
+
+    * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+      The current styles are `:long`, `:short` and `:narrow`.
+      The default is `style: :long`
+
+    * Any other options are passed to `Cldr.Number.to_string/2`
+      which is used to format the `number`
+
+  ## Returns
+
+  * `formatted_string` or
+
+  * raises and exception
+
   ## Examples
 
-      iex> Cldr.Unit.to_string! 123, :gallon
+      iex> Cldr.Unit.to_string! 123, unit: :gallon
       "123 gallons"
 
-      iex> Cldr.Unit.to_string! 1, :gallon
+      iex> Cldr.Unit.to_string! 1, unit: :gallon
       "1 gallon"
 
-      iex> Cldr.Unit.to_string! 1, :gallon, locale: "af"
+      iex> Cldr.Unit.to_string! 1, unit: :gallon, locale: "af"
       "1 gelling"
 
   """
@@ -197,7 +303,7 @@ defmodule Cldr.Unit do
     |> Enum.into(%{})
 
   @doc """
-  Returns the known unit categories.
+  Returns a list of the known unit categories.
 
   ## Example
 
@@ -212,11 +318,51 @@ defmodule Cldr.Unit do
     @unit_categories
   end
 
+  @doc """
+  Returns a list of the unit types and associated
+  units
+
+  ## Example
+
+      Cldr.Unit.unit_types
+      %{
+        acceleration: [:g_force, :meter_per_second_squared],
+        angle: [:arc_minute, :arc_second, :degree, :radian, :revolution],
+        area: [:acre, :hectare, :square_centimeter, :square_foot, :square_inch,
+               :square_kilometer, :square_meter, :square_mile, :square_yard],
+        concentr: [:karat, :milligram_per_deciliter, :millimole_per_liter,
+                   :part_per_million]
+        ...
+
+  """
   @spec unit_types :: [atom, ...]
   def unit_types do
     @unit_types
   end
 
+  @doc """
+  Returns the units associated with a given unit type
+
+  ## Options
+
+  * `unit` is any units returned by
+    `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
+
+  ## Returns
+
+  * a valid unit or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.unit_type :pint_metric
+      :volume
+
+      iex> Cldr.Unit.unit_type :stone
+      :mass
+
+  """
   @spec unit_type(Unit.t | String.t | atom()) :: atom() | {:error, {Exception.t, String.t}}
   def unit_type(unit) do
     with {:ok, unit} <- validate_unit(unit) do
@@ -229,7 +375,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      Cldr.Unit.available_units
+      Cldr.Unit.units
       [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
        :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
        :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
@@ -249,19 +395,111 @@ defmodule Cldr.Unit do
     @units
   end
 
+  @doc """
+  Returns the units for a given unit type
+
+  ## Options
+
+  * `type` is any unit type returned by
+  `  Cldr.Unit.unit_types/0
+
+  ## Returns
+
+  * a list of units
+
+  ## Examples
+
+      iex> Cldr.Unit.units(:length)
+      [:astronomical_unit, :centimeter, :decimeter, :fathom, :foot, :furlong, :inch,
+       :kilometer, :light_year, :meter, :micrometer, :mile, :mile_scandinavian,
+       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point, :yard]
+
+  """
   @spec units(atom) :: [atom, ...]
-  def units(type) do
+  def units(type) when type in @unit_categories do
     Map.get(unit_types(), type)
   end
 
+  def units(type) do
+    {:error, unit_type_error(type)}
+  end
+
+  @doc """
+  Returns a list of units that are within the
+  specified jaro distance of the provided unit.
+
+  ## Options
+
+  * `unit` is any unit returned by `Cldr.Unit.units/0` or by
+    `Cldr.Unit.new/2`
+
+  * `sensitivity` is a float between 0.0 and 1.0 representing
+    the jaro distance above which a unit must match in order
+    to be returned.  The default is 0.75
+
+  ## Returns
+
+  * a list of tagged tuples of the form `{jaro_distance, unit}`
+    sorted in decending jaro distance order or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.jaro_match :foot
+      [{1.0, :foot}]
+
+      iex> Cldr.Unit.jaro_match :meter
+      [
+        {1.0, :meter},
+        {0.7708333333333334, :meter_per_second},
+        {0.7592592592592592, :kilometer_per_hour}
+      ]
+
+  """
   @default_sensitivity 0.75
   @spec jaro_match(unit, number) :: [{float, unit}, ...] | []
-  def jaro_match(unit, sensitivity \\ @default_sensitivity) do
+  def jaro_match(unit, sensitivity \\ @default_sensitivity)
+
+  def jaro_match(%Unit{unit: unit}, sensitivity) do
+    jaro_match(unit, sensitivity)
+  end
+
+  def jaro_match(unit, sensitivity) do
     unit
     |> Kernel.to_string
     |> match_list(sensitivity)
   end
 
+
+  @doc """
+  Returns the unit closed in jaro distance to the
+  provided unit
+
+  ## Options
+
+  * `unit` is any unit returned by `Cldr.Unit.units/0` or by
+    `Cldr.Unit.new/2
+
+  * `sensitivity` is a float between 0.0 and 1.0 representing
+    the jaro distance above which a unit must match in order
+    to be returned.  The default is 0.75
+
+  ## Returns
+
+  * a unit or
+
+  * `nil`
+
+  ## Examples
+
+      iex> Cldr.Unit.best_match :ft
+      :fathom
+
+      iex> Cldr.Unit.best_match :zippity
+      nil
+
+  """
   def best_match(unit, sensitivity \\ @default_sensitivity) do
     unit
     |> jaro_match(sensitivity)
@@ -269,13 +507,50 @@ defmodule Cldr.Unit do
   end
 
   defp return_best_match([]) do
-    :no_match
+    nil
   end
 
   defp return_best_match([{_fit, unit} | _rest]) do
     unit
   end
 
+  @doc """
+  Returns a list of units that are compatible with the
+  provided unit.
+
+  ## Options
+
+  * `unit` is any unit returned by `Cldr.Unit.units/0` or by
+    `Cldr.Unit.new/2
+
+  * `options` is a keyword list of options,  The valid
+    options are:
+
+    * `:jaro` is a boolean which determines if the match
+      is to use the jaro distance.  The default is `false`
+
+    * `sensitivity` is a float between 0.0 and 1.0 representing
+      the jaro distance above which a unit must match in order
+      to be returned.  The default is 0.75
+
+  ## Returns
+
+  * a list of tagged tuples of the form `{jaro_distance, unit}`
+    sorted in decending jaro distance order or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.compatible_units :foot
+      [:astronomical_unit, :centimeter, :decimeter, :fathom, :foot, :furlong, :inch,
+       :kilometer, :light_year, :meter, :micrometer, :mile, :mile_scandinavian,
+       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point, :yard]
+
+      iex> Cldr.Unit.compatible_units :me, jaro: true
+      [{0.7999999999999999, :meter}]
+
+  """
   @default_options [jaro: false, sensitivity: @default_sensitivity]
   @spec compatible_units(unit, Keyword.t | Map.t)
     :: [unit, ...] | [{float, unit}, ...] | []
@@ -294,12 +569,10 @@ defmodule Cldr.Unit do
   end
 
   def compatible_units(unit, %{jaro: true, sensitivity: sensitivity}) when is_number(sensitivity) do
-    with {:ok, unit} <- validate_unit(unit) do
-      unit = Atom.to_string(unit)
-      case jaro_match(unit, sensitivity) do
-        jaro_list when is_list(jaro_list) -> compatible_list(jaro_list, unit)
-        other -> other
-      end
+    unit = Kernel.to_string(unit)
+    case jaro_match(unit, sensitivity) do
+      jaro_list when is_list(jaro_list) -> compatible_list(jaro_list, unit)
+      other -> other
     end
   end
 
@@ -319,6 +592,10 @@ defmodule Cldr.Unit do
         {_distance, u} -> unit_type(u) == unit_type(unit)
         u -> unit_type(u) == unit_type(unit)
       end
+    else _ ->
+      # Use the best match as the key
+      [{_, unit} | _] = jaro_list
+      compatible_list(jaro_list, unit)
     end
   end
 
@@ -335,6 +612,15 @@ defmodule Cldr.Unit do
     @styles
   end
 
+  @doc """
+  Returns the default formatting style.
+
+  ## Example
+
+      iex> Cldr.Unit.default_style
+      :long
+
+  """
   def default_style do
     @default_style
   end
@@ -371,7 +657,7 @@ defmodule Cldr.Unit do
     end
   end
 
-  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit) do
+  defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit) do
     with \
       {:ok, style} <- validate_style(style),
       {:ok, unit} <- validate_unit(unit),
@@ -381,7 +667,7 @@ defmodule Cldr.Unit do
     end
   end
 
-  def pattern_for(locale_name, style, unit) do
+  defp pattern_for(locale_name, style, unit) do
     with {:ok, locale} <- Cldr.validate_locale(locale_name) do
       pattern_for(locale, style, unit)
     end
@@ -411,6 +697,10 @@ defmodule Cldr.Unit do
     {locale, style, options}
   end
 
+  @doc """
+  Validates a unit name and normalizes it to a
+  standard downcased atom form
+  """
   def validate_unit(unit) when unit in @units do
     {:ok, unit}
   end
@@ -432,11 +722,15 @@ defmodule Cldr.Unit do
     {:error, unit_error(unit)}
   end
 
-  defp validate_style(style) when style in @styles do
+  @doc """
+  Validates a unit style and normalizes it to a
+  standard downcased atom form
+  """
+  def validate_style(style) when style in @styles do
     {:ok, style}
   end
 
-  defp validate_style(style) when is_binary(style) do
+  def validate_style(style) when is_binary(style) do
     style
     |> String.downcase
     |> String.to_existing_atom
@@ -445,7 +739,7 @@ defmodule Cldr.Unit do
     {:error, style_error(style)}
   end
 
-  defp validate_style(style) do
+  def validate_style(style) do
     {:error, style_error(style)}
   end
 
@@ -458,6 +752,12 @@ defmodule Cldr.Unit do
   def unit_error(unit) do
     {Cldr.UnknownUnitError,
       "The unit #{inspect unit} is not known."}
+  end
+
+  @doc false
+  def unit_type_error(type) do
+    {Cldr.Unit.UnknownUnitTypeError,
+      "The unit type #{inspect type} is not known."}
   end
 
   @doc false
