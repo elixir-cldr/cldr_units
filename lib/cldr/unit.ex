@@ -29,6 +29,7 @@ defmodule Cldr.Unit do
   defdelegate sub(unit_1, unit_2),  to: Cldr.Unit.Math
   defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate div(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate convert(unit_1, unit_2), to: Cldr.Unit.Conversion
 
   def new(value, unit) when is_number(value) do
     with {:ok, unit} <- validate_unit(unit) do
@@ -93,56 +94,59 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string 123, :gallon
+      iex> Cldr.Unit.to_string 123, unit: :gallon
       {:ok, "123 gallons"}
 
-      iex> Cldr.Unit.to_string 1, :gallon
+      iex> Cldr.Unit.to_string 1, unit: :gallon
       {:ok, "1 gallon"}
 
-      iex> Cldr.Unit.to_string 1, :gallon, locale: "af"
+      iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "af"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, :gallon, locale: "af-NA"
+      iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "af-NA"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, :gallon, locale: "bs"
+      iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "bs"
       {:ok, "1 galona"}
 
-      iex> Cldr.Unit.to_string 1234, :gallon, format: :long
+      iex> Cldr.Unit.to_string 1234, unit: :gallon, format: :long
       {:ok, "1 thousand gallons"}
 
-      iex> Cldr.Unit.to_string 1234, :gallon, format: :short
+      iex> Cldr.Unit.to_string 1234, unit: :gallon, format: :short
       {:ok, "1K gallons"}
 
-      iex> Cldr.Unit.to_string 1234, :megahertz
+      iex> Cldr.Unit.to_string 1234, unit: :megahertz
       {:ok, "1,234 megahertz"}
 
-      iex> Cldr.Unit.to_string 1234, :megahertz, style: :narrow
+      iex> Cldr.Unit.to_string 1234, unit: :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
-      iex> Cldr.Unit.to_string 123, :megabyte, locale: "en", style: :unknown
+      iex> Cldr.Unit.to_string 123, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
-      iex> Cldr.Unit.to_string 123, :blabber, locale: "en"
+      iex> Cldr.Unit.to_string 123, unit: :blabber, locale: "en"
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(Cldr.Math.number_or_decimal, unit, Keyword.t) ::
+  @spec to_string(Cldr.Math.number_or_decimal,  Keyword.t) ::
     {:ok, String.t} | {:error, {atom, binary}}
-  def to_string(number, unit, options \\ []) do
+  def to_string(number, options \\ [])
+
+  def to_string(%Unit{unit: unit, value: value}, options) when is_list(options) do
+    to_string(value, Keyword.put(options, :unit, unit))
+  end
+
+  def to_string(number, options) when is_list(options) do
     with \
       {locale, style, options} <- normalize_options(options),
       {:ok, locale} <- Cldr.validate_locale(locale),
       {:ok, style} <- validate_style(style),
-      {:ok, unit} <- validate_unit(unit)
+      {:ok, unit} <- validate_unit(options[:unit])
     do
       {:ok, to_string(number, unit, locale, style, options)}
     end
   end
 
-  def to_string(%Unit{unit: unit, value: value}) do
-    to_string(value, unit)
-  end
 
   @doc """
   Formats a list using `to_string/3` but raises if there is
@@ -160,9 +164,9 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(Math.decimal_or_number, unit, Keyword.t) :: String.t | no_return()
-  def to_string!(number, unit, options \\ []) do
-    case to_string(number, unit, options) do
+  @spec to_string!(Math.decimal_or_number, Keyword.t) :: String.t | no_return()
+  def to_string!(number, options \\ []) do
+    case to_string(number, options) do
       {:ok, string} -> string
       {:error, {exception, message}} -> raise exception, message
     end
@@ -256,6 +260,20 @@ defmodule Cldr.Unit do
     unit
     |> Kernel.to_string
     |> match_list(sensitivity)
+  end
+
+  def best_match(unit, sensitivity \\ @default_sensitivity) do
+    unit
+    |> jaro_match(sensitivity)
+    |> return_best_match
+  end
+
+  defp return_best_match([]) do
+    :no_match
+  end
+
+  defp return_best_match([{_fit, unit} | _rest]) do
+    unit
   end
 
   @default_options [jaro: false, sensitivity: @default_sensitivity]
@@ -432,8 +450,14 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def unit_error(nil) do
+    {Cldr.UnknownUnitError,
+      "A unit must be provided, for example 'Cldr.Unit.string(123, unit: :meter)'."}
+  end
+
   def unit_error(unit) do
-    {Cldr.UnknownUnitError, "The unit #{inspect unit} is not known."}
+    {Cldr.UnknownUnitError,
+      "The unit #{inspect unit} is not known."}
   end
 
   @doc false
