@@ -14,26 +14,82 @@ defmodule Cldr.Unit do
   alias Cldr.Substitution
   alias Cldr.LanguageTag
   alias Cldr.Locale
+  alias Cldr.Unit
 
-  @unit_styles [:long, :short, :narrow]
+  @type t :: %Unit{}
+  @type unit :: atom()
+  @type style :: atom()
+
+  @styles [:long, :short, :narrow]
   @default_style :long
+
+  defstruct unit: nil, value: 0
+
+  defdelegate add(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate sub(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate div(unit_1, unit_2),  to: Cldr.Unit.Math
+
+  def new(value, unit) when is_number(value) do
+    with {:ok, unit} <- validate_unit(unit) do
+      {:ok, %Cldr.Unit{unit: unit, value: value}}
+    end
+  end
+
+  def new(unit, value) when is_number(value) do
+    new(value, unit)
+  end
+
+  def new(%Decimal{} = value, unit) do
+    with {:ok, unit} <- validate_unit(unit) do
+      {:ok, %Cldr.Unit{unit: unit, value: value}}
+    end
+  end
+
+  def new(unit, %Decimal{} = value) do
+    new(value, unit)
+  end
+
+  def new!(unit, value) do
+    case new(unit, value) do
+      {:ok, unit} -> unit
+      {:error, {exception, message}} -> raise exception, message
+    end
+  end
+
+  def compatible?(%Unit{} = unit_1, %Unit{} = unit_2) do
+    unit_type(unit_1) == unit_type(unit_2)
+  end
+
+  def compatible?(unit_1, unit_2) do
+    with \
+      {:ok, unit_1} <- validate_unit(unit_1),
+      {:ok, unit_2} <- validate_unit(unit_2)
+    do
+      unit_type(unit_1) == unit_type(unit_2)
+    else
+      _ -> false
+    end
+  end
 
   @doc """
   Formats a number into a string according to a unit definition for a locale.
 
   * `number` is any number (integer, float or Decimal)
 
-  * `unit` is any unit returned by `Cldr.Unit.available_units/2`
+  * `unit` is any unit returned by `Cldr.Unit.units/2`
 
   * `options` are:
 
-    * `locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-      or a `Cldr.LanguageTag` struct
+    * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+      or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
 
-    * `style` is one of those returned by `Cldr.Unit.available_styles`.
-      The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
+    * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+      The current styles are `:long`, `:short` and `:narrow`.
+      The default is `style: :long`
 
-    * Any other options are passed to `Cldr.Number.to_string/2` which is used to format the `number`
+    * Any other options are passed to `Cldr.Number.to_string/2`
+      which is used to format the `number`
 
   ## Examples
 
@@ -71,19 +127,21 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(Cldr.Math.number_or_decimal, atom, Keyword.t) ::
+  @spec to_string(Cldr.Math.number_or_decimal, unit, Keyword.t) ::
     {:ok, String.t} | {:error, {atom, binary}}
   def to_string(number, unit, options \\ []) do
     with \
       {locale, style, options} <- normalize_options(options),
       {:ok, locale} <- Cldr.validate_locale(locale),
       {:ok, style} <- validate_style(style),
-      {:ok, unit} <- validate_unit(locale, style, unit)
+      {:ok, unit} <- validate_unit(unit)
     do
       {:ok, to_string(number, unit, locale, style, options)}
-    else
-      {:error, reason} -> {:error, reason}
     end
+  end
+
+  def to_string(%Unit{unit: unit, value: value}) do
+    to_string(value, unit)
   end
 
   @doc """
@@ -102,15 +160,16 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(List.t, atom, Keyword.t) :: String.t | Exception.t
+  @spec to_string!(Math.decimal_or_number, unit, Keyword.t) :: String.t | no_return()
   def to_string!(number, unit, options \\ []) do
     case to_string(number, unit, options) do
-      {:error, {exception, message}} ->
-        raise exception, message
-      {:ok, string} ->
-        string
+      {:ok, string} -> string
+      {:error, {exception, message}} -> raise exception, message
     end
   end
+
+  @spec to_string(Math.decimal_or_number, unit, Locale.locale_name | LanguageTag.t,
+      style, Keyword.t) :: String.t
 
   defp to_string(number, unit, locale, style, options) do
     with \
@@ -118,20 +177,51 @@ defmodule Cldr.Unit do
       {:ok, patterns} <- pattern_for(locale, style, unit)
     do
       pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
-      Substitution.substitute([number_string], pattern) |> :erlang.iolist_to_binary
-    else
-      {:error,reason} -> {:error, reason}
+
+      number_string
+      |> Substitution.substitute(pattern)
+      |> :erlang.iolist_to_binary
+    end
+  end
+
+  @unit_types Cldr.default_locale
+    |> Map.get(:cldr_locale_name)
+    |> Cldr.Config.get_locale
+    |> Map.get(:units)
+    |> Map.get(:short)
+    |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+    |> Enum.into(%{})
+
+  @doc """
+  Returns the known unit categories.
+
+  ## Example
+
+      iex> Cldr.Unit.unit_categories
+      [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
+       :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
+       :pressure, :speed, :temperature, :volume]
+
+  """
+  @unit_categories Map.keys(@unit_types)
+  def unit_categories do
+    @unit_categories
+  end
+
+  @spec unit_types :: [atom, ...]
+  def unit_types do
+    @unit_types
+  end
+
+  @spec unit_type(Unit.t | String.t | atom()) :: atom() | {:error, {Exception.t, String.t}}
+  def unit_type(unit) do
+    with {:ok, unit} <- validate_unit(unit) do
+      type_map(unit)
     end
   end
 
   @doc """
-  Returns the available units for a given locale and style.
-
-  * `locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct
-
-  * `style` is one of those returned by `Cldr.Unit.available_styles`.
-    The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
+  Returns the known units.
 
   ## Example
 
@@ -146,47 +236,101 @@ defmodule Cldr.Unit do
        :hour, :inch, ...]
 
   """
-  def available_units(locale \\ Cldr.get_current_locale(), style \\ @default_style)
-  def available_units(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
-    available_units(cldr_locale_name, style)
+  @units @unit_types
+    |> Map.values
+    |> List.flatten
+
+  @spec units :: [atom, ...]
+  def units do
+    @units
+  end
+
+  @spec units(atom) :: [atom, ...]
+  def units(type) do
+    Map.get(unit_types(), type)
+  end
+
+  @default_sensitivity 0.75
+  @spec jaro_match(unit, number) :: [{float, unit}, ...] | []
+  def jaro_match(unit, sensitivity \\ @default_sensitivity) do
+    unit
+    |> Kernel.to_string
+    |> match_list(sensitivity)
+  end
+
+  @default_options [jaro: false, sensitivity: @default_sensitivity]
+  @spec compatible_units(unit, Keyword.t | Map.t)
+    :: [unit, ...] | [{float, unit}, ...] | []
+
+  def compatible_units(unit, options \\ @default_options)
+  def compatible_units(unit, options) when is_list(options) do
+    options = Keyword.merge(@default_options, options) |> Enum.into(%{})
+    compatible_units(unit, options)
+  end
+
+  def compatible_units(unit, %{jaro: false}) do
+    with {:ok, unit} <- validate_unit(unit) do
+      type = unit_type(unit)
+      unit_types()[type]
+    end
+  end
+
+  def compatible_units(unit, %{jaro: true, sensitivity: sensitivity}) when is_number(sensitivity) do
+    with {:ok, unit} <- validate_unit(unit) do
+      unit = Atom.to_string(unit)
+      case jaro_match(unit, sensitivity) do
+        jaro_list when is_list(jaro_list) -> compatible_list(jaro_list, unit)
+        other -> other
+      end
+    end
+  end
+
+  @string_units Enum.map(@units, &Atom.to_string/1)
+  @spec match_list(unit, number) :: [{float, unit}, ...] | []
+  defp match_list(unit, sensitivity) when is_binary(unit) and is_number(sensitivity) do
+    @string_units
+    |> Enum.map(fn u -> {String.jaro_distance(unit, u), String.to_existing_atom(u)} end)
+    |> Enum.filter(&(elem(&1, 0) >= sensitivity))
+    |> Enum.sort(&(elem(&1, 0) > elem(&2, 0)))
+  end
+
+  @spec compatible_list([{float, unit}, ...], unit) :: [{float, unit}, ...] | []
+  defp compatible_list(jaro_list, unit) when is_list(jaro_list) do
+    with {:ok, unit} <- validate_unit(unit) do
+      Enum.filter jaro_list, fn
+        {_distance, u} -> unit_type(u) == unit_type(unit)
+        u -> unit_type(u) == unit_type(unit)
+      end
+    end
   end
 
   @doc """
-  Returns the available unit types for a given locale and style.
-
-  * `locale` is any configured locale. See `Cldr.known_locales()`. The default
-    is `locale: Cldr.get_current_locale()`
-
-  * `style` is one of those returned by `Cldr.Unit.available_styles`.
-    The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
+  Returns the known styles for a unit.
 
   ## Example
 
-      iex> Cldr.Unit.available_unit_types
-      [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
-       :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
-       :pressure, :speed, :temperature, :volume]
+      iex> Cldr.Unit.styles
+      [:long, :short, :narrow]
 
   """
-  def available_unit_types(locale \\ Cldr.get_current_locale(), style \\ @default_style)
-  def available_unit_types(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
-    available_unit_types(cldr_locale_name, style)
+  def styles do
+    @styles
   end
 
-  def units_for(locale \\ Cldr.get_current_locale(), style \\ @default_style)
-  def units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
-    units_for(cldr_locale_name, style)
+  def default_style do
+    @default_style
   end
 
-  defp validate_style(style) when style in @unit_styles, do: {:ok, style}
-  defp validate_style(style), do: {:error, style_error(style)}
-
-  defp validate_unit(locale, style, unit) do
-    if unit in available_units(locale, style) do
-      {:ok, unit}
-    else
-      {:error, unit_error(unit)}
+  defp type_map(unit) do
+    with {:ok, unit} <- validate_unit(unit) do
+      type_map()
+      |> Map.get(unit)
     end
+  end
+
+  defp units_for(locale \\ Cldr.get_current_locale(), style \\ @default_style)
+  defp units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
+    units_for(cldr_locale_name, style)
   end
 
   # Generate the functions that encapsulate the unit data from CDLR
@@ -196,55 +340,45 @@ defmodule Cldr.Unit do
       |> Cldr.Config.get_locale
       |> Map.get(:units)
 
-    for style <- @unit_styles do
+    for style <- @styles do
       units =
         Map.get(locale_data, style)
-        |> Enum.map(fn {_k, v} -> v end)
+        |> Enum.map(&elem(&1, 1))
         |> Cldr.Map.merge_map_list
         |> Enum.into(%{})
 
-      unit_types =
-        Map.get(locale_data, style)
-        |> Map.keys
-
-      def units_for(unquote(locale_name), unquote(style)) do
+      defp units_for(unquote(locale_name), unquote(style)) do
         unquote(Macro.escape(units))
       end
-
-      def available_unit_types(unquote(locale_name), unquote(style)) do
-        unquote(unit_types)
-      end
-
-      def available_units(unquote(locale_name), unquote(style)) do
-        unquote(Map.keys(units) |> Enum.sort)
-      end
     end
   end
 
-  defp pattern_for(locale, style, unit) do
-    pattern =
-      locale.cldr_locale_name
-      |> units_for(style)
-      |> Map.get(unit)
-
-    if pattern do
+  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit) do
+    with \
+      {:ok, style} <- validate_style(style),
+      {:ok, unit} <- validate_unit(unit),
+      pattern = Map.get(units_for(locale_name, style), unit)
+    do
       {:ok, pattern}
-    else
-      {:error, Locale.locale_error(locale)}
     end
   end
 
-  @doc """
-  Returns the available styles for a unit localiation.
+  def pattern_for(locale_name, style, unit) do
+    with {:ok, locale} <- Cldr.validate_locale(locale_name) do
+      pattern_for(locale, style, unit)
+    end
+  end
 
-  ## Example
+  @type_map @unit_types
+    |> Enum.map(fn {k, v} ->
+      k = List.duplicate(k, length(v))
+      Enum.zip(v, k)
+    end)
+    |> List.flatten
+    |> Enum.into(%{})
 
-      iex> Cldr.Unit.available_styles
-      [:long, :short, :narrow]
-
-  """
-  def available_styles do
-    @unit_styles
+  defp type_map do
+    @type_map
   end
 
   defp normalize_options(options) do
@@ -259,6 +393,44 @@ defmodule Cldr.Unit do
     {locale, style, options}
   end
 
+  def validate_unit(unit) when unit in @units do
+    {:ok, unit}
+  end
+
+  def validate_unit(unit) when is_binary(unit) do
+    unit
+    |> String.downcase
+    |> String.to_existing_atom
+    |> validate_unit()
+  rescue ArgumentError ->
+    {:error, unit_error(unit)}
+  end
+
+  def validate_unit(%Unit{unit: unit}) do
+    {:ok, unit}
+  end
+
+  def validate_unit(unit) do
+    {:error, unit_error(unit)}
+  end
+
+  defp validate_style(style) when style in @styles do
+    {:ok, style}
+  end
+
+  defp validate_style(style) when is_binary(style) do
+    style
+    |> String.downcase
+    |> String.to_existing_atom
+    |> validate_style()
+  catch ArgumentError ->
+    {:error, style_error(style)}
+  end
+
+  defp validate_style(style) do
+    {:error, style_error(style)}
+  end
+
   @doc false
   def unit_error(unit) do
     {Cldr.UnknownUnitError, "The unit #{inspect unit} is not known."}
@@ -269,4 +441,22 @@ defmodule Cldr.Unit do
     {Cldr.UnknownFormatError, "The unit style #{inspect style} is not known."}
   end
 
+  @doc false
+  def incompatible_unit_error(unit_1, unit_2) do
+    {Unit.IncompatibleUnitError,
+      "Operations can only be performed between units of the same type. " <>
+      "Received #{inspect unit_1} and #{inspect unit_2}"}
+  end
+
+  defimpl String.Chars do
+    def to_string(unit) do
+      Unit.to_string(unit)
+    end
+  end
+
+  defimpl Inspect, for: Cldr.Unit do
+    def inspect(unit, _opts) do
+      "#Unit<#{inspect unit.unit}, #{inspect unit.value}>"
+    end
+  end
 end
