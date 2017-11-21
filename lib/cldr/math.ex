@@ -1,6 +1,6 @@
 defmodule Cldr.Unit.Math do
   @moduledoc """
-  Simple arithmetic for the `%Unit{}` type
+  Simple arithmetic functins for the `%Cldr.Unit{}` type
   """
   alias Cldr.Unit
   import Kernel, except: [div: 2]

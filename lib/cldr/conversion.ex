@@ -1,4 +1,9 @@
 defmodule Cldr.Unit.Conversion do
+  @moduledoc """
+  Unit conversion functions for the units defined
+  in `Cldr`.
+  """
+
   alias Cldr.Unit
   import Unit, only: [incompatible_unit_error: 2]
 
@@ -145,11 +150,12 @@ defmodule Cldr.Unit.Conversion do
         meter_per_second:        1,
         mile_per_hour:           2.23694
       },
+      # {to_celsius, from_celsius}
       temperature: %{
         celsius:                 1,
-        fahrenheit:              &(&1 * 1.8 + 32),
-        generic:                 1,
-        kelvin:                  &(&1 + 273.15)
+        fahrenheit:              {&((&1 - 32) / 1.8), &(&1 * 1.8 + 32)},
+        generic:                 :not_convertible,
+        kelvin:                  {&(&1 - 273.15), &(&1 + 273.15)}
       },
       volume: %{
         acre_foot:               8.1071e-7,
@@ -181,15 +187,70 @@ defmodule Cldr.Unit.Conversion do
     }
   end
 
+  @doc """
+  Convert one unit into another unit of the same
+  unit type (length, volume, mass, ...)
+
+  ## Options
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  * `to_unit` is any unit name returned by `Cldr.Unit.units/0
+
+  ## Returns
+
+  * a `Unit.t` of the unit type `to_unit` or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.convert Cldr.Unit.new!(:celsius, 0), :fahrenheit
+      #Unit<:fahrenheit, 32.0>
+
+      iex> Cldr.Unit.convert Cldr.Unit.new!(:fahrenheit, 32), :celsius
+      #Unit<:celsius, 0.0>
+
+      iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :foot
+      #Unit<:foot, 5279.945925937846>
+
+      iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :gallon
+      {:error, {Cldr.Unit.IncompatibleUnitError,
+                "Operations can only be performed between units of the same type. Received :mile and :gallon"}}
+
+  """
   def convert(%Unit{unit: from_unit, value: value}, to_unit) do
-    with {:ok, to_unit} <- Unit.validate_unit(to_unit) do
-      if Unit.compatible?(from_unit, to_unit) do
-        converted = value / factor(from_unit) * factor(to_unit)
-        Unit.new(to_unit, converted)
-      else
-        {:error, incompatible_unit_error(from_unit, to_unit)}
-      end
+    with \
+      {:ok, to_unit} <- Unit.validate_unit(to_unit),
+      true <- Unit.compatible?(from_unit, to_unit),
+      {:ok, converted} <- convert(value, factor(from_unit), factor(to_unit))
+    do
+      Unit.new(to_unit, converted)
+    else
+      {:error, _} = error -> error
+      false -> {:error, incompatible_unit_error(from_unit, to_unit)}
     end
+  end
+
+  defp convert(value, from, to) when is_number(from) and is_number(to) do
+    {:ok, value / from * to}
+  end
+
+  defp convert(value, {to_fun, _}, to) when is_number(to) do
+    {:ok, to_fun.(value) * to}
+  end
+
+  defp convert(value, from, {_to_fun, from_fun}) when is_number(from) do
+    {:ok,  from_fun.(value / from)}
+  end
+
+  defp convert(value, {to_fun, _}, {_, from_fun}) do
+    {:ok, from_fun.(to_fun.(value))}
+  end
+
+  defp convert(_value, from, to)
+  when from == :not_convertible or to == :not_convertible do
+    {:error, {Cldr.Unit.UnitNotConvertibleError, "No conversion is possible"}}
   end
 
   defp factor(unit) do
