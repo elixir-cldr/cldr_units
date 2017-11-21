@@ -433,7 +433,7 @@ defmodule Cldr.Unit do
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
     `Cldr.Unit.new/2`
 
-  * `sensitivity` is a float between 0.0 and 1.0 representing
+  * `distance` is a float between 0.0 and 1.0 representing
     the jaro distance above which a unit must match in order
     to be returned.  The default is 0.75
 
@@ -457,18 +457,18 @@ defmodule Cldr.Unit do
       ]
 
   """
-  @default_sensitivity 0.75
+  @default_distance 0.75
   @spec jaro_match(unit, number) :: [{float, unit}, ...] | []
-  def jaro_match(unit, sensitivity \\ @default_sensitivity)
+  def jaro_match(unit, distance \\ @default_distance)
 
-  def jaro_match(%Unit{unit: unit}, sensitivity) do
-    jaro_match(unit, sensitivity)
+  def jaro_match(%Unit{unit: unit}, distance) do
+    jaro_match(unit, distance)
   end
 
-  def jaro_match(unit, sensitivity) do
+  def jaro_match(unit, distance) do
     unit
     |> Kernel.to_string
-    |> match_list(sensitivity)
+    |> match_list(distance)
   end
 
 
@@ -481,7 +481,7 @@ defmodule Cldr.Unit do
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
     `Cldr.Unit.new/2
 
-  * `sensitivity` is a float between 0.0 and 1.0 representing
+  * `distance` is a float between 0.0 and 1.0 representing
     the jaro distance above which a unit must match in order
     to be returned.  The default is 0.75
 
@@ -500,9 +500,9 @@ defmodule Cldr.Unit do
       nil
 
   """
-  def best_match(unit, sensitivity \\ @default_sensitivity) do
+  def best_match(unit, distance \\ @default_distance) do
     unit
-    |> jaro_match(sensitivity)
+    |> jaro_match(distance)
     |> return_best_match
   end
 
@@ -510,7 +510,7 @@ defmodule Cldr.Unit do
     nil
   end
 
-  defp return_best_match([{_fit, unit} | _rest]) do
+  defp return_best_match([{_distance, unit} | _rest]) do
     unit
   end
 
@@ -529,14 +529,14 @@ defmodule Cldr.Unit do
     * `:jaro` is a boolean which determines if the match
       is to use the jaro distance.  The default is `false`
 
-    * `sensitivity` is a float between 0.0 and 1.0 representing
+    * `distance` is a float between 0.0 and 1.0 representing
       the jaro distance above which a unit must match in order
       to be returned.  The default is 0.75
 
   ## Returns
 
-  * a list of tagged tuples of the form `{jaro_distance, unit}`
-    sorted in decending jaro distance order or
+  * a list of tuples of the form `{jaro_distance, unit}`
+    sorted in decending jaro distance order, or
 
   * `{:error, {exception, message}}`
 
@@ -551,7 +551,7 @@ defmodule Cldr.Unit do
       [{0.7999999999999999, :meter}]
 
   """
-  @default_options [jaro: false, sensitivity: @default_sensitivity]
+  @default_options [jaro: false, distance: @default_distance]
   @spec compatible_units(unit, Keyword.t | Map.t)
     :: [unit, ...] | [{float, unit}, ...] | []
 
@@ -568,9 +568,9 @@ defmodule Cldr.Unit do
     end
   end
 
-  def compatible_units(unit, %{jaro: true, sensitivity: sensitivity}) when is_number(sensitivity) do
+  def compatible_units(unit, %{jaro: true, distance: distance}) when is_number(distance) do
     unit = Kernel.to_string(unit)
-    case jaro_match(unit, sensitivity) do
+    case jaro_match(unit, distance) do
       jaro_list when is_list(jaro_list) -> compatible_list(jaro_list, unit)
       other -> other
     end
@@ -578,10 +578,10 @@ defmodule Cldr.Unit do
 
   @string_units Enum.map(@units, &Atom.to_string/1)
   @spec match_list(unit, number) :: [{float, unit}, ...] | []
-  defp match_list(unit, sensitivity) when is_binary(unit) and is_number(sensitivity) do
+  defp match_list(unit, distance) when is_binary(unit) and is_number(distance) do
     @string_units
     |> Enum.map(fn u -> {String.jaro_distance(unit, u), String.to_existing_atom(u)} end)
-    |> Enum.filter(&(elem(&1, 0) >= sensitivity))
+    |> Enum.filter(&(elem(&1, 0) >= distance))
     |> Enum.sort(&(elem(&1, 0) > elem(&2, 0)))
   end
 
@@ -593,7 +593,7 @@ defmodule Cldr.Unit do
         u -> unit_type(u) == unit_type(unit)
       end
     else _ ->
-      # Use the best match as the key
+      # Use the best match as the match key
       [{_, unit} | _] = jaro_list
       compatible_list(jaro_list, unit)
     end
