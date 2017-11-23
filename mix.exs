@@ -8,7 +8,7 @@ defmodule CldrUnits.Mixfile do
       app: :ex_cldr_units,
       version: @version,
       elixir: "~> 1.5",
-      name: "Cldr_Units",
+      name: "Cldr Units",
       source_url: "https://github.com/kipcole9/cldr_units",
       description: description(),
       package: package(),
