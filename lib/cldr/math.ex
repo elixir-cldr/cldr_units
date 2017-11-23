@@ -83,7 +83,7 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the sum of `unit_1` and the potentially converted
-    `unit_2 or
+    `unit_2` or
 
   * Raises an exception
 
@@ -111,9 +111,9 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
-    converted `unit_2
+    converted `unit_2`
 
-  * {:error, {IncompatibleUnitError, message}}
+  * `{:error, {IncompatibleUnitError, message}}`
 
   ## Examples
 
@@ -173,7 +173,7 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
-    converted `unit_2
+    converted `unit_2`
 
   * Raises an exception
 
@@ -200,9 +200,9 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the product of `unit_1` and the potentially
-    converted `unit_2
+    converted `unit_2`
 
-  * {:error, {IncompatibleUnitError, message}}
+  * `{:error, {IncompatibleUnitError, message}}`
 
   ## Examples
 
@@ -261,7 +261,7 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the product of `unit_1` and the potentially
-    converted `unit_2
+    converted `unit_2`
 
   * Raises an exception
 
@@ -288,9 +288,9 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
-    converted `unit_2
+    converted `unit_2`
 
-  * {:error, {IncompatibleUnitError, message}}
+  * `{:error, {IncompatibleUnitError, message}}`
 
   ## Examples
 
@@ -350,7 +350,7 @@ defmodule Cldr.Unit.Math do
 
   * A `%Unit{}` of the same time as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
-    converted `unit_2
+    converted `unit_2`
 
   * Raises an exception
 

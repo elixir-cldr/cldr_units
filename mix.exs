@@ -35,7 +35,7 @@ defmodule CldrUnits.Mixfile do
     [
       {:ex_cldr, "~> 1.0.0-rc or ~> 1.0"},
       {:ex_cldr_numbers, "~> 1.0.0-rc or ~> 1.0"},
-      {:ex_doc, ">= 0.18.1", only: :dev}
+      {:ex_doc, "~> 0.18", only: :dev}
     ]
   end
 
@@ -54,7 +54,8 @@ defmodule CldrUnits.Mixfile do
     [
       source_ref: "v#{@version}",
       main: "readme",
-      extras: ["README.md", "CHANGELOG.md", "LICENSE.md"]
+      extras: ["README.md", "CHANGELOG.md", "LICENSE.md"],
+      logo: "logo.png"
     ]
   end
 

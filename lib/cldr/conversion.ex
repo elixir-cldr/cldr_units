@@ -195,7 +195,7 @@ defmodule Cldr.Unit.Conversion do
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  * `to_unit` is any unit name returned by `Cldr.Unit.units/0
+  * `to_unit` is any unit name returned by `Cldr.Unit.units/0`
 
   ## Returns
 

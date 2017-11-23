@@ -99,7 +99,7 @@ defmodule Cldr.Unit do
 
   * `unit` or
 
-  * `raises an exception
+  * raises an exception
 
   ## Examples
 
@@ -410,7 +410,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `type` is any unit type returned by
-  `  Cldr.Unit.unit_types/0
+    `Cldr.Unit.unit_types/0`
 
   ## Returns
 
@@ -488,7 +488,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
-    `Cldr.Unit.new/2
+    `Cldr.Unit.new/2`
 
   * `distance` is a float between 0.0 and 1.0 representing
     the jaro distance above which a unit must match in order
@@ -496,7 +496,7 @@ defmodule Cldr.Unit do
 
   ## Returns
 
-  * a unit or
+  * a `Unit.t` struct or
 
   * `nil`
 
@@ -530,7 +530,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
-    `Cldr.Unit.new/2
+    `Cldr.Unit.new/2`
 
   * `options` is a keyword list of options,  The valid
     options are:
