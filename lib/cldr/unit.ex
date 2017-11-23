@@ -303,7 +303,7 @@ defmodule Cldr.Unit do
     end
   end
 
-  @unit_types Cldr.default_locale
+  @unit_tree Cldr.default_locale
     |> Map.get(:cldr_locale_name)
     |> Cldr.Config.get_locale
     |> Map.get(:units)
@@ -316,15 +316,15 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.unit_categories
+      iex> Cldr.Unit.unit_types
       [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
        :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
        :pressure, :speed, :temperature, :volume]
 
   """
-  @unit_categories Map.keys(@unit_types)
-  def unit_categories do
-    @unit_categories
+  @unit_types Map.keys(@unit_tree)
+  def unit_types do
+    @unit_types
   end
 
   @doc """
@@ -333,7 +333,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      Cldr.Unit.unit_types
+      Cldr.Unit.unit_tree
       %{
         acceleration: [:g_force, :meter_per_second_squared],
         angle: [:arc_minute, :arc_second, :degree, :radian, :revolution],
@@ -344,9 +344,9 @@ defmodule Cldr.Unit do
         ...
 
   """
-  @spec unit_types :: [atom, ...]
-  def unit_types do
-    @unit_types
+  @spec unit_tree :: [atom, ...]
+  def unit_tree do
+    @unit_tree
   end
 
   @doc """
@@ -395,7 +395,7 @@ defmodule Cldr.Unit do
        :hour, :inch, ...]
 
   """
-  @units @unit_types
+  @units @unit_tree
     |> Map.values
     |> List.flatten
 
@@ -425,8 +425,8 @@ defmodule Cldr.Unit do
 
   """
   @spec units(atom) :: [atom, ...]
-  def units(type) when type in @unit_categories do
-    Map.get(unit_types(), type)
+  def units(type) when type in @unit_types do
+    Map.get(unit_tree(), type)
   end
 
   def units(type) do
@@ -573,7 +573,7 @@ defmodule Cldr.Unit do
   def compatible_units(unit, %{jaro: false}) do
     with {:ok, unit} <- validate_unit(unit) do
       type = unit_type(unit)
-      unit_types()[type]
+      unit_tree()[type]
     end
   end
 
@@ -682,7 +682,7 @@ defmodule Cldr.Unit do
     end
   end
 
-  @type_map @unit_types
+  @type_map @unit_tree
     |> Enum.map(fn {k, v} ->
       k = List.duplicate(k, length(v))
       Enum.zip(v, k)
