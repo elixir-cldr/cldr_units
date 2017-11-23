@@ -6,7 +6,7 @@
 
 ## Getting Started
 
-`ex_cldr_units` is an addon library for [ex_cldr](https://hex.pm/packages/ex_cldr) that provides localisation and formatting for units such as weights, lengths, areas, volumes and so on.
+`ex_cldr_units` is an addon library for [ex_cldr](https://hex.pm/packages/ex_cldr) that provides localisation and formatting for units such as weights, lengths, areas, volumes and so on. It also provides unit conversion and simple arithmetic for compatible units.
 
 The primary api is defined by three functions:
 
