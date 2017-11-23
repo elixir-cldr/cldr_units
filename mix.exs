@@ -20,8 +20,8 @@ defmodule CldrUnits.Mixfile do
 
   defp description do
     """
-    Unit formatting (volume, area, length, ...) functions for the Common Locale Data Repository (CLDR)
-    package ex_cldr
+    Unit formatting (volume, area, length, ...), conversion and arithmetic
+    functions based upon the Common Locale Data Repository (CLDR).
     """
   end
 

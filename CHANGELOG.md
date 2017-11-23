@@ -30,5 +30,7 @@ iex> Cldr.Unit.to_string 23, unit: :gram, locale: "zh"
 
 * Add `Cldr.Unit.compatible_units/1` to return the list of units that can be converted into each other
 
-* Update `Cldr.Unit.to_string/`
+* Add `Cldr.Unit.compatible?/2` that returns a boolean indicating if two units are of the same type and are convertible to each other
+
+* Add `Cldr.Unit.Alias` module to manage unit name aliases which is helpful for user interfaces that use a combination of US spelling and British spelling
 

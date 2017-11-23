@@ -3,7 +3,7 @@ use Mix.Config
 
 config :ex_cldr,
   default_locale: "en",
-  locales: :all,
+  locales: ["root", "fr", "de", "zh", "en", "bs", "pl", "ru", "th", "he", "af", "af-NA"],
   gettext: Cldr.Gettext,
   precompile_transliterations: [{:latn, :arab}, {:arab, :thai}, {:arab, :latn}]
 

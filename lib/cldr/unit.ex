@@ -15,6 +15,8 @@ defmodule Cldr.Unit do
   alias Cldr.LanguageTag
   alias Cldr.Locale
   alias Cldr.Unit
+  alias Cldr.Unit.Conversion
+  alias Cldr.Unit.Alias
 
   @type t :: %Unit{}
   @type unit :: atom()
@@ -31,8 +33,13 @@ defmodule Cldr.Unit do
   defdelegate div(unit_1, unit_2),  to: Cldr.Unit.Math
   defdelegate convert(unit_1, unit_2), to: Cldr.Unit.Conversion
 
+  defdelegate add!(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate sub!(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate mult!(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate div!(unit_1, unit_2),  to: Cldr.Unit.Math
+
   @doc """
-  Returns a new `%Unit{}` struct.
+  Returns a new `Unit.t` struct.
 
   ## Options
 
@@ -80,7 +87,7 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Returns a new `%Unit{}` struct or raises on error.
+  Returns a new `Unit.t` struct or raises on error.
 
   ## Options
 
@@ -141,7 +148,9 @@ defmodule Cldr.Unit do
       {:ok, unit_1} <- validate_unit(unit_1),
       {:ok, unit_2} <- validate_unit(unit_2)
     do
-      unit_type(unit_1) == unit_type(unit_2)
+      (unit_type(unit_1) == unit_type(unit_2)) &&
+      Conversion.factor(unit_1) != :not_convertible &&
+      Conversion.factor(unit_2) != :not_convertible
     else
       _ -> false
     end
@@ -703,6 +712,13 @@ defmodule Cldr.Unit do
   """
   def validate_unit(unit) when unit in @units do
     {:ok, unit}
+  end
+
+  @aliases Alias.aliases |> Map.keys
+  def validate_unit(unit) when unit in @aliases do
+    unit
+    |> Alias.alias
+    |> validate_unit
   end
 
   def validate_unit(unit) when is_binary(unit) do

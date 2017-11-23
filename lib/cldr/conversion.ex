@@ -236,16 +236,16 @@ defmodule Cldr.Unit.Conversion do
     {:ok, value / from * to}
   end
 
-  defp convert(value, {to_fun, _}, to) when is_number(to) do
-    {:ok, to_fun.(value) * to}
+  defp convert(value, {to_base_fun, _}, to) when is_number(to) do
+    {:ok, to_base_fun.(value) * to}
   end
 
-  defp convert(value, from, {_to_fun, from_fun}) when is_number(from) do
-    {:ok,  from_fun.(value / from)}
+  defp convert(value, from, {_to_fun, from_base_fun}) when is_number(from) do
+    {:ok,  from_base_fun.(value / from)}
   end
 
-  defp convert(value, {to_fun, _}, {_, from_fun}) do
-    {:ok, from_fun.(to_fun.(value))}
+  defp convert(value, {to_base_fun, _}, {_, from_base_fun}) do
+    {:ok, from_base_fun.(to_base_fun.(value))}
   end
 
   defp convert(_value, from, to)
@@ -253,7 +253,8 @@ defmodule Cldr.Unit.Conversion do
     {:error, {Cldr.Unit.UnitNotConvertibleError, "No conversion is possible"}}
   end
 
-  defp factor(unit) do
+  @doc false
+  def factor(unit) do
     unit_type = Unit.unit_type(unit)
     get_in(factors(), [unit_type, unit])
   end
