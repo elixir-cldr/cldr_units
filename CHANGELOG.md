@@ -1,6 +1,6 @@
-# Changelog for Cldr_Units v1.0.0-rc.0
+# Changelog for Cldr_Units v1.0.0
 
-This is the changelog for Cldr_Units v1.0.0-rc.0 released on November 23rd, 2017.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_Units v1.0.0 release on December ___th, 2017.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
 
 This version signals API stability and the first release candidate.
 
@@ -19,6 +19,8 @@ iex> Cldr.Unit.to_string 23, unit: :gram, locale: "zh"
 * Rename `Cldr.Unit.available_units` to `Cldr.Unit.units`
 
 ## Enhancements
+
+* Add `Cldr.Unit.round/3` which rounds the unit value to the specified number of decimal places using the specified rounding mode
 
 * Add `Cldr.Unit.new/2` and `Cldr.Unit.new!/2` to create a new `%Cldr.Unit{}` struct
 

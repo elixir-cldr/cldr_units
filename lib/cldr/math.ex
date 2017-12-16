@@ -18,7 +18,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the sum of `unit_1` and the potentially converted
     `unit_2` or
 
@@ -81,7 +81,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the sum of `unit_1` and the potentially converted
     `unit_2` or
 
@@ -109,7 +109,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
     converted `unit_2`
 
@@ -171,7 +171,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
     converted `unit_2`
 
@@ -198,7 +198,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the product of `unit_1` and the potentially
     converted `unit_2`
 
@@ -259,7 +259,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the product of `unit_1` and the potentially
     converted `unit_2`
 
@@ -286,7 +286,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
     converted `unit_2`
 
@@ -348,7 +348,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same time as `unit_1` with a value
+  * A `%Unit{}` of the same type as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
     converted `unit_2`
 
@@ -363,5 +363,67 @@ defmodule Cldr.Unit.Math do
       {:error, {exception, reason}} -> raise exception, reason
       unit -> unit
     end
+  end
+
+  @doc """
+  Rounds the value of a unit.
+
+  ## Options
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  * `places` is the number of decimal places to round to.  The default is `0`.
+
+  * `mode` is the rounding mode to be applied.  The default is `:half_up`.
+
+  ## Returns
+
+  * A `%Unit{}` of the same type as `unit` with a value
+    that is rounded to the specified number of decimal places
+
+  ## Rounding modes
+
+  Directed roundings:
+
+  * `:down` - Round towards 0 (truncate), eg 10.9 rounds to 10.0
+
+  * `:up` - Round away from 0, eg 10.1 rounds to 11.0. (Non IEEE algorithm)
+
+  * `:ceiling` - Round toward +∞ - Also known as rounding up or ceiling
+
+  * `:floor` - Round toward -∞ - Also known as rounding down or floor
+
+  Round to nearest:
+
+  * `:half_even` - Round to nearest value, but in a tiebreak, round towards the
+    nearest value with an even (zero) least significant bit, which occurs 50%
+    of the time. This is the default for IEEE binary floating-point and the recommended
+    value for decimal.
+
+  * `:half_up` - Round to nearest value, but in a tiebreak, round away from 0.
+    This is the default algorithm for Erlang's Kernel.round/2
+
+  * `:half_down` - Round to nearest value, but in a tiebreak, round towards 0
+    (Non IEEE algorithm)
+
+  ## Examples
+
+      iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1
+      #Unit<:yard, 1031.6>
+
+      iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 2
+      #Unit<:yard, 1031.61>
+
+      iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1, :up
+      #Unit<:yard, 1031.7>
+
+  """
+  @spec round(unit :: Unit.t, places :: non_neg_integer,
+          mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down) ::
+          Unit.t
+
+  def round(%Unit{unit: unit, value: value}, places \\ 0, mode \\ :half_up) do
+    rounded_value = Cldr.Math.round(value, places, mode)
+    Unit.new(unit, rounded_value)
   end
 end

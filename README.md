@@ -81,7 +81,7 @@ iex> Cldr.Unit.compatible_units :foot
 
 ### Unit arithmetic
 
-Basic arithmetic is provided by `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.mult/2`, `Cldr.Unit.div/2`.
+Basic arithmetic is provided by `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.mult/2`, `Cldr.Unit.div/2` as well as `Cldr.Unit.round/3`
 
 ```elixir
 iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1)
@@ -93,6 +93,12 @@ iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
 iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
 {:error, {Cldr.Unit.IncompatibleUnitError,
   "Operations can only be performed between units of the same type. Received #Unit<:foot, 1> and #Unit<:gallon, 1>"}}
+
+iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1
+#Unit<:yard, 1031.6>
+
+iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1, :up
+#Unit<:yard, 1031.7>
 
 ```
 

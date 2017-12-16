@@ -38,6 +38,10 @@ defmodule Cldr.Unit do
   defdelegate mult!(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate div!(unit_1, unit_2),  to: Cldr.Unit.Math
 
+  defdelegate round(unit, places, mode), to: Cldr.Unit.Math
+  defdelegate round(unit, places), to: Cldr.Unit.Math
+  defdelegate round(unit), to: Cldr.Unit.Math
+
   @doc """
   Returns a new `Unit.t` struct.
 
