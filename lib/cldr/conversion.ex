@@ -105,11 +105,11 @@ defmodule Cldr.Unit.Conversion do
         micrometer:              0.001,
         mile:                    6.2137e-13,
         mile_scandinavian:       1.0e-13,
-        millimeter:              1_000_000,
+        millimeter:              1.0e-6,
         nanometer:               1,
         nautical_mile:           5.3996e-13,
         parsec:                  3.24078e-26,
-        picometer:               0.001,
+        picometer:               1000,
         point:                   2.8346456692913e-6,
         yard:                    1.0936e-9
       },
