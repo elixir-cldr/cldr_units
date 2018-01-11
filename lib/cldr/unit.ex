@@ -305,6 +305,29 @@ defmodule Cldr.Unit do
     end
   end
 
+  @doc """
+  Return the value of the Unit struct
+
+  ## Options
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  ## Returns
+
+  * an integer, float or Decimal representing the amount
+  of the unit
+
+  ## Example
+
+      iex(1)> Cldr.Unit.value Cldr.Unit.new(:kilogram, 23)
+      23
+
+  """
+  @spec value(unit :: Unit.t) :: Cldr.Math.number_or_decimal()
+  def value(%Unit{value: value}) do
+    value
+  end
+
   @unit_tree Cldr.default_locale()
              |> Map.get(:cldr_locale_name)
              |> Cldr.Config.get_locale()
