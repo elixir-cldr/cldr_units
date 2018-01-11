@@ -27,20 +27,21 @@ defmodule Cldr.Unit do
 
   defstruct unit: nil, value: 0
 
-  defdelegate add(unit_1, unit_2),  to: Cldr.Unit.Math
-  defdelegate sub(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate div(unit_1, unit_2),  to: Cldr.Unit.Math
-  defdelegate convert(unit_1, unit_2), to: Cldr.Unit.Conversion
+  defdelegate div(unit_1, unit_2), to: Cldr.Unit.Math
 
-  defdelegate add!(unit_1, unit_2),  to: Cldr.Unit.Math
-  defdelegate sub!(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate add!(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate sub!(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate mult!(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate div!(unit_1, unit_2),  to: Cldr.Unit.Math
+  defdelegate div!(unit_1, unit_2), to: Cldr.Unit.Math
 
   defdelegate round(unit, places, mode), to: Cldr.Unit.Math
   defdelegate round(unit, places), to: Cldr.Unit.Math
   defdelegate round(unit), to: Cldr.Unit.Math
+
+  defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
 
   @doc """
   Returns a new `Unit.t` struct.
@@ -148,13 +149,10 @@ defmodule Cldr.Unit do
 
   """
   def compatible?(unit_1, unit_2) do
-    with \
-      {:ok, unit_1} <- validate_unit(unit_1),
-      {:ok, unit_2} <- validate_unit(unit_2)
-    do
-      (unit_type(unit_1) == unit_type(unit_2)) &&
-      Conversion.factor(unit_1) != :not_convertible &&
-      Conversion.factor(unit_2) != :not_convertible
+    with {:ok, unit_1} <- validate_unit(unit_1),
+         {:ok, unit_2} <- validate_unit(unit_2) do
+      unit_type(unit_1) == unit_type(unit_2) && Conversion.factor(unit_1) != :not_convertible &&
+        Conversion.factor(unit_2) != :not_convertible
     else
       _ -> false
     end
@@ -223,8 +221,8 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(Cldr.Math.number_or_decimal,  Keyword.t) ::
-    {:ok, String.t} | {:error, {atom, binary}}
+  @spec to_string(Cldr.Math.number_or_decimal(), Keyword.t()) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
   def to_string(number, options \\ [])
 
   def to_string(%Unit{unit: unit, value: value}, options) when is_list(options) do
@@ -232,16 +230,13 @@ defmodule Cldr.Unit do
   end
 
   def to_string(number, options) when is_list(options) do
-    with \
-      {locale, style, options} <- normalize_options(options),
-      {:ok, locale} <- Cldr.validate_locale(locale),
-      {:ok, style} <- validate_style(style),
-      {:ok, unit} <- validate_unit(options[:unit])
-    do
+    with {locale, style, options} <- normalize_options(options),
+         {:ok, locale} <- Cldr.validate_locale(locale),
+         {:ok, style} <- validate_style(style),
+         {:ok, unit} <- validate_unit(options[:unit]) do
       {:ok, to_string(number, unit, locale, style, options)}
     end
   end
-
 
   @doc """
   Formats a list using `to_string/3` but raises if there is
@@ -283,7 +278,7 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(Math.decimal_or_number, Keyword.t) :: String.t | no_return()
+  @spec to_string!(Math.decimal_or_number(), Keyword.t()) :: String.t() | no_return()
   def to_string!(number, options \\ []) do
     case to_string(number, options) do
       {:ok, string} -> string
@@ -291,29 +286,32 @@ defmodule Cldr.Unit do
     end
   end
 
-  @spec to_string(Math.decimal_or_number, unit, Locale.locale_name | LanguageTag.t,
-      style, Keyword.t) :: String.t
+  @spec to_string(
+          Math.decimal_or_number(),
+          unit,
+          Locale.locale_name() | LanguageTag.t(),
+          style,
+          Keyword.t()
+        ) :: String.t()
 
   defp to_string(number, unit, locale, style, options) do
-    with \
-      {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
-      {:ok, patterns} <- pattern_for(locale, style, unit)
-    do
+    with {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
+         {:ok, patterns} <- pattern_for(locale, style, unit) do
       pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
 
       number_string
       |> Substitution.substitute(pattern)
-      |> :erlang.iolist_to_binary
+      |> :erlang.iolist_to_binary()
     end
   end
 
-  @unit_tree Cldr.default_locale
-    |> Map.get(:cldr_locale_name)
-    |> Cldr.Config.get_locale
-    |> Map.get(:units)
-    |> Map.get(:short)
-    |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-    |> Enum.into(%{})
+  @unit_tree Cldr.default_locale()
+             |> Map.get(:cldr_locale_name)
+             |> Cldr.Config.get_locale()
+             |> Map.get(:units)
+             |> Map.get(:short)
+             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+             |> Enum.into(%{})
 
   @doc """
   Returns a list of the known unit categories.
@@ -376,7 +374,8 @@ defmodule Cldr.Unit do
       :mass
 
   """
-  @spec unit_type(Unit.t | String.t | atom()) :: atom() | {:error, {Exception.t, String.t}}
+  @spec unit_type(Unit.t() | String.t() | atom()) ::
+          atom() | {:error, {Exception.t(), String.t()}}
   def unit_type(unit) do
     with {:ok, unit} <- validate_unit(unit) do
       type_map(unit)
@@ -400,8 +399,8 @@ defmodule Cldr.Unit do
 
   """
   @units @unit_tree
-    |> Map.values
-    |> List.flatten
+         |> Map.values()
+         |> List.flatten()
 
   @spec units :: [atom, ...]
   def units do
@@ -480,10 +479,9 @@ defmodule Cldr.Unit do
 
   def jaro_match(unit, distance) do
     unit
-    |> Kernel.to_string
+    |> Kernel.to_string()
     |> match_list(distance)
   end
-
 
   @doc """
   Returns the unit closed in jaro distance to the
@@ -565,10 +563,10 @@ defmodule Cldr.Unit do
 
   """
   @default_options [jaro: false, distance: @default_distance]
-  @spec compatible_units(unit, Keyword.t | Map.t)
-    :: [unit, ...] | [{float, unit}, ...] | []
+  @spec compatible_units(unit, Keyword.t() | Map.t()) :: [unit, ...] | [{float, unit}, ...] | []
 
   def compatible_units(unit, options \\ @default_options)
+
   def compatible_units(unit, options) when is_list(options) do
     options = Keyword.merge(@default_options, options) |> Enum.into(%{})
     compatible_units(unit, options)
@@ -583,6 +581,7 @@ defmodule Cldr.Unit do
 
   def compatible_units(unit, %{jaro: true, distance: distance}) when is_number(distance) do
     unit = Kernel.to_string(unit)
+
     case jaro_match(unit, distance) do
       jaro_list when is_list(jaro_list) -> compatible_list(jaro_list, unit)
       other -> other
@@ -601,14 +600,15 @@ defmodule Cldr.Unit do
   @spec compatible_list([{float, unit}, ...], unit) :: [{float, unit}, ...] | []
   defp compatible_list(jaro_list, unit) when is_list(jaro_list) do
     with {:ok, unit} <- validate_unit(unit) do
-      Enum.filter jaro_list, fn
+      Enum.filter(jaro_list, fn
         {_distance, u} -> unit_type(u) == unit_type(unit)
         u -> unit_type(u) == unit_type(unit)
-      end
-    else _ ->
-      # Use the best match as the match key
-      [{_, unit} | _] = jaro_list
-      compatible_list(jaro_list, unit)
+      end)
+    else
+      _ ->
+        # Use the best match as the match key
+        [{_, unit} | _] = jaro_list
+        compatible_list(jaro_list, unit)
     end
   end
 
@@ -646,6 +646,7 @@ defmodule Cldr.Unit do
   end
 
   defp units_for(locale \\ Cldr.get_current_locale(), style \\ @default_style)
+
   defp units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
     units_for(cldr_locale_name, style)
   end
@@ -654,14 +655,14 @@ defmodule Cldr.Unit do
   for locale_name <- Cldr.known_locale_names() do
     locale_data =
       locale_name
-      |> Cldr.Config.get_locale
+      |> Cldr.Config.get_locale()
       |> Map.get(:units)
 
     for style <- @styles do
       units =
         Map.get(locale_data, style)
         |> Enum.map(&elem(&1, 1))
-        |> Cldr.Map.merge_map_list
+        |> Cldr.Map.merge_map_list()
         |> Enum.into(%{})
 
       defp units_for(unquote(locale_name), unquote(style)) do
@@ -671,11 +672,9 @@ defmodule Cldr.Unit do
   end
 
   defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit) do
-    with \
-      {:ok, style} <- validate_style(style),
-      {:ok, unit} <- validate_unit(unit),
-      pattern = Map.get(units_for(locale_name, style), unit)
-    do
+    with {:ok, style} <- validate_style(style),
+         {:ok, unit} <- validate_unit(unit),
+         pattern = Map.get(units_for(locale_name, style), unit) do
       {:ok, pattern}
     end
   end
@@ -687,12 +686,12 @@ defmodule Cldr.Unit do
   end
 
   @type_map @unit_tree
-    |> Enum.map(fn {k, v} ->
-      k = List.duplicate(k, length(v))
-      Enum.zip(v, k)
-    end)
-    |> List.flatten
-    |> Enum.into(%{})
+            |> Enum.map(fn {k, v} ->
+              k = List.duplicate(k, length(v))
+              Enum.zip(v, k)
+            end)
+            |> List.flatten()
+            |> Enum.into(%{})
 
   defp type_map do
     @type_map
@@ -718,20 +717,21 @@ defmodule Cldr.Unit do
     {:ok, unit}
   end
 
-  @aliases Alias.aliases |> Map.keys
+  @aliases Alias.aliases() |> Map.keys()
   def validate_unit(unit) when unit in @aliases do
     unit
-    |> Alias.alias
+    |> Alias.alias()
     |> validate_unit
   end
 
   def validate_unit(unit) when is_binary(unit) do
     unit
-    |> String.downcase
-    |> String.to_existing_atom
+    |> String.downcase()
+    |> String.to_existing_atom()
     |> validate_unit()
-  rescue ArgumentError ->
-    {:error, unit_error(unit)}
+  rescue
+    ArgumentError ->
+      {:error, unit_error(unit)}
   end
 
   def validate_unit(%Unit{unit: unit}) do
@@ -752,11 +752,12 @@ defmodule Cldr.Unit do
 
   def validate_style(style) when is_binary(style) do
     style
-    |> String.downcase
-    |> String.to_existing_atom
+    |> String.downcase()
+    |> String.to_existing_atom()
     |> validate_style()
-  catch ArgumentError ->
-    {:error, style_error(style)}
+  catch
+    ArgumentError ->
+      {:error, style_error(style)}
   end
 
   def validate_style(style) do
@@ -765,31 +766,33 @@ defmodule Cldr.Unit do
 
   @doc false
   def unit_error(nil) do
-    {Cldr.UnknownUnitError,
-      "A unit must be provided, for example 'Cldr.Unit.string(123, unit: :meter)'."}
+    {
+      Cldr.UnknownUnitError,
+      "A unit must be provided, for example 'Cldr.Unit.string(123, unit: :meter)'."
+    }
   end
 
   def unit_error(unit) do
-    {Cldr.UnknownUnitError,
-      "The unit #{inspect unit} is not known."}
+    {Cldr.UnknownUnitError, "The unit #{inspect(unit)} is not known."}
   end
 
   @doc false
   def unit_type_error(type) do
-    {Cldr.Unit.UnknownUnitTypeError,
-      "The unit type #{inspect type} is not known."}
+    {Cldr.Unit.UnknownUnitTypeError, "The unit type #{inspect(type)} is not known."}
   end
 
   @doc false
   def style_error(style) do
-    {Cldr.UnknownFormatError, "The unit style #{inspect style} is not known."}
+    {Cldr.UnknownFormatError, "The unit style #{inspect(style)} is not known."}
   end
 
   @doc false
   def incompatible_unit_error(unit_1, unit_2) do
-    {Unit.IncompatibleUnitError,
+    {
+      Unit.IncompatibleUnitError,
       "Operations can only be performed between units of the same type. " <>
-      "Received #{inspect unit_1} and #{inspect unit_2}"}
+        "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
+    }
   end
 
   defimpl String.Chars do
@@ -800,7 +803,7 @@ defmodule Cldr.Unit do
 
   defimpl Inspect, for: Cldr.Unit do
     def inspect(unit, _opts) do
-      "#Unit<#{inspect unit.unit}, #{inspect unit.value}>"
+      "#Unit<#{inspect(unit.unit)}, #{inspect(unit.value)}>"
     end
   end
 end

@@ -3,7 +3,6 @@ defmodule Cldr.UnitsTest do
 
   test "that centimetre conversion is correct" do
     assert Cldr.Unit.convert(Cldr.Unit.new(:millimeter, 300), :centimeter) ==
-           Cldr.Unit.new(:centimeter, 30.0)
+             Cldr.Unit.new(:centimeter, 30.0)
   end
-
 end

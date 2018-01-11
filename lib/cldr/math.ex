@@ -37,28 +37,28 @@ defmodule Cldr.Unit.Math do
         "Operations can only be performed between units of the same type. Received #Unit<:foot, 1> and #Unit<:gallon, 1>"}}
 
   """
-  @spec add(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | {:error, {Unit.IncompatibleUnitError, String.t}}
+  @spec add(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
+          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
 
   def add(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-  when is_number(value_1) and is_number(value_2) do
+      when is_number(value_1) and is_number(value_2) do
     Unit.new!(unit, value_1 + value_2)
   end
 
-  def add(%Unit{unit: unit, value: %Decimal{} = value_1},
-          %Unit{unit: unit, value: %Decimal{} = value_2}) do
+  def add(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
+        unit: unit,
+        value: %Decimal{} = value_2
+      }) do
     Unit.new!(unit, Decimal.add(value_1, value_2))
   end
 
-  def add(%Unit{unit: unit, value: %Decimal{}} = unit_1,
-          %Unit{unit: unit, value: value_2})
-  when is_number(value_2) do
+  def add(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
     add(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def add(%Unit{unit: unit, value: value_2},
-          %Unit{unit: unit, value: %Decimal{}} = unit_1)
-  when is_number(value_2) do
+  def add(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
+      when is_number(value_2) do
     add(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
@@ -88,8 +88,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec add!(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | no_return()
+  @spec add!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
 
   def add!(unit_1, unit_2) do
     case add(unit_1, unit_2) do
@@ -97,7 +96,6 @@ defmodule Cldr.Unit.Math do
       unit -> unit
     end
   end
-
 
   @doc """
   Subtracts two compatible `%Unit{}` types
@@ -127,28 +125,28 @@ defmodule Cldr.Unit.Math do
       #Unit<:pint, 4>
 
   """
-  @spec sub(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | {:error, {Unit.IncompatibleUnitError, String.t}}
+  @spec sub(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
+          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
 
   def sub(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-  when is_number(value_1) and is_number(value_2) do
+      when is_number(value_1) and is_number(value_2) do
     Unit.new!(unit, value_1 - value_2)
   end
 
-  def sub(%Unit{unit: unit, value: %Decimal{} = value_1},
-          %Unit{unit: unit, value: %Decimal{} = value_2}) do
+  def sub(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
+        unit: unit,
+        value: %Decimal{} = value_2
+      }) do
     Unit.new!(unit, Decimal.sub(value_1, value_2))
   end
 
-  def sub(%Unit{unit: unit, value: %Decimal{}} = unit_1,
-          %Unit{unit: unit, value: value_2})
-  when is_number(value_2) do
+  def sub(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
     sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def sub(%Unit{unit: unit, value: value_2},
-          %Unit{unit: unit, value: %Decimal{}} = unit_1)
-  when is_number(value_2) do
+  def sub(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
+      when is_number(value_2) do
     sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
@@ -178,8 +176,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec sub!(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | no_return()
+  @spec sub!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
 
   def sub!(unit_1, unit_2) do
     case sub(unit_1, unit_2) do
@@ -216,27 +213,27 @@ defmodule Cldr.Unit.Math do
       #Unit<:pint, 5>
 
   """
-  @spec mult(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | {:error, {Unit.IncompatibleUnitError, String.t}}
+  @spec mult(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
+          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
   def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-  when is_number(value_1) and is_number(value_2) do
+      when is_number(value_1) and is_number(value_2) do
     Unit.new!(unit, value_1 * value_2)
   end
 
-  def mult(%Unit{unit: unit, value: %Decimal{} = value_1},
-          %Unit{unit: unit, value: %Decimal{} = value_2}) do
+  def mult(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
+        unit: unit,
+        value: %Decimal{} = value_2
+      }) do
     Unit.new!(unit, Decimal.mult(value_1, value_2))
   end
 
-  def mult(%Unit{unit: unit, value: %Decimal{}} = unit_1,
-          %Unit{unit: unit, value: value_2})
-  when is_number(value_2) do
+  def mult(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
     mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def mult(%Unit{unit: unit, value: value_2},
-          %Unit{unit: unit, value: %Decimal{}} = unit_1)
-  when is_number(value_2) do
+  def mult(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
+      when is_number(value_2) do
     mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
@@ -266,8 +263,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec mult!(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | no_return()
+  @spec mult!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
 
   def mult!(unit_1, unit_2) do
     case mult(unit_1, unit_2) do
@@ -304,28 +300,28 @@ defmodule Cldr.Unit.Math do
   #Unit<:pint, 5.0>
 
   """
-  @spec div(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | {:error, {Unit.IncompatibleUnitError, String.t}}
+  @spec div(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
+          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
 
   def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-  when is_number(value_1) and is_number(value_2) do
+      when is_number(value_1) and is_number(value_2) do
     Unit.new!(unit, value_1 / value_2)
   end
 
-  def div(%Unit{unit: unit, value: %Decimal{} = value_1},
-          %Unit{unit: unit, value: %Decimal{} = value_2}) do
+  def div(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
+        unit: unit,
+        value: %Decimal{} = value_2
+      }) do
     Unit.new!(unit, Decimal.div(value_1, value_2))
   end
 
-  def div(%Unit{unit: unit, value: %Decimal{}} = unit_1,
-          %Unit{unit: unit, value: value_2})
-  when is_number(value_2) do
+  def div(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
     div(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def div(%Unit{unit: unit, value: value_2},
-          %Unit{unit: unit, value: %Decimal{}} = unit_1)
-  when is_number(value_2) do
+  def div(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
+      when is_number(value_2) do
     div(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
@@ -355,8 +351,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec div!(unit_1 :: Unit.t, unit_2 :: Unit.t) ::
-    Unit.t | no_return()
+  @spec div!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
 
   def div!(unit_1, unit_2) do
     case div(unit_1, unit_2) do
@@ -418,9 +413,11 @@ defmodule Cldr.Unit.Math do
       #Unit<:yard, 1031.7>
 
   """
-  @spec round(unit :: Unit.t, places :: non_neg_integer,
-          mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down) ::
-          Unit.t
+  @spec round(
+          unit :: Unit.t(),
+          places :: non_neg_integer,
+          mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
+        ) :: Unit.t()
 
   def round(%Unit{unit: unit, value: value}, places \\ 0, mode \\ :half_up) do
     rounded_value = Cldr.Math.round(value, places, mode)

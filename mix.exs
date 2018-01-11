@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "1.0.1"
+  @version "1.0.2"
 
   def project do
     [
@@ -13,7 +13,7 @@ defmodule CldrUnits.Mixfile do
       description: description(),
       package: package(),
       docs: docs(),
-      start_permanent: Mix.env == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
   end
@@ -45,7 +45,12 @@ defmodule CldrUnits.Mixfile do
       licenses: ["Apache 2.0"],
       links: links(),
       files: [
-        "lib", "config", "mix.exs", "README*", "CHANGELOG*", "LICENSE*"
+        "lib",
+        "config",
+        "mix.exs",
+        "README*",
+        "CHANGELOG*",
+        "LICENSE*"
       ]
     ]
   end
@@ -61,10 +66,9 @@ defmodule CldrUnits.Mixfile do
 
   def links do
     %{
-      "GitHub"    => "https://github.com/kipcole9/cldr_units",
-      "Readme"    => "https://github.com/kipcole9/cldr_units/blob/v#{@version}/README.md",
+      "GitHub" => "https://github.com/kipcole9/cldr_units",
+      "Readme" => "https://github.com/kipcole9/cldr_units/blob/v#{@version}/README.md",
       "Changelog" => "https://github.com/kipcole9/cldr_units/blob/v#{@version}/CHANGELOG.md"
     }
   end
-
 end

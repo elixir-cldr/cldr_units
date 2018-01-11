@@ -3,11 +3,6 @@ defmodule Cldr.Unit.Alias do
     %{
       "metre" => :meter,
       "kilometre" => :kilometer
-
-
-
-
-
     }
   end
 
