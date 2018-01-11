@@ -8,7 +8,7 @@ This is the changelog for Cldr v1.0.2 released on January 12th, 2018.  For older
 
 ## Enhancements
 
-* Add `Cldr.Unit.value(Unit.t)` to return the value of the `Unit`
+* Add `Cldr.Unit.value(Unit.t)` to return the value of the `Unit`.  Closes #6.
 
 * Format the code with `mix format`
 
