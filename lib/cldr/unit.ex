@@ -817,16 +817,4 @@ defmodule Cldr.Unit do
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }
   end
-
-  defimpl String.Chars do
-    def to_string(unit) do
-      Unit.to_string(unit)
-    end
-  end
-
-  defimpl Inspect, for: Cldr.Unit do
-    def inspect(unit, _opts) do
-      "#Unit<#{inspect(unit.unit)}, #{inspect(unit.value)}>"
-    end
-  end
 end
