@@ -35,7 +35,9 @@ defmodule CldrUnits.Mixfile do
     [
       {:ex_cldr, "~> 1.0"},
       {:ex_cldr_numbers, "~> 1.0"},
-      {:ex_doc, "~> 0.18", only: :dev}
+      {:ex_doc, "~> 0.18", only: :dev},
+      {:poison, "~> 2.1 or ~> 3.0", optional: true},
+      {:jason, "~> 1.0", optional: true}
     ]
   end
 
