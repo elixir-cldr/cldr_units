@@ -1,6 +1,14 @@
-# Changelog for Cldr_Units v1.1.1
+# Changelog for Cldr_Units v1.2.0
 
-This is the changelog for Cldr v1.1.1 released on January 26th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr v1.1.1 released on March 29th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+### Enhancements
+
+* Update ex_cldr dependency to version 1.5.0 which uses CLDR data version 33.
+
+* Update ex_cldr_numbers dependency to 1.4.0
+
+# Changelog for Cldr_Units v1.1.1
 
 ## Bug Fixes
 
