@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v1.2.1
+
+This is the changelog for Cldr v1.2.1 released on May 9th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+## Bug Fixes
+
+* `to_string/3` now performs cardinal rather than ordinal pluralization. Thanks to @lostkobrakai. Closes #7
+
 # Changelog for Cldr_Units v1.2.0
 
 This is the changelog for Cldr v1.2.0 released on March 29th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)

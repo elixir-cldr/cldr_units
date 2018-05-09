@@ -200,7 +200,7 @@ defmodule Cldr.Unit do
       {:ok, "1 gelling"}
 
       iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "bs"
-      {:ok, "1 galona"}
+      {:ok, "1 galon"}
 
       iex> Cldr.Unit.to_string 1234, unit: :gallon, format: :long
       {:ok, "1 thousand gallons"}
@@ -297,7 +297,7 @@ defmodule Cldr.Unit do
   defp to_string(number, unit, locale, style, options) do
     with {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
          {:ok, patterns} <- pattern_for(locale, style, unit) do
-      pattern = Cldr.Number.Ordinal.pluralize(number, locale, patterns)
+      pattern = Cldr.Number.Cardinal.pluralize(number, locale, patterns)
 
       number_string
       |> Substitution.substitute(pattern)
