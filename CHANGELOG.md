@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v1.2.2
+
+This is the changelog for Cldr v1.2.2 released on August 26th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+## Bug Fixes
+
+* `Cldr.Unit.Conversion.convert/2` now correctly accepts units with a decimal value. Fixes #8.  Thanks to @lostkobrakai.
+
 # Changelog for Cldr_Units v1.2.1
 
 This is the changelog for Cldr v1.2.1 released on May 9th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)

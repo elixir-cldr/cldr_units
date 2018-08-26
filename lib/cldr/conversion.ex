@@ -153,9 +153,39 @@ defmodule Cldr.Unit.Conversion do
       # {to_celsius, from_celsius}
       temperature: %{
         celsius: 1,
-        fahrenheit: {&((&1 - 32) / 1.8), &(&1 * 1.8 + 32)},
+        fahrenheit: {
+          fn
+            x when is_number(x) ->
+              (x - 32) / 1.8
+            %Decimal{} = x ->
+              Decimal.sub(x, Decimal.new(32))
+              |> Decimal.div(Decimal.new("1.8"))
+          end,
+
+          fn
+            x when is_number(x) ->
+              (x * 1.8) + 32
+            %Decimal{} = x ->
+              Decimal.mult(x, Decimal.new("1.8"))
+              |> Decimal.add(Decimal.new(32))
+          end
+          },
         generic: :not_convertible,
-        kelvin: {&(&1 - 273.15), &(&1 + 273.15)}
+        kelvin: {
+          fn
+            x when is_number(x) ->
+              (x - 273.15)
+            %Decimal{} = x ->
+              Decimal.sub(x, Decimal.new("273.15"))
+          end,
+
+          fn
+            x when is_number(x) ->
+              (x + 273.15)
+            %Decimal{} = x ->
+              Decimal.add(x, Decimal.new("273.15"))
+          end
+          },
       },
       volume: %{
         acre_foot: 8.1071e-7,
@@ -231,16 +261,33 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(value, from, to) when is_number(from) and is_number(to) do
+  defp convert(value, from, to) when is_number(value) and is_number(from) and is_number(to) do
     {:ok, value / from * to}
   end
 
-  defp convert(value, {to_base_fun, _}, to) when is_number(to) do
-    {:ok, to_base_fun.(value) * to}
+  defp convert(%Decimal{} = value, from, to) when is_number(from) and is_number(to) do
+    converted =
+      value
+      |> Decimal.div(Decimal.new(from))
+      |> Decimal.mult(Decimal.new(to))
+
+    {:ok, converted}
   end
 
-  defp convert(value, from, {_to_fun, from_base_fun}) when is_number(from) do
+  defp convert(value, {to_base_fun, _}, to) when is_number(value) and is_number(to) do
+    {:ok,to_base_fun.(value) * to}
+  end
+
+  defp convert(%Decimal{} = value, {to_base_fun, _}, to) when is_number(to) do
+    {:ok,Decimal.mult(to_base_fun.(value), Decimal.new(to))}
+  end
+
+  defp convert(value, from, {_to_fun, from_base_fun}) when is_number(value) and is_number(from) do
     {:ok, from_base_fun.(value / from)}
+  end
+
+  defp convert(%Decimal{} = value, from, {_to_fun, from_base_fun}) when is_number(from) do
+    {:ok, Decimal.div(from_base_fun.(value), Decimal.new(from))}
   end
 
   defp convert(value, {to_base_fun, _}, {_, from_base_fun}) do
