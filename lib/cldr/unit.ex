@@ -323,7 +323,7 @@ defmodule Cldr.Unit do
       23
 
   """
-  @spec value(unit :: Unit.t) :: Cldr.Math.number_or_decimal()
+  @spec value(unit :: Unit.t()) :: Cldr.Math.number_or_decimal()
   def value(%Unit{value: value}) do
     value
   end

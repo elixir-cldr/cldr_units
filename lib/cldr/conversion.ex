@@ -157,35 +157,37 @@ defmodule Cldr.Unit.Conversion do
           fn
             x when is_number(x) ->
               (x - 32) / 1.8
+
             %Decimal{} = x ->
               Decimal.sub(x, Decimal.new(32))
               |> Decimal.div(Decimal.new("1.8"))
           end,
-
           fn
             x when is_number(x) ->
-              (x * 1.8) + 32
+              x * 1.8 + 32
+
             %Decimal{} = x ->
               Decimal.mult(x, Decimal.new("1.8"))
               |> Decimal.add(Decimal.new(32))
           end
-          },
+        },
         generic: :not_convertible,
         kelvin: {
           fn
             x when is_number(x) ->
-              (x - 273.15)
+              x - 273.15
+
             %Decimal{} = x ->
               Decimal.sub(x, Decimal.new("273.15"))
           end,
-
           fn
             x when is_number(x) ->
-              (x + 273.15)
+              x + 273.15
+
             %Decimal{} = x ->
               Decimal.add(x, Decimal.new("273.15"))
           end
-          },
+        }
       },
       volume: %{
         acre_foot: 8.1071e-7,
@@ -275,11 +277,11 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert(value, {to_base_fun, _}, to) when is_number(value) and is_number(to) do
-    {:ok,to_base_fun.(value) * to}
+    {:ok, to_base_fun.(value) * to}
   end
 
   defp convert(%Decimal{} = value, {to_base_fun, _}, to) when is_number(to) do
-    {:ok,Decimal.mult(to_base_fun.(value), Decimal.new(to))}
+    {:ok, Decimal.mult(to_base_fun.(value), Decimal.new(to))}
   end
 
   defp convert(value, from, {_to_fun, from_base_fun}) when is_number(value) and is_number(from) do
