@@ -56,7 +56,8 @@ defmodule Cldr.Unit.Conversion do
         megabit: 1.0e-6,
         megabyte: 1.25e-7,
         terabit: 1.0e-12,
-        terabyte: 1.25e-13
+        terabyte: 1.25e-13,
+        petabyte: 1.25e-16
       },
       duration: %{
         century: 3.171e-16,
@@ -142,7 +143,8 @@ defmodule Cldr.Unit.Conversion do
         inch_hg: 0.02953,
         millibar: 1,
         millimeter_of_mercury: 0.75006375541921,
-        pound_per_square_inch: 0.000145038
+        pound_per_square_inch: 0.000145038,
+        atmosphere: 0.000986923
       },
       speed: %{
         kilometer_per_hour: 3.6,
