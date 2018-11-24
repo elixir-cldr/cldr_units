@@ -19,7 +19,15 @@ defmodule MyApp.Cldr do
 end
 ```
 
-### Pub lic API
+### Supporting the String.Chars protocol
+
+The `String.Chars` protocol underpins `Kernel.to_string/1` and is also used in string interpolation such as `#{my_unit}`.  In order for this to be supported by `Cldr.Unit`, a default backend module must be configured in `config.exs`.  For example:
+```
+config :ex_cldr_units,
+  default_backend: MyApp.Cldr
+```
+
+## Public API
 
 The primary api is defined by three functions:
 
@@ -142,7 +150,7 @@ iex> MyApp.Cldr.Unit.unit_types
  :pressure, :speed, :temperature, :volume]
 ```
 
-### Further information
+## Further information
 For help in `iex`:
 
 ```elixir
