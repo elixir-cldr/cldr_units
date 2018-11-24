@@ -8,25 +8,27 @@ defmodule Cldr.Unit do
   * `Cldr.Unit.to_string/3` which, given a number and a unit name will output a localized string
 
   * `Cldr.Unit.available_units/0` identifies the available units for localization
+
   """
 
-  require Cldr
   alias Cldr.Substitution
   alias Cldr.LanguageTag
   alias Cldr.Locale
-  alias Cldr.Unit
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Alias
+  alias Cldr.Unit
+
+  @enforce_keys [:unit, :value]
+  defstruct unit: nil, value: 0
 
   @type t :: %Unit{}
   @type unit :: atom()
   @type style :: atom()
 
-  @styles [:long, :short, :narrow]
   @default_style :long
+  @styles [:long, :short, :narrow]
 
-  defstruct unit: nil, value: 0
-
+  defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
   defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math
@@ -40,8 +42,6 @@ defmodule Cldr.Unit do
   defdelegate round(unit, places, mode), to: Cldr.Unit.Math
   defdelegate round(unit, places), to: Cldr.Unit.Math
   defdelegate round(unit), to: Cldr.Unit.Math
-
-  defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
 
   @doc """
   Returns a new `Unit.t` struct.
@@ -161,80 +161,90 @@ defmodule Cldr.Unit do
   @doc """
   Formats a number into a string according to a unit definition for a locale.
 
+  ## Arguments
+
+  * `number` is any number (integer, float or Decimal) or a
+    `Cldr.Unit.t()` struct
+
+  * `options` is a keyword list
+
   ## Options
 
-  * `number` is any number (integer, float or Decimal)
+  * `:unit` is any unit returned by `Cldr.Unit.units/2`. Ignored if
+    the number to be formatted is a `Cldr.Unit.t()` struct
 
-  * `unit` is any unit returned by `Cldr.Unit.units/2`
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
 
-  * `options` are:
+  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+    The current styles are `:long`, `:short` and `:narrow`.
+    The default is `style: :long`
 
-    * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-      or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
-
-    * `:style` is one of those returned by `Cldr.Unit.available_styles`.
-      The current styles are `:long`, `:short` and `:narrow`.
-      The default is `style: :long`
-
-    * Any other options are passed to `Cldr.Number.to_string/2`
-      which is used to format the `number`
+  * Any other options are passed to `Cldr.Number.to_string/2`
+    which is used to format the `number`
 
   ## Returns
 
-  * `{;ok, formatted_string}` or
+  * `{:ok, formatted_string}` or
 
   * `{:error, {exception, message}}`
 
   ## Examples
 
-      iex> Cldr.Unit.to_string 123, unit: :gallon
+      iex> Cldr.Unit.to_string 123, TestBackend.Cldr, unit: :gallon
       {:ok, "123 gallons"}
 
-      iex> Cldr.Unit.to_string 1, unit: :gallon
+      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon
       {:ok, "1 gallon"}
 
-      iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "af"
+      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "af"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "af-NA"
+      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "af-NA"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, unit: :gallon, locale: "bs"
+      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "bs"
       {:ok, "1 galon"}
 
-      iex> Cldr.Unit.to_string 1234, unit: :gallon, format: :long
+      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :gallon, format: :long
       {:ok, "1 thousand gallons"}
 
-      iex> Cldr.Unit.to_string 1234, unit: :gallon, format: :short
+      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :gallon, format: :short
       {:ok, "1K gallons"}
 
-      iex> Cldr.Unit.to_string 1234, unit: :megahertz
+      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :megahertz
       {:ok, "1,234 megahertz"}
 
-      iex> Cldr.Unit.to_string 1234, unit: :megahertz, style: :narrow
+      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
-      iex> Cldr.Unit.to_string 123, unit: :megabyte, locale: "en", style: :unknown
+      iex> unit = Cldr.Unit.new(123, :foot)
+      iex> Cldr.Unit.to_string unit, TestBackend.Cldr
+      {:ok, "123 feet"}
+
+      iex> Cldr.Unit.to_string 123, TestBackend.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
-      iex> Cldr.Unit.to_string 123, unit: :blabber, locale: "en"
+      iex> Cldr.Unit.to_string 123, TestBackend.Cldr, unit: :blabber, locale: "en"
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(Cldr.Math.number_or_decimal(), Keyword.t()) ::
+  @spec to_string(Cldr.Math.number_or_decimal() | t(), Cldr.backend(), Keyword.t()) ::
           {:ok, String.t()} | {:error, {atom, binary}}
-  def to_string(number, options \\ [])
 
-  def to_string(%Unit{unit: unit, value: value}, options) when is_list(options) do
-    to_string(value, Keyword.put(options, :unit, unit))
+  def to_string(number, backend, options \\ [])
+
+  def to_string(%Unit{unit: unit, value: value}, backend, options) when is_list(options) do
+    options = Keyword.put(options, :unit, unit)
+    to_string(value, backend, options)
   end
 
-  def to_string(number, options) when is_list(options) do
-    with {locale, style, options} <- normalize_options(options),
-         {:ok, locale} <- Cldr.validate_locale(locale),
+  def to_string(number, backend, options) when is_list(options) do
+    with {locale, style, options} <- normalize_options(backend, options),
+         {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style),
          {:ok, unit} <- validate_unit(options[:unit]) do
-      {:ok, to_string(number, unit, locale, style, options)}
+      {:ok, to_string(number, unit, locale, style, backend, options)}
     end
   end
 
@@ -242,23 +252,27 @@ defmodule Cldr.Unit do
   Formats a list using `to_string/3` but raises if there is
   an error.
 
+  ## Arguments
+
+  * `number` is any number (integer, float or Decimal) or a
+    `Cldr.Unit.t()` struct
+
+  * `options` is a keyword list
+
   ## Options
 
-  * `number` is any number (integer, float or Decimal)
+  * `:unit` is any unit returned by `Cldr.Unit.units/2`. Ignored if
+    the number to be formatted is a `Cldr.Unit.t()` struct
 
-  * `unit` is any unit returned by `Cldr.Unit.units/2`
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
 
-  * `options` are:
+  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+    The current styles are `:long`, `:short` and `:narrow`.
+    The default is `style: :long`
 
-    * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-      or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
-
-    * `:style` is one of those returned by `Cldr.Unit.available_styles`.
-      The current styles are `:long`, `:short` and `:narrow`.
-      The default is `style: :long`
-
-    * Any other options are passed to `Cldr.Number.to_string/2`
-      which is used to format the `number`
+  * Any other options are passed to `Cldr.Number.to_string/2`
+    which is used to format the `number`
 
   ## Returns
 
@@ -268,19 +282,19 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string! 123, unit: :gallon
+      iex> Cldr.Unit.to_string! 123, TestBackend.Cldr, unit: :gallon
       "123 gallons"
 
-      iex> Cldr.Unit.to_string! 1, unit: :gallon
+      iex> Cldr.Unit.to_string! 1, TestBackend.Cldr, unit: :gallon
       "1 gallon"
 
-      iex> Cldr.Unit.to_string! 1, unit: :gallon, locale: "af"
+      iex> Cldr.Unit.to_string! 1, TestBackend.Cldr, unit: :gallon, locale: "af"
       "1 gelling"
 
   """
-  @spec to_string!(Math.decimal_or_number(), Keyword.t()) :: String.t() | no_return()
-  def to_string!(number, options \\ []) do
-    case to_string(number, options) do
+  @spec to_string!(Math.decimal_or_number(), Cldr.backend(), Keyword.t()) :: String.t() | no_return()
+  def to_string!(number, backend, options \\ []) do
+    case to_string(number, backend, options) do
       {:ok, string} -> string
       {:error, {exception, message}} -> raise exception, message
     end
@@ -291,13 +305,15 @@ defmodule Cldr.Unit do
           unit,
           Locale.locale_name() | LanguageTag.t(),
           style,
+          Cldr.backend(),
           Keyword.t()
         ) :: String.t()
 
-  defp to_string(number, unit, locale, style, options) do
-    with {:ok, number_string} <- Cldr.Number.to_string(number, options ++ [locale: locale]),
-         {:ok, patterns} <- pattern_for(locale, style, unit) do
-      pattern = Cldr.Number.Cardinal.pluralize(number, locale, patterns)
+  defp to_string(number, unit, locale, style, backend, options) do
+    with {:ok, number_string} <- Cldr.Number.to_string(number, backend, options ++ [locale: locale]),
+         {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
+      cardinal_module = Module.concat(backend, Number.Cardinal)
+      pattern = cardinal_module.pluralize(number, locale, patterns)
 
       number_string
       |> Substitution.substitute(pattern)
@@ -308,7 +324,7 @@ defmodule Cldr.Unit do
   @doc """
   Return the value of the Unit struct
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
@@ -319,7 +335,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex(1)> Cldr.Unit.value Cldr.Unit.new(:kilogram, 23)
+      iex> Cldr.Unit.value Cldr.Unit.new(:kilogram, 23)
       23
 
   """
@@ -328,9 +344,11 @@ defmodule Cldr.Unit do
     value
   end
 
-  @unit_tree Cldr.default_locale()
-             |> Map.get(:cldr_locale_name)
-             |> Cldr.Config.get_locale()
+  @data_dir [:code.priv_dir(:ex_cldr), "/cldr/locales"] |> :erlang.iolist_to_binary
+  @config   %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
+
+  @unit_tree "en"
+             |> Cldr.Config.get_locale(@config)
              |> Map.get(:units)
              |> Map.get(:short)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
@@ -359,7 +377,7 @@ defmodule Cldr.Unit do
   ## Example
 
       Cldr.Unit.unit_tree
-      %{
+      => %{
         acceleration: [:g_force, :meter_per_second_squared],
         angle: [:arc_minute, :arc_second, :degree, :radian, :revolution],
         area: [:acre, :hectare, :square_centimeter, :square_foot, :square_inch,
@@ -433,7 +451,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns the units for a given unit type
 
-  ## Options
+  ## Arguments
 
   * `type` is any unit type returned by
     `Cldr.Unit.unit_types/0`
@@ -463,7 +481,7 @@ defmodule Cldr.Unit do
   Returns a list of units that are within the
   specified jaro distance of the provided unit.
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
     `Cldr.Unit.new/2`
@@ -510,7 +528,7 @@ defmodule Cldr.Unit do
   Returns the unit closed in jaro distance to the
   provided unit
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
     `Cldr.Unit.new/2`
@@ -552,20 +570,21 @@ defmodule Cldr.Unit do
   Returns a list of units that are compatible with the
   provided unit.
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.units/0` or by
     `Cldr.Unit.new/2`
 
-  * `options` is a keyword list of options,  The valid
-    options are:
+  * `options` is a keyword list of options
 
-    * `:jaro` is a boolean which determines if the match
-      is to use the jaro distance.  The default is `false`
+  ## Options
 
-    * `distance` is a float between 0.0 and 1.0 representing
-      the jaro distance above which a unit must match in order
-      to be returned.  The default is 0.75
+  * `:jaro` is a boolean which determines if the match
+    is to use the jaro distance.  The default is `false`
+
+  * `distance` is a float between 0.0 and 1.0 representing
+    the jaro distance above which a unit must match in order
+    to be returned.  The default is 0.75
 
   ## Returns
 
@@ -668,43 +687,23 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp units_for(locale \\ Cldr.get_current_locale(), style \\ @default_style)
-
-  defp units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
-    units_for(cldr_locale_name, style)
+  def units_for(locale, style, backend) do
+    module = Module.concat(backend, :'Elixir.Unit')
+    module.units_for(locale, style)
   end
 
-  # Generate the functions that encapsulate the unit data from CDLR
-  for locale_name <- Cldr.known_locale_names() do
-    locale_data =
-      locale_name
-      |> Cldr.Config.get_locale()
-      |> Map.get(:units)
-
-    for style <- @styles do
-      units =
-        Map.get(locale_data, style)
-        |> Enum.map(&elem(&1, 1))
-        |> Cldr.Map.merge_map_list()
-        |> Enum.into(%{})
-
-      defp units_for(unquote(locale_name), unquote(style)) do
-        unquote(Macro.escape(units))
-      end
-    end
-  end
-
-  defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit) do
+  defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
     with {:ok, style} <- validate_style(style),
-         {:ok, unit} <- validate_unit(unit),
-         pattern = Map.get(units_for(locale_name, style), unit) do
+         {:ok, unit} <- validate_unit(unit) do
+      units = units_for(locale_name, style, backend)
+      pattern = Map.get(units, unit)
       {:ok, pattern}
     end
   end
 
-  defp pattern_for(locale_name, style, unit) do
-    with {:ok, locale} <- Cldr.validate_locale(locale_name) do
-      pattern_for(locale, style, unit)
+  defp pattern_for(locale_name, style, unit, backend) do
+    with {:ok, locale} <- backend.validate_locale(locale_name) do
+      pattern_for(locale, style, unit, backend)
     end
   end
 
@@ -720,8 +719,8 @@ defmodule Cldr.Unit do
     @type_map
   end
 
-  defp normalize_options(options) do
-    locale = options[:locale] || Cldr.get_current_locale()
+  defp normalize_options(backend, options) do
+    locale = options[:locale] || backend.get_locale()
     style = options[:style] || @default_style
 
     options =
@@ -735,6 +734,7 @@ defmodule Cldr.Unit do
   @doc """
   Validates a unit name and normalizes it to a
   standard downcased atom form
+
   """
   def validate_unit(unit) when unit in @units do
     {:ok, unit}
@@ -768,6 +768,7 @@ defmodule Cldr.Unit do
   @doc """
   Validates a unit style and normalizes it to a
   standard downcased atom form
+
   """
   def validate_style(style) when style in @styles do
     {:ok, style}

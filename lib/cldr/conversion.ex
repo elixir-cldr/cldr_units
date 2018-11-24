@@ -2,6 +2,7 @@ defmodule Cldr.Unit.Conversion do
   @moduledoc """
   Unit conversion functions for the units defined
   in `Cldr`.
+
   """
 
   alias Cldr.Unit
@@ -272,8 +273,8 @@ defmodule Cldr.Unit.Conversion do
   defp convert(%Decimal{} = value, from, to) when is_number(from) and is_number(to) do
     converted =
       value
-      |> Decimal.div(Decimal.new(from))
-      |> Decimal.mult(Decimal.new(to))
+      |> Decimal.div(decimal_new(from))
+      |> Decimal.mult(decimal_new(to))
 
     {:ok, converted}
   end
@@ -283,7 +284,7 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert(%Decimal{} = value, {to_base_fun, _}, to) when is_number(to) do
-    {:ok, Decimal.mult(to_base_fun.(value), Decimal.new(to))}
+    {:ok, Decimal.mult(to_base_fun.(value), decimal_new(to))}
   end
 
   defp convert(value, from, {_to_fun, from_base_fun}) when is_number(value) and is_number(from) do
@@ -291,7 +292,7 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert(%Decimal{} = value, from, {_to_fun, from_base_fun}) when is_number(from) do
-    {:ok, Decimal.div(from_base_fun.(value), Decimal.new(from))}
+    {:ok, Decimal.div(from_base_fun.(value), decimal_new(from))}
   end
 
   defp convert(value, {to_base_fun, _}, {_, from_base_fun}) do
@@ -308,4 +309,7 @@ defmodule Cldr.Unit.Conversion do
     unit_type = Unit.unit_type(unit)
     get_in(factors(), [unit_type, unit])
   end
+
+  defp decimal_new(n) when is_integer(n), do: Decimal.new(n)
+  defp decimal_new(n) when is_float(n), do: Decimal.from_float(n)
 end

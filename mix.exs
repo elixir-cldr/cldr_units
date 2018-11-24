@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "1.3.0"
+  @version "2.0.0"
 
   def project do
     [
@@ -14,7 +14,9 @@ defmodule CldrUnits.Mixfile do
       package: package(),
       docs: docs(),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
+      cldr_provider: {Cldr.Unit.Backend, :define_unit_module, []}
     ]
   end
 
@@ -33,10 +35,9 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, "~> 1.8"},
-      {:ex_cldr_numbers, "~> 1.6"},
+      {:ex_cldr, "~> 2.0"},
+      {:ex_cldr_numbers, "~> 2.0"},
       {:ex_doc, "~> 0.18", only: :dev},
-      {:poison, "~> 2.1 or ~> 3.0", optional: true},
       {:jason, "~> 1.0", optional: true}
     ]
   end
@@ -73,4 +74,8 @@ defmodule CldrUnits.Mixfile do
       "Changelog" => "https://github.com/kipcole9/cldr_units/blob/v#{@version}/CHANGELOG.md"
     }
   end
+
+  defp elixirc_paths(:test), do: ["lib", "mix", "test"]
+  defp elixirc_paths(:dev), do: ["lib", "mix"]
+  defp elixirc_paths(_), do: ["lib"]
 end
