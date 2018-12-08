@@ -90,12 +90,12 @@ A localised string representing this decomposition can also be produced.  `Cldr.
 ```
 iex> c = Cldr.Unit.decompose height, [:foot, :inch]
 [#Unit<:foot, 6.0>, #Unit<:inch, 4.0>]
-iex> Cldr.Unit.to_string c, TestBackend.Cldr
+iex> Cldr.Unit.to_string c, MyApp.Cldr
 "6 feet and 4 inches"
-iex> Cldr.Unit.to_string c, TestBackend.Cldr, list_options: [format: :unit_short]
+iex> Cldr.Unit.to_string c, MyApp.Cldr, list_options: [format: :unit_short]
 "6 feet, 4 inches"
 # And of course full localisation is supported
-iex> Cldr.Unit.to_string c, TestBackend.Cldr, locale: "fr"
+iex> Cldr.Unit.to_string c, MyApp.Cldr, locale: "fr"
 "6 pieds et 4 pouces"
 ```
 
