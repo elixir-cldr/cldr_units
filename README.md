@@ -80,7 +80,7 @@ iex> MyApp.Cldr.Unit.to_string Cldr.Unit.new(:ampere, 42), locale: "fr"
 
 Sometimes its a requirement to decompose a unit into one or more subunits.  For example, if someone is 6.3 feet heigh we would normally say "6 feet, 4 inches".  This can be achieved with `Cldr.Unit.decompose/2`. Using our example:
 ```
-iex(1)> height = Cldr.Unit.new(:foot, 6.3)
+iex> height = Cldr.Unit.new(:foot, 6.3)
 #Unit<:foot, 6.3>
 iex(2)> Cldr.Unit.decompose height, [:foot, :inch]
 [#Unit<:foot, 6.0>, #Unit<:inch, 4.0>]
@@ -88,11 +88,11 @@ iex(2)> Cldr.Unit.decompose height, [:foot, :inch]
 
 A localised string representing this decomposition can also be produced.  `Cldr.Unit.to_string/3` will process a unit list, using the function `Cldr.List.to_string/2` to perform the list combination.  Again using the example:
 ```
-iex(3)> c = Cldr.Unit.decompose height, [:foot, :inch]
+iex> c = Cldr.Unit.decompose height, [:foot, :inch]
 [#Unit<:foot, 6.0>, #Unit<:inch, 4.0>]
-iex(4)> Cldr.Unit.to_string c, TestBackend.Cldr
+iex> Cldr.Unit.to_string c, TestBackend.Cldr
 "6 feet and 4 inches"
-iex(5)> Cldr.Unit.to_string c, TestBackend.Cldr, list_options: [format: :unit_short]
+iex> Cldr.Unit.to_string c, TestBackend.Cldr, list_options: [format: :unit_short]
 "6 feet, 4 inches"
 # And of course full localisation is supported
 iex> Cldr.Unit.to_string c, TestBackend.Cldr, locale: "fr"
