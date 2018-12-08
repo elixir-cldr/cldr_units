@@ -17,6 +17,9 @@ defmodule Cldr.Unit.Backend do
         defdelegate new!(unit, value), to: Cldr.Unit
         defdelegate compatible?(unit_1, unit_2), to: Cldr.Unit
         defdelegate value(unit), to: Cldr.Unit
+        defdelegate zero(unit), to: Cldr.Unit
+        defdelegate zero?(unit), to: Cldr.Unit
+        defdelegate decompose(unit, list), to: Cldr.Unit
 
         defdelegate units, to: Cldr.Unit
         defdelegate units(type), to: Cldr.Unit
@@ -55,8 +58,8 @@ defmodule Cldr.Unit.Backend do
 
         ## Arguments
 
-        * `number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct
+        * `list_or_number` is any number (integer, float or Decimal) or a
+          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
 
         * `options` is a keyword list
 
@@ -71,6 +74,10 @@ defmodule Cldr.Unit.Backend do
         * `:style` is one of those returned by `Cldr.Unit.available_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
+
+        * `:list_options` is a keyword list of options for formatting a list
+          which is passed through to `Cldr.List.to_string/3`. This is only
+          applicable when formatting a list of units.
 
         * Any other options are passed to `Cldr.Number.to_string/2`
           which is used to format the `number`
@@ -117,7 +124,7 @@ defmodule Cldr.Unit.Backend do
             {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
         """
-        @spec to_string(Cldr.Math.number_or_decimal(), Keyword.t()) ::
+        @spec to_string(Cldr.Math.number_or_decimal() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
@@ -130,8 +137,8 @@ defmodule Cldr.Unit.Backend do
 
         ## Arguments
 
-        * `number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct
+        * `list_or_number` is any number (integer, float or Decimal) or a
+          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
 
         * `options` is a keyword list
 
@@ -147,6 +154,10 @@ defmodule Cldr.Unit.Backend do
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
+        * `:list_options` is a keyword list of options for formatting a list
+          which is passed through to `Cldr.List.to_string/3`. This is only
+          applicable when formatting a list of units.
+
         * Any other options are passed to `Cldr.Number.to_string/2`
           which is used to format the `number`
 
@@ -158,7 +169,7 @@ defmodule Cldr.Unit.Backend do
 
         ## Examples
 
-            iex> #{inspect __MODULE__}.to_string! 123, TestBackend.Cldr, unit: :gallon
+            iex> #{inspect __MODULE__}.to_string! 123, unit: :gallon
             "123 gallons"
 
             iex> #{inspect __MODULE__}.to_string! 1, unit: :gallon

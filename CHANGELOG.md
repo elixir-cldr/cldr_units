@@ -1,3 +1,21 @@
+# Changelog for Cldr_Units v2.1.0
+
+This is the changelog for Cldr_units v2.1.0 released on December 8th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+### Enhancements
+
+* Add `Cldr.Unit.Conversion.convert!/3`
+
+* Add `Cldr.Unit.Math.cmp/2`
+
+* Add `Cldr.Unit.decompose/2`
+
+* Add `Cldr.Unit.zero/1`
+
+* Add `Cldr.Unit.zero?/1`
+
+The appropriate backend equivalents are also added.
+
 # Changelog for Cldr_Units v2.0.0
 
 This is the changelog for Cldr_units v2.0.0 released on November 24th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)

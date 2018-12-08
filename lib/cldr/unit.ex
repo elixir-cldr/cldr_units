@@ -3,11 +3,20 @@ defmodule Cldr.Unit do
   Supports the CLDR Units definitions which provide for the localization of many
   unit types.
 
-  The public API defines two primary functions:
+  The primary public API defines:
 
-  * `Cldr.Unit.to_string/3` which, given a number and a unit name will output a localized string
+  * `Cldr.Unit.to_string/3` which, given a number and a unit name or unit list will output a localized string
 
-  * `Cldr.Unit.available_units/0` identifies the available units for localization
+  * `Cldr.Unit.units/0` identifies the available units for localization
+
+  * `Cldr.Unit.{add, sub, mult, div}/2` to support basic unit mathematics between
+    units of compatible type (like length or volume)
+
+  * `Cldr.Unit.convert/2` to convert one unit to another unit as long as they
+    are convertable.
+
+  * `Cldr.Unit.decompose/2` to take a unit and return a list of units decomposed
+    by a list of smaller units.
 
   """
 
@@ -17,6 +26,7 @@ defmodule Cldr.Unit do
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Alias
   alias Cldr.Unit
+  alias Cldr.Unit.Math
 
   @enforce_keys [:unit, :value]
   defstruct unit: nil, value: 0
@@ -163,22 +173,26 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `number` is any number (integer, float or Decimal) or a
-    `Cldr.Unit.t()` struct
+  * `list_or_number` is any number (integer, float or Decimal) or a
+    `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
 
-  * `options` is a keyword list
+  * `options` is a keyword list of options
 
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.units/2`. Ignored if
     the number to be formatted is a `Cldr.Unit.t()` struct
 
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
 
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+  * `:style` is one of those returned by `Cldr.Unit.styles`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
+
+  * `:list_options` is a keyword list of options for formatting a list
+    which is passed through to `Cldr.List.to_string/3`. This is only
+    applicable when formatting a list of units.
 
   * Any other options are passed to `Cldr.Number.to_string/2`
     which is used to format the `number`
@@ -198,9 +212,6 @@ defmodule Cldr.Unit do
       {:ok, "1 gallon"}
 
       iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "af"
-      {:ok, "1 gelling"}
-
-      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "af-NA"
       {:ok, "1 gelling"}
 
       iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "bs"
@@ -229,10 +240,18 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(Cldr.Math.number_or_decimal() | t(), Cldr.backend(), Keyword.t()) ::
+  @spec to_string(list_or_number :: Cldr.Math.number_or_decimal() | t() | [t(), ...], backend :: Cldr.backend(), options :: Keyword.t()) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
-  def to_string(number, backend, options \\ [])
+  def to_string(list_or_number, backend, options \\ [])
+
+  def to_string(unit_list, backend, options) when is_list(unit_list) do
+    list_options = Keyword.get(options, :list_options, [])
+
+    unit_list
+    |> Enum.map(&to_string!(&1, backend, options))
+    |> Cldr.List.to_string!(backend, list_options)
+  end
 
   def to_string(%Unit{unit: unit, value: value}, backend, options) when is_list(options) do
     options = Keyword.put(options, :unit, unit)
@@ -353,6 +372,111 @@ defmodule Cldr.Unit do
              |> Map.get(:short)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
              |> Enum.into(%{})
+
+  @doc """
+  Decomposes a unit into subunits.
+
+  Any list compatible units can be provided
+  however a list of units of decreasing scale
+  is recommended.  For example `[:foot, :inch]`
+  or `[:kilometer, :meter, :centimeter, :millimeter]`
+
+  ## Examples
+
+      iex> u = Cldr.Unit.new(10.3, :foot)
+      iex> Cldr.Unit.decompose u, [:foot, :inch]
+      [Cldr.Unit.new(:foot, 10.0), Cldr.Unit.new(:inch, 4.0)]
+
+      iex> u = Cldr.Unit.new(:centimeter, 1111)
+      iex> Cldr.Unit.decompose u, [:kilometer, :meter, :centimeter, :millimeter]
+      [Cldr.Unit.new(:meter, 11.0), Cldr.Unit.new(:centimeter, 11.0)]
+
+  """
+  @spec decompose(Unit.t(), [Unit.unit(), ...]) :: [Unit.t(), ...] | {:error, {module(), String.t()}}
+
+  def decompose(unit, []) do
+    [unit]
+  end
+
+  def decompose(unit, [h | []]) do
+    new_unit =
+      unit
+      |> Conversion.convert!(h)
+      |> Math.round
+
+    if zero?(new_unit) do
+      []
+    else
+      [new_unit]
+    end
+  end
+
+  def decompose(unit, [h | t]) do
+    new_unit = Conversion.convert!(unit, h)
+    {integer_unit, remainder} = int_rem(new_unit)
+
+    if zero?(integer_unit) do
+      decompose(remainder, t)
+    else
+      [integer_unit | decompose(remainder, t)]
+    end
+  end
+
+  defp int_rem(unit) do
+    integer = Unit.round(unit, 0, :down)
+    remainder = Math.sub(unit, integer)
+    {integer, remainder}
+  end
+
+  @doc """
+  Returns a new unit of the same unit
+  type but with a zero value.
+
+  ## Example
+
+      iex> u = Cldr.Unit.new(:foot, 23.3)
+      #Unit<:foot, 23.3>
+      iex> Cldr.Unit.zero(u)
+      #Unit<:foot, 0.0>
+
+  """
+  def zero(%Unit{value: value} = unit) when is_integer(value) do
+    %Unit{unit | value: 0}
+  end
+
+  def zero(%Unit{value: value} = unit) when is_float(value) do
+    %Unit{unit | value: 0.0}
+  end
+
+  def zero(%Unit{} = unit) do
+    %Unit{unit | value: Decimal.new(0)}
+  end
+
+  @doc """
+  Returns a boolean indicating whether a given unit
+  has a zero value.
+
+  ## Examples
+
+      iex> u = Cldr.Unit.new(:foot, 23.3)
+      #Unit<:foot, 23.3>
+      iex> Cldr.Unit.zero?(u)
+      false
+
+      iex> u = Cldr.Unit.new(:foot, 0)
+      #Unit<:foot, 0>
+      iex> Cldr.Unit.zero?(u)
+      true
+
+  """
+  def zero?(%Unit{value: value}) when is_number(value) do
+    value == 0
+  end
+
+  @decimal_0 Decimal.new(0)
+  def zero?(%Unit{value: value}) do
+    Decimal.cmp(value, @decimal_0) == :eq
+  end
 
   @doc """
   Returns a list of the known unit categories.
@@ -811,9 +935,9 @@ defmodule Cldr.Unit do
   end
 
   @doc false
-  def incompatible_unit_error(unit_1, unit_2) do
+  def incompatible_units_error(unit_1, unit_2) do
     {
-      Unit.IncompatibleUnitError,
+      Unit.IncompatibleUnitsError,
       "Operations can only be performed between units of the same type. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }

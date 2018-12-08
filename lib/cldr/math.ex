@@ -5,8 +5,8 @@ defmodule Cldr.Unit.Math do
   alias Cldr.Unit
   alias Cldr.Unit.Conversion
 
-  import Kernel, except: [div: 2]
-  import Unit, only: [incompatible_unit_error: 2]
+  import Kernel, except: [div: 2, round: 1]
+  import Unit, only: [incompatible_units_error: 2]
 
   @doc """
   Adds two compatible `%Unit{}` types
@@ -33,7 +33,7 @@ defmodule Cldr.Unit.Math do
       #Unit<:foot, 5280.945925937846>
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
-      {:error, {Cldr.Unit.IncompatibleUnitError,
+      {:error, {Cldr.Unit.IncompatibleUnitsError,
         "Operations can only be performed between units of the same type. Received #Unit<:foot, 1> and #Unit<:gallon, 1>"}}
 
   """
@@ -66,7 +66,7 @@ defmodule Cldr.Unit.Math do
     if Unit.compatible?(unit_type_1, unit_type_2) do
       add(unit_1, Conversion.convert(unit_2, unit_type_1))
     else
-      {:error, incompatible_unit_error(unit_1, unit_2)}
+      {:error, incompatible_units_error(unit_1, unit_2)}
     end
   end
 
@@ -154,7 +154,7 @@ defmodule Cldr.Unit.Math do
     if Unit.compatible?(unit_type_1, unit_type_2) do
       sub(unit_1, Conversion.convert(unit_2, unit_type_1))
     else
-      {:error, incompatible_unit_error(unit_1, unit_2)}
+      {:error, incompatible_units_error(unit_1, unit_2)}
     end
   end
 
@@ -241,7 +241,7 @@ defmodule Cldr.Unit.Math do
     if Unit.compatible?(unit_type_1, unit_type_2) do
       mult(unit_1, Conversion.convert(unit_2, unit_type_1))
     else
-      {:error, incompatible_unit_error(unit_1, unit_2)}
+      {:error, incompatible_units_error(unit_1, unit_2)}
     end
   end
 
@@ -329,7 +329,7 @@ defmodule Cldr.Unit.Math do
     if Unit.compatible?(unit_type_1, unit_type_2) do
       div(unit_1, Conversion.convert(unit_2, unit_type_1))
     else
-      {:error, incompatible_unit_error(unit_1, unit_2)}
+      {:error, incompatible_units_error(unit_1, unit_2)}
     end
   end
 
@@ -422,5 +422,53 @@ defmodule Cldr.Unit.Math do
   def round(%Unit{unit: unit, value: value}, places \\ 0, mode \\ :half_up) do
     rounded_value = Cldr.Math.round(value, places, mode)
     Unit.new(unit, rounded_value)
+  end
+
+  @doc """
+  Compare two units, converting to a common unit
+  type if required.
+
+  If conversion is performed, the results are both
+  rounded to a single decimal place before
+  comparison.
+
+  Returns `:gt`, `:lt`, or `:eq`.
+
+  ## Example
+
+      iex> x = Cldr.Unit.new(:kilometer, 1)
+      iex> y = Cldr.Unit.new(:meter, 1000)
+      iex> Cldr.Unit.Math.cmp x, y
+      :eq
+
+  """
+  def cmp(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: %Decimal{}} = unit_2) do
+    Decimal.cmp(unit_1.value, unit_2.value)
+  end
+
+  def cmp(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
+    unit_2 = Unit.Conversion.convert(unit_2, unit_1.unit)
+    cmp(unit_1, unit_2)
+  end
+
+  def cmp(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
+    cond do
+      unit_1.value == unit_2.value -> :eq
+      unit_1.value > unit_2.value -> :gt
+      unit_1.value < unit_2.value -> :lt
+    end
+  end
+
+  def cmp(%Unit{} = unit_1, %Unit{} = unit_2) do
+    unit_1 =
+      unit_1
+      |> round(1, :half_even)
+
+    unit_2 =
+      unit_2
+      |> Unit.Conversion.convert(unit_1.unit)
+      |> round(1, :half_even)
+
+    cmp(unit_1, unit_2)
   end
 end

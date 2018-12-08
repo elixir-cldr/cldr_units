@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "2.0.0"
+  @version "2.1.0"
 
   def project do
     [
@@ -15,8 +15,7 @@ defmodule CldrUnits.Mixfile do
       docs: docs(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env()),
-      cldr_provider: {Cldr.Unit.Backend, :define_unit_module, []}
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -35,8 +34,9 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, "~> 2.0"},
-      {:ex_cldr_numbers, "~> 2.0"},
+      {:ex_cldr, "~> 2.1"},
+      {:ex_cldr_numbers, "~> 2.1"},
+      {:ex_cldr_lists, "~> 2.0"},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
       {:jason, "~> 1.0", optional: true}
     ]
