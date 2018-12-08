@@ -246,11 +246,18 @@ defmodule Cldr.Unit do
   def to_string(list_or_number, backend, options \\ [])
 
   def to_string(unit_list, backend, options) when is_list(unit_list) do
-    list_options = Keyword.get(options, :list_options, [])
+    with {locale, _style, options} <- normalize_options(backend, options),
+         {:ok, locale} <- backend.validate_locale(locale) do
 
-    unit_list
-    |> Enum.map(&to_string!(&1, backend, options))
-    |> Cldr.List.to_string!(backend, list_options)
+      list_options =
+        options
+        |> Keyword.get(:list_options, [])
+        |> Keyword.put(:locale, locale)
+
+      unit_list
+      |> Enum.map(&to_string!(&1, backend, options ++ [locale: locale]))
+      |> Cldr.List.to_string!(backend, list_options)
+    end
   end
 
   def to_string(%Unit{unit: unit, value: value}, backend, options) when is_list(options) do

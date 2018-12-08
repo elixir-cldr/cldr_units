@@ -51,4 +51,5 @@ defmodule Cldr.UnitsTest do
     unit = Cldr.Unit.new(23, :foot)
     assert to_string(unit) == "23 feet"
   end
+
 end
