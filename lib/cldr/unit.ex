@@ -33,7 +33,7 @@ defmodule Cldr.Unit do
 
   @type unit :: atom()
   @type style :: atom()
-  @type t(unit) :: %Unit{value: unit}
+  @type t(unit) :: %Unit{unit: unit}
   @type t :: t(atom())
 
   @default_style :long
