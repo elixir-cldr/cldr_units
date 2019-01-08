@@ -31,9 +31,10 @@ defmodule Cldr.Unit do
   @enforce_keys [:unit, :value]
   defstruct unit: nil, value: 0
 
-  @type t :: %Unit{}
   @type unit :: atom()
   @type style :: atom()
+  @type t(unit) :: %Unit{value: unit}
+  @type t :: t(atom())
 
   @default_style :long
   @styles [:long, :short, :narrow]
