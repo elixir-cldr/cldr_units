@@ -394,11 +394,11 @@ defmodule Cldr.Unit do
 
       iex> u = Cldr.Unit.new(10.3, :foot)
       iex> Cldr.Unit.decompose u, [:foot, :inch]
-      [Cldr.Unit.new(:foot, 10.0), Cldr.Unit.new(:inch, 4.0)]
+      [Cldr.Unit.new(:foot, 10), Cldr.Unit.new(:inch, 4)]
 
       iex> u = Cldr.Unit.new(:centimeter, 1111)
       iex> Cldr.Unit.decompose u, [:kilometer, :meter, :centimeter, :millimeter]
-      [Cldr.Unit.new(:meter, 11.0), Cldr.Unit.new(:centimeter, 11.0)]
+      [Cldr.Unit.new(:meter, 11), Cldr.Unit.new(:centimeter, 11)]
 
   """
   @spec decompose(Unit.t(), [Unit.unit(), ...]) :: [Unit.t(), ...] | {:error, {module(), String.t()}}
@@ -412,6 +412,7 @@ defmodule Cldr.Unit do
       unit
       |> Conversion.convert!(h)
       |> Math.round
+      |> Math.trunc
 
     if zero?(new_unit) do
       []
@@ -432,7 +433,7 @@ defmodule Cldr.Unit do
   end
 
   defp int_rem(unit) do
-    integer = Unit.round(unit, 0, :down)
+    integer = Unit.round(unit, 0, :down) |> Math.trunc
     remainder = Math.sub(unit, integer)
     {integer, remainder}
   end

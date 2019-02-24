@@ -8,6 +8,30 @@ defmodule Cldr.Unit.Conversion do
   alias Cldr.Unit
   import Unit, only: [incompatible_units_error: 2]
 
+  def direct_factors do
+    %{
+      minute: %{
+        second: 60
+      },
+      hour: %{
+        minute: 60,
+        second: 3600
+      },
+      day: %{
+        hour: 24
+      },
+      week: %{
+        day: 7
+      },
+      foot: %{
+        inches: 12
+      },
+      yard: %{
+        foot: 3
+      }
+    }
+  end
+
   def factors do
     %{
       acceleration: %{
@@ -256,7 +280,20 @@ defmodule Cldr.Unit.Conversion do
   """
   @spec convert(Unit.t(), Unit.unit()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def convert(%Unit{unit: from_unit, value: value}, to_unit) do
+  def convert(%Unit{unit: from_unit, value: value} = from, to_unit) do
+    cond do
+      unit_mult = get_in(direct_factors(), [from_unit, to_unit]) ->
+        {:ok, new_value} = convert(value, 1, unit_mult)
+        Unit.new(to_unit, new_value)
+      unit_div = get_in(direct_factors(), [to_unit, from_unit]) ->
+        {:ok, new_value} = convert(value, unit_div, 1)
+        Unit.new(to_unit, new_value)
+      true ->
+        two_step_convert(from, to_unit)
+    end
+  end
+
+  defp two_step_convert(%Unit{unit: from_unit, value: value}, to_unit) do
     with {:ok, to_unit} <- Unit.validate_unit(to_unit),
          true <- Unit.compatible?(from_unit, to_unit),
          {:ok, converted} <- convert(value, factor(from_unit), factor(to_unit)) do
@@ -268,7 +305,14 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert(value, from, to) when is_number(value) and is_number(from) and is_number(to) do
-    {:ok, value / from * to}
+    converted = value / from * to
+    truncated = trunc(converted)
+
+    if converted == truncated do
+      {:ok, truncated}
+    else
+      {:ok, converted}
+    end
   end
 
   defp convert(%Decimal{} = value, from, to) when is_number(from) and is_number(to) do

@@ -5,7 +5,7 @@ defmodule Cldr.Unit.Math do
   alias Cldr.Unit
   alias Cldr.Unit.Conversion
 
-  import Kernel, except: [div: 2, round: 1]
+  import Kernel, except: [div: 2, round: 1, trunc: 1]
   import Unit, only: [incompatible_units_error: 2]
 
   @doc """
@@ -422,6 +422,18 @@ defmodule Cldr.Unit.Math do
   def round(%Unit{unit: unit, value: value}, places \\ 0, mode \\ :half_up) do
     rounded_value = Cldr.Math.round(value, places, mode)
     Unit.new(unit, rounded_value)
+  end
+
+  def trunc(%Unit{value: value} = unit) when is_float(value) do
+    %{unit | value: Kernel.trunc(value)}
+  end
+
+  def trunc(%Unit{value: value} = unit) when is_integer(value) do
+    unit
+  end
+
+  def trunc(%Unit{value: %Decimal{} = value} = unit) do
+    %{unit | value: Decimal.round(value, 0)}
   end
 
   @doc """
