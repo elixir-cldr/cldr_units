@@ -51,11 +51,8 @@ defmodule Mix.Tasks.Cldr.Unit.Download do
     end
   end
 
-  @priv_dir :code.priv_dir(:ex_cldr_units)
-  |> List.to_string
-
   defp data_path(filename) do
-    Path.join(@priv_dir, filename)
+    Path.join("./priv", filename)
   end
 end
 

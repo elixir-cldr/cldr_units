@@ -8,9 +8,9 @@ defmodule Cldr.Unit.Conversion do
   alias Cldr.Unit
   import Unit, only: [incompatible_units_error: 2]
 
-  @conversion_factors :code.priv_dir(:ex_cldr_units)
-  |> List.to_string
-  |> Path.join("conversion_factors.json")
+  @external_resource Path.join("./priv", "conversion_factors.json")
+
+  @conversion_factors @external_resource
   |> File.read!
   |> Jason.decode!
   |> Cldr.Map.atomize_keys
