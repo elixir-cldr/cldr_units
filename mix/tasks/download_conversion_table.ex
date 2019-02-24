@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Cldr.Unit.Download do
   @moduledoc """
-  Downloads the latest unit conversion table fro Cldr.Unit
+  Downloads the latest unit conversion table for Cldr.Unit
   """
 
   use Mix.Task
@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Cldr.Unit.Download do
 
   defp required_files do
     [
-      {"https://github.com/kipcole9/ex_cldr_units/blob/master/priv/conversion_factors.json",
+      {"https://raw.githubusercontent.com/kipcole9/cldr_units/master/priv/conversion_factors.json",
         data_path("conversion_factors.json")},
     ]
   end
