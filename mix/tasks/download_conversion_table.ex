@@ -31,7 +31,7 @@ defmodule Mix.Tasks.Cldr.Unit.Download do
         destination
         |> File.write!(:erlang.list_to_binary(body))
 
-        Logger.info("Downloaded #{inspect(url)} to #{inspect(destination)}")
+        Logger.info("Downloaded unit conversion table to #{inspect(destination)}")
         {:ok, destination}
 
       {_, {{_version, code, message}, _headers, _body}} ->
