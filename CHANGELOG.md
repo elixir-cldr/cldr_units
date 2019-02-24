@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v2.3.0
+
+This is the changelog for Cldr_units v2.1.0 released on ____, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+### Enhancements
+
+* The conversion tables are now stored as json and updates may be downloaded at any time with the mix task `mix cldr.unit.download`. This means that updates to the conversion table may be made without requiring a new release of `Cldr.Unit`.
+
 # Changelog for Cldr_Units v2.2.0
 
 This is the changelog for Cldr_units v2.1.0 released on February 24th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
@@ -18,7 +26,7 @@ This is the changelog for Cldr_units v2.1.0 released on December 8th, 2018.  For
 
 ### Enhancements
 
-* Add `Cldr.Unit.Conversion.convert!/3`
+* Add `Cldr.Unit.Conversion.convert!/2`
 
 * Add `Cldr.Unit.Math.cmp/2`
 

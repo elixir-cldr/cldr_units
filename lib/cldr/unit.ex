@@ -182,7 +182,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `:unit` is any unit returned by `Cldr.Unit.units/2`. Ignored if
+  * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
@@ -289,7 +289,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `:unit` is any unit returned by `Cldr.Unit.units/2`. Ignored if
+  * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
