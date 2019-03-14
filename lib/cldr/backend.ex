@@ -6,11 +6,15 @@ defmodule Cldr.Unit.Backend do
 
     quote location: :keep, bind_quoted: [module: module, backend: backend, config: config] do
       defmodule Unit do
-        @moduledoc """
-        Supports the CLDR Units definitions which provide for the localization of many
-        unit types.
+        @moduledoc false
+        if Cldr.Config.include_module_docs?(config.generate_docs) do
+          @moduledoc """
+          Supports the CLDR Units definitions which provide for the localization of many
+          unit types.
 
-        """
+          """
+        end
+
         @styles [:long, :short, :narrow]
 
         defdelegate new(unit, value), to: Cldr.Unit

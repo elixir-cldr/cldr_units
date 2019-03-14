@@ -1,6 +1,6 @@
 %{
   "abnf2": {:hex, :abnf2, "0.1.4", "9a424cfe94556c0e3e58b02326c39383b170dde4777913fcbdbdfcd2f1b0a97f", [:mix], [], "hexpm"},
-  "cldr_utils": {:hex, :cldr_utils, "2.0.5", "eba0f4cc86861b74f2c1180fe7f6fa25f9e9a3b06365fa7468213c9ec3fd392c", [:mix], [{:decimal, "~> 1.5", [hex: :decimal, repo: "hexpm", optional: false]}], "hexpm"},
+  "cldr_utils": {:hex, :cldr_utils, "2.1.0", "15d82ef0e3931e5f54bdabcbe76bbac0114d59074f18ffbfa8d55df789940835", [:mix], [{:decimal, "~> 1.5", [hex: :decimal, repo: "hexpm", optional: false]}], "hexpm"},
   "decimal": {:hex, :decimal, "1.7.0", "30d6b52c88541f9a66637359ddf85016df9eb266170d53105f02e4a67e00c5aa", [:mix], [], "hexpm"},
   "earmark": {:hex, :earmark, "1.3.1", "73812f447f7a42358d3ba79283cfa3075a7580a3a2ed457616d6517ac3738cb9", [:mix], [], "hexpm"},
   "ex_abnf": {:hex, :ex_abnf, "0.3.0", "07847d0d6cb75b779948520d02cba80eb855e18acb1aa8d43b1e370ef31afbcb", [:mix], []},
