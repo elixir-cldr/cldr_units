@@ -14,6 +14,7 @@ defmodule MyApp.Cldr do
     gettext: MyApp.Gettext,
     generate_docs: false
 end
+```
 
 # Changelog for Cldr_Units v2.3.0
 

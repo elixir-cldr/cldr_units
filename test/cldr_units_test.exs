@@ -52,12 +52,13 @@ defmodule Cldr.UnitsTest do
     assert to_string(unit) == "23 feet"
   end
 
-  test "that no module docs are generated for a backend" do
-    assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)
-  end
+  if function_exported?(Code, :fetch_docs, 1) do
+    test "that no module docs are generated for a backend" do
+      assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)
+    end
 
-  assert "that module docs are generated for a backend" do
-    {:docs_v1, 1, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(TestBackend.Cldr)
+    assert "that module docs are generated for a backend" do
+      {:docs_v1, _, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(TestBackend.Cldr)
+    end
   end
-
 end

@@ -1,3 +1,5 @@
+require Cldr.Unit.Backend
+
 defmodule TestBackend.Cldr do
   use Cldr,
     locales: ["en", "fr", "de", "bs", "af", "af-NA"],
