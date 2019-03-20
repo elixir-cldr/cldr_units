@@ -37,8 +37,7 @@ defmodule Cldr.Unit.Math do
         "Operations can only be performed between units of the same type. Received #Unit<:foot, 1> and #Unit<:gallon, 1>"}}
 
   """
-  @spec add(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
-          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
+  @spec add(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
   def add(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
@@ -88,7 +87,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec add!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
+  @spec add!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
 
   def add!(unit_1, unit_2) do
     case add(unit_1, unit_2) do
@@ -125,8 +124,7 @@ defmodule Cldr.Unit.Math do
       #Unit<:pint, 4>
 
   """
-  @spec sub(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
-          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
+  @spec sub(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
   def sub(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
@@ -176,7 +174,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec sub!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
+  @spec sub!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
 
   def sub!(unit_1, unit_2) do
     case sub(unit_1, unit_2) do
@@ -213,8 +211,8 @@ defmodule Cldr.Unit.Math do
       #Unit<:pint, 5>
 
   """
-  @spec mult(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
-          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
+  @spec mult(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
+
   def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
     Unit.new!(unit, value_1 * value_2)
@@ -263,7 +261,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec mult!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
+  @spec mult!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
 
   def mult!(unit_1, unit_2) do
     case mult(unit_1, unit_2) do
@@ -300,8 +298,7 @@ defmodule Cldr.Unit.Math do
   #Unit<:pint, 5.0>
 
   """
-  @spec div(unit_1 :: Unit.t(), unit_2 :: Unit.t()) ::
-          Unit.t() | {:error, {Unit.IncompatibleUnitError, String.t()}}
+  @spec div(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
   def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
@@ -351,7 +348,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec div!(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: Unit.t() | no_return()
+  @spec div!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
 
   def div!(unit_1, unit_2) do
     case div(unit_1, unit_2) do

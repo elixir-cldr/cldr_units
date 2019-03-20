@@ -33,9 +33,8 @@ defmodule Cldr.Unit do
 
   @type unit :: atom()
   @type style :: atom()
-  @type t(unit, value_type) :: %Unit{unit: unit, value: value_type}
-  @type t(unit) :: t(unit, integer | float | Decimal.t)
-  @type t :: t(atom())
+  @type value :: Cldr.Math.number_or_decimal()
+  @type t :: %Unit{unit: unit, value: value}
 
   @default_style :long
   @styles [:long, :short, :narrow]
@@ -83,6 +82,8 @@ defmodule Cldr.Unit do
         "The unit :gadzoots is not known."}}
 
   """
+  @spec new(unit() | value(), value() | unit()) :: t() | {:error, {module(), String.t()}}
+
   def new(value, unit) when is_number(value) do
     with {:ok, unit} <- validate_unit(unit) do
       %Unit{unit: unit, value: value}
@@ -128,6 +129,8 @@ defmodule Cldr.Unit do
           (ex_cldr_units) lib/cldr/unit.ex:57: Cldr.Unit.new!/2
 
   """
+  @spec new!(unit() | value(), value() | unit()) :: t() | no_return()
+
   def new!(unit, value) do
     case new(unit, value) do
       {:error, {exception, message}} -> raise exception, message
@@ -160,6 +163,7 @@ defmodule Cldr.Unit do
       false
 
   """
+  @spec compatible?(unit(), unit()) :: boolean
   def compatible?(unit_1, unit_2) do
     with {:ok, unit_1} <- validate_unit(unit_1),
          {:ok, unit_2} <- validate_unit(unit_2) do
@@ -242,7 +246,7 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(list_or_number :: Cldr.Math.number_or_decimal() | t() | [t(), ...], backend :: Cldr.backend(), options :: Keyword.t()) ::
+  @spec to_string(list_or_number :: value | t() | list(t()), backend :: Cldr.backend(), options :: Keyword.t()) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(list_or_number, backend, options \\ [])
@@ -320,7 +324,7 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(Math.decimal_or_number(), Cldr.backend(), Keyword.t()) :: String.t() | no_return()
+  @spec to_string!(value(), Cldr.backend(), Keyword.t()) :: String.t() | no_return()
   def to_string!(number, backend, options \\ []) do
     case to_string(number, backend, options) do
       {:ok, string} -> string
@@ -329,7 +333,7 @@ defmodule Cldr.Unit do
   end
 
   @spec to_string(
-          Math.decimal_or_number(),
+          Cldr.Math.number_or_decimal(),
           unit,
           Locale.locale_name() | LanguageTag.t(),
           style,
@@ -343,7 +347,7 @@ defmodule Cldr.Unit do
       cardinal_module = Module.concat(backend, Number.Cardinal)
       pattern = cardinal_module.pluralize(number, locale, patterns)
 
-      number_string
+      [number_string]
       |> Substitution.substitute(pattern)
       |> :erlang.iolist_to_binary()
     end
@@ -367,7 +371,7 @@ defmodule Cldr.Unit do
       23
 
   """
-  @spec value(unit :: Unit.t()) :: Cldr.Math.number_or_decimal()
+  @spec value(unit :: t()) :: value()
   def value(%Unit{value: value}) do
     value
   end
@@ -521,7 +525,7 @@ defmodule Cldr.Unit do
         ...
 
   """
-  @spec unit_tree :: [atom, ...]
+  @spec unit_tree :: map()
   def unit_tree do
     @unit_tree
   end
@@ -739,7 +743,7 @@ defmodule Cldr.Unit do
 
   """
   @default_options [jaro: false, distance: @default_distance]
-  @spec compatible_units(unit, Keyword.t() | Map.t()) :: [unit, ...] | [{float, unit}, ...] | []
+  @spec compatible_units(unit(), Keyword.t() | map()) :: [unit(), ...] | [{float, unit}, ...] | []
 
   def compatible_units(unit, options \\ @default_options)
 
@@ -756,16 +760,15 @@ defmodule Cldr.Unit do
   end
 
   def compatible_units(unit, %{jaro: true, distance: distance}) when is_number(distance) do
-    unit = Kernel.to_string(unit)
-
-    case jaro_match(unit, distance) do
-      jaro_list when is_list(jaro_list) -> compatible_list(jaro_list, unit)
-      other -> other
-    end
+    unit
+    |> Kernel.to_string
+    |> jaro_match(distance)
+    |> compatible_list(unit)
   end
 
   @string_units Enum.map(@units, &Atom.to_string/1)
-  @spec match_list(unit, number) :: [{float, unit}, ...] | []
+  @spec match_list(String.t(), float) :: list({float, unit()}) | []
+
   defp match_list(unit, distance) when is_binary(unit) and is_number(distance) do
     @string_units
     |> Enum.map(fn u -> {String.jaro_distance(unit, u), String.to_existing_atom(u)} end)
@@ -774,6 +777,7 @@ defmodule Cldr.Unit do
   end
 
   @spec compatible_list([{float, unit}, ...], unit) :: [{float, unit}, ...] | []
+
   defp compatible_list(jaro_list, unit) when is_list(jaro_list) do
     with {:ok, unit} <- validate_unit(unit) do
       Enum.filter(jaro_list, fn

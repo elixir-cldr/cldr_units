@@ -161,7 +161,7 @@ defmodule Cldr.Unit.Conversion do
       ** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units of the same type. Received :mile and :gallon
 
   """
-  @spec convert(Unit.t(), Unit.unit()) :: Unit.t() | {:error, {module(), String.t()}}
+  @spec convert!(Unit.t(), Unit.unit()) :: Unit.t() | no_return()
 
   def convert!(%Unit{} = unit, to_unit) do
     case convert(unit, to_unit) do

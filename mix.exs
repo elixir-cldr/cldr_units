@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "2.3.1"
+  @version "2.3.2"
 
   def project do
     [
@@ -15,7 +15,11 @@ defmodule CldrUnits.Mixfile do
       docs: docs(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      dialyzer: [
+        ignore_warnings: ".dialyzer_ignore_warnings",
+        plt_add_apps: ~w(inets jason mix)a
+      ],
     ]
   end
 
@@ -36,6 +40,7 @@ defmodule CldrUnits.Mixfile do
     [
       {:ex_cldr, "~> 2.4"},
       {:ex_cldr_numbers, "~> 2.1"},
+      {:dialyxir, "~> 1.0.0-rc.4", only: [:dev], runtime: false},
       {:ex_cldr_lists, "~> 2.0"},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
       {:jason, "~> 1.0", optional: true}

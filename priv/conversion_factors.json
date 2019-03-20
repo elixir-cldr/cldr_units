@@ -17,7 +17,13 @@
       "day": 7
     },
     "yard": {
-      "foot": 3
+      "foot": 3,
+      "inch": 36
+    },
+    "mile": {
+      "yard": 1760,
+      "feet": 5280,
+      "inch": 63360
     }
   },
   "acceleration": {

@@ -17,6 +17,8 @@ defmodule Cldr.Unit.Backend do
 
         @styles [:long, :short, :narrow]
 
+        alias Cldr.Math
+
         defdelegate new(unit, value), to: Cldr.Unit
         defdelegate new!(unit, value), to: Cldr.Unit
         defdelegate compatible?(unit_1, unit_2), to: Cldr.Unit
@@ -183,7 +185,7 @@ defmodule Cldr.Unit.Backend do
             "1 gelling"
 
         """
-        @spec to_string!(Math.decimal_or_number(), Keyword.t()) :: String.t() | no_return()
+        @spec to_string!(Cldr.Math.number_or_decimal(), Keyword.t()) :: String.t() | no_return()
 
         def to_string!(number, options \\ []) do
           Cldr.Unit.to_string!(number, unquote(backend), options)

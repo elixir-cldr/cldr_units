@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v2.3.2
+
+This is the changelog for Cldr_units v2.3.2 released on March 20th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix dialyzer warnings
+
 # Changelog for Cldr_Units v2.3.1
 
 This is the changelog for Cldr_units v2.3.1 released on March 15th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
