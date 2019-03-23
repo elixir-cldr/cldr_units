@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v2.4.0
+
+This is the changelog for Cldr_units v2.4.0 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+
+### Enhancements
+
+* Supports `Cldr.default_backend()` as a default for `backend` parameters in `Cldr.Unit`
+
 # Changelog for Cldr_Units v2.3.3
 
 This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)

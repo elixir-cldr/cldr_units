@@ -249,7 +249,7 @@ defmodule Cldr.Unit do
   @spec to_string(list_or_number :: value | t() | list(t()), backend :: Cldr.backend(), options :: Keyword.t()) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
-  def to_string(list_or_number, backend, options \\ [])
+  def to_string(list_or_number, backend \\ Cldr.default_backend(), options \\ [])
 
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
@@ -325,7 +325,8 @@ defmodule Cldr.Unit do
 
   """
   @spec to_string!(value(), Cldr.backend(), Keyword.t()) :: String.t() | no_return()
-  def to_string!(number, backend, options \\ []) do
+
+  def to_string!(number, backend \\ Cldr.default_backend(), options \\ []) do
     case to_string(number, backend, options) do
       {:ok, string} -> string
       {:error, {exception, message}} -> raise exception, message
@@ -825,7 +826,7 @@ defmodule Cldr.Unit do
     end
   end
 
-  def units_for(locale, style, backend) do
+  def units_for(locale, style, backend \\ Cldr.default_backend()) do
     module = Module.concat(backend, :'Elixir.Unit')
     module.units_for(locale, style)
   end
