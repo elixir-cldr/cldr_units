@@ -500,8 +500,8 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.unit_types
       [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
-       :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
-       :pressure, :speed, :temperature, :volume]
+       :duration, :electric, :energy, :force, :frequency, :length, :light, :mass,
+       :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """
   @unit_types Map.keys(@unit_tree)
@@ -604,7 +604,8 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.units(:length)
       [:astronomical_unit, :centimeter, :decimeter, :fathom, :foot, :furlong, :inch,
        :kilometer, :light_year, :meter, :micrometer, :mile, :mile_scandinavian,
-       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point, :yard]
+       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point,
+       :solar_radius, :yard]
 
   """
   @spec units(atom) :: [atom, ...]
@@ -737,7 +738,8 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.compatible_units :foot
       [:astronomical_unit, :centimeter, :decimeter, :fathom, :foot, :furlong, :inch,
        :kilometer, :light_year, :meter, :micrometer, :mile, :mile_scandinavian,
-       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point, :yard]
+       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point,
+       :solar_radius, :yard]
 
       iex> Cldr.Unit.compatible_units :me, jaro: true
       [{0.7999999999999999, :meter}]
