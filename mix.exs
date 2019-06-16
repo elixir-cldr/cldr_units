@@ -9,7 +9,7 @@ defmodule CldrUnits.Mixfile do
       version: @version,
       elixir: "~> 1.5",
       name: "Cldr Units",
-      source_url: "https://github.com/kipcole9/cldr_units",
+      source_url: "https://github.com/elixir-cldr/cldr_units",
       description: description(),
       package: package(),
       docs: docs(),
@@ -75,9 +75,9 @@ defmodule CldrUnits.Mixfile do
 
   def links do
     %{
-      "GitHub" => "https://github.com/kipcole9/cldr_units",
-      "Readme" => "https://github.com/kipcole9/cldr_units/blob/v#{@version}/README.md",
-      "Changelog" => "https://github.com/kipcole9/cldr_units/blob/v#{@version}/CHANGELOG.md"
+      "GitHub" => "https://github.com/elixir-cldr/cldr_units",
+      "Readme" => "https://github.com/elixir-cldr/cldr_units/blob/v#{@version}/README.md",
+      "Changelog" => "https://github.com/elixir-cldr/cldr_units/blob/v#{@version}/CHANGELOG.md"
     }
   end
 

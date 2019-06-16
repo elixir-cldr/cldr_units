@@ -1,6 +1,6 @@
 # Changelog for Cldr_Units v2.5.0
 
-This is the changelog for Cldr_units v2.5.0 released on March 28th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.5.0 released on March 28th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
@@ -8,7 +8,7 @@ This is the changelog for Cldr_units v2.5.0 released on March 28th, 2019.  For o
 
 # Changelog for Cldr_Units v2.4.0
 
-This is the changelog for Cldr_units v2.4.0 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.4.0 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
@@ -16,7 +16,7 @@ This is the changelog for Cldr_units v2.4.0 released on March 23rd, 2019.  For o
 
 # Changelog for Cldr_Units v2.3.3
 
-This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -24,7 +24,7 @@ This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For o
 
 # Changelog for Cldr_Units v2.3.2
 
-This is the changelog for Cldr_units v2.3.2 released on March 20th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.3.2 released on March 20th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -32,7 +32,7 @@ This is the changelog for Cldr_units v2.3.2 released on March 20th, 2019.  For o
 
 # Changelog for Cldr_Units v2.3.1
 
-This is the changelog for Cldr_units v2.3.1 released on March 15th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.3.1 released on March 15th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
@@ -50,7 +50,7 @@ end
 
 # Changelog for Cldr_Units v2.3.0
 
-This is the changelog for Cldr_units v2.3.0 released on March 4th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.3.0 released on March 4th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
@@ -58,7 +58,7 @@ This is the changelog for Cldr_units v2.3.0 released on March 4th, 2019.  For ol
 
 # Changelog for Cldr_Units v2.2.0
 
-This is the changelog for Cldr_units v2.2.0 released on February 24th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.2.0 released on February 24th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
@@ -72,7 +72,7 @@ Currently the implementation uses a static map.  In order to give users a better
 
 # Changelog for Cldr_Units v2.1.0
 
-This is the changelog for Cldr_units v2.1.0 released on December 8th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.1.0 released on December 8th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
@@ -90,7 +90,7 @@ The appropriate backend equivalents are also added.
 
 # Changelog for Cldr_Units v2.0.0
 
-This is the changelog for Cldr_units v2.0.0 released on November 24th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/kipcole9/cldr_units/tags)
+This is the changelog for Cldr_units v2.0.0 released on November 24th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Breaking changes
 
