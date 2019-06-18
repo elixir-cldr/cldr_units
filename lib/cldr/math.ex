@@ -451,7 +451,10 @@ defmodule Cldr.Unit.Math do
       :eq
 
   """
-  def cmp(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: %Decimal{}} = unit_2) do
+  def cmp(
+        %Unit{unit: unit, value: %Decimal{}} = unit_1,
+        %Unit{unit: unit, value: %Decimal{}} = unit_2
+      ) do
     Decimal.cmp(unit_1.value, unit_2.value)
   end
 

@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "2.5.0"
+  @version "2.5.1"
 
   def project do
     [
@@ -19,7 +19,7 @@ defmodule CldrUnits.Mixfile do
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
         plt_add_apps: ~w(inets jason mix)a
-      ],
+      ]
     ]
   end
 

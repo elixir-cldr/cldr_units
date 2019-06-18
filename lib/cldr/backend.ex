@@ -96,41 +96,44 @@ defmodule Cldr.Unit.Backend do
 
         ## Examples
 
-            iex> #{inspect __MODULE__}.to_string 123, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string 123, unit: :gallon
             {:ok, "123 gallons"}
 
-            iex> #{inspect __MODULE__}.to_string 1, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon
             {:ok, "1 gallon"}
 
-            iex> #{inspect __MODULE__}.to_string 1, unit: :gallon, locale: "af"
+            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "af"
             {:ok, "1 gelling"}
 
-            iex> #{inspect __MODULE__}.to_string 1, unit: :gallon, locale: "af-NA"
+            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "af-NA"
             {:ok, "1 gelling"}
 
-            iex> #{inspect __MODULE__}.to_string 1, unit: :gallon, locale: "bs"
+            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "bs"
             {:ok, "1 galon"}
 
-            iex> #{inspect __MODULE__}.to_string 1234, unit: :gallon, format: :long
+            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :gallon, format: :long
             {:ok, "1 thousand gallons"}
 
-            iex> #{inspect __MODULE__}.to_string 1234, unit: :gallon, format: :short
+            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :gallon, format: :short
             {:ok, "1K gallons"}
 
-            iex> #{inspect __MODULE__}.to_string 1234, unit: :megahertz
+            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz
             {:ok, "1,234 megahertz"}
 
-            iex> #{inspect __MODULE__}.to_string 1234, unit: :megahertz, style: :narrow
+            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz, style: :narrow
             {:ok, "1,234MHz"}
 
-            iex> #{inspect __MODULE__}.to_string 123, unit: :megabyte, locale: "en", style: :unknown
+            iex> #{inspect(__MODULE__)}.to_string 123, unit: :megabyte, locale: "en", style: :unknown
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
-            iex> #{inspect __MODULE__}.to_string 123, unit: :blabber, locale: "en"
+            iex> #{inspect(__MODULE__)}.to_string 123, unit: :blabber, locale: "en"
             {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
         """
-        @spec to_string(Cldr.Math.number_or_decimal() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+        @spec to_string(
+                Cldr.Math.number_or_decimal() | Cldr.Unit.t() | [Cldr.Unit.t(), ...],
+                Keyword.t()
+              ) ::
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
@@ -175,13 +178,13 @@ defmodule Cldr.Unit.Backend do
 
         ## Examples
 
-            iex> #{inspect __MODULE__}.to_string! 123, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string! 123, unit: :gallon
             "123 gallons"
 
-            iex> #{inspect __MODULE__}.to_string! 1, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string! 1, unit: :gallon
             "1 gallon"
 
-            iex> #{inspect __MODULE__}.to_string! 1, unit: :gallon, locale: "af"
+            iex> #{inspect(__MODULE__)}.to_string! 1, unit: :gallon, locale: "af"
             "1 gelling"
 
         """
@@ -193,7 +196,7 @@ defmodule Cldr.Unit.Backend do
 
         # Generate the functions that encapsulate the unit data from CDLR
         @doc false
-        def units_for(locale \\ unquote(backend).get_locale(), style \\ Cldr.Unit.default_style)
+        def units_for(locale \\ unquote(backend).get_locale(), style \\ Cldr.Unit.default_style())
 
         for locale_name <- Cldr.Config.known_locale_names(config) do
           locale_data =

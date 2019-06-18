@@ -11,17 +11,17 @@ defmodule Cldr.Unit.Conversion do
   @external_resource Path.join("./priv", "conversion_factors.json")
 
   @conversion_factors @external_resource
-  |> File.read!
-  |> Jason.decode!
-  |> Cldr.Map.atomize_keys
+                      |> File.read!()
+                      |> Jason.decode!()
+                      |> Cldr.Map.atomize_keys()
 
   def direct_factors do
     unquote(Macro.escape(Map.get(@conversion_factors, :direct_factors)))
   end
 
   @factors Enum.reject(@conversion_factors, fn {k, _v} -> k == :direct_factors end)
-  |> Map.new
-  |> Map.merge(Cldr.Unit.Conversion.FunctionFactors.factors)
+           |> Map.new()
+           |> Map.merge(Cldr.Unit.Conversion.FunctionFactors.factors())
 
   def factors do
     unquote(Macro.escape(@factors))
@@ -66,9 +66,11 @@ defmodule Cldr.Unit.Conversion do
       unit_mult = get_in(direct_factors(), [from_unit, to_unit]) ->
         {:ok, new_value} = convert(value, 1, unit_mult)
         Unit.new(to_unit, new_value)
+
       unit_div = get_in(direct_factors(), [to_unit, from_unit]) ->
         {:ok, new_value} = convert(value, unit_div, 1)
         Unit.new(to_unit, new_value)
+
       true ->
         two_step_convert(from, to_unit)
     end
@@ -128,8 +130,8 @@ defmodule Cldr.Unit.Conversion do
   defp convert(_value, from, to)
        when from == :not_convertible or to == :not_convertible do
     {:error,
-      {Cldr.Unit.UnitNotConvertibleError,
-        "No conversion is possible between #{inspect to} and #{inspect from}"}}
+     {Cldr.Unit.UnitNotConvertibleError,
+      "No conversion is possible between #{inspect(to)} and #{inspect(from)}"}}
   end
 
   @doc """

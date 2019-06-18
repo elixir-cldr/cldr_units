@@ -182,6 +182,9 @@ defmodule Cldr.Unit do
   * `list_or_number` is any number (integer, float or Decimal) or a
     `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
 
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend/0`.
+
   * `options` is a keyword list of options
 
   ## Options
@@ -211,50 +214,57 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string 123, TestBackend.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :gallon
       {:ok, "123 gallons"}
 
-      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string 1, MyApp.Cldr, unit: :gallon
       {:ok, "1 gallon"}
 
-      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "af"
+      iex> Cldr.Unit.to_string 1, MyApp.Cldr, unit: :gallon, locale: "af"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, TestBackend.Cldr, unit: :gallon, locale: "bs"
+      iex> Cldr.Unit.to_string 1, MyApp.Cldr, unit: :gallon, locale: "bs"
       {:ok, "1 galon"}
 
-      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :gallon, format: :long
+      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :gallon, format: :long
       {:ok, "1 thousand gallons"}
 
-      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :gallon, format: :short
+      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :gallon, format: :short
       {:ok, "1K gallons"}
 
-      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :megahertz
+      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :megahertz
       {:ok, "1,234 megahertz"}
 
-      iex> Cldr.Unit.to_string 1234, TestBackend.Cldr, unit: :megahertz, style: :narrow
+      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
       iex> unit = Cldr.Unit.new(123, :foot)
-      iex> Cldr.Unit.to_string unit, TestBackend.Cldr
+      iex> Cldr.Unit.to_string unit, MyApp.Cldr
       {:ok, "123 feet"}
 
-      iex> Cldr.Unit.to_string 123, TestBackend.Cldr, unit: :megabyte, locale: "en", style: :unknown
+      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
-      iex> Cldr.Unit.to_string 123, TestBackend.Cldr, unit: :blabber, locale: "en"
+      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :blabber, locale: "en"
       {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
 
   """
-  @spec to_string(list_or_number :: value | t() | list(t()), backend :: Cldr.backend(), options :: Keyword.t()) ::
+  @spec to_string(
+          list_or_number :: value | t() | list(t()),
+          backend :: Cldr.backend(),
+          options :: Keyword.t()
+        ) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(list_or_number, backend \\ Cldr.default_backend(), options \\ [])
 
+  def to_string(list_or_number, options, []) when is_list(options) do
+    to_string(list_or_number, Cldr.default_backend(), options)
+  end
+
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale) do
-
       list_options =
         options
         |> Keyword.get(:list_options, [])
@@ -289,6 +299,9 @@ defmodule Cldr.Unit do
   * `number` is any number (integer, float or Decimal) or a
     `Cldr.Unit.t()` struct
 
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend/0`.
+
   * `options` is a keyword list
 
   ## Options
@@ -314,13 +327,13 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string! 123, TestBackend.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string! 123, MyApp.Cldr, unit: :gallon
       "123 gallons"
 
-      iex> Cldr.Unit.to_string! 1, TestBackend.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string! 1, MyApp.Cldr, unit: :gallon
       "1 gallon"
 
-      iex> Cldr.Unit.to_string! 1, TestBackend.Cldr, unit: :gallon, locale: "af"
+      iex> Cldr.Unit.to_string! 1, MyApp.Cldr, unit: :gallon, locale: "af"
       "1 gelling"
 
   """
@@ -343,7 +356,8 @@ defmodule Cldr.Unit do
         ) :: String.t()
 
   defp to_string(number, unit, locale, style, backend, options) do
-    with {:ok, number_string} <- Cldr.Number.to_string(number, backend, options ++ [locale: locale]),
+    with {:ok, number_string} <-
+           Cldr.Number.to_string(number, backend, options ++ [locale: locale]),
          {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
       cardinal_module = Module.concat(backend, Number.Cardinal)
       pattern = cardinal_module.pluralize(number, locale, patterns)
@@ -377,8 +391,8 @@ defmodule Cldr.Unit do
     value
   end
 
-  @data_dir [:code.priv_dir(:ex_cldr), "/cldr/locales"] |> :erlang.iolist_to_binary
-  @config   %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
+  @data_dir [:code.priv_dir(:ex_cldr), "/cldr/locales"] |> :erlang.iolist_to_binary()
+  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
 
   @unit_tree "en"
              |> Cldr.Config.get_locale(@config)
@@ -406,7 +420,8 @@ defmodule Cldr.Unit do
       [Cldr.Unit.new(:meter, 11), Cldr.Unit.new(:centimeter, 11)]
 
   """
-  @spec decompose(Unit.t(), [Unit.unit(), ...]) :: [Unit.t(), ...] | {:error, {module(), String.t()}}
+  @spec decompose(Unit.t(), [Unit.unit(), ...]) ::
+          [Unit.t(), ...] | {:error, {module(), String.t()}}
 
   def decompose(unit, []) do
     [unit]
@@ -416,8 +431,8 @@ defmodule Cldr.Unit do
     new_unit =
       unit
       |> Conversion.convert!(h)
-      |> Math.round
-      |> Math.trunc
+      |> Math.round()
+      |> Math.trunc()
 
     if zero?(new_unit) do
       []
@@ -438,7 +453,7 @@ defmodule Cldr.Unit do
   end
 
   defp int_rem(unit) do
-    integer = Unit.round(unit, 0, :down) |> Math.trunc
+    integer = Unit.round(unit, 0, :down) |> Math.trunc()
     remainder = Math.sub(unit, integer)
     {integer, remainder}
   end
@@ -764,7 +779,7 @@ defmodule Cldr.Unit do
 
   def compatible_units(unit, %{jaro: true, distance: distance}) when is_number(distance) do
     unit
-    |> Kernel.to_string
+    |> Kernel.to_string()
     |> jaro_match(distance)
     |> compatible_list(unit)
   end
@@ -829,7 +844,7 @@ defmodule Cldr.Unit do
   end
 
   def units_for(locale, style, backend \\ Cldr.default_backend()) do
-    module = Module.concat(backend, :'Elixir.Unit')
+    module = Module.concat(backend, :"Elixir.Unit")
     module.units_for(locale, style)
   end
 

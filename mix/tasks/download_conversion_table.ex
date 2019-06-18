@@ -19,7 +19,7 @@ defmodule Mix.Tasks.Cldr.Unit.Download do
   defp required_files do
     [
       {"https://raw.githubusercontent.com/kipcole9/cldr_units/master/priv/conversion_factors.json",
-        data_path("conversion_factors.json")},
+       data_path("conversion_factors.json")}
     ]
   end
 
@@ -55,4 +55,3 @@ defmodule Mix.Tasks.Cldr.Unit.Download do
     Path.join("./priv", filename)
   end
 end
-

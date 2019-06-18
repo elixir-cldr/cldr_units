@@ -1,3 +1,13 @@
+# Changelog for Cldr_Units v2.5.1
+
+This is the changelog for Cldr_units v2.5.1 released on June 18th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Standardize the development cldr backend as `MyApp.Cldr` which makes for more understandable and readable examples and doc tests
+
+* `Cldr.Unit.to_string/3` now allows for the `backend` parameter to default to `Cldr.default_backend/0`
+
 # Changelog for Cldr_Units v2.5.0
 
 This is the changelog for Cldr_units v2.5.0 released on March 28th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

@@ -5,5 +5,5 @@ defmodule Doc.Test do
   doctest Cldr.Unit.Conversion
   doctest Cldr.Unit.Math
 
-  doctest TestBackend.Cldr.Unit
+  doctest MyApp.Cldr.Unit
 end

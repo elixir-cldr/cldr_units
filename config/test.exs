@@ -5,5 +5,5 @@ config :ex_unit,
   case_load_timeout: 220_000,
   timeout: 120_000
 
-config :ex_cldr_units,
-  default_backend: TestBackend.Cldr
+config :ex_cldr,
+  default_backend: MyApp.Cldr

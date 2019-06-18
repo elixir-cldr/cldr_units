@@ -7,14 +7,19 @@ defmodule Cldr.UnitsTest do
   end
 
   test "that pluralization in non-en locales works" do
-    assert Cldr.Unit.to_string!(1, TestBackend.Cldr, locale: "de", unit: :microsecond) == "1 Mikrosekunde"
-    assert Cldr.Unit.to_string!(123, TestBackend.Cldr, locale: "de", unit: :microsecond) == "123 Mikrosekunden"
+    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :microsecond) ==
+             "1 Mikrosekunde"
 
-    assert Cldr.Unit.to_string!(1, TestBackend.Cldr, locale: "de", unit: :pint) == "1 Pint"
-    assert Cldr.Unit.to_string!(123, TestBackend.Cldr, locale: "de", unit: :pint) == "123 Pints"
+    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :microsecond) ==
+             "123 Mikrosekunden"
 
-    assert Cldr.Unit.to_string!(1, TestBackend.Cldr, locale: "de", unit: :century) == "1 Jahrhundert"
-    assert Cldr.Unit.to_string!(123, TestBackend.Cldr, locale: "de", unit: :century) == "123 Jahrhunderte"
+    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :pint) == "1 Pint"
+    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :pint) == "123 Pints"
+
+    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :century) == "1 Jahrhundert"
+
+    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :century) ==
+             "123 Jahrhunderte"
   end
 
   test "decimal" do
@@ -58,7 +63,7 @@ defmodule Cldr.UnitsTest do
     end
 
     assert "that module docs are generated for a backend" do
-      {:docs_v1, _, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(TestBackend.Cldr)
+      {:docs_v1, _, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(MyApp.Cldr)
     end
   end
 end
