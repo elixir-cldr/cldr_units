@@ -876,13 +876,13 @@ defmodule Cldr.Unit do
   end
 
   defp normalize_options(backend, options) do
-    locale = options[:locale] || backend.get_locale()
-    style = options[:style] || @default_style
+    locale = Keyword.get(options, :locale, backend.get_locale())
+    style = Keyword.get(options, :style, @default_style)
 
     options =
       options
       |> Keyword.delete(:locale)
-      |> Keyword.delete(:style)
+      |> Keyword.put(:style, style)
 
     {locale, style, options}
   end
