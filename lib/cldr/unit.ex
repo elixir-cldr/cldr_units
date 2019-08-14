@@ -193,7 +193,7 @@ defmodule Cldr.Unit do
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
   * `:style` is one of those returned by `Cldr.Unit.styles`.
     The current styles are `:long`, `:short` and `:narrow`.
@@ -310,7 +310,7 @@ defmodule Cldr.Unit do
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_current_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
   * `:style` is one of those returned by `Cldr.Unit.available_styles`.
     The current styles are `:long`, `:short` and `:narrow`.

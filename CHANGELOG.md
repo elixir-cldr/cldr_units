@@ -1,3 +1,13 @@
+# Changelog for Cldr_Units v2.5.2
+
+This is the changelog for Cldr_units v2.5.2 released on ______, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Replace `Cldr.get_current_locale/0` with `Cldr.get_locale/0`in docs
+
+* Fix dialyzer warnings
+
 # Changelog for Cldr_Units v2.5.1
 
 This is the changelog for Cldr_units v2.5.1 released on June 18th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
