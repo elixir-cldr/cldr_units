@@ -38,7 +38,7 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, "~> 2.6"},
+      {:ex_cldr, "~> 2.7"},
       {:ex_cldr_numbers, "~> 2.6"},
       {:dialyxir, "~> 1.0.0-rc.4", only: [:dev], runtime: false},
       {:ex_cldr_lists, "~> 2.2"},

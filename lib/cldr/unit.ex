@@ -666,7 +666,7 @@ defmodule Cldr.Unit do
 
   """
   @default_distance 0.75
-  @spec jaro_match(unit, number) :: [{float, unit}, ...] | []
+  @spec jaro_match(unit | String.t(), number) :: [{float, unit}, ...] | []
   def jaro_match(unit, distance \\ @default_distance)
 
   def jaro_match(%Unit{unit: unit}, distance) do
@@ -766,7 +766,7 @@ defmodule Cldr.Unit do
   def compatible_units(unit, options \\ @default_options)
 
   def compatible_units(unit, options) when is_list(options) do
-    options = Keyword.merge(@default_options, options) |> Enum.into(%{})
+    options = Keyword.merge(@default_options, options) |> Map.new
     compatible_units(unit, options)
   end
 
@@ -779,7 +779,6 @@ defmodule Cldr.Unit do
 
   def compatible_units(unit, %{jaro: true, distance: distance}) when is_number(distance) do
     unit
-    |> Kernel.to_string()
     |> jaro_match(distance)
     |> compatible_list(unit)
   end
