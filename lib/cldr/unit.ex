@@ -251,7 +251,7 @@ defmodule Cldr.Unit do
   """
   @spec to_string(
           list_or_number :: value | t() | list(t()),
-          backend :: Cldr.backend(),
+          backend_or_options :: Cldr.backend() | Keyword.t(),
           options :: Keyword.t()
         ) ::
           {:ok, String.t()} | {:error, {atom, binary}}
@@ -337,7 +337,7 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(value(), Cldr.backend(), Keyword.t()) :: String.t() | no_return()
+  @spec to_string!(value(), Cldr.backend() | Keyword.t(), Keyword.t()) :: String.t() | no_return()
 
   def to_string!(number, backend \\ Cldr.default_backend(), options \\ []) do
     case to_string(number, backend, options) do
