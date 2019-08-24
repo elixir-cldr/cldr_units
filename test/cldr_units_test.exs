@@ -57,6 +57,21 @@ defmodule Cldr.UnitsTest do
     assert to_string(unit) == "23 feet"
   end
 
+  test "per pattern for a defined per_unit_pattern" do
+    unit = Cldr.Unit.new(45, :gallon)
+    assert Cldr.Unit.to_string(unit, per: :square_kilometer) ==
+      {:ok, "45 gallons per square kilometer"}
+
+    assert Cldr.Unit.to_string(unit, style: :narrow, per: :square_kilometer) ==
+      {:ok, "45gal/km²"}
+  end
+
+  test "per pattern for a generic per_unit_pattern" do
+    unit = Cldr.Unit.new(45, :gallon)
+    assert Cldr.Unit.to_string(unit, per: :degree) == {:ok, "45 gallons per degree"}
+    assert Cldr.Unit.to_string(unit, style: :narrow, per: :degree) == {:ok, "45gal/°"}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

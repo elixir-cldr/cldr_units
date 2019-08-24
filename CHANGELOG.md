@@ -1,3 +1,15 @@
+# Changelog for Cldr_Units v2.6.0
+
+This is the changelog for Cldr_units v2.6.0 released on ____, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Adds a `:per` option to `Cldr.Unit.to_string/3`. This option leverages the `per` formatting style to allow compound units to be printed.  For example, assume want to emit a string which represents "kilograms per second". There is no such unit defined in CLDR (or perhaps anywhere!). But if we define the unit `unit = Cldr.Unit.new(:kilogram, 20)` when can then execute `Cldr.Unit.to_string(unit, per: :second)`.  Each locale defines a specific way to format such a compount unit.  Usually it will return something like `20 kilograms/second`
+
+### Deprecation
+
+* Add `Cldr.Unit.unit_category/1` and deprecate `Cldr.Unit.unit_type/1` in order to be consistent with the nomenclature of CLDR
+
 # Changelog for Cldr_Units v2.5.3
 
 This is the changelog for Cldr_units v2.5.3 released on August 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

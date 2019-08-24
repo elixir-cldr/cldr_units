@@ -174,8 +174,8 @@ defmodule Cldr.Unit.Conversion do
 
   @doc false
   def factor(unit) do
-    unit_type = Unit.unit_type(unit)
-    get_in(factors(), [unit_type, unit])
+    unit_category = Unit.unit_category(unit)
+    get_in(factors(), [unit_category, unit])
   end
 
   defp decimal_new(n) when is_integer(n), do: Decimal.new(n)
