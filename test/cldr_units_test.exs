@@ -59,11 +59,12 @@ defmodule Cldr.UnitsTest do
 
   test "per pattern for a defined per_unit_pattern" do
     unit = Cldr.Unit.new(45, :gallon)
+
     assert Cldr.Unit.to_string(unit, per: :square_kilometer) ==
-      {:ok, "45 gallons per square kilometer"}
+             {:ok, "45 gallons per square kilometer"}
 
     assert Cldr.Unit.to_string(unit, style: :narrow, per: :square_kilometer) ==
-      {:ok, "45gal/km²"}
+             {:ok, "45gal/km²"}
   end
 
   test "per pattern for a generic per_unit_pattern" do

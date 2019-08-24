@@ -167,7 +167,8 @@ defmodule Cldr.Unit do
   def compatible?(unit_1, unit_2) do
     with {:ok, unit_1} <- validate_unit(unit_1),
          {:ok, unit_2} <- validate_unit(unit_2) do
-      unit_category(unit_1) == unit_category(unit_2) && Conversion.factor(unit_1) != :not_convertible &&
+      unit_category(unit_1) == unit_category(unit_2) &&
+        Conversion.factor(unit_1) != :not_convertible &&
         Conversion.factor(unit_2) != :not_convertible
     else
       _ -> false
@@ -265,6 +266,8 @@ defmodule Cldr.Unit do
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale) do
+      options = Map.to_list(options)
+
       list_options =
         options
         |> Keyword.get(:list_options, [])
@@ -352,7 +355,7 @@ defmodule Cldr.Unit do
           Locale.locale_name() | LanguageTag.t(),
           style,
           Cldr.backend(),
-          Keyword.t()
+          map()
         ) :: String.t()
 
   defp to_string(number, unit, locale, style, backend, %{per: nil} = options) do
@@ -389,7 +392,7 @@ defmodule Cldr.Unit do
     |> get_in([unit, :one])
     |> Enum.reject(&is_integer/1)
     |> hd
-    |> String.trim
+    |> String.trim()
   end
 
   @doc """
@@ -580,7 +583,7 @@ defmodule Cldr.Unit do
   end
 
   def unit_type(unit) do
-    IO.warn "Cldr.Unit.unit_type/1 is deprecated. Please use `Cldr.Unit.unit_category/1"
+    IO.warn("Cldr.Unit.unit_type/1 is deprecated. Please use `Cldr.Unit.unit_category/1")
     unit_category(unit)
   end
 
@@ -607,12 +610,12 @@ defmodule Cldr.Unit do
   end
 
   @unit_category_map @unit_tree
-            |> Enum.map(fn {k, v} ->
-              k = List.duplicate(k, length(v))
-              Enum.zip(v, k)
-            end)
-            |> List.flatten()
-            |> Map.new()
+                     |> Enum.map(fn {k, v} ->
+                       k = List.duplicate(k, length(v))
+                       Enum.zip(v, k)
+                     end)
+                     |> List.flatten()
+                     |> Map.new()
 
   @doc """
   Returns a mapping of units to their respective
@@ -829,7 +832,7 @@ defmodule Cldr.Unit do
   def compatible_units(unit, options \\ @default_options)
 
   def compatible_units(unit, options) when is_list(options) do
-    options = Keyword.merge(@default_options, options) |> Map.new
+    options = Keyword.merge(@default_options, options) |> Map.new()
     compatible_units(unit, options)
   end
 
@@ -898,9 +901,69 @@ defmodule Cldr.Unit do
     @default_style
   end
 
+  @doc false
   def units_for(locale, style \\ default_style(), backend \\ Cldr.default_backend()) do
     module = Module.concat(backend, :"Elixir.Unit")
     module.units_for(locale, style)
+  end
+
+  @doc """
+  Returns the default measurement system for a territory.
+
+  ## Example
+
+      iex> Cldr.Unit.measurement_system_for :US
+      :US
+
+      iex> Cldr.Unit.measurement_system_for :GB
+      :UK
+
+      iex> Cldr.Unit.measurement_system_for :AU
+      :metric
+
+  """
+  @spec measurement_system_for(atom()) ::
+          :metric | :US | :UK | {:error, {module(), String.t()}}
+
+  def measurement_system_for(territory) do
+    with {:ok, territory} <- Cldr.validate_territory(territory) do
+      map = measurement_system()
+      get_in(map, [:default, territory]) || get_in(map, [:default, :"001"])
+    end
+  end
+
+  @doc """
+  Returns the default measurement system for a territory
+  in a given category.
+
+  ## Example
+
+      iex> Cldr.Unit.measurement_system_for :US, :temperature
+      :US
+
+      iex> Cldr.Unit.measurement_system_for :BS, :temperature
+      :US
+
+      iex> Cldr.Unit.measurement_system_for :BS
+      :metric
+
+  """
+  @spec measurement_system_for(atom(), atom()) ::
+          :metric | :US | :UK | nil | {:error, {module(), String.t()}}
+
+  def measurement_system_for(territory, category) do
+    with {:ok, territory} <- Cldr.validate_territory(territory) do
+      map = measurement_system()
+
+      get_in(map, [category, territory]) || get_in(map, [:default, territory]) ||
+        get_in(map, [:default, :"001"])
+    end
+  end
+
+  @doc false
+  @measurement_system Cldr.Config.measurement_system()
+  defp measurement_system do
+    @measurement_system
   end
 
   defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
