@@ -4,7 +4,28 @@ This is the changelog for Cldr_units v2.6.0 released on ____, 2019.  For older c
 
 ### Enhancements
 
-* Adds a `:per` option to `Cldr.Unit.to_string/3`. This option leverages the `per` formatting style to allow compound units to be printed.  For example, assume want to emit a string which represents "kilograms per second". There is no such unit defined in CLDR (or perhaps anywhere!). But if we define the unit `unit = Cldr.Unit.new(:kilogram, 20)` when can then execute `Cldr.Unit.to_string(unit, per: :second)`.  Each locale defines a specific way to format such a compount unit.  Usually it will return something like `20 kilograms/second`
+* Add `Cldr.Unit.localize/3` to support converting a given unit into units that are familiar to a given territory. For example, given a unit of `#Unit<2, :meter>` is would normally be expected to show this as `[#Unit<:foot, 5>, #Unit<:inch, 11>]`. The data to support these conversions is returned by `Cldr.Unit.unit_preferences/0`. An example:
+
+```elixir
+  iex> height = Cldr.Unit.new(1.8, :meter)
+  iex> Cldr.Unit.localize height, :person, territory: :US, style: :informal
+  [#Unit<:foot, 5>, #Unit<:inch, 11>]
+```
+
+  * Note that conversion is dependent on context. The context above is `:person` reflecting that we are referring to the height of a person. For units of `length` category, the other contexts available are `:rainfall`, `:snowfall`, `:vehicle`, `:visibility` and `:road`. Using the above example with the context of `:rainfall` we see
+
+```elixir
+  iex> Cldr.Unit.localize height, :rainfall, territory: :US
+  [#Unit<:inch, 71>]
+```
+
+* Adds a `:per` option to `Cldr.Unit.to_string/3`. This option leverages the `per` formatting style to allow compound units to be printed.  For example, assume want to emit a string which represents "kilograms per second". There is no such unit defined in CLDR (or perhaps anywhere!). But if we define the unit `unit = Cldr.Unit.new(:kilogram, 20)` we can then execute `Cldr.Unit.to_string(unit, per: :second)`.  Each locale defines a specific way to format such a compount unit.  Usually it will return something like `20 kilograms/second`
+
+* Adds `Cldr.Unit.unit_preferences/0` to map units into a territory preference alternative unit
+
+* Adds `Cldr.Unit.measurement_systems/0` that identifies the unit system in use for a territory
+
+* Adds `Cldr.Unit.measurement_system_for/1` that returns the measurement system in use for a given territory.  The result will be one of `:metric`, `:US` or `:UK`.
 
 ### Deprecation
 

@@ -73,6 +73,36 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(unit, style: :narrow, per: :degree) == {:ok, "45gal/°"}
   end
 
+  test "localize a unit" do
+    unit = Cldr.Unit.new(100, :meter)
+
+    assert Cldr.Unit.localize(unit, :person, territory: :US) ==
+             [Cldr.Unit.new(:inch, 3937)]
+
+    assert Cldr.Unit.localize(unit, :person, territory: :US, style: :informal) ==
+             [Cldr.Unit.new(:foot, 328), Cldr.Unit.new(:inch, 1)]
+
+    assert Cldr.Unit.localize(unit, :unknown, territory: :US) ==
+             {:error,
+              {Cldr.Unit.UnknownUnitPreferenceError,
+               "No known unit preference for usage :unknown"}}
+
+    assert Cldr.Unit.localize(unit, :person, territory: :US, style: :unknown) ==
+             {:error,
+              {Cldr.Unit.UnknownUnitPreferenceError,
+               "Style :unknown is not known. It should be :informal or nil"}}
+
+    assert Cldr.Unit.localize(unit, :person, territory: :US, scope: :unknown) ==
+             {:error,
+              {Cldr.Unit.UnknownUnitPreferenceError,
+               "Scope :unknown is not known. It should be :small or nil"}}
+
+    assert Cldr.Unit.localize(unit, :person, territory: :US, scope: :unknown1, style: :unknown2) ==
+             {:error,
+              {Cldr.Unit.UnknownUnitPreferenceError,
+               "No known scope :unknown1 and no known style :unknown2"}}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

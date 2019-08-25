@@ -14,6 +14,14 @@ defmodule Cldr.Unit.UnknownUnitCategoryError do
   end
 end
 
+defmodule Cldr.Unit.UnknownUnitPreferenceError do
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
 defmodule Cldr.Unit.UnitNotConvertibleError do
   defexception [:message]
 
