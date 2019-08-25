@@ -1,6 +1,6 @@
 # Changelog for Cldr_Units v2.6.0
 
-This is the changelog for Cldr_units v2.6.0 released on ____, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v2.6.0 released on August 25th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
