@@ -57,6 +57,11 @@ defmodule Cldr.UnitsTest do
     assert to_string(unit) == "23 feet"
   end
 
+  test "formatting a list" do
+    list = [Cldr.Unit.new(23, :foot), Cldr.Unit.new(5, :inch)]
+    assert Cldr.Unit.to_string(list) == {:ok, "23 feet and 5 inches"}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

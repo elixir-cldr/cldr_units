@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v2.5.4
+
+This is the changelog for Cldr_units v2.5.4 released on August 31st, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix `Cldr.Unit.to_string/3` to ensure that `{:ok, string}` is returned when formatting a list of units
+
 # Changelog for Cldr_Units v2.5.3
 
 This is the changelog for Cldr_units v2.5.3 released on August 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

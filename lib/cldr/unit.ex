@@ -272,7 +272,7 @@ defmodule Cldr.Unit do
 
       unit_list
       |> Enum.map(&to_string!(&1, backend, options ++ [locale: locale]))
-      |> Cldr.List.to_string!(backend, list_options)
+      |> Cldr.List.to_string(backend, list_options)
     end
   end
 
