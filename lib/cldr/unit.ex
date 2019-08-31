@@ -288,13 +288,8 @@ defmodule Cldr.Unit do
         |> Keyword.put(:locale, locale)
 
       unit_list
-<<<<<<< HEAD
       |> Enum.map(&to_string!(&1, backend, options ++ [locale: locale]))
       |> Cldr.List.to_string(backend, list_options)
-=======
-      |> Enum.map(&to_string!(&1, backend, Keyword.put(options, :locale, locale)))
-      |> Cldr.List.to_string!(backend, list_options)
->>>>>>> f227828dcb5f773a1d573c8c1ce76129d9752967
     end
   end
 
