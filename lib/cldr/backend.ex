@@ -26,10 +26,17 @@ defmodule Cldr.Unit.Backend do
         defdelegate zero(unit), to: Cldr.Unit
         defdelegate zero?(unit), to: Cldr.Unit
         defdelegate decompose(unit, list), to: Cldr.Unit
+        defdelegate localize(unit, usage, options), to: Cldr.Unit
+
+        defdelegate unit_preferences, to: Cldr.Unit
+        defdelegate measurement_systems, to: Cldr.Unit
+        defdelegate measurement_system_for(territory), to: Cldr.Unit
+        defdelegate measurement_system_for(territory, category), to: Cldr.Unit
 
         defdelegate units, to: Cldr.Unit
         defdelegate units(type), to: Cldr.Unit
         defdelegate unit_tree, to: Cldr.Unit
+        defdelegate unit_categories, to: Cldr.Unit
         defdelegate styles, to: Cldr.Unit
         defdelegate default_style, to: Cldr.Unit
         defdelegate validate_unit(unit), to: Cldr.Unit
@@ -81,6 +88,14 @@ defmodule Cldr.Unit.Backend do
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
+        * `:per` allows compound units to be formatted. For example, assume
+          we want to format a string which represents "kilograms per second".
+          There is no such unit defined in CLDR (or perhaps anywhere!).
+          If however we define the unit `unit = Cldr.Unit.new(:kilogram, 20)`
+          we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
+          Each locale defines a specific way to format such a compount unit.
+          Usually it will return something like `20 kilograms/second`
+
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
           applicable when formatting a list of units.
@@ -122,6 +137,12 @@ defmodule Cldr.Unit.Backend do
 
             iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz, style: :narrow
             {:ok, "1,234MHz"}
+
+            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :foot, style: :narrow, per: :second
+            {:ok, "1,234′/s"}
+
+            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :foot, per: :second
+            {:ok, "1,234 feet per second"}
 
             iex> #{inspect(__MODULE__)}.to_string 123, unit: :megabyte, locale: "en", style: :unknown
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}

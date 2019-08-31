@@ -61,9 +61,9 @@ defmodule Cldr.Unit.Math do
     add(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def add(%Unit{unit: unit_type_1} = unit_1, %Unit{unit: unit_type_2} = unit_2) do
-    if Unit.compatible?(unit_type_1, unit_type_2) do
-      add(unit_1, Conversion.convert(unit_2, unit_type_1))
+  def add(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
+    if Unit.compatible?(unit_category_1, unit_category_2) do
+      add(unit_1, Conversion.convert(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -148,9 +148,9 @@ defmodule Cldr.Unit.Math do
     sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def sub(%Unit{unit: unit_type_1} = unit_1, %Unit{unit: unit_type_2} = unit_2) do
-    if Unit.compatible?(unit_type_1, unit_type_2) do
-      sub(unit_1, Conversion.convert(unit_2, unit_type_1))
+  def sub(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
+    if Unit.compatible?(unit_category_1, unit_category_2) do
+      sub(unit_1, Conversion.convert(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -235,9 +235,9 @@ defmodule Cldr.Unit.Math do
     mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def mult(%Unit{unit: unit_type_1} = unit_1, %Unit{unit: unit_type_2} = unit_2) do
-    if Unit.compatible?(unit_type_1, unit_type_2) do
-      mult(unit_1, Conversion.convert(unit_2, unit_type_1))
+  def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
+    if Unit.compatible?(unit_category_1, unit_category_2) do
+      mult(unit_1, Conversion.convert(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -322,9 +322,9 @@ defmodule Cldr.Unit.Math do
     div(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def div(%Unit{unit: unit_type_1} = unit_1, %Unit{unit: unit_type_2} = unit_2) do
-    if Unit.compatible?(unit_type_1, unit_type_2) do
-      div(unit_1, Conversion.convert(unit_2, unit_type_1))
+  def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
+    if Unit.compatible?(unit_category_1, unit_category_2) do
+      div(unit_1, Conversion.convert(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end

@@ -167,7 +167,8 @@ defmodule Cldr.Unit do
   def compatible?(unit_1, unit_2) do
     with {:ok, unit_1} <- validate_unit(unit_1),
          {:ok, unit_2} <- validate_unit(unit_2) do
-      unit_type(unit_1) == unit_type(unit_2) && Conversion.factor(unit_1) != :not_convertible &&
+      unit_category(unit_1) == unit_category(unit_2) &&
+        Conversion.factor(unit_1) != :not_convertible &&
         Conversion.factor(unit_2) != :not_convertible
     else
       _ -> false
@@ -198,6 +199,14 @@ defmodule Cldr.Unit do
   * `:style` is one of those returned by `Cldr.Unit.styles`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
+
+  * `:per` allows compound units to be formatted. For example, assume
+    we want to format a string which represents "kilograms per second".
+    There is no such unit defined in CLDR (or perhaps anywhere!).
+    If however we define the unit `unit = Cldr.Unit.new(:kilogram, 20)`
+    we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
+    Each locale defines a specific way to format such a compount unit.
+    Usually it will return something like `20 kilograms/second`
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
@@ -238,6 +247,12 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :megahertz, style: :narrow
       {:ok, "1,234MHz"}
 
+      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :foot, style: :narrow, per: :second
+      {:ok, "1,234′/s"}
+
+      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :foot, per: :second
+      {:ok, "1,234 feet per second"}
+
       iex> unit = Cldr.Unit.new(123, :foot)
       iex> Cldr.Unit.to_string unit, MyApp.Cldr
       {:ok, "123 feet"}
@@ -265,14 +280,21 @@ defmodule Cldr.Unit do
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale) do
+      options = Map.to_list(options)
+
       list_options =
         options
         |> Keyword.get(:list_options, [])
         |> Keyword.put(:locale, locale)
 
       unit_list
+<<<<<<< HEAD
       |> Enum.map(&to_string!(&1, backend, options ++ [locale: locale]))
       |> Cldr.List.to_string(backend, list_options)
+=======
+      |> Enum.map(&to_string!(&1, backend, Keyword.put(options, :locale, locale)))
+      |> Cldr.List.to_string!(backend, list_options)
+>>>>>>> f227828dcb5f773a1d573c8c1ce76129d9752967
     end
   end
 
@@ -352,12 +374,12 @@ defmodule Cldr.Unit do
           Locale.locale_name() | LanguageTag.t(),
           style,
           Cldr.backend(),
-          Keyword.t()
+          map()
         ) :: String.t()
 
-  defp to_string(number, unit, locale, style, backend, options) do
+  defp to_string(number, unit, locale, style, backend, %{per: nil} = options) do
     with {:ok, number_string} <-
-           Cldr.Number.to_string(number, backend, options ++ [locale: locale]),
+           Cldr.Number.to_string(number, backend, Map.to_list(options)),
          {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
       cardinal_module = Module.concat(backend, Number.Cardinal)
       pattern = cardinal_module.pluralize(number, locale, patterns)
@@ -366,6 +388,30 @@ defmodule Cldr.Unit do
       |> Substitution.substitute(pattern)
       |> :erlang.iolist_to_binary()
     end
+  end
+
+  defp to_string(number, unit, locale, style, backend, %{per: per} = options) do
+    with {:ok, per_pattern} <- per_pattern_for(locale, style, per, backend) do
+      unit_string = to_string(number, unit, locale, style, backend, Map.put(options, :per, nil))
+
+      if length(per_pattern) <= 2 do
+        [unit_string]
+        |> Substitution.substitute(per_pattern)
+      else
+        [unit_string, localize_per_unit(per, locale, style)]
+        |> Substitution.substitute(per_pattern)
+      end
+      |> :erlang.iolist_to_binary()
+    end
+  end
+
+  defp localize_per_unit(unit, %LanguageTag{cldr_locale_name: locale_name}, style) do
+    locale_name
+    |> Cldr.Unit.units_for(style)
+    |> get_in([unit, :one])
+    |> Enum.reject(&is_integer/1)
+    |> hd
+    |> String.trim()
   end
 
   @doc """
@@ -409,6 +455,19 @@ defmodule Cldr.Unit do
   is recommended.  For example `[:foot, :inch]`
   or `[:kilometer, :meter, :centimeter, :millimeter]`
 
+  ## Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  * `decompose_list` is a list of valid units (one or
+    more from the list returned by `Cldr.units/0`). All
+    units must be from the same category.
+
+  ## Returns
+
+  * a list of units after decomposition or an error
+    tuple
+
   ## Examples
 
       iex> u = Cldr.Unit.new(10.3, :foot)
@@ -420,7 +479,7 @@ defmodule Cldr.Unit do
       [Cldr.Unit.new(:meter, 11), Cldr.Unit.new(:centimeter, 11)]
 
   """
-  @spec decompose(Unit.t(), [Unit.unit(), ...]) ::
+  @spec decompose(unit :: Unit.t(), decompose_list :: [Unit.unit(), ...]) ::
           [Unit.t(), ...] | {:error, {module(), String.t()}}
 
   def decompose(unit, []) do
@@ -450,6 +509,125 @@ defmodule Cldr.Unit do
     else
       [integer_unit | decompose(remainder, t)]
     end
+  end
+
+  @doc """
+  Localizes a unit according to a territory
+
+  A territory can be derived from a `locale_name`
+  or `Cldr.LangaugeTag.t()`.
+
+  Use this function if you have a unit which
+  should be presented in a user interface using
+  units relevant to the audience. For example, a
+  unit `#Unit<100, :meter>` might be better
+  presented to a US audiance as `#Unit<328, :foot>`.
+
+  ## Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  * `usage` is the way in which the unit is intended
+    to be used.  The available `usage` varyies according
+    to the unit category.  See `Cldr.Unit.unit_preferences/0`.
+
+  * `options` is a keyword list of options
+
+  ## Options
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `:territory` is any valid territory code returned by
+    `Cldr.known_territories/0`. The default is the territory defined
+    as part of the `:locale`.
+
+  * `:scope` may be set to `:small` to indicate that a unit conversion
+    intended for "small" unit sizes is preferred. In some territories it is
+    customary to use different units for "small" sizes from those that
+    are "large".
+
+  * `:style` may be set to `:informal` to indicate that a more informal
+    unit conversion be applied.
+
+  ## Examples
+
+      iex> Cldr.Unit.localize(Cldr.Unit.new(100, :meter), :person, territory: :US)
+      [Cldr.Unit.new(:inch, 3937)]
+
+      iex> Cldr.Unit.localize(Cldr.Unit.new(100, :meter), :person, territory: :US, style: :informal)
+      [Cldr.Unit.new(:foot, 328), Cldr.Unit.new(:inch, 1)]
+
+  """
+  def localize(%Unit{} = unit, usage, options) do
+    locale = Keyword.get(options, :locale, Cldr.get_locale())
+
+    with {:ok, locale} <- Cldr.validate_locale(locale),
+         territory = Keyword.get(options, :territory, locale.territory),
+         {:ok, territory} <- Cldr.validate_territory(territory),
+         {:ok, unit_list} <- extract_unit_list(unit, usage, territory, options) do
+      decompose(unit, unit_list)
+    end
+  end
+
+  defp extract_unit_list(unit, usage, territory, options) do
+    category = unit_category(unit)
+
+    unit_preferences()
+    |> get_in([category, usage])
+    |> find_preference(usage, territory, options[:scope], options[:style])
+  end
+
+  @global :"001"
+  defp find_preference(nil, usage, _territory, _scope, _style) do
+    {:error,
+     {Cldr.Unit.UnknownUnitPreferenceError,
+      "No known unit preference for usage #{inspect(usage)}"}}
+  end
+
+  defp find_preference(preferences, _usage, territory, nil, nil) do
+    {:ok, Map.get(preferences, territory) || Map.get(preferences, @global)}
+  end
+
+  defp find_preference(preferences, usage, territory, :small, nil) do
+    {:ok,
+     get_in(preferences, [:small, territory]) || get_in(preferences, [:small, @global]) ||
+       find_preference(usage, preferences, territory, nil, nil)}
+  end
+
+  defp find_preference(preferences, usage, territory, nil, :informal) do
+    {:ok,
+     get_in(preferences, [:informal, territory]) || get_in(preferences, [:informal, @global]) ||
+       find_preference(usage, preferences, territory, nil, nil)}
+  end
+
+  defp find_preference(preferences, usage, territory, :small, :informal) do
+    {:ok,
+     get_in(preferences, [:small, :informal, territory]) ||
+       get_in(preferences, [:small, :informal, @global]) ||
+       get_in(preferences, [:informal, territory]) ||
+       get_in(preferences, [:informal, @global]) ||
+       find_preference(usage, preferences, territory, nil, nil)}
+  end
+
+  defp find_preference(_preferences, _usage, _territory, scope, style)
+       when scope in [:small, nil] do
+    {:error,
+     {Cldr.Unit.UnknownUnitPreferenceError,
+      "Style #{inspect(style)} is not known. It should be :informal or nil"}}
+  end
+
+  defp find_preference(_preferences, _usage, _territory, scope, style)
+       when style in [:informal, nil] do
+    {:error,
+     {Cldr.Unit.UnknownUnitPreferenceError,
+      "Scope #{inspect(scope)} is not known. It should be :small or nil"}}
+  end
+
+  defp find_preference(_preferences, _usage, _territory, scope, style) do
+    {:error,
+     {Cldr.Unit.UnknownUnitPreferenceError,
+      "No known scope #{inspect(scope)} and no known style #{inspect(style)}"}}
   end
 
   defp int_rem(unit) do
@@ -513,19 +691,55 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.unit_types
-      [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
+      iex> Cldr.Unit.unit_categories
+      [:acceleration, :angle, :area, :compound, :concentr, :consumption, :coordinate, :digital,
        :duration, :electric, :energy, :force, :frequency, :length, :light, :mass,
        :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """
-  @unit_types Map.keys(@unit_tree)
-  def unit_types do
-    @unit_types
+  @unit_categories Map.keys(@unit_tree)
+  def unit_categories do
+    @unit_categories
   end
 
   @doc """
-  Returns a list of the unit types and associated
+  Returns the units category for a given unit
+
+  ## Options
+
+  * `unit` is any units returned by
+    `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
+
+  ## Returns
+
+  * a valid category or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.unit_category :pint_metric
+      :volume
+
+      iex> Cldr.Unit.unit_category :stone
+      :mass
+
+  """
+  @spec unit_category(Unit.t() | String.t() | atom()) ::
+          atom() | {:error, {module(), String.t()}}
+  def unit_category(unit) do
+    with {:ok, unit} <- validate_unit(unit) do
+      Map.get(unit_category_map(), unit)
+    end
+  end
+
+  def unit_type(unit) do
+    IO.warn("Cldr.Unit.unit_type/1 is deprecated. Please use `Cldr.Unit.unit_category/1")
+    unit_category(unit)
+  end
+
+  @doc """
+  Returns a list of the unit categories and associated
   units
 
   ## Example
@@ -546,35 +760,37 @@ defmodule Cldr.Unit do
     @unit_tree
   end
 
+  @unit_category_map @unit_tree
+                     |> Enum.map(fn {k, v} ->
+                       k = List.duplicate(k, length(v))
+                       Enum.zip(v, k)
+                     end)
+                     |> List.flatten()
+                     |> Map.new()
+
   @doc """
-  Returns the units associated with a given unit type
+  Returns a mapping of units to their respective
+  unit categories
 
-  ## Options
+  ## Example
 
-  * `unit` is any units returned by
-    `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
-
-  ## Returns
-
-  * a valid unit or
-
-  * `{:error, {exception, message}}`
-
-  ## Examples
-
-      iex> Cldr.Unit.unit_type :pint_metric
-      :volume
-
-      iex> Cldr.Unit.unit_type :stone
-      :mass
+      => iex> Cldr.Unit.unit_category_map
+      %{
+        kilowatt: :power,
+        percent: :concentr,
+        picometer: :length,
+        centiliter: :volume,
+        square_inch: :area,
+        megapascal: :pressure,
+        atmosphere: :pressure,
+        per: :compound,
+        ...
+      }
 
   """
-  @spec unit_type(Unit.t() | String.t() | atom()) ::
-          atom() | {:error, {Exception.t(), String.t()}}
-  def unit_type(unit) do
-    with {:ok, unit} <- validate_unit(unit) do
-      type_map(unit)
-    end
+  @spec unit_category_map :: map()
+  def unit_category_map do
+    @unit_category_map
   end
 
   @doc """
@@ -594,6 +810,7 @@ defmodule Cldr.Unit do
 
   """
   @units @unit_tree
+         |> Map.delete(:compound)
          |> Map.values()
          |> List.flatten()
 
@@ -608,7 +825,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `type` is any unit type returned by
-    `Cldr.Unit.unit_types/0`
+    `Cldr.Unit.unit_categories/0`
 
   ## Returns
 
@@ -624,12 +841,12 @@ defmodule Cldr.Unit do
 
   """
   @spec units(atom) :: [atom, ...]
-  def units(type) when type in @unit_types do
-    Map.get(unit_tree(), type)
+  def units(category) when category in @unit_categories do
+    Map.get(unit_tree(), category)
   end
 
-  def units(type) do
-    {:error, unit_type_error(type)}
+  def units(category) do
+    {:error, unit_category_error(category)}
   end
 
   @doc """
@@ -766,13 +983,13 @@ defmodule Cldr.Unit do
   def compatible_units(unit, options \\ @default_options)
 
   def compatible_units(unit, options) when is_list(options) do
-    options = Keyword.merge(@default_options, options) |> Map.new
+    options = Keyword.merge(@default_options, options) |> Map.new()
     compatible_units(unit, options)
   end
 
   def compatible_units(unit, %{jaro: false}) do
     with {:ok, unit} <- validate_unit(unit) do
-      type = unit_type(unit)
+      type = unit_category(unit)
       unit_tree()[type]
     end
   end
@@ -798,8 +1015,8 @@ defmodule Cldr.Unit do
   defp compatible_list(jaro_list, unit) when is_list(jaro_list) do
     with {:ok, unit} <- validate_unit(unit) do
       Enum.filter(jaro_list, fn
-        {_distance, u} -> unit_type(u) == unit_type(unit)
-        u -> unit_type(u) == unit_type(unit)
+        {_distance, u} -> unit_category(u) == unit_category(unit)
+        u -> unit_category(u) == unit_category(unit)
       end)
     else
       _ ->
@@ -835,16 +1052,137 @@ defmodule Cldr.Unit do
     @default_style
   end
 
-  defp type_map(unit) do
-    with {:ok, unit} <- validate_unit(unit) do
-      type_map()
-      |> Map.get(unit)
+  @doc """
+  Returns a map of unit preferences
+
+  Units of measure vary country by country. While
+  most countries standardize on the metric system,
+  others use the US or UKL systems of measure.
+
+  When presening a unit to an end user it is appropriate
+  to do so using units familiar and relevant to that
+  end user.
+
+  The data returned by this function supports the
+  opportunity to convert a give unit to meet this
+  requirement.
+
+  Unit preferences can vary by usage, not just territory,
+  Therefore the data is structured according to unit
+  category and unit usage.
+
+  """
+  @unit_preferences Cldr.Config.unit_preferences()
+  @spec unit_preferences() :: map()
+  def unit_preferences do
+    @unit_preferences
+  end
+
+  @doc false
+  def units_for(locale, style \\ default_style(), backend \\ Cldr.default_backend()) do
+    module = Module.concat(backend, :"Elixir.Unit")
+    module.units_for(locale, style)
+  end
+
+  @doc """
+  Returns the default measurement system for a territory.
+
+  ## Example
+
+      iex> Cldr.Unit.measurement_system_for :US
+      :US
+
+      iex> Cldr.Unit.measurement_system_for :GB
+      :UK
+
+      iex> Cldr.Unit.measurement_system_for :AU
+      :metric
+
+  """
+  @spec measurement_system_for(atom()) ::
+          :metric | :US | :UK | {:error, {module(), String.t()}}
+
+  def measurement_system_for(territory) do
+    with {:ok, territory} <- Cldr.validate_territory(territory) do
+      map = measurement_systems()
+      get_in(map, [:default, territory]) || get_in(map, [:default, :"001"])
     end
   end
 
-  def units_for(locale, style, backend \\ Cldr.default_backend()) do
-    module = Module.concat(backend, :"Elixir.Unit")
-    module.units_for(locale, style)
+  @doc """
+  Returns the default measurement system for a territory
+  in a given category.
+
+  ## Example
+
+      iex> Cldr.Unit.measurement_system_for :US, :temperature
+      :US
+
+      iex> Cldr.Unit.measurement_system_for :BS, :temperature
+      :US
+
+      iex> Cldr.Unit.measurement_system_for :BS
+      :metric
+
+  """
+  @spec measurement_system_for(atom(), atom()) ::
+          :metric | :US | :UK | nil | {:error, {module(), String.t()}}
+
+  def measurement_system_for(territory, category) do
+    with {:ok, territory} <- Cldr.validate_territory(territory) do
+      map = measurement_systems()
+
+      get_in(map, [category, territory]) || get_in(map, [:default, territory]) ||
+        get_in(map, [:default, :"001"])
+    end
+  end
+
+  @doc """
+  Returns the measurement system in use by territory
+
+  ## Example
+
+      iex> Cldr.Unit.measurement_systems
+      %{
+        default: %{
+          "001": :metric,
+          GB: :UK,
+          LR: :US,
+          MM: :US,
+          US: :US
+        },
+        paper_size: %{
+          "001": :A4,
+          BZ: :"US-Letter",
+          CA: :"US-Letter",
+          CL: :"US-Letter",
+          CO: :"US-Letter",
+          CR: :"US-Letter",
+          GT: :"US-Letter",
+          MX: :"US-Letter",
+          NI: :"US-Letter",
+          PA: :"US-Letter",
+          PH: :"US-Letter",
+          PR: :"US-Letter",
+          SV: :"US-Letter",
+          US: :"US-Letter",
+          VE: :"US-Letter"
+        },
+        temperature: %{
+          BS: :US,
+          BZ: :US,
+          KY: :US,
+          LR: :metric,
+          MM: :metric,
+          PR: :US,
+          PW: :US
+        }
+      }
+
+  """
+  @measurement_systems Cldr.Config.measurement_system()
+  def measurement_systems do
+    @measurement_systems
   end
 
   defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
@@ -862,28 +1200,35 @@ defmodule Cldr.Unit do
     end
   end
 
-  @type_map @unit_tree
-            |> Enum.map(fn {k, v} ->
-              k = List.duplicate(k, length(v))
-              Enum.zip(v, k)
-            end)
-            |> List.flatten()
-            |> Enum.into(%{})
+  defp per_pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
+    with {:ok, style} <- validate_style(style),
+         {:ok, unit} <- validate_unit(unit) do
+      units = units_for(locale_name, style, backend)
+      pattern = get_in(units, [unit, :per_unit_pattern])
+      default_pattern = get_in(units, [:per, :compound_unit_pattern])
+      {:ok, pattern || default_pattern}
+    end
+  end
 
-  defp type_map do
-    @type_map
+  defp per_pattern_for(locale_name, style, unit, backend) do
+    with {:ok, locale} <- backend.validate_locale(locale_name) do
+      per_pattern_for(locale, style, unit, backend)
+    end
   end
 
   defp normalize_options(backend, options) do
-    locale = Keyword.get(options, :locale, backend.get_locale())
-    style = Keyword.get(options, :style, @default_style)
+    with {:ok, per_unit} <- validate_per_unit(options[:per]) do
+      locale = Keyword.get(options, :locale, backend.get_locale())
+      style = Keyword.get(options, :style, @default_style)
 
-    options =
-      options
-      |> Keyword.delete(:locale)
-      |> Keyword.put(:style, style)
+      options =
+        options
+        |> Keyword.delete(:locale)
+        |> Keyword.put(:style, style)
+        |> Keyword.put(:per, per_unit)
 
-    {locale, style, options}
+      {locale, style, Map.new(options)}
+    end
   end
 
   @doc """
@@ -918,6 +1263,14 @@ defmodule Cldr.Unit do
 
   def validate_unit(unit) do
     {:error, unit_error(unit)}
+  end
+
+  defp validate_per_unit(nil) do
+    {:ok, nil}
+  end
+
+  defp validate_per_unit(unit) do
+    validate_unit(unit)
   end
 
   @doc """
@@ -956,8 +1309,8 @@ defmodule Cldr.Unit do
   end
 
   @doc false
-  def unit_type_error(type) do
-    {Cldr.Unit.UnknownUnitTypeError, "The unit type #{inspect(type)} is not known."}
+  def unit_category_error(category) do
+    {Cldr.Unit.UnknownUnitCategoryError, "The unit category #{inspect(category)} is not known."}
   end
 
   @doc false

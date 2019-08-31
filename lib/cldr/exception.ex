@@ -6,7 +6,15 @@ defmodule Cldr.Unit.IncompatibleUnitsError do
   end
 end
 
-defmodule Cldr.Unit.UnknownUnitTypeError do
+defmodule Cldr.Unit.UnknownUnitCategoryError do
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
+defmodule Cldr.Unit.UnknownUnitPreferenceError do
   defexception [:message]
 
   def exception(message) do
