@@ -1,13 +1,13 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "2.6.1"
+  @version "2.7.0"
 
   def project do
     [
       app: :ex_cldr_units,
       version: @version,
-      elixir: "~> 1.5",
+      elixir: "~> 1.6",
       name: "Cldr Units",
       source_url: "https://github.com/elixir-cldr/cldr_units",
       description: description(),
@@ -38,7 +38,7 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, "~> 2.10"},
+      {:ex_cldr, "~> 2.11"},
       {:ex_cldr_numbers, "~> 2.6"},
       {:dialyxir, "~> 1.0.0-rc", only: [:dev], runtime: false},
       {:ex_cldr_lists, "~> 2.2"},

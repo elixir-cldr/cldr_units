@@ -16,10 +16,10 @@ defmodule Cldr.Unit.Conversion do
                       |> Cldr.Map.atomize_keys()
 
   def direct_factors do
-    unquote(Macro.escape(Map.get(@conversion_factors, :direct_factors)))
+    unquote(Macro.escape(Map.get(@conversion_factors, :direct_conversion)))
   end
 
-  @factors Enum.reject(@conversion_factors, fn {k, _v} -> k == :direct_factors end)
+  @factors Enum.reject(@conversion_factors, fn {k, _v} -> k == :direct_conversion end)
            |> Map.new()
            |> Map.merge(Cldr.Unit.Conversion.FunctionFactors.factors())
 

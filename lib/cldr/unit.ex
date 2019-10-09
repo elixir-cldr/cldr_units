@@ -688,7 +688,7 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.unit_categories
       [:acceleration, :angle, :area, :compound, :concentr, :consumption, :coordinate, :digital,
-       :duration, :electric, :energy, :force, :frequency, :length, :light, :mass,
+       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
        :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """

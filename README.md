@@ -1,7 +1,8 @@
 # Cldr for Units
 ![Build Status](http://sweatbox.noexpectations.com.au:8080/buildStatus/icon?job=cldr_units)
-[![Hex pm](http://img.shields.io/hexpm/v/ex_cldr_units.svg?style=flat)](https://hex.pm/packages/ex_cldr_units)
-[![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/kipcole9/cldr_units/blob/master/LICENSE)
+[![Hex.pm](https://img.shields.io/hexpm/v/ex_cldr_units.svg)](https://hex.pm/packages/ex_cldr_units)
+[![Hex.pm](https://img.shields.io/hexpm/dw/ex_cldr_units.svg?)](https://hex.pm/packages/ex_cldr_units)
+[![Hex.pm](https://img.shields.io/hexpm/l/ex_cldr_units.svg)](https://hex.pm/packages/ex_cldr_units)
 
 ## Getting Started
 

@@ -1,3 +1,15 @@
+# Changelog for Cldr_Units v2.7.0
+
+This is the changelog for Cldr_units v2.7.0 released on October 10th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Update [ex_cldr](https://github.com/elixir-cldr/cldr) to version `2.11.0` which encapsulates [CLDR](https://cldr.unicode.org) version `36.0.0` data.
+
+* Update minimum Elixir version to `1.6`
+
+* Adds conversion for `newton meter`, `dalton`, `solar luminosity`, `pound foot`, `bar`, `newton`, `electron volt`, `barrel`, `dunam`, `decade`, `mole`, `pound force`, `megapascal`, `pascal`, `kilopascal`, `solar radius`, `therm US`, `British thermal unit`, `earth mass`.
+
 # Changelog for Cldr_Units v2.6.1
 
 This is the changelog for Cldr_units v2.6.1 released on August 31st, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
