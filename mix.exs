@@ -7,6 +7,7 @@ defmodule CldrUnits.Mixfile do
     [
       app: :ex_cldr_units,
       version: @version,
+      licenses: ["Apache-2.0"],
       elixir: "~> 1.6",
       name: "Cldr Units",
       source_url: "https://github.com/elixir-cldr/cldr_units",
