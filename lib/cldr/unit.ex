@@ -61,7 +61,7 @@ defmodule Cldr.Unit do
 
   * `value` is any float, integer or `Decimal`
 
-  * `unit` is any unit returned by `Cldr.Unit.units`
+  * `unit` is any unit returned by `Cldr.Unit.units/0`
 
   ## Returns
 
@@ -167,9 +167,7 @@ defmodule Cldr.Unit do
   def compatible?(unit_1, unit_2) do
     with {:ok, unit_1} <- validate_unit(unit_1),
          {:ok, unit_2} <- validate_unit(unit_2) do
-      unit_category(unit_1) == unit_category(unit_2) &&
-        Conversion.factor(unit_1) != :not_convertible &&
-        Conversion.factor(unit_2) != :not_convertible
+      unit_category(unit_1) == unit_category(unit_2)
     else
       _ -> false
     end
@@ -190,7 +188,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
+  * `:unit` is any unit returned by `Cldr.Unit.units/0`. Ignored if
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
@@ -432,7 +430,8 @@ defmodule Cldr.Unit do
     value
   end
 
-  @data_dir [:code.priv_dir(:ex_cldr), "/cldr/locales"] |> :erlang.iolist_to_binary()
+  @app_name Cldr.Config.app_name()
+  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
   @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
 
   @unit_tree "en"
@@ -1245,6 +1244,7 @@ defmodule Cldr.Unit do
   def validate_unit(unit) when is_binary(unit) do
     unit
     |> String.downcase()
+    |> String.replace("-", "_")
     |> String.to_existing_atom()
     |> validate_unit()
   rescue

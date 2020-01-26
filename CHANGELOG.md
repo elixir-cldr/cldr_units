@@ -1,5 +1,13 @@
 # Changelog for Cldr_Units v2.7.0
 
+This is the changelog for Cldr_units v2.8.0 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Incorporate CLDR's unit conversion data into the conversion engine
+
+# Changelog for Cldr_Units v2.7.0
+
 This is the changelog for Cldr_units v2.7.0 released on October 10th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements

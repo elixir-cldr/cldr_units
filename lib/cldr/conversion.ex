@@ -8,23 +8,16 @@ defmodule Cldr.Unit.Conversion do
   alias Cldr.Unit
   import Unit, only: [incompatible_units_error: 2]
 
-  @external_resource Path.join("./priv", "conversion_factors.json")
-
-  @conversion_factors @external_resource
-                      |> File.read!()
-                      |> Jason.decode!()
-                      |> Cldr.Map.atomize_keys()
-
-  def direct_factors do
-    unquote(Macro.escape(Map.get(@conversion_factors, :direct_conversion)))
-  end
-
-  @factors Enum.reject(@conversion_factors, fn {k, _v} -> k == :direct_conversion end)
-           |> Map.new()
-           |> Map.merge(Cldr.Unit.Conversion.FunctionFactors.factors())
+  @factors Cldr.Config.unit_conversion_info() |> Map.get(:conversions)
+  @inverse_factors Enum.map(@factors, fn {_k, v} -> {v.target, %{factor: 1, offset: 0}} end)
+  |> Map.new
 
   def factors do
-    unquote(Macro.escape(@factors))
+    unquote(Macro.escape(Map.merge(@factors, @inverse_factors)))
+  end
+
+  def factors(factor) do
+    Map.get(factors(), factor)
   end
 
   @doc """
@@ -52,34 +45,19 @@ defmodule Cldr.Unit.Conversion do
       #Unit<:celsius, 0.0>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :foot
-      #Unit<:foot, 5279.945925937846>
+      #Unit<:foot, 5280>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :gallon
       {:error, {Cldr.Unit.IncompatibleUnitsError,
-                "Operations can only be performed between units of the same type. Received :mile and :gallon"}}
+        "Operations can only be performed between units of the same type. Received :mile and :gallon"}}
 
   """
   @spec convert(Unit.t(), Unit.unit()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def convert(%Unit{unit: from_unit, value: value} = from, to_unit) do
-    cond do
-      unit_mult = get_in(direct_factors(), [from_unit, to_unit]) ->
-        {:ok, new_value} = convert(value, 1, unit_mult)
-        Unit.new(to_unit, new_value)
-
-      unit_div = get_in(direct_factors(), [to_unit, from_unit]) ->
-        {:ok, new_value} = convert(value, unit_div, 1)
-        Unit.new(to_unit, new_value)
-
-      true ->
-        two_step_convert(from, to_unit)
-    end
-  end
-
-  defp two_step_convert(%Unit{unit: from_unit, value: value}, to_unit) do
+  def convert(%Unit{unit: from_unit, value: value}, to_unit) do
     with {:ok, to_unit} <- Unit.validate_unit(to_unit),
          true <- Unit.compatible?(from_unit, to_unit),
-         {:ok, converted} <- convert(value, factor(from_unit), factor(to_unit)) do
+         {:ok, converted} <- convert(value, factors(from_unit), factors(to_unit)) do
       Unit.new(to_unit, converted)
     else
       {:error, _} = error -> error
@@ -87,8 +65,11 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(value, from, to) when is_number(value) and is_number(from) and is_number(to) do
-    converted = value / from * to
+  defp convert(value, from, to) when is_number(value) do
+    %{factor: from_factor, offset: from_offset} = from
+    %{factor: to_factor, offset: to_offset} = to
+
+    converted = (value * from_factor - from_offset) / to_factor + to_offset
     truncated = trunc(converted)
 
     if converted == truncated do
@@ -98,37 +79,21 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(%Decimal{} = value, from, to) when is_number(from) and is_number(to) do
+  defp convert(%Decimal{} = value, from, to) do
+    %{factor: from_factor, offset: from_offset} = from
+    %{factor: to_factor, offset: to_offset} = to
+
     converted =
       value
-      |> Decimal.div(decimal_new(from))
-      |> Decimal.mult(decimal_new(to))
+      |> Decimal.mult(decimal_new(from_factor))
+      |> Decimal.sub(decimal_new(from_offset))
+      |> Decimal.div(decimal_new(to_factor))
+      |> Decimal.add(decimal_new(to_offset))
 
     {:ok, converted}
   end
 
-  defp convert(value, {to_base_fun, _}, to) when is_number(value) and is_number(to) do
-    {:ok, to_base_fun.(value) * to}
-  end
-
-  defp convert(%Decimal{} = value, {to_base_fun, _}, to) when is_number(to) do
-    {:ok, Decimal.mult(to_base_fun.(value), decimal_new(to))}
-  end
-
-  defp convert(value, from, {_to_fun, from_base_fun}) when is_number(value) and is_number(from) do
-    {:ok, from_base_fun.(value / from)}
-  end
-
-  defp convert(%Decimal{} = value, from, {_to_fun, from_base_fun}) when is_number(from) do
-    {:ok, Decimal.div(from_base_fun.(value), decimal_new(from))}
-  end
-
-  defp convert(value, {to_base_fun, _}, {_, from_base_fun}) do
-    {:ok, from_base_fun.(to_base_fun.(value))}
-  end
-
-  defp convert(_value, from, to)
-       when from == :not_convertible or to == :not_convertible do
+  defp convert(_value, from, to) do
     {:error,
      {Cldr.Unit.UnitNotConvertibleError,
       "No conversion is possible between #{inspect(to)} and #{inspect(from)}"}}
@@ -172,11 +137,6 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  @doc false
-  def factor(unit) do
-    unit_category = Unit.unit_category(unit)
-    get_in(factors(), [unit_category, unit])
-  end
 
   defp decimal_new(n) when is_integer(n), do: Decimal.new(n)
   defp decimal_new(n) when is_float(n), do: Decimal.from_float(n)
