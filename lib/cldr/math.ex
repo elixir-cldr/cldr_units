@@ -447,23 +447,23 @@ defmodule Cldr.Unit.Math do
 
       iex> x = Cldr.Unit.new(:kilometer, 1)
       iex> y = Cldr.Unit.new(:meter, 1000)
-      iex> Cldr.Unit.Math.cmp x, y
+      iex> Cldr.Unit.Math.compare x, y
       :eq
 
   """
-  def cmp(
+  def compare(
         %Unit{unit: unit, value: %Decimal{}} = unit_1,
         %Unit{unit: unit, value: %Decimal{}} = unit_2
       ) do
-    Decimal.cmp(unit_1.value, unit_2.value)
+    Cldr.Math.decimal_compare(unit_1.value, unit_2.value)
   end
 
-  def cmp(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
+  def compare(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
     unit_2 = Unit.Conversion.convert(unit_2, unit_1.unit)
-    cmp(unit_1, unit_2)
+    compare(unit_1, unit_2)
   end
 
-  def cmp(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
+  def compare(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
     cond do
       unit_1.value == unit_2.value -> :eq
       unit_1.value > unit_2.value -> :gt
@@ -471,7 +471,7 @@ defmodule Cldr.Unit.Math do
     end
   end
 
-  def cmp(%Unit{} = unit_1, %Unit{} = unit_2) do
+  def compare(%Unit{} = unit_1, %Unit{} = unit_2) do
     unit_1 =
       unit_1
       |> round(1, :half_even)
@@ -481,6 +481,11 @@ defmodule Cldr.Unit.Math do
       |> Unit.Conversion.convert(unit_1.unit)
       |> round(1, :half_even)
 
-    cmp(unit_1, unit_2)
+    compare(unit_1, unit_2)
+  end
+
+  @deprecated "Please us Cldr.Unit.Math.compare/2"
+  def cmp(unit_1, unit_2) do
+    compare(unit_1, unit_2)
   end
 end

@@ -1,3 +1,34 @@
+# Changelog for Cldr_Units v2.8.0
+
+This is the changelog for Cldr_units v2.8.0 released on January 27th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Support the new `Enum.sort/2` in Elixir 1.10. The function `Cldr.Math.cmp/2` is deprecated in favour of `Cldr.Math.compare/2` that has the same function signature and returns the same result that is compatible with Elixir 1.10.
+
+* Adds `Cldr.Unit.compare/2` that is required for `Enum.sort/2` to work as expected with units.
+
+As an example:
+```
+iex> alias Cldr.Unit                                                                             Cldr.Unit
+
+iex> unit_list = [Unit.new(:millimeter, 100), Unit.new(:centimeter, 100), Unit.new(:meter, 100), Unit.new(:kilometer, 100)]
+[#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
+ #Unit<:kilometer, 100>]
+
+iex> Enum.sort unit_list, Cldr.Unit
+[#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
+ #Unit<:kilometer, 100>]
+
+iex> Enum.sort unit_list, {:desc, Cldr.Unit}
+[#Unit<:kilometer, 100>, #Unit<:meter, 100>, #Unit<:centimeter, 100>,
+ #Unit<:millimeter, 100>]
+
+iex> Enum.sort unit_list, {:asc, Cldr.Unit}
+[#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
+ #Unit<:kilometer, 100>]
+```
+
 # Changelog for Cldr_Units v2.7.0
 
 This is the changelog for Cldr_units v2.7.0 released on October 10th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

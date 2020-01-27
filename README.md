@@ -207,6 +207,29 @@ iex> MyApp.Cldr.Unit.unit_categories
  :pressure, :speed, :temperature, :volume]
 ```
 
+### Sorting Units
+
+With Elixir 1.10, `Enum.sort/2` supports module-based comparisons to provide a simpler API for sorting structs. `ex_cldr_units` supports Elixir 1.10 as the following example shows:
+```
+iex> alias Cldr.Unit                                                                             Cldr.Unit
+
+iex> unit_list = [Unit.new(:millimeter, 100), Unit.new(:centimeter, 100), Unit.new(:meter, 100), Unit.new(:kilometer, 100)]
+[#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
+ #Unit<:kilometer, 100>]
+
+iex> Enum.sort unit_list, Cldr.Unit
+[#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
+ #Unit<:kilometer, 100>]
+
+iex> Enum.sort unit_list, {:desc, Cldr.Unit}
+[#Unit<:kilometer, 100>, #Unit<:meter, 100>, #Unit<:centimeter, 100>,
+ #Unit<:millimeter, 100>]
+
+iex> Enum.sort unit_list, {:asc, Cldr.Unit}
+[#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
+ #Unit<:kilometer, 100>]
+```
+
 ## Further information
 For help in `iex`:
 
