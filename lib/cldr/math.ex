@@ -118,7 +118,7 @@ defmodule Cldr.Unit.Math do
       #Unit<:kilogram, 4.54640763>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Unit<:pint, 2.8866235811>
+      #Unit<:pint, 2.886623581134813>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Unit<:pint, 4>
@@ -128,7 +128,7 @@ defmodule Cldr.Unit.Math do
 
   def sub(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
-    Unit.new!(unit, sub_round(value_1 - value_2))
+    Unit.new!(unit, value_1 - value_2)
   end
 
   def sub(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
@@ -155,12 +155,6 @@ defmodule Cldr.Unit.Math do
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
   end
-
-  # To help overcome some float precision issues
-  # Using decimal values is the better solution
-  @precision 10
-  defp sub_round(number) when is_integer(number), do: number
-  defp sub_round(number) when is_float(number), do: Float.round(number, @precision)
 
   @doc """
   Subtracts two compatible `%Unit{}` types

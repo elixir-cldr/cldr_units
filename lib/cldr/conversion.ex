@@ -8,7 +8,22 @@ defmodule Cldr.Unit.Conversion do
   alias Cldr.Unit
   import Unit, only: [incompatible_units_error: 2]
 
-  @factors Cldr.Config.unit_conversion_info() |> Map.get(:conversions)
+  @factors Cldr.Config.unit_conversion_info()
+           |> Map.get(:conversions)
+           |> Enum.map(fn
+               {unit, %{factor: factor} = conversion} when is_number(factor) ->
+                  {unit, conversion}
+               {unit, %{factor: factor} = conversion} ->
+                  {unit, %{conversion | factor: Ratio.new(factor.numerator, factor.denominator)}}
+           end)
+           |> Enum.map(fn
+               {unit, %{offset: offset} = conversion} when is_number(offset) ->
+                  {unit, conversion}
+               {unit, %{offset: offset} = conversion} ->
+                  {unit, %{conversion | offset: Ratio.new(offset.numerator, offset.denominator)}}
+           end)
+           |> Map.new
+
   @inverse_factors Enum.map(@factors, fn {_k, v} -> {v.target, %{factor: 1, offset: 0}} end)
   |> Map.new
 
@@ -39,7 +54,7 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Unit<:fahrenheit, 31.999999999999986>
+      #Unit<:fahrenheit, 32>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:fahrenheit, 32), :celsius
       #Unit<:celsius, 0>
@@ -77,11 +92,13 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert(value, from, to) when is_number(value) do
+    use Ratio
+
     %{factor: from_factor, offset: from_offset} = from
     %{factor: to_factor, offset: to_offset} = to
 
     base = (value * from_factor) + from_offset
-    converted = (base - to_offset) / to_factor
+    converted = ((base - to_offset) / to_factor) |> Ratio.to_float
 
     truncated = trunc(converted)
 
@@ -135,7 +152,7 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.Conversion.convert! Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Unit<:fahrenheit, 31.999999999999986>
+      #Unit<:fahrenheit, 32>
 
       iex> Cldr.Unit.Conversion.convert! Cldr.Unit.new!(:fahrenheit, 32), :celsius
       #Unit<:celsius, 0>
