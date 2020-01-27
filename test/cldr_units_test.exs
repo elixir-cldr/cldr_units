@@ -34,8 +34,8 @@ defmodule Cldr.UnitsTest do
   test "decimal functional conversion - celsius" do
     celsius = Cldr.Unit.new(Decimal.new("100"), :celsius)
     fahrenheit = Cldr.Unit.Conversion.convert(celsius, :fahrenheit)
-
-    assert Decimal.equal?(Cldr.Unit.value(fahrenheit), Decimal.new(212))
+    value = Decimal.round(Cldr.Unit.value(fahrenheit))
+    assert Decimal.equal?(value, Decimal.new(212))
   end
 
   test "decimal functional conversion - kelvin" do

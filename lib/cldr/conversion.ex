@@ -39,10 +39,10 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Unit<:fahrenheit, 32.0>
+      #Unit<:fahrenheit, 31.999999999999986>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:fahrenheit, 32), :celsius
-      #Unit<:celsius, 0.0>
+      #Unit<:celsius, 0>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :foot
       #Unit<:foot, 5280>
@@ -57,7 +57,9 @@ defmodule Cldr.Unit.Conversion do
   def convert(%Unit{unit: from_unit, value: value}, to_unit) do
     with {:ok, to_unit} <- Unit.validate_unit(to_unit),
          true <- Unit.compatible?(from_unit, to_unit),
-         {:ok, converted} <- convert(value, factors(from_unit), factors(to_unit)) do
+         {:ok, from_conversion} <- get_factors(from_unit),
+         {:ok, to_conversion} <- get_factors(to_unit),
+         {:ok, converted} <- convert(value, from_conversion, to_conversion) do
       Unit.new(to_unit, converted)
     else
       {:error, _} = error -> error
@@ -65,11 +67,22 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
+  defp get_factors(unit) do
+    if factors = factors(unit) do
+      {:ok, factors}
+    else
+      {:error,  {Cldr.Unit.UnitNotConvertibleError,
+        "No conversion is possible for #{inspect unit}"}}
+    end
+  end
+
   defp convert(value, from, to) when is_number(value) do
     %{factor: from_factor, offset: from_offset} = from
     %{factor: to_factor, offset: to_offset} = to
 
-    converted = (value * from_factor - from_offset) / to_factor + to_offset
+    base = (value * from_factor) + from_offset
+    converted = (base - to_offset) / to_factor
+
     truncated = trunc(converted)
 
     if converted == truncated do
@@ -83,12 +96,15 @@ defmodule Cldr.Unit.Conversion do
     %{factor: from_factor, offset: from_offset} = from
     %{factor: to_factor, offset: to_offset} = to
 
-    converted =
+    base =
       value
       |> Decimal.mult(decimal_new(from_factor))
-      |> Decimal.sub(decimal_new(from_offset))
+      |> Decimal.add(decimal_new(from_offset))
+
+    converted =
+      base
+      |> Decimal.sub(decimal_new(to_offset))
       |> Decimal.div(decimal_new(to_factor))
-      |> Decimal.add(decimal_new(to_offset))
 
     {:ok, converted}
   end
@@ -119,10 +135,10 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.Conversion.convert! Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Unit<:fahrenheit, 32.0>
+      #Unit<:fahrenheit, 31.999999999999986>
 
       iex> Cldr.Unit.Conversion.convert! Cldr.Unit.new!(:fahrenheit, 32), :celsius
-      #Unit<:celsius, 0.0>
+      #Unit<:celsius, 0>
 
       Cldr.Unit.Conversion.convert Cldr.Unit.new!(:mile, 1), :gallon
       ** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units of the same type. Received :mile and :gallon

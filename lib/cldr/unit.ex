@@ -5,12 +5,16 @@ defmodule Cldr.Unit do
 
   The primary public API defines:
 
-  * `Cldr.Unit.to_string/3` which, given a number and a unit name or unit list will output a localized string
+  * `Cldr.Unit.to_string/3` which, given a number and a unit name or unit list will
+    output a localized string
 
   * `Cldr.Unit.units/0` identifies the available units for localization
 
   * `Cldr.Unit.{add, sub, mult, div}/2` to support basic unit mathematics between
     units of compatible type (like length or volume)
+
+  * `Cldr.Unit.compare/2` to compare one unit to another unit as long as they
+    are convertable.
 
   * `Cldr.Unit.convert/2` to convert one unit to another unit as long as they
     are convertable.
@@ -53,6 +57,8 @@ defmodule Cldr.Unit do
   defdelegate round(unit, places, mode), to: Cldr.Unit.Math
   defdelegate round(unit, places), to: Cldr.Unit.Math
   defdelegate round(unit), to: Cldr.Unit.Math
+
+  defdelegate compare(unit_1, unit_2), to: Cldr.Unit.Math
 
   @doc """
   Returns a new `Unit.t` struct.
@@ -677,7 +683,7 @@ defmodule Cldr.Unit do
 
   @decimal_0 Decimal.new(0)
   def zero?(%Unit{value: value}) do
-    Decimal.cmp(value, @decimal_0) == :eq
+    Cldr.Math.decimal_compare(value, @decimal_0) == :eq
   end
 
   @doc """

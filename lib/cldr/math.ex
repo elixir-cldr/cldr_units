@@ -30,7 +30,7 @@ defmodule Cldr.Unit.Math do
       #Unit<:foot, 2>
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
-      #Unit<:foot, 5280.945925937846>
+      #Unit<:foot, 5281>
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
       {:error, {Cldr.Unit.IncompatibleUnitsError,
@@ -115,10 +115,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Unit<:kilogram, 4.54640709056436>
+      #Unit<:kilogram, 4.54640763>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Unit<:pint, 2.88662>
+      #Unit<:pint, 2.8866235811>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Unit<:pint, 4>
@@ -128,7 +128,7 @@ defmodule Cldr.Unit.Math do
 
   def sub(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
-    Unit.new!(unit, value_1 - value_2)
+    Unit.new!(unit, sub_round(value_1 - value_2))
   end
 
   def sub(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
@@ -155,6 +155,12 @@ defmodule Cldr.Unit.Math do
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
   end
+
+  # To help overcome some float precision issues
+  # Using decimal values is the better solution
+  @precision 10
+  defp sub_round(number) when is_integer(number), do: number
+  defp sub_round(number) when is_float(number), do: Float.round(number, @precision)
 
   @doc """
   Subtracts two compatible `%Unit{}` types
@@ -202,10 +208,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Unit<:kilogram, 2.2679645471781984>
+      #Unit<:kilogram, 2.2679618500000003>
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Unit<:pint, 10.566899999999999>
+      #Unit<:pint, 10.566882094325935>
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Unit<:pint, 5>
@@ -289,10 +295,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
   iex> Cldr.Unit.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-  #Unit<:kilogram, 11.023100000000001>
+  #Unit<:kilogram, 11.023113109243878>
 
   iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-  #Unit<:pint, 2.365878355998448>
+  #Unit<:pint, 2.365882365>
 
   iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
   #Unit<:pint, 5.0>
@@ -447,23 +453,23 @@ defmodule Cldr.Unit.Math do
 
       iex> x = Cldr.Unit.new(:kilometer, 1)
       iex> y = Cldr.Unit.new(:meter, 1000)
-      iex> Cldr.Unit.Math.cmp x, y
+      iex> Cldr.Unit.Math.compare x, y
       :eq
 
   """
-  def cmp(
+  def compare(
         %Unit{unit: unit, value: %Decimal{}} = unit_1,
         %Unit{unit: unit, value: %Decimal{}} = unit_2
       ) do
-    Decimal.cmp(unit_1.value, unit_2.value)
+    Cldr.Math.decimal_compare(unit_1.value, unit_2.value)
   end
 
-  def cmp(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
+  def compare(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
     unit_2 = Unit.Conversion.convert(unit_2, unit_1.unit)
-    cmp(unit_1, unit_2)
+    compare(unit_1, unit_2)
   end
 
-  def cmp(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
+  def compare(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
     cond do
       unit_1.value == unit_2.value -> :eq
       unit_1.value > unit_2.value -> :gt
@@ -471,7 +477,7 @@ defmodule Cldr.Unit.Math do
     end
   end
 
-  def cmp(%Unit{} = unit_1, %Unit{} = unit_2) do
+  def compare(%Unit{} = unit_1, %Unit{} = unit_2) do
     unit_1 =
       unit_1
       |> round(1, :half_even)
@@ -481,6 +487,12 @@ defmodule Cldr.Unit.Math do
       |> Unit.Conversion.convert(unit_1.unit)
       |> round(1, :half_even)
 
-    cmp(unit_1, unit_2)
+    compare(unit_1, unit_2)
   end
+
+  @deprecated "Please use Cldr.Unit.Math.compare/2"
+  def cmp(unit_1, unit_2) do
+    compare(unit_1, unit_2)
+  end
+
 end

@@ -41,6 +41,7 @@ defmodule CldrUnits.Mixfile do
       # {:ex_cldr, "~> 2.11"},
       {:ex_cldr, path: "../cldr", override: true},
       {:ex_cldr_numbers, "~> 2.6"},
+      {:cldr_utils, "~> 2.6", override: true},
       {:dialyxir, "~> 1.0.0-rc", only: [:dev], runtime: false},
       {:ex_cldr_lists, "~> 2.2"},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
