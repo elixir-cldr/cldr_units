@@ -44,15 +44,14 @@ defmodule CldrUnits.Mixfile do
       # {:ex_cldr, "~> 2.14"},
       {:ex_cldr, path: "../cldr", override: true},
       {:ex_cldr_numbers, "~> 2.12"},
+      {:ex_cldr_lists, "~> 2.2"},
 
       # Requires whatever the version is that add
       # support for Decimals
-      # {:ratio, "~> 2.0"},
-      {:ratio, path: "../elixir-rational"},
+      {:ratio, "~> 2.4"},
 
       {:decimal, "~> 1.6 or ~> 2.0", optional: true},
       {:dialyxir, "~> 1.0.0-rc", only: [:dev], runtime: false},
-      {:ex_cldr_lists, "~> 2.2"},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
       {:jason, "~> 1.0", optional: true},
       {:sweet_xml, "~> 0.6", only: [:dev, :test], optional: true}
