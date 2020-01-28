@@ -15,7 +15,10 @@ From [ex_cldr](https://hex.pm/packages/ex_cldr) version 2.0, a backend module mu
 In the following examples we assume the presence of a module called `MyApp.Cldr` defined as:
 ```elixir
 defmodule MyApp.Cldr do
-  use Cldr, locales: ["en", "fr"], default_locale: "en"
+  use Cldr,
+    locales: ["en", "fr"],
+    default_locale: "en",
+    providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 end
 ```
 
