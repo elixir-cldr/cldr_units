@@ -41,7 +41,8 @@ defmodule Cldr.Unit.Backend do
         defdelegate default_style, to: Cldr.Unit
         defdelegate validate_unit(unit), to: Cldr.Unit
         defdelegate validate_style(unit), to: Cldr.Unit
-        defdelegate unit_type(unit), to: Cldr.Unit
+
+        defdelegate unit_category(unit), to: Cldr.Unit
         defdelegate jaro_match(unit), to: Cldr.Unit
         defdelegate jaro_match(unit, distance), to: Cldr.Unit
         defdelegate best_match(unit), to: Cldr.Unit

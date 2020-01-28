@@ -63,7 +63,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns a new `Unit.t` struct.
 
-  ## Options
+  ## Arguments
 
   * `value` is any float, integer or `Decimal`
 
@@ -113,7 +113,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns a new `Unit.t` struct or raises on error.
 
-  ## Options
+  ## Arguments
 
   * `value` is any float, integer or `Decimal`
 
@@ -148,7 +148,7 @@ defmodule Cldr.Unit do
   Returns a boolean indicating if two units are
   of the same unit type.
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are any units returned by
     `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
@@ -640,6 +640,10 @@ defmodule Cldr.Unit do
   Returns a new unit of the same unit
   type but with a zero value.
 
+  ## Argument
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
   ## Example
 
       iex> u = Cldr.Unit.new(:foot, 23.3)
@@ -663,6 +667,10 @@ defmodule Cldr.Unit do
   @doc """
   Returns a boolean indicating whether a given unit
   has a zero value.
+
+  ## Argument
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
 
   ## Examples
 
@@ -707,7 +715,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `unit` is any units returned by
+  * `unit` is any unit returned by
     `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
 
   ## Returns
@@ -733,8 +741,8 @@ defmodule Cldr.Unit do
     end
   end
 
+  @deprecated "Please use `Cldr.Unit.unit_category/1"
   def unit_type(unit) do
-    IO.warn("Cldr.Unit.unit_type/1 is deprecated. Please use `Cldr.Unit.unit_category/1")
     unit_category(unit)
   end
 

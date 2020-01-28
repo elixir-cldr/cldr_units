@@ -38,13 +38,19 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      # {:ex_cldr, "~> 2.11"},
+      # Requires the version that contains the
+      # unit_conversions.xml files
+
+      # {:ex_cldr, "~> 2.14"},
       {:ex_cldr, path: "../cldr", override: true},
-      {:ex_cldr_numbers, "~> 2.6"},
-      {:cldr_utils, "~> 2.6", override: true},
-      {:ratio, path: "../elixir-rational"},
-      {:decimal, "~> 1.9-rc or ~> 2.0", override: true},
+      {:ex_cldr_numbers, "~> 2.12"},
+
+      # Requires whatever the version is that add
+      # support for Decimals
       # {:ratio, "~> 2.0"},
+      {:ratio, path: "../elixir-rational"},
+
+      {:decimal, "~> 1.6 or ~> 2.0", optional: true},
       {:dialyxir, "~> 1.0.0-rc", only: [:dev], runtime: false},
       {:ex_cldr_lists, "~> 2.2"},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},

@@ -8,7 +8,12 @@ defmodule Cldr.Unit.Conversion do
   alias Cldr.Unit
   import Unit, only: [incompatible_units_error: 2]
 
-  @factors Cldr.Config.unit_conversion_info()
+  @conversions Cldr.Config.unit_conversion_info()
+
+  # Here we are reconstituting the rationals representing the factor
+  # and offset for a conversion from their map form that came from
+  # JSON decoding.
+  @factors @conversions
            |> Map.get(:conversions)
            |> Enum.map(fn
                {unit, %{factor: factor} = conversion} when is_number(factor) ->
@@ -39,7 +44,7 @@ defmodule Cldr.Unit.Conversion do
   Convert one unit into another unit of the same
   unit type (length, volume, mass, ...)
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
@@ -140,7 +145,7 @@ defmodule Cldr.Unit.Conversion do
   unit type (length, volume, mass, ...) and raises
   on a unit type mismatch
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
