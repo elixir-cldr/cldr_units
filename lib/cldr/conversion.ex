@@ -110,20 +110,29 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert(%Decimal{} = value, from, to) do
+    use Ratio
+
     %{factor: from_factor, offset: from_offset} = from
     %{factor: to_factor, offset: to_offset} = to
 
     base =
-      value
-      |> Decimal.mult(decimal_new(from_factor))
-      |> Decimal.add(decimal_new(from_offset))
+      Ratio.new(value)
+      |> Ratio.mult(Ratio.new(from_factor))
+      |> Ratio.add(Ratio.new(from_offset))
 
     converted =
       base
-      |> Decimal.sub(decimal_new(to_offset))
-      |> Decimal.div(decimal_new(to_factor))
+      |> Ratio.sub(Ratio.new(to_offset))
+      |> Ratio.div(Ratio.new(to_factor))
+      |> Ratio.to_float
 
-    {:ok, converted}
+    truncated = trunc(converted)
+
+    if converted == truncated do
+      {:ok, truncated}
+    else
+      {:ok, converted}
+    end
   end
 
   defp convert(_value, from, to) do
@@ -170,7 +179,4 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-
-  defp decimal_new(n) when is_integer(n), do: Decimal.new(n)
-  defp decimal_new(n) when is_float(n), do: Decimal.from_float(n)
 end

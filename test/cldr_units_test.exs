@@ -42,7 +42,7 @@ defmodule Cldr.UnitsTest do
     celsius = Cldr.Unit.new(Decimal.new("0"), :celsius)
     kelvin = Cldr.Unit.Conversion.convert(celsius, :kelvin)
 
-    assert Decimal.equal?(Cldr.Unit.value(kelvin), Decimal.new("273.15"))
+    assert Decimal.equal?(Decimal.from_float(Cldr.Unit.value(kelvin)), Decimal.new("273.15"))
   end
 
   test "decimal conversion without function" do
