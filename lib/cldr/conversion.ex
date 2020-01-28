@@ -124,15 +124,9 @@ defmodule Cldr.Unit.Conversion do
       base
       |> Ratio.sub(Ratio.new(to_offset))
       |> Ratio.div(Ratio.new(to_factor))
-      |> Ratio.to_float
+      |> to_decimal
 
-    truncated = trunc(converted)
-
-    if converted == truncated do
-      {:ok, truncated}
-    else
-      {:ok, converted}
-    end
+    {:ok, converted}
   end
 
   defp convert(_value, from, to) do
@@ -177,6 +171,15 @@ defmodule Cldr.Unit.Conversion do
       {:error, {exception, reason}} -> raise exception, reason
       unit -> unit
     end
+  end
+
+  def to_decimal(%Ratio{numerator: numerator, denominator: denominator}) do
+    Decimal.new(numerator)
+    |> Decimal.div(Decimal.new(denominator))
+  end
+
+  def to_decimal(number) when is_integer(number) do
+    Decimal.new(number)
   end
 
 end
