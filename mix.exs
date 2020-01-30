@@ -40,14 +40,11 @@ defmodule CldrUnits.Mixfile do
     [
       # Requires the version that contains the
       # unit_conversions.xml files
-
       # {:ex_cldr, "~> 2.14"},
       {:ex_cldr, path: "../cldr", override: true},
+
       {:ex_cldr_numbers, "~> 2.12"},
       {:ex_cldr_lists, "~> 2.2"},
-
-      # Requires whatever the version is that add
-      # support for Decimals
       {:ratio, "~> 2.4"},
 
       {:decimal, "~> 1.6 or ~> 2.0", optional: true},

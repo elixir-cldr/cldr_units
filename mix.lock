@@ -1,5 +1,5 @@
 %{
-  "cldr_utils": {:hex, :cldr_utils, "2.6.0", "c1e398158e4925237452e49ad3e6a9b575987f890035bbf22ba60b7e632613e5", [:mix], [{:decimal, "~> 1.6 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: false]}], "hexpm"},
+  "cldr_utils": {:hex, :cldr_utils, "2.7.0", "6407e831e42413dc35a399f1d89ac4351f7ca3605787b82d0c25c059848d1354", [:mix], [{:decimal, "~> 1.6 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: false]}], "hexpm"},
   "coerce": {:hex, :coerce, "1.0.1", "211c27386315dc2894ac11bc1f413a0e38505d808153367bd5c6e75a4003d096", [:mix], [], "hexpm"},
   "decimal": {:hex, :decimal, "1.8.1", "a4ef3f5f3428bdbc0d35374029ffcf4ede8533536fa79896dd450168d9acdf3c", [:mix], [], "hexpm"},
   "dialyxir": {:hex, :dialyxir, "1.0.0-rc.7", "6287f8f2cb45df8584317a4be1075b8c9b8a69de8eeb82b4d9e6c761cf2664cd", [:mix], [{:erlex, ">= 0.2.5", [hex: :erlex, repo: "hexpm", optional: false]}], "hexpm"},

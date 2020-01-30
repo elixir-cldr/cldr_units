@@ -7,38 +7,7 @@ defmodule Cldr.Unit.Conversion do
 
   alias Cldr.Unit
   import Unit, only: [incompatible_units_error: 2]
-
-  @conversions Cldr.Config.unit_conversion_info()
-
-  # Here we are reconstituting the rationals representing the factor
-  # and offset for a conversion from their map form that came from
-  # JSON decoding.
-  @factors @conversions
-           |> Map.get(:conversions)
-           |> Enum.map(fn
-               {unit, %{factor: factor} = conversion} when is_number(factor) ->
-                  {unit, conversion}
-               {unit, %{factor: factor} = conversion} ->
-                  {unit, %{conversion | factor: Ratio.new(factor.numerator, factor.denominator)}}
-           end)
-           |> Enum.map(fn
-               {unit, %{offset: offset} = conversion} when is_number(offset) ->
-                  {unit, conversion}
-               {unit, %{offset: offset} = conversion} ->
-                  {unit, %{conversion | offset: Ratio.new(offset.numerator, offset.denominator)}}
-           end)
-           |> Map.new
-
-  @inverse_factors Enum.map(@factors, fn {_k, v} -> {v.target, %{factor: 1, offset: 0}} end)
-  |> Map.new
-
-  def factors do
-    unquote(Macro.escape(Map.merge(@factors, @inverse_factors)))
-  end
-
-  def factors(factor) do
-    Map.get(factors(), factor)
-  end
+  import Cldr.Unit.Factor, only: [factors: 1]
 
   @doc """
   Convert one unit into another unit of the same
