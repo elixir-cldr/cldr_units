@@ -44,6 +44,9 @@ defmodule Cldr.Unit do
   @styles [:long, :short, :narrow]
 
   defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
+  defdelegate preferred_units(unit, backend, options), to: Cldr.Unit.Conversion
+  defdelegate preferred_units!(unit, backend, options), to: Cldr.Unit.Conversion
+
   defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math

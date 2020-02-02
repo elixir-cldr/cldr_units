@@ -216,6 +216,134 @@ defmodule Cldr.Unit.Backend do
           Cldr.Unit.to_string!(number, unquote(backend), options)
         end
 
+        @doc """
+        Returns a list of the preferred units for a given
+        unit, locale, use case and scope.
+
+        The units used to represent length, volume and so on
+        depend on a given territory, measurement system and usage.
+
+        For example, in the US, people height is most commonly
+        referred to in `inches`, or informally as `feet and inches`.
+        In most of the rest of the world it is `centimeters`.
+
+        ### Arguments
+
+        * `unit` is any unit returned by `Cldr.Unit.new/2`.
+
+        * `backend` is any Cldr backend module. That is, any module
+          that includes `use Cldr`. The default is `Cldr.default_backend/0`
+
+        * `options` is a keyword list of options or a
+          `Cldr.Unit.Conversion.Options` struct. The default
+          is `[]`.
+
+        ### Options
+
+        * `:usage` is the unit usage. for example `;person` for a unit
+          type of length. The available usage for a given unit category can
+          be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`.
+
+        * `:scope` is either `:small` or `nil`. In some usage, the units
+          used are different when the unit size is small. It is up to the
+          developer to determine when `scope: :small` is appropriate.
+
+        * `:alt` is either `:informal` or `nil`. Like `:scope`, the units
+          in use depend on whether they are being used in a formal or informal
+          context.
+
+        * `:locale` is any locale returned by `Cldr.validate_locale/2`
+
+        ### Returns
+
+        * `{:ok, unit_list}` or
+
+        * `{:error, {exception, reason}}`
+
+        ### Examples
+
+            iex> meter = Cldr.Unit.new :meter, 1
+            #Unit<:meter, 1>
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person, alt: :informal
+            {:ok, [:foot, :inch]}
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
+            {:ok, [:inch]}
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :person
+            {:ok, [:centimeter]}
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :road
+            {:ok, [:mile]}
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :road
+            {:ok, [:kilometer]}
+
+        """
+        def preferred_units(unit, options \\ []) do
+          Cldr.Unit.Conversion.preferred_units(unit, unquote(backend), options)
+        end
+
+        @doc """
+        Returns a list of the preferred units for a given
+        unit, locale, use case and scope.
+
+        The units used to represent length, volume and so on
+        depend on a given territory, measurement system and usage.
+
+        For example, in the US, people height is most commonly
+        referred to in `inches`, or informally as `feet and inches`.
+        In most of the rest of the world it is `centimeters`.
+
+        ### Arguments
+
+        * `unit` is any unit returned by `Cldr.Unit.new/2`.
+
+        * `backend` is any Cldr backend module. That is, any module
+          that includes `use Cldr`. The default is `Cldr.default_backend/0`
+
+        * `options` is a keyword list of options or a
+          `Cldr.Unit.Conversion.Options` struct. The default
+          is `[]`.
+
+        ### Options
+
+        * `:usage` is the unit usage. for example `;person` for a unit
+          type of length. The available usage for a given unit category can
+          be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`.
+
+        * `:scope` is either `:small` or `nil`. In some usage, the units
+          used are different when the unit size is small. It is up to the
+          developer to determine when `scope: :small` is appropriate.
+
+        * `:alt` is either `:informal` or `nil`. Like `:scope`, the units
+          in use depend on whether they are being used in a formal or informal
+          context.
+
+        * `:locale` is any locale returned by `Cldr.validate_locale/2`
+
+        ### Returns
+
+        * `unit_list` or
+
+        * raises an exception
+
+        ### Examples
+
+            iex> meter = Cldr.Unit.new :meter, 1
+            #Unit<:meter, 1>
+            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person, alt: :informal
+            [:foot, :inch]
+            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person
+            [:inch]
+            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :person
+            [:centimeter]
+            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :road
+            [:mile]
+            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :road
+            [:kilometer]
+
+        """
+        def preferred_units!(unit, options \\ []) do
+          Cldr.Unit.Conversion.preferred_units!(unit, unquote(backend), options)
+        end
+
         # Generate the functions that encapsulate the unit data from CDLR
         @doc false
         def units_for(locale \\ unquote(backend).get_locale(), style \\ Cldr.Unit.default_style())

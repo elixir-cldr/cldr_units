@@ -1,10 +1,37 @@
-# Changelog for Cldr_Units v2.7.0
+# Changelog for Cldr_Units v3.0.0
 
-This is the changelog for Cldr_units v2.8.0 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
 * Incorporate CLDR's unit conversion data into the conversion engine
+
+* Add `Cldr.Unit.Conversion.preferred_units/3` that returns a list of preferred units for a given unit. This makes it straight forward to take a unit and convert it to the units preferred by the user for a given unit type, locale and use case.  For example:
+
+**Examples**
+
+      iex> meter = Cldr.Unit.new :meter, 1
+      #Unit<:meter, 1>
+      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal
+      {:ok, [:foot, :inch]}
+      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
+      {:ok, [:inch]}
+      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
+      {:ok, [:centimeter]}
+      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
+      {:ok, [:mile]}
+      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
+      {:ok, [:kilometer]}
+
+**Converting one unit to a locale specific unit list**
+
+One common pattern is to convert a given unit into the units appropriate for a given local and usage. This can be accomplished with a combination of `Cldr.Unit.Conversion.preferred_units/2`and `Cldr.Unit.decompose/2`. For example:
+
+      iex> meter = Cldr.Unit.new(:meter, 1)
+      iex> with {:ok, preferred_units} <- Cldr.Unit.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal) do
+      ...>   Cldr.Unit.decompose(meter, preferred_units)
+      ...> end
+      [Cldr.Unit.new(:foot, 3), Cldr.Unit.new(:inch, 3)]
 
 # Changelog for Cldr_Units v2.7.0
 
