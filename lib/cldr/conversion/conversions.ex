@@ -16,7 +16,7 @@ defmodule Cldr.Unit.Conversions do
   end)
   |> Map.new
 
-  @inverse_conversions Enum.map(@conversions, fn {_k, v} -> {v.target, %{factor: 1, offset: 0}} end)
+  @inverse_conversions Enum.map(@conversions, fn {_k, v} -> {v.base_unit, %{factor: 1, offset: 0}} end)
                        |> Map.new
 
   @all_conversions Map.merge(@conversions, @inverse_conversions)
