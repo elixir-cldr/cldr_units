@@ -2,9 +2,15 @@
 
 This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
+### Deprecations
+
+* Deprecate 'Cldr.Unit.unit_categories/0` in favour of `Cldr.Unit.known_unit_categories/0` to be consistent across CLDR.
+
 ### Enhancements
 
 * Incorporate CLDR's unit conversion data into the conversion engine
+
+* Add `Cldr.Unit.known_measurement_sytems/0` to return the known measurement systems
 
 * Add `Cldr.Unit.Conversion.preferred_units/3` that returns a list of preferred units for a given unit. This makes it straight forward to take a unit and convert it to the units preferred by the user for a given unit type, locale and use case.  For example:
 

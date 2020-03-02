@@ -245,7 +245,7 @@ defmodule Cldr.Unit.Conversion do
     with {:ok, locale} <- backend.validate_locale(locale || backend.get_locale()) do
       territory = atomize(locale.territory)
       category = Unit.unit_category(unit.unit)
-      preferences = Cldr.Config.unit_preferences()
+      preferences = Cldr.Unit.unit_preferences()
 
       preferred_units =
         get_in(preferences, [category, usage, scope, alt, territory]) ||

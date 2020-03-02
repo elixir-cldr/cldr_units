@@ -29,14 +29,13 @@ defmodule Cldr.Unit.Backend do
         defdelegate localize(unit, usage, options), to: Cldr.Unit
 
         defdelegate unit_preferences, to: Cldr.Unit
-        defdelegate measurement_systems, to: Cldr.Unit
         defdelegate measurement_system_for(territory), to: Cldr.Unit
         defdelegate measurement_system_for(territory, category), to: Cldr.Unit
 
         defdelegate units, to: Cldr.Unit
         defdelegate units(type), to: Cldr.Unit
         defdelegate unit_tree, to: Cldr.Unit
-        defdelegate unit_categories, to: Cldr.Unit
+        defdelegate known_unit_categories, to: Cldr.Unit
         defdelegate styles, to: Cldr.Unit
         defdelegate default_style, to: Cldr.Unit
         defdelegate validate_unit(unit), to: Cldr.Unit

@@ -1,7 +1,7 @@
 defmodule Cldr.Unit.Conversions do
   @moduledoc false
 
-  @conversions Map.get(Cldr.Config.unit_conversion_info(), :conversions)
+  @conversions Map.get(Cldr.Config.units(), :conversions)
   |> Enum.map(fn
       {unit, %{factor: factor} = conversion} when is_number(factor) ->
          {unit, conversion}

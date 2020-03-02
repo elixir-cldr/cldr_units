@@ -698,20 +698,47 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Return a list of known measurement systems.
+
+  ## Example
+
+      iex> Cldr.Unit.known_measurement_systems()
+      %{
+        metric: %{alias: nil, description: "Metric System"},
+        uksystem: %{
+          alias: :imperial,
+          description: "UK System of measurement: feet, pints, etc.; pints are 20oz"
+        },
+        ussystem: %{
+          alias: nil,
+          description: "US System of measurement: feet, pints, etc.; pints are 16oz"
+        }
+      }
+
+  """
+  @measurement_systems Cldr.Config.measurement_systems()
+  def known_measurement_systems do
+    @measurement_systems
+  end
+
+  @doc """
   Returns a list of the known unit categories.
 
   ## Example
 
-      iex> Cldr.Unit.unit_categories
+      iex> Cldr.Unit.known_unit_categories
       [:acceleration, :angle, :area, :compound, :concentr, :consumption, :coordinate, :digital,
        :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
        :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """
   @unit_categories Map.keys(@unit_tree)
-  def unit_categories do
+  def known_unit_categories do
     @unit_categories
   end
+
+  @deprecated "Use `Cldr.Unit.known_unit_categories/0"
+  defdelegate unit_categories(), to: __MODULE__, as: :known_unit_categories
 
   @doc """
   Returns the units category for a given unit
@@ -1083,7 +1110,7 @@ defmodule Cldr.Unit do
   category and unit usage.
 
   """
-  @unit_preferences Cldr.Config.unit_preferences()
+  @unit_preferences Cldr.Config.units() |> Map.get(:preferences)
   @spec unit_preferences() :: map()
   def unit_preferences do
     @unit_preferences
@@ -1101,22 +1128,23 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.measurement_system_for :US
-      :US
+      :ussystem
 
       iex> Cldr.Unit.measurement_system_for :GB
-      :UK
+      :uksystem
 
       iex> Cldr.Unit.measurement_system_for :AU
       :metric
 
   """
   @spec measurement_system_for(atom()) ::
-          :metric | :US | :UK | {:error, {module(), String.t()}}
+          :metric | :ussystem | :uk_system | {:error, {module(), String.t()}}
 
   def measurement_system_for(territory) do
     with {:ok, territory} <- Cldr.validate_territory(territory) do
-      map = measurement_systems()
-      get_in(map, [:default, territory]) || get_in(map, [:default, :"001"])
+      territory
+      |> Cldr.Config.territory()
+      |> get_in([:measurement_system, :default])
     end
   end
 
@@ -1127,73 +1155,24 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.measurement_system_for :US, :temperature
-      :US
+      :ussystem
 
       iex> Cldr.Unit.measurement_system_for :BS, :temperature
-      :US
+      :ussystem
 
       iex> Cldr.Unit.measurement_system_for :BS
       :metric
 
   """
   @spec measurement_system_for(atom(), atom()) ::
-          :metric | :US | :UK | nil | {:error, {module(), String.t()}}
+           :metric | :ussystem | :uk_system | {:error, {module(), String.t()}}
 
   def measurement_system_for(territory, category) do
     with {:ok, territory} <- Cldr.validate_territory(territory) do
-      map = measurement_systems()
-
-      get_in(map, [category, territory]) || get_in(map, [:default, territory]) ||
-        get_in(map, [:default, :"001"])
+      territory
+      |> Cldr.Config.territory()
+      |> get_in([:measurement_system, category])
     end
-  end
-
-  @doc """
-  Returns the measurement system in use by territory
-
-  ## Example
-
-      iex> Cldr.Unit.measurement_systems
-      %{
-        default: %{
-          "001": :metric,
-          GB: :UK,
-          LR: :US,
-          MM: :US,
-          US: :US
-        },
-        paper_size: %{
-          "001": :A4,
-          BZ: :"US-Letter",
-          CA: :"US-Letter",
-          CL: :"US-Letter",
-          CO: :"US-Letter",
-          CR: :"US-Letter",
-          GT: :"US-Letter",
-          MX: :"US-Letter",
-          NI: :"US-Letter",
-          PA: :"US-Letter",
-          PH: :"US-Letter",
-          PR: :"US-Letter",
-          SV: :"US-Letter",
-          US: :"US-Letter",
-          VE: :"US-Letter"
-        },
-        temperature: %{
-          BS: :US,
-          BZ: :US,
-          KY: :US,
-          LR: :metric,
-          MM: :metric,
-          PR: :US,
-          PW: :US
-        }
-      }
-
-  """
-  @measurement_systems Cldr.Config.measurement_system()
-  def measurement_systems do
-    @measurement_systems
   end
 
   defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
