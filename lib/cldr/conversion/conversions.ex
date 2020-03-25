@@ -2,6 +2,7 @@ defmodule Cldr.Unit.Conversions do
   @moduledoc false
 
   alias Cldr.Unit.Conversion.Derived
+  alias Cldr.Unit.Alias
 
   @conversions Map.get(Cldr.Config.units(), :conversions)
   |> Enum.map(fn
@@ -17,10 +18,12 @@ defmodule Cldr.Unit.Conversions do
          {unit, %{conversion | offset: Ratio.new(offset.numerator, offset.denominator)}}
   end)
   |> Map.new
-  |> Derived.add_derived_conversions(Cldr.Unit.known_units)
+  |> Derived.add_derived_conversions(Cldr.Unit.known_units |> Enum.map(&Alias.alias/1))
 
-  @identity_conversions Enum.map(@conversions, fn {_k, v} -> {v.base_unit, %{factor: 1, offset: 0}} end)
-                       |> Map.new
+  @identity_conversions Enum.map(@conversions, fn
+    {_k, v} -> {v.base_unit, %{factor: 1, offset: 0}}
+  end)
+  |> Map.new
 
   @all_conversions Map.merge(@conversions, @identity_conversions)
 

@@ -43,24 +43,23 @@ defmodule Cldr.Unit.Conversion.Derived do
   end
 
   def add_derived_conversions(conversions, units) do
-    updated_conversions =
-      conversions
-      |> si_factor_conversions(units)
-      |> Map.merge(conversions)
-
-    compound_unit_conversions(updated_conversions, units)
-    |> Map.merge(exponent_unit_conversions(updated_conversions, units))
-    |> Map.merge(updated_conversions)
+    conversions
+    |> add_si_factor_conversions(units)
+    |> add_exponent_unit_conversions(units)
+    |> add_per_unit_conversions(units)
     |> Cldr.Map.atomize_keys(level: 1)
   end
 
   def unconvertible_units do
-    for unit <- Cldr.Unit.known_units, not Map.has_key?(Cldr.Unit.Conversions.conversions(), unit) do
+    units = Cldr.Unit.known_units |> Enum.map(&Cldr.Unit.Alias.alias/1)
+    conversions = Cldr.Unit.Conversions.conversions()
+
+    for unit <- units, not Map.has_key?(conversions, unit) do
       unit
     end
   end
 
-  defp si_factor_conversions(conversions, units) do
+  defp add_si_factor_conversions(conversions, units) do
     for unit <- units, not Map.has_key?(conversions, unit) do
       with {:ok, _prefix, base_unit, si_factor} <- resolve_si_prefix(unit) do
         if Map.has_key?(conversions, base_unit) do
@@ -74,23 +73,10 @@ defmodule Cldr.Unit.Conversion.Derived do
     end
     |> Enum.reject(&is_nil/1)
     |> Map.new
+    |> Map.merge(conversions)
   end
 
-  defp compound_unit_conversions(conversions, units) do
-    for unit <- units, not Map.has_key?(conversions, unit) do
-      conversion =
-        unit
-        |> String.split("_per_")
-        |> Enum.map(&Map.get(conversions, &1))
-        |> craft_compound_conversion
-
-      {unit, conversion}
-    end
-    |> Enum.reject(&is_nil(elem(&1, 1)))
-    |> Map.new
-  end
-
-  defp exponent_unit_conversions(conversions, units) do
+  defp add_exponent_unit_conversions(conversions, units) do
     for unit <- units, not Map.has_key?(conversions, unit) do
       with {:ok, exponent, prefix, base_unit} <- resolve_exponent_prefix(unit) do
         if Map.has_key?(conversions, base_unit) do
@@ -110,6 +96,22 @@ defmodule Cldr.Unit.Conversion.Derived do
     end
     |> Enum.reject(&is_nil/1)
     |> Map.new
+    |> Map.merge(conversions)
+  end
+
+  defp add_per_unit_conversions(conversions, units) do
+    for unit <- units, not Map.has_key?(conversions, unit) do
+      conversion =
+        unit
+        |> String.split("_per_")
+        |> Enum.map(&Map.get(conversions, &1))
+        |> craft_compound_conversion
+
+      {unit, conversion}
+    end
+    |> Enum.reject(&is_nil(elem(&1, 1)))
+    |> Map.new
+    |> Map.merge(conversions)
   end
 
   defp craft_compound_conversion([nil]), do: nil
