@@ -243,6 +243,7 @@ defmodule Cldr.Unit.Conversion do
     %{usage: usage, scope: scope, alt: alt, locale: locale} = options
 
     with {:ok, locale} <- backend.validate_locale(locale || backend.get_locale()) do
+      # TODO territory should also conside the -u-rd flag
       territory = atomize(locale.territory)
       category = Unit.unit_category(unit.unit)
       preferences = Cldr.Unit.unit_preferences()

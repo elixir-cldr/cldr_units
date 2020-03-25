@@ -839,7 +839,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      Cldr.Unit.units
+      Cldr.Unit.known_units
       [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
        :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
        :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
@@ -855,10 +855,13 @@ defmodule Cldr.Unit do
          |> Map.values()
          |> List.flatten()
 
-  @spec units :: [atom, ...]
-  def units do
+  @spec known_units :: [atom, ...]
+  def known_units do
     @units
   end
+
+  @deprecated "Use Cldr.Unit.known_units/0"
+  def units, do: known_units()
 
   @doc """
   Returns the units for a given unit type
