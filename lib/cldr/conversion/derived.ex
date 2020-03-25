@@ -43,34 +43,61 @@ defmodule Cldr.Unit.Conversion.Derived do
   end
 
   def add_derived_conversions(conversions, units) do
-    conversions
-    |> additional_conversions(units)
-    |> Map.merge(conversions)
+    updated_conversions =
+      conversions
+      |> si_factor_conversions(units)
+      |> Map.merge(conversions)
+
+    compound_unit_conversions(updated_conversions, units)
+    |> Map.merge(updated_conversions)
     |> Cldr.Map.atomize_keys(level: 1)
   end
 
-  defp additional_conversions(conversions, units) do
-    known_conversions = Map.keys(conversions)
-
-    for unit <- units, unit not in known_conversions do
+  defp si_factor_conversions(conversions, units) do
+    for unit <- units, not Map.has_key?(conversions, unit) do
       with {:ok, _prefix, base_unit, si_factor} <- resolve_si_prefix(unit) do
-        if base_unit in known_conversions do
+        if Map.has_key?(conversions, base_unit) do
           base_conversion = Map.fetch!(conversions, base_unit)
           new_factor = Ratio.mult(base_conversion.factor, si_factor)
           {unit, %{base_conversion | factor: new_factor}}
-        else
-          # IO.puts "The unit #{unit} is localisable but has no conversion for the base unit"
-          # There is where we need to process compount units to derived a conversion
-          nil
         end
-      else _other ->
-        # IO.puts "The unit #{unit} is localisable, has no conversion and has no SI prefix"
-        # We also have to deal with compount units here
-        nil
+      else
+        _other -> nil
       end
     end
     |> Enum.reject(&is_nil/1)
     |> Map.new
+  end
+
+  def compound_unit_conversions(conversions, units) do
+    for unit <- units, not Map.has_key?(conversions, unit) do
+      conversion =
+        unit
+        |> String.split("_per_")
+        |> Enum.map(&Map.get(conversions, &1))
+        |> craft_compound_conversion
+
+      {unit, conversion}
+    end
+    |> Enum.reject(&is_nil(elem(&1, 1)))
+    |> Map.new
+  end
+
+  def craft_compound_conversion([nil]), do: nil
+  def craft_compound_conversion([nil, _]), do: nil
+  def craft_compound_conversion([_, nil]), do: nil
+
+  def craft_compound_conversion([c1, c2]) do
+    c1
+    |> Map.put(:base_unit, String.to_atom("#{c1.base_unit}_per_#{c2.base_unit}"))
+    |> Map.put(:factor, Ratio.div(c1.factor, c2.factor))
+  end
+
+  def unconvertible_units do
+    for unit <- Cldr.Unit.known_units, not Map.has_key?(Cldr.Unit.Conversions.conversions(), unit) do
+      IO.puts "Unit #{unit} is not convertible"
+    end
+    nil
   end
 
   for {prefix, factor} <- @si_factors do
