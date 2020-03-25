@@ -54,6 +54,12 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> Cldr.Map.atomize_keys(level: 1)
   end
 
+  def unconvertible_units do
+    for unit <- Cldr.Unit.known_units, not Map.has_key?(Cldr.Unit.Conversions.conversions(), unit) do
+      unit
+    end
+  end
+
   defp si_factor_conversions(conversions, units) do
     for unit <- units, not Map.has_key?(conversions, unit) do
       with {:ok, _prefix, base_unit, si_factor} <- resolve_si_prefix(unit) do
@@ -70,7 +76,7 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> Map.new
   end
 
-  def compound_unit_conversions(conversions, units) do
+  defp compound_unit_conversions(conversions, units) do
     for unit <- units, not Map.has_key?(conversions, unit) do
       conversion =
         unit
@@ -84,7 +90,7 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> Map.new
   end
 
-  def exponent_unit_conversions(conversions, units) do
+  defp exponent_unit_conversions(conversions, units) do
     for unit <- units, not Map.has_key?(conversions, unit) do
       with {:ok, exponent, prefix, base_unit} <- resolve_exponent_prefix(unit) do
         if Map.has_key?(conversions, base_unit) do
@@ -114,13 +120,6 @@ defmodule Cldr.Unit.Conversion.Derived do
     c1
     |> Map.put(:base_unit, String.to_atom("#{c1.base_unit}_per_#{c2.base_unit}"))
     |> Map.put(:factor, Ratio.div(c1.factor, c2.factor))
-  end
-
-  def unconvertible_units do
-    for unit <- Cldr.Unit.known_units, not Map.has_key?(Cldr.Unit.Conversions.conversions(), unit) do
-      IO.puts "Unit #{unit} is not convertible"
-    end
-    nil
   end
 
   defp resolve_exponent_prefix(<< "square_", base_unit :: binary >>) do
