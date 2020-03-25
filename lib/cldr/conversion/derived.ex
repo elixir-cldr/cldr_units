@@ -31,9 +31,9 @@ defmodule Cldr.Unit.Conversion.Derived do
     "giga"  =>  1_000_000_000,
     "tera"  =>  1_000_000_000_000,
     "peta"  =>  1_000_000_000_000_000,
-    "exa"   =>   1_000_000_000_000_000_000,
-    "zetta" => 1_000_000_000_000_000_000_000,
-    "yotta" => 1_000_000_000_000_000_000_000_000
+    "exa"   =>  1_000_000_000_000_000_000,
+    "zetta" =>  1_000_000_000_000_000_000_000,
+    "yotta" =>  1_000_000_000_000_000_000_000_000
   }
 
   def add_derived_conversions(conversions, [unit | _rest] = units) when is_atom(unit) do
@@ -43,47 +43,44 @@ defmodule Cldr.Unit.Conversion.Derived do
   end
 
   def add_derived_conversions(conversions, units) do
-    known_conversions = Map.keys(conversions)
-
-    additional_conversions =
-      for unit <- units, unit not in known_conversions do
-        with {:ok, _prefix, base_unit, si_factor} <- resolve_si_prefix(unit) do
-          if base_unit in known_conversions do
-            base_conversion = Map.fetch!(conversions, base_unit)
-            new_factor = Ratio.mult(base_conversion.factor, si_factor)
-            {unit, %{base_conversion | factor: new_factor}}
-          else
-            # IO.puts "The unit #{unit} is localisable but has no conversion for the base unit"
-            # There is where we need to process compount units to derived a conversion
-            nil
-          end
-        else _other ->
-          # IO.puts "The unit #{unit} is localisable, has no conversion and has no SI prefix"
-          # We also have to deal with compount units here
-          nil
-        end
-      end
-      |> Enum.reject(&is_nil/1)
-      |> Map.new
-
     conversions
-    |> Map.merge(additional_conversions)
+    |> additional_conversions(units)
+    |> Map.merge(conversions)
     |> Cldr.Map.atomize_keys(level: 1)
   end
 
+  defp additional_conversions(conversions, units) do
+    known_conversions = Map.keys(conversions)
+
+    for unit <- units, unit not in known_conversions do
+      with {:ok, _prefix, base_unit, si_factor} <- resolve_si_prefix(unit) do
+        if base_unit in known_conversions do
+          base_conversion = Map.fetch!(conversions, base_unit)
+          new_factor = Ratio.mult(base_conversion.factor, si_factor)
+          {unit, %{base_conversion | factor: new_factor}}
+        else
+          # IO.puts "The unit #{unit} is localisable but has no conversion for the base unit"
+          # There is where we need to process compount units to derived a conversion
+          nil
+        end
+      else _other ->
+        # IO.puts "The unit #{unit} is localisable, has no conversion and has no SI prefix"
+        # We also have to deal with compount units here
+        nil
+      end
+    end
+    |> Enum.reject(&is_nil/1)
+    |> Map.new
+  end
+
   for {prefix, factor} <- @si_factors do
-    def resolve_si_prefix(<< unquote(prefix), base_unit :: binary >>) do
+    defp resolve_si_prefix(<< unquote(prefix), base_unit :: binary >>) do
       {:ok, unquote(prefix), base_unit, unquote(Macro.escape(factor))}
     end
   end
 
-  def resolve_si_prefix(unit) do
+  defp resolve_si_prefix(unit) do
     {:error, "No known SI prefix for unit #{unit}"}
   end
 
-  for {prefix, factor} <- @si_factors do
-    def si_prefix_factor(unquote(prefix)), do: {:ok, unquote(Macro.escape(factor))}
-  end
-
-  def si_prefix_factor(_other), do: {:error, :no_such_factor}
 end
