@@ -49,6 +49,7 @@ defmodule Cldr.Unit.Conversion.Derived do
       |> Map.merge(conversions)
 
     compound_unit_conversions(updated_conversions, units)
+    |> Map.merge(exponent_unit_conversions(updated_conversions, units))
     |> Map.merge(updated_conversions)
     |> Cldr.Map.atomize_keys(level: 1)
   end
@@ -83,11 +84,33 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> Map.new
   end
 
-  def craft_compound_conversion([nil]), do: nil
-  def craft_compound_conversion([nil, _]), do: nil
-  def craft_compound_conversion([_, nil]), do: nil
+  def exponent_unit_conversions(conversions, units) do
+    for unit <- units, not Map.has_key?(conversions, unit) do
+      with {:ok, exponent, prefix, base_unit} <- resolve_exponent_prefix(unit) do
+        if Map.has_key?(conversions, base_unit) do
+          base_conversion = Map.fetch!(conversions, base_unit)
+          new_factor = Ratio.pow(base_conversion.factor, exponent)
 
-  def craft_compound_conversion([c1, c2]) do
+          conversion =
+            base_conversion
+            |> Map.put(:factor, new_factor)
+            |> Map.put(:base_unit, String.to_atom("#{prefix}_#{base_unit}"))
+
+          {unit, conversion}
+        end
+      else
+        _other -> nil
+      end
+    end
+    |> Enum.reject(&is_nil/1)
+    |> Map.new
+  end
+
+  defp craft_compound_conversion([nil]), do: nil
+  defp craft_compound_conversion([nil, _]), do: nil
+  defp craft_compound_conversion([_, nil]), do: nil
+
+  defp craft_compound_conversion([c1, c2]) do
     c1
     |> Map.put(:base_unit, String.to_atom("#{c1.base_unit}_per_#{c2.base_unit}"))
     |> Map.put(:factor, Ratio.div(c1.factor, c2.factor))
@@ -98,6 +121,18 @@ defmodule Cldr.Unit.Conversion.Derived do
       IO.puts "Unit #{unit} is not convertible"
     end
     nil
+  end
+
+  defp resolve_exponent_prefix(<< "square_", base_unit :: binary >>) do
+    {:ok, 2, "square", base_unit}
+  end
+
+  defp resolve_exponent_prefix(<< "cubic_", base_unit :: binary >>) do
+    {:ok, 3, "cubic", base_unit}
+  end
+
+  defp resolve_exponent_prefix(unit) do
+    {:error, "No known expenent prefix for unit #{unit}"}
   end
 
   for {prefix, factor} <- @si_factors do
