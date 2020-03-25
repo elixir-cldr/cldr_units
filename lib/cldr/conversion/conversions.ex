@@ -1,6 +1,8 @@
 defmodule Cldr.Unit.Conversions do
   @moduledoc false
 
+  alias Cldr.Unit.Conversion.Derived
+
   @conversions Map.get(Cldr.Config.units(), :conversions)
   |> Enum.map(fn
       {unit, %{factor: factor} = conversion} when is_number(factor) ->
@@ -15,11 +17,12 @@ defmodule Cldr.Unit.Conversions do
          {unit, %{conversion | offset: Ratio.new(offset.numerator, offset.denominator)}}
   end)
   |> Map.new
+  |> Derived.add_derived_conversions(Cldr.Unit.known_units)
 
-  @inverse_conversions Enum.map(@conversions, fn {_k, v} -> {v.base_unit, %{factor: 1, offset: 0}} end)
+  @identity_conversions Enum.map(@conversions, fn {_k, v} -> {v.base_unit, %{factor: 1, offset: 0}} end)
                        |> Map.new
 
-  @all_conversions Map.merge(@conversions, @inverse_conversions)
+  @all_conversions Map.merge(@conversions, @identity_conversions)
 
   def conversions do
     unquote(Macro.escape(@all_conversions))

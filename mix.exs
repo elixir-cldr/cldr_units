@@ -42,6 +42,7 @@ defmodule CldrUnits.Mixfile do
       # unit_conversions.xml files
       # {:ex_cldr, "~> 2.14"},
       {:ex_cldr, path: "../cldr", override: true},
+      {:cldr_utils, path: "../cldr_utils", override: true},
 
       {:ex_cldr_numbers, "~> 2.12"},
       {:ex_cldr_lists, "~> 2.2"},

@@ -32,7 +32,7 @@ defmodule Cldr.Unit.Backend do
         defdelegate measurement_system_for(territory), to: Cldr.Unit
         defdelegate measurement_system_for(territory, category), to: Cldr.Unit
 
-        defdelegate units, to: Cldr.Unit
+        defdelegate known_units, to: Cldr.Unit
         defdelegate units(type), to: Cldr.Unit
         defdelegate unit_tree, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
