@@ -287,7 +287,10 @@ defmodule Cldr.Unit do
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale) do
-      options = Map.to_list(options)
+      options =
+        options
+        |> Map.to_list
+        |> Keyword.put(:locale, locale)
 
       list_options =
         options
@@ -295,7 +298,7 @@ defmodule Cldr.Unit do
         |> Keyword.put(:locale, locale)
 
       unit_list
-      |> Enum.map(&to_string!(&1, backend, options ++ [locale: locale]))
+      |> Enum.map(&to_string!(&1, backend, options))
       |> Cldr.List.to_string(backend, list_options)
     end
   end
