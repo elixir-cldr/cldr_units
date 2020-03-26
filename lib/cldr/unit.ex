@@ -31,6 +31,7 @@ defmodule Cldr.Unit do
   alias Cldr.Unit.Alias
   alias Cldr.Unit
   alias Cldr.Unit.Math
+  alias Cldr.Unit.Preference
 
   @enforce_keys [:unit, :value]
   defstruct unit: nil, value: 0
@@ -533,113 +534,40 @@ defmodule Cldr.Unit do
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  * `usage` is the way in which the unit is intended
-    to be used.  The available `usage` varyies according
-    to the unit category.  See `Cldr.Unit.unit_preferences/0`.
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module.
 
   * `options` is a keyword list of options
 
   ## Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`
 
   * `:territory` is any valid territory code returned by
     `Cldr.known_territories/0`. The default is the territory defined
     as part of the `:locale`.
 
-  * `:scope` may be set to `:small` to indicate that a unit conversion
-    intended for "small" unit sizes is preferred. In some territories it is
-    customary to use different units for "small" sizes from those that
-    are "large".
-
-  * `:style` may be set to `:informal` to indicate that a more informal
-    unit conversion be applied.
+  * `:usage` is the way in which the unit is intended
+    to be used.  The available `usage` varyies according
+    to the unit category.  See `Cldr.Unit.unit_preferences/0`.
 
   ## Examples
 
-      iex> Cldr.Unit.localize(Cldr.Unit.new(100, :meter), :person, territory: :US)
+      iex> Cldr.Unit.localize(Cldr.Unit.new(100, :meter), usage: :person, territory: :US)
       [Cldr.Unit.new(:inch, 3937)]
 
-      iex> Cldr.Unit.localize(Cldr.Unit.new(100, :meter), :person, territory: :US, style: :informal)
-      [Cldr.Unit.new(:foot, 328), Cldr.Unit.new(:inch, 1)]
-
   """
-  def localize(%Unit{} = unit, usage, options) do
-    locale = Keyword.get(options, :locale, Cldr.get_locale())
+  def localize(%Unit{} = unit, backend, options) do
+    locale = Keyword.get_lazy(options, :locale, &backend.get_locale/)
+    usage = Keyword.get(options, :usage, :default)
+    territory = Keyword.get(options, :territory)
 
     with {:ok, locale} <- Cldr.validate_locale(locale),
-         territory = Keyword.get(options, :territory, locale.territory),
-         {:ok, territory} <- Cldr.validate_territory(territory),
-         {:ok, unit_list} <- extract_unit_list(unit, usage, territory, options) do
+         {:ok, territory_chain} <- Cldr.territory_chain(locale, territory),
+         {:ok, unit_list} <- Preference.find_preference(unit, usage, territory_chain) do
       decompose(unit, unit_list)
     end
-  end
-
-  defp extract_unit_list(unit, usage, territory, options) do
-    category = unit_category(unit)
-
-    unit_preferences()
-    |> get_in([category, usage])
-    |> find_preference(usage, territory, options[:scope], options[:style])
-  end
-
-  @global :"001"
-  defp find_preference(nil, usage, _territory, _scope, _style) do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "No known unit preference for usage #{inspect(usage)}"}}
-  end
-
-  defp find_preference(preferences, _usage, territory, nil, nil) do
-    {:ok, Map.get(preferences, territory) || Map.get(preferences, @global)}
-  end
-
-  defp find_preference(preferences, usage, territory, :small, nil) do
-    {:ok,
-     get_in(preferences, [:small, territory]) || get_in(preferences, [:small, @global]) ||
-       find_preference(usage, preferences, territory, nil, nil)}
-  end
-
-  defp find_preference(preferences, usage, territory, nil, :informal) do
-    {:ok,
-     get_in(preferences, [:informal, territory]) || get_in(preferences, [:informal, @global]) ||
-       find_preference(usage, preferences, territory, nil, nil)}
-  end
-
-  defp find_preference(preferences, usage, territory, :small, :informal) do
-    {:ok,
-     get_in(preferences, [:small, :informal, territory]) ||
-       get_in(preferences, [:small, :informal, @global]) ||
-       get_in(preferences, [:informal, territory]) ||
-       get_in(preferences, [:informal, @global]) ||
-       find_preference(usage, preferences, territory, nil, nil)}
-  end
-
-  defp find_preference(_preferences, _usage, _territory, scope, style)
-       when scope in [:small, nil] do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "Style #{inspect(style)} is not known. It should be :informal or nil"}}
-  end
-
-  defp find_preference(_preferences, _usage, _territory, scope, style)
-       when style in [:informal, nil] do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "Scope #{inspect(scope)} is not known. It should be :small or nil"}}
-  end
-
-  defp find_preference(_preferences, _usage, _territory, scope, style) do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "No known scope #{inspect(scope)} and no known style #{inspect(style)}"}}
-  end
-
-  defp int_rem(unit) do
-    integer = Unit.round(unit, 0, :down) |> Math.trunc()
-    remainder = Math.sub(unit, integer)
-    {integer, remainder}
   end
 
   @doc """
@@ -1101,7 +1029,7 @@ defmodule Cldr.Unit do
 
   Units of measure vary country by country. While
   most countries standardize on the metric system,
-  others use the US or UKL systems of measure.
+  others use the US or UK systems of measure.
 
   When presening a unit to an end user it is appropriate
   to do so using units familiar and relevant to that
@@ -1128,10 +1056,33 @@ defmodule Cldr.Unit do
     module.units_for(locale, style)
   end
 
-  @doc """
-  Returns the default measurement system for a territory.
+  @measurement_systems Cldr.Config.territories()
+  |> Enum.map(fn {k, v} -> {k, v.measurement_system} end)
+  |> Map.new
 
-  ## Example
+  @doc """
+  Returns a map of measurement systems by territory
+
+  """
+  @spec measurement_systems() :: map()
+  def measurement_systems do
+    @measurement_systems
+  end
+
+  @doc """
+  Returns the default measurement system for a territory
+  in a given category.
+
+  ## Arguments
+
+  * `territory` is any valid territory returned by
+    `Cldr.validate_territory/1`
+
+  * `category` is any measurement system category.
+    The known categories are `:default`, `:temperature`
+    and `:paper_size`. The default category is `:default`.
+
+  ## Examples
 
       iex> Cldr.Unit.measurement_system_for :US
       :ussystem
@@ -1142,42 +1093,20 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.measurement_system_for :AU
       :metric
 
-  """
-  @spec measurement_system_for(atom()) ::
-          :metric | :ussystem | :uk_system | {:error, {module(), String.t()}}
-
-  def measurement_system_for(territory) do
-    with {:ok, territory} <- Cldr.validate_territory(territory) do
-      territory
-      |> Cldr.Config.territory()
-      |> get_in([:measurement_system, :default])
-    end
-  end
-
-  @doc """
-  Returns the default measurement system for a territory
-  in a given category.
-
-  ## Example
-
       iex> Cldr.Unit.measurement_system_for :US, :temperature
       :ussystem
 
-      iex> Cldr.Unit.measurement_system_for :BS, :temperature
-      :ussystem
-
-      iex> Cldr.Unit.measurement_system_for :BS
-      :metric
+      iex> Cldr.Unit.measurement_system_for :GB, :temperature
+      :uksystem
 
   """
   @spec measurement_system_for(atom(), atom()) ::
            :metric | :ussystem | :uk_system | {:error, {module(), String.t()}}
 
-  def measurement_system_for(territory, category) do
+  def measurement_system_for(territory, category \\ :default) do
     with {:ok, territory} <- Cldr.validate_territory(territory) do
-      territory
-      |> Cldr.Config.territory()
-      |> get_in([:measurement_system, category])
+      measurement_systems()
+      |> get_in([territory, category])
     end
   end
 
