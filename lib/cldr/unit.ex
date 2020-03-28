@@ -45,8 +45,8 @@ defmodule Cldr.Unit do
   @styles [:long, :short, :narrow]
 
   defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
-  defdelegate preferred_units(unit, backend, options), to: Cldr.Unit.Conversion
-  defdelegate preferred_units!(unit, backend, options), to: Cldr.Unit.Conversion
+  defdelegate preferred_units(unit, backend, options), to: Cldr.Unit.Preference
+  defdelegate preferred_units!(unit, backend, options), to: Cldr.Unit.Preference
 
   defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
   defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
@@ -546,7 +546,8 @@ defmodule Cldr.Unit do
 
   * `:territory` is any valid territory code returned by
     `Cldr.known_territories/0`. The default is the territory defined
-    as part of the `:locale`.
+    as part of the `:locale`. The option `:territory` has a precedence
+    over the territory in a locale.
 
   * `:usage` is the way in which the unit is intended
     to be used.  The available `usage` varyies according
@@ -554,18 +555,13 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.localize(Cldr.Unit.new(100, :meter), usage: :person, territory: :US)
+      iex> unit = Cldr.Unit.new(1.83, :meter)
+      iex> Cldr.Unit.localize(unit, usage: :person, territory: :US)
       [Cldr.Unit.new(:inch, 3937)]
 
   """
-  def localize(%Unit{} = unit, backend, options) do
-    locale = Keyword.get_lazy(options, :locale, &backend.get_locale/)
-    usage = Keyword.get(options, :usage, :default)
-    territory = Keyword.get(options, :territory)
-
-    with {:ok, locale} <- Cldr.validate_locale(locale),
-         {:ok, territory_chain} <- Cldr.territory_chain(locale, territory),
-         {:ok, unit_list} <- Preference.find_preference(unit, usage, territory_chain) do
+  def localize(%Unit{} = unit, backend, options \\ []) when is_atom(backend) do
+    with {:ok, unit_list} <- Preference.preferred_units(unit, backend, options) do
       decompose(unit, unit_list)
     end
   end
@@ -666,6 +662,12 @@ defmodule Cldr.Unit do
   @unit_categories Map.keys(@unit_tree)
   def known_unit_categories do
     @unit_categories
+  end
+
+  def base_unit(%Unit{} = unit) do
+    unit.unit
+    |> Cldr.Unit.Conversions.conversion_factor
+    |> Map.get(:base_unit)
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
@@ -1251,5 +1253,11 @@ defmodule Cldr.Unit do
       "Operations can only be performed between units of the same type. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }
+  end
+
+  defp int_rem(unit) do
+    integer = Unit.round(unit, 0, :down) |> Math.trunc()
+    remainder = Math.sub(unit, integer)
+    {integer, remainder}
   end
 end

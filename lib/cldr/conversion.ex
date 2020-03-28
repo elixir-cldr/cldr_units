@@ -10,7 +10,7 @@ defmodule Cldr.Unit.Conversion do
   import Cldr.Unit.Conversions, only: [conversion_factor: 1]
 
   defmodule Options do
-    defstruct [usage: nil, scope: nil, locale: nil, backend: nil, alt: nil]
+    defstruct [usage: nil, locale: nil, backend: nil, territory: nil]
   end
 
   @doc """
@@ -117,6 +117,15 @@ defmodule Cldr.Unit.Conversion do
       "No conversion is possible between #{inspect(to)} and #{inspect(from)}"}}
   end
 
+  def to_decimal(%Ratio{numerator: numerator, denominator: denominator}) do
+    Decimal.new(numerator)
+    |> Decimal.div(Decimal.new(denominator))
+  end
+
+  def to_decimal(number) when is_integer(number) do
+    Decimal.new(number)
+  end
+
   @doc """
   Convert one unit into another unit of the same
   unit type (length, volume, mass, ...) and raises
@@ -150,6 +159,74 @@ defmodule Cldr.Unit.Conversion do
 
   def convert!(%Unit{} = unit, to_unit) do
     case convert(unit, to_unit) do
+      {:error, {exception, reason}} -> raise exception, reason
+      unit -> unit
+    end
+  end
+
+  @doc """
+  Convert a unit into its base unit.
+
+  For example, the base unit for `length`
+  is `meter`. The base unit is an
+  intermediary unit used in all
+  conversions.
+
+  ## Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  ## Returns
+
+  * `unit` converted to its base unit as a `t:Unit.t()` or
+
+  * `{;error, {exception, reason}}` as an error
+
+  ## Example
+
+      iex> u = Cldr.Unit.new(:kilometer, 10)
+      #Unit<:kilometer, 10>
+      iex> Cldr.Unit.Conversion.convert_to_base_unit u
+      #Unit<:meter, 10000>
+
+  """
+  def convert_to_base_unit(%Unit{} = unit) do
+    if base_unit = Unit.base_unit(unit) do
+      convert(unit, base_unit)
+    else
+      {:error, {Cldr.Unit.UnitNotConvertibleError, "No base unit for #{inspect unit} is known"}}
+    end
+  end
+
+  @doc """
+  Convert a unit into its base unit and
+  raises on error
+
+  For example, the base unit for `length`
+  is `meter`. The base unit is an
+  intermediary unit used in all
+  conversions.
+
+  ## Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  ## Returns
+
+  * `unit` converted to its base unit as a `t:Unit.t()` or
+
+  * raises an exception
+
+  ## Example
+
+      iex> u = Cldr.Unit.new(:kilometer, 10)
+      #Unit<:kilometer, 10>
+      iex> Cldr.Unit.Conversion.convert_to_base_unit u
+      #Unit<:meter, 10000>
+
+  """
+  def convert_to_base_unit!(%Unit{} = unit) do
+    case convert_to_base_unit(unit) do
       {:error, {exception, reason}} -> raise exception, reason
       unit -> unit
     end

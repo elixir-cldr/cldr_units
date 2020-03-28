@@ -1,8 +1,10 @@
 defmodule Cldr.Unit.Preference do
+  alias Cldr.Unit
+  alias Cldr.Unit.Conversion.Options
 
   @doc """
   Returns a list of the preferred units for a given
-  unit, locale, use case and scope.
+  unit, locale, territory and use case.
 
   The units used to represent length, volume and so on
   depend on a given territory, measurement system and usage.
@@ -67,7 +69,8 @@ defmodule Cldr.Unit.Preference do
   and `Cldr.Unit.decompose/2`. For example:
 
       iex> meter = Cldr.Unit.new(:meter, 1)
-      iex> with {:ok, preferred_units} <- Cldr.Unit.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal) do
+      iex> preferred_units = Cldr.Unit.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
+      iex> with {:ok, preferred_units} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
       [Cldr.Unit.new(:foot, 3), Cldr.Unit.new(:inch, 3)]
@@ -76,48 +79,33 @@ defmodule Cldr.Unit.Preference do
   def preferred_units(unit, backend, options \\ [])
 
   def preferred_units(%Unit{} = unit, options, []) when is_list(options) do
-    preferred_units(unit, Cldr.default_backend(), options)
+    with {:ok, options} <- validate_preference_options(options) do
+      preferred_units(unit, options.backend, options)
+    end
   end
 
   def preferred_units(%Unit{} = unit, backend, options) when is_list(options) do
-    preferred_units(unit, backend, struct(Cldr.Unit.Conversion.Options, options))
+    with {:ok, options} <- validate_preference_options(backend, options) do
+      preferred_units(unit, backend, options)
+    end
   end
 
-  @default_territory :"001"
-  def preferred_units(%Unit{} = unit, backend, %Options{} = options) do
-    %{usage: usage, scope: scope, alt: alt, locale: locale} = options
+  def preferred_units(%Unit{} = unit, _backend, %Options{} = options) do
+    %{usage: usage, locale: locale, territory: territory, backend: backend} = options
 
-    with {:ok, locale} <- backend.validate_locale(locale || backend.get_locale()) do
-      # TODO territory should also conside the -u-rd flag
-      territory = atomize(locale.territory)
-      category = Unit.unit_category(unit.unit)
-      preferences = Cldr.Unit.unit_preferences()
 
-      preferred_units =
-        get_in(preferences, [category, usage, scope, alt, territory]) ||
-        get_in(preferences, [category, usage, scope, territory]) ||
-        get_in(preferences, [category, usage, alt, territory]) ||
-        get_in(preferences, [category, usage, territory]) ||
-
-        get_in(preferences, [category, usage, scope, alt, @default_territory]) ||
-        get_in(preferences, [category, usage, scope, @default_territory]) ||
-        get_in(preferences, [category, usage, alt, @default_territory]) ||
-        get_in(preferences, [category, usage, @default_territory]) ||
-        [unit.unit]
-
-      {:ok, preferred_units}
-    end
+    # {:ok, preferred_units}
   end
 
   @doc """
   Returns a list of the preferred units for a given
-  unit, locale, use case and scope.
+  unit, locale, territory and use case.
 
   The units used to represent length, volume and so on
   depend on a given territory, measurement system and usage.
 
   For example, in the US, people height is most commonly
-  referred to in `inches`, or informally as `feet and inches`.
+  referred to in `inches`, or `feet and inches`.
   In most of the rest of the world it is `centimeters`.
 
   ### Arguments
@@ -133,19 +121,17 @@ defmodule Cldr.Unit.Preference do
 
   ### Options
 
-  * `:usage` is the unit usage. for example `;person` for a unit
-    of type `:length`. The available usage for a given unit category can
-    be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`.
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`
 
-  * `:scope` is either `:small` or `nil`. In some usage, the units
-    used are different when the unit size is small. It is up to the
-    developer to determine when `scope: :small` is appropriate.
+  * `:territory` is any valid territory code returned by
+    `Cldr.known_territories/0`. The default is the territory defined
+    as part of the `:locale`. The option `:territory` has a precedence
+    over the territory in a locale.
 
-  * `:alt` is either `:informal` or `nil`. Like `:scope`, the units
-    in use depend on whether they are being used in a formal or informal
-    context.
-
-  * `:locale` is any locale returned by `Cldr.validate_locale/2`
+  * `:usage` is the way in which the unit is intended
+    to be used.  The available `usage` varyies according
+    to the unit category.  See `Cldr.Unit.unit_preferences/0`.
 
   ### Returns
 
@@ -157,7 +143,7 @@ defmodule Cldr.Unit.Preference do
 
       iex> meter = Cldr.Unit.new :meter, 1
       #Unit<:meter, 1>
-      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal
+      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person
       [:foot, :inch]
       iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person
       [:inch]
@@ -176,77 +162,59 @@ defmodule Cldr.Unit.Preference do
     end
   end
 
-  defp atomize(string) do
-    String.to_existing_atom(string)
-  rescue ArgumentError ->
-    :"001"
+  defp validate_preference_options(backend, options) when is_list(options) do
+    options
+    |> Keyword.put(:backend, backend)
+    |> validate_preference_options
   end
 
-  def to_decimal(%Ratio{numerator: numerator, denominator: denominator}) do
-    Decimal.new(numerator)
-    |> Decimal.div(Decimal.new(denominator))
+  defp validate_preference_options(options) when is_list(options) do
+    backend = Keyword.get_lazy(options, :backend, &Cldr.default_backend/0)
+    locale = Keyword.get_lazy(options, :locale, &backend.get_locale/0)
+    territory = Keyword.get(options, :territory, locale.territory)
+    usage = Keyword.get(options, :usage, :default)
+
+    with {:ok, locale} <- backend.validate_locale(locale),
+         {:ok, territory} <- Cldr.validate_territory(territory) do
+      options = [locale: locale, territory: territory, usage: usage, backend: backend]
+      {:ok, struct(Options, options)}
+    end
   end
 
-  def to_decimal(number) when is_integer(number) do
-    Decimal.new(number)
+  for {category, usages} <- Unit.unit_preferences() do
+    for {usage, preferences} <- usages do
+      for preference <- preferences do
+        %{geq: geq, regions: regions, units: units} = preference
+        def preferred_units(unquote(category), unquote(usage), region, value)
+            when region in unquote(regions) and value >= unquote(geq) do
+         {:ok, unquote(units)}
+        end
+      end
+    end
   end
 
-  @global :"001"
-  defp find_preference(nil, usage, _territory, _scope, _style) do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "No known unit preference for usage #{inspect(usage)}"}}
+  def preferred_units(category, usage, region, value) when is_atom(region) do
+    {:error, unknown_preferences_error(category, usage, region, value)}
   end
 
-  defp find_preference(preferences, _usage, territory, nil, nil) do
-    {:ok, Map.get(preferences, territory) || Map.get(preferences, @global)}
+  def preferred_units(category, usage, [region], value) do
+    preferred_units(category, usage, region, value)
   end
 
-  defp find_preference(preferences, usage, territory, :small, nil) do
-    {:ok,
-     get_in(preferences, [:small, territory]) || get_in(preferences, [:small, @global]) ||
-       find_preference(usage, preferences, territory, nil, nil)}
+  def preferred_units(category, usage, [region | other_regions] = regions, value) do
+    case preferred_units(category, usage, region, value) do
+      {:ok, units} -> {:ok, units}
+      other -> preferred_units(category, usage, other_regions, value)
+    end
   end
 
-  defp find_preference(preferences, usage, territory, nil, :informal) do
-    {:ok,
-     get_in(preferences, [:informal, territory]) || get_in(preferences, [:informal, @global]) ||
-       find_preference(usage, preferences, territory, nil, nil)}
+  def unknown_preferences_error(category, usage, regions, value) do
+    {
+      Cldr.Unit.UnknownUnitPreferenceError,
+      "No preferences found for #{inspect category} " <>
+      "with usage #{inspect usage} " <>
+      "for region #{inspect regions} and " <>
+      "value #{inspect value}"
+    }
   end
-
-  defp find_preference(preferences, usage, territory, :small, :informal) do
-    {:ok,
-     get_in(preferences, [:small, :informal, territory]) ||
-       get_in(preferences, [:small, :informal, @global]) ||
-       get_in(preferences, [:informal, territory]) ||
-       get_in(preferences, [:informal, @global]) ||
-       find_preference(usage, preferences, territory, nil, nil)}
-  end
-
-  defp find_preference(_preferences, _usage, _territory, scope, style)
-       when scope in [:small, nil] do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "Style #{inspect(style)} is not known. It should be :informal or nil"}}
-  end
-
-  defp find_preference(_preferences, _usage, _territory, scope, style)
-       when style in [:informal, nil] do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "Scope #{inspect(scope)} is not known. It should be :small or nil"}}
-  end
-
-  defp find_preference(_preferences, _usage, _territory, scope, style) do
-    {:error,
-     {Cldr.Unit.UnknownUnitPreferenceError,
-      "No known scope #{inspect(scope)} and no known style #{inspect(style)}"}}
-  end
-
-  defp int_rem(unit) do
-    integer = Unit.round(unit, 0, :down) |> Math.trunc()
-    remainder = Math.sub(unit, integer)
-    {integer, remainder}
-  end
-
 end

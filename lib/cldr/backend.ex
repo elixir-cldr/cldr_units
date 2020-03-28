@@ -263,7 +263,7 @@ defmodule Cldr.Unit.Backend do
 
             iex> meter = Cldr.Unit.new :meter, 1
             #Unit<:meter, 1>
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person, alt: :informal
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
             {:ok, [:foot, :inch]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
             {:ok, [:inch]}
@@ -276,7 +276,7 @@ defmodule Cldr.Unit.Backend do
 
         """
         def preferred_units(unit, options \\ []) do
-          Cldr.Unit.Conversion.preferred_units(unit, unquote(backend), options)
+          Cldr.Unit.Preference.preferred_units(unit, unquote(backend), options)
         end
 
         @doc """
@@ -340,7 +340,7 @@ defmodule Cldr.Unit.Backend do
 
         """
         def preferred_units!(unit, options \\ []) do
-          Cldr.Unit.Conversion.preferred_units!(unit, unquote(backend), options)
+          Cldr.Unit.Preference.preferred_units!(unit, unquote(backend), options)
         end
 
         # Generate the functions that encapsulate the unit data from CDLR

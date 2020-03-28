@@ -29,3 +29,4 @@ defmodule Cldr.Unit.UnitNotConvertibleError do
     %__MODULE__{message: message}
   end
 end
+
