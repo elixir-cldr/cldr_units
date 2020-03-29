@@ -191,11 +191,24 @@ defmodule Cldr.Unit.Conversion do
 
   """
   def convert_to_base_unit(%Unit{} = unit) do
-    if base_unit = Unit.base_unit(unit) do
-      convert(unit, base_unit)
-    else
-      {:error, {Cldr.Unit.UnitNotConvertibleError, "No base unit for #{inspect unit} is known"}}
+    case Unit.base_unit(unit) do
+      {:ok, base_unit} ->
+        convert(unit, base_unit)
+      _ ->
+        {:error, {Cldr.Unit.UnitNotConvertibleError,
+          "No base unit for #{inspect unit} is known"}}
     end
+  end
+
+  def convert_to_base_unit(unit) when is_atom(unit) do
+    case Unit.new(unit, 1) do
+      {:error, reason} -> {:error, reason}
+      unit -> convert_to_base_unit(unit)
+    end
+  end
+
+  def convert_to_base_unit([unit | _rest]) when is_atom(unit) do
+    convert_to_base_unit(unit)
   end
 
   @doc """

@@ -452,7 +452,7 @@ defmodule Cldr.Unit do
              |> Map.get(:units)
              |> Map.get(:short)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-             |> Enum.into(%{})
+             |> Map.new
 
   @doc """
   Decomposes a unit into subunits.
@@ -664,10 +664,48 @@ defmodule Cldr.Unit do
     @unit_categories
   end
 
-  def base_unit(%Unit{} = unit) do
-    unit.unit
-    |> Cldr.Unit.Conversions.conversion_factor
-    |> Map.get(:base_unit)
+  @doc """
+  Returns a mapping from unit categories to the
+  base unit.
+
+  """
+  @base_units Cldr.Config.units() |> Map.get(:base_units)
+  def base_units do
+    @base_units
+  end
+
+  @doc """
+  Returns the base unit for a given `t:Cldr.Unit.t()
+  or `atom()`.
+
+  ## Argument
+
+  * `unit` is either a `t:Cldr.Unit.t()` or an `atom`
+
+  ## Returns
+
+  * `{:ok, base_unit}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Example
+
+      iex> Cldr.Unit.base_unit :square_kilometer
+      {:ok, :square_meter}
+
+      iex> Cldr.Unit.base_unit :square_table
+      {:error, {Cldr.UnknownUnitError, "The unit :square_table is not known."}
+
+  """
+  def base_unit(unit_name) when is_atom(unit_name) do
+    case unit_category(unit_name) do
+      {:error, reason} -> {:error, reason}
+      category -> Map.fetch(base_units(), category)
+    end
+  end
+
+  def base_unit(%Unit{unit: unit_name}) do
+    base_unit(unit_name)
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
@@ -769,7 +807,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      Cldr.Unit.known_units
+      => Cldr.Unit.known_units
       [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
        :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
        :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
@@ -1112,7 +1150,8 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
+  @doc false
+  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
     with {:ok, style} <- validate_style(style),
          {:ok, unit} <- validate_unit(unit) do
       units = units_for(locale_name, style, backend)
@@ -1121,13 +1160,13 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp pattern_for(locale_name, style, unit, backend) do
+  def pattern_for(locale_name, style, unit, backend) do
     with {:ok, locale} <- backend.validate_locale(locale_name) do
       pattern_for(locale, style, unit, backend)
     end
   end
 
-  defp per_pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
+  def per_pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
     with {:ok, style} <- validate_style(style),
          {:ok, unit} <- validate_unit(unit) do
       units = units_for(locale_name, style, backend)
@@ -1137,7 +1176,7 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp per_pattern_for(locale_name, style, unit, backend) do
+  def per_pattern_for(locale_name, style, unit, backend) do
     with {:ok, locale} <- backend.validate_locale(locale_name) do
       per_pattern_for(locale, style, unit, backend)
     end

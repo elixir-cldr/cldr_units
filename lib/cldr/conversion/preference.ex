@@ -1,5 +1,6 @@
 defmodule Cldr.Unit.Preference do
   alias Cldr.Unit
+  alias Cldr.Unit.Conversion
   alias Cldr.Unit.Conversion.Options
 
   @doc """
@@ -91,11 +92,29 @@ defmodule Cldr.Unit.Preference do
   end
 
   def preferred_units(%Unit{} = unit, _backend, %Options{} = options) do
-    %{usage: usage, locale: locale, territory: territory, backend: backend} = options
+    %{usage: usage, territory: territory} = options
+    geq = Conversion.convert_to_base_unit(unit) |> Unit.value
+    category = Unit.unit_category(unit)
 
+    with {:ok, usage} <- validate_usage(category, usage) do
+      territory_chain =
+        territory
+        |> Cldr.territory_chain
+        |> List.insert_at(0, territory)
+        |> Enum.uniq
 
-    # {:ok, preferred_units}
+      preferred_units(category, usage, territory_chain, geq)
+    end
   end
+
+  defp validate_usage(category, usage) do
+    if get_in(Unit.unit_preferences(), [category, usage]) do
+      {:ok, usage}
+    else
+      {:error, "undefined usage"}
+    end
+  end
+
 
   @doc """
   Returns a list of the preferred units for a given
@@ -184,10 +203,17 @@ defmodule Cldr.Unit.Preference do
   for {category, usages} <- Unit.unit_preferences() do
     for {usage, preferences} <- usages do
       for preference <- preferences do
-        %{geq: geq, regions: regions, units: units} = preference
-        def preferred_units(unquote(category), unquote(usage), region, value)
-            when region in unquote(regions) and value >= unquote(geq) do
-         {:ok, unquote(units)}
+        with %{geq: geq, regions: regions, units: units} <- preference,
+             %Unit{value: value} <- Conversion.convert_to_base_unit(units) do
+          geq = value * geq
+          def preferred_units(unquote(category), unquote(usage), region, value)
+              when region in unquote(regions) and value >= unquote(geq) do
+           {:ok, unquote(units)}
+          end
+        else other ->
+          IO.puts "Unable to generate functions for #{inspect preference}"
+          IO.inspect other
+          nil
         end
       end
     end
@@ -201,10 +227,10 @@ defmodule Cldr.Unit.Preference do
     preferred_units(category, usage, region, value)
   end
 
-  def preferred_units(category, usage, [region | other_regions] = regions, value) do
+  def preferred_units(category, usage, [region | other_regions], value) do
     case preferred_units(category, usage, region, value) do
       {:ok, units} -> {:ok, units}
-      other -> preferred_units(category, usage, other_regions, value)
+      _other -> preferred_units(category, usage, other_regions, value)
     end
   end
 
