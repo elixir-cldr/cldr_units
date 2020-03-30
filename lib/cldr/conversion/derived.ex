@@ -18,6 +18,9 @@ defmodule Cldr.Unit.Conversion.Derived do
   #
   # * if its not an SI prefixed unit, move on
 
+  alias Cldr.Unit
+  alias Cldr.Unit.Conversions
+
   @si_factors %{
     "pico"  =>  Ratio.new(1, 1_000_000_000_000),
     "nano"  =>  Ratio.new(1, 1_000_000_000),
@@ -35,6 +38,92 @@ defmodule Cldr.Unit.Conversion.Derived do
     "zetta" =>  1_000_000_000_000_000_000_000,
     "yotta" =>  1_000_000_000_000_000_000_000_000
   }
+
+  @per "_per_"
+
+  def normalize_unit(unit_string, _conversions \\ Conversions.conversions()) do
+    unit_string
+    |> String.replace("-", "_")
+    |> String.split("_per_", parts: 2)
+    |> Enum.map(&normalize_subunit/1)
+  end
+
+  def normalize_subunit(unit_string) do
+    unit_string
+    |> String.replace(@per, "")
+    |> String.split("_")
+    |> recombine_power_units
+    |> combine_instances()
+    |> Enum.sort(&unit_sorter/2)
+  end
+
+  defp recombine_power_units([power, unit]) when power in ["square", "cubic"] do
+    power <> "_" <> unit
+  end
+
+  defp recombine_power_units([power, unit | rest]) when power in ["square", "cubic"] do
+    [power <> "_" <> unit | recombine_power_units(rest)]
+  end
+
+  defp recombine_power_units([head | rest]) do
+    [head, recombine_power_units(rest)]
+  end
+
+  defp unit_sorter(a, b) do
+    case {unit_sort_key(a), unit_sort_key(b)} do
+      {{key, order_1}, {key, order_2}} -> order_1 < order_2
+      {{key_1, _order_1}, key_2} when is_integer(key_2) -> key_1 < key_2
+      {key_1, {key_2, _order_2}} when is_integer(key_1) -> key_1 < key_2
+      {key_1, key_2} -> key_1 < key_2
+    end
+  end
+
+  defp combine_instances(units) do
+    units
+    |> Enum.group_by(&(&1))
+    |> Enum.map(fn
+      {k, v} when length(v) == 1 -> k
+      {k, v} when length(v) == 2 -> "square_#{k}"
+      {k, v} when length(v) == 3 -> "cubic_#{k}"
+    end)
+  end
+
+  def unit_sort_key(<< "square_", unit :: binary >>) do
+    unit_sort_key(unit)
+  end
+
+  def unit_sort_key(<< "cubic_", unit :: binary >>) do
+    unit_sort_key(unit)
+  end
+
+  @si_order @si_factors
+  |> Map.keys()
+  |> Enum.reverse
+  |> Enum.with_index
+
+  for {prefix, order} <- @si_order do
+    def unit_sort_key(<< unquote(prefix), unit :: binary >>) do
+      {unit_sort_key(unit), unquote(order)}
+    end
+  end
+
+  def unit_sort_key(unit) do
+    with {:ok, base_unit} <- Unit.base_unit(unit) do
+      Map.get(base_units_in_order(), base_unit)
+    else
+      _other -> 0
+    end
+  end
+
+  @base_units_in_order Cldr.Config.units
+  |> Map.get(:base_units)
+  |> Enum.map(&(elem(&1, 1)))
+  |> Enum.with_index
+  |> Map.new
+
+  def base_units_in_order do
+    @base_units_in_order
+  end
 
   def add_derived_conversions(conversions, [unit | _rest] = units) when is_atom(unit) do
     string_units = Cldr.Map.stringify_values(units)

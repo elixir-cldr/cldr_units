@@ -669,7 +669,7 @@ defmodule Cldr.Unit do
   base unit.
 
   """
-  @base_units Cldr.Config.units() |> Map.get(:base_units)
+  @base_units Cldr.Config.units() |> Map.get(:base_units) |> Map.new()
   def base_units do
     @base_units
   end
@@ -706,6 +706,14 @@ defmodule Cldr.Unit do
 
   def base_unit(%Unit{unit: unit_name}) do
     base_unit(unit_name)
+  end
+
+  def base_unit(unit_name) when is_binary(unit_name) do
+    unit_name
+    |> String.to_existing_atom()
+    |> base_unit()
+  rescue ArgumentError ->
+    :error
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
