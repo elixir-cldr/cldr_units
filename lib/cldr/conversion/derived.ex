@@ -44,7 +44,7 @@ defmodule Cldr.Unit.Conversion.Derived do
   def normalize_unit(unit_string, _conversions \\ Conversions.conversions()) do
     unit_string
     |> String.replace("-", "_")
-    |> String.split("_per_", parts: 2)
+    |> String.split(@per, parts: 2)
     |> Enum.map(&normalize_subunit/1)
   end
 
@@ -53,8 +53,23 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> String.replace(@per, "")
     |> String.split("_")
     |> expand_power_units()
-    |> combine_instances()
+    |> combine_power_instances()
+    |> Enum.map(&resolve_base_unit/1)
     |> Enum.sort(&unit_sorter/2)
+  end
+
+  def resolve_base_unit(<< "square_", base_unit :: binary >> = unit) do
+    {unit, Unit.base_unit(base_unit), 2}
+  end
+
+  def resolve_base_unit(<< "cubic_", base_unit :: binary >> = unit) do
+    {unit, Unit.base_unit(base_unit), 3}
+  end
+
+  for {prefix, scale} <- @si_factors do
+    def resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
+      {unit, Unit.base_unit(base_unit), unquote(Macro.escape(scale))}
+    end
   end
 
   def expand_power_units([]) do
@@ -79,10 +94,11 @@ defmodule Cldr.Unit.Conversion.Derived do
       {{key_1, _order_1}, key_2} when is_integer(key_2) -> key_1 < key_2
       {key_1, {key_2, _order_2}} when is_integer(key_1) -> key_1 < key_2
       {key_1, key_2} -> key_1 < key_2
+      _other -> true
     end
   end
 
-  defp combine_instances(units) do
+  defp combine_power_instances(units) do
     units
     |> Enum.group_by(&(&1))
     |> Enum.map(fn
