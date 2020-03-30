@@ -52,21 +52,25 @@ defmodule Cldr.Unit.Conversion.Derived do
     unit_string
     |> String.replace(@per, "")
     |> String.split("_")
-    |> recombine_power_units
+    |> expand_power_units()
     |> combine_instances()
     |> Enum.sort(&unit_sorter/2)
   end
 
-  defp recombine_power_units([power, unit]) when power in ["square", "cubic"] do
-    power <> "_" <> unit
+  def expand_power_units([]) do
+    []
   end
 
-  defp recombine_power_units([power, unit | rest]) when power in ["square", "cubic"] do
-    [power <> "_" <> unit | recombine_power_units(rest)]
+  def expand_power_units(["square", unit | rest]) do
+    [unit, unit | expand_power_units(rest)]
   end
 
-  defp recombine_power_units([head | rest]) do
-    [head, recombine_power_units(rest)]
+  def expand_power_units(["cubic", unit | rest]) do
+    [unit, unit, unit | expand_power_units(rest)]
+  end
+
+  def expand_power_units([unit | rest]) do
+    [unit | expand_power_units(rest)]
   end
 
   defp unit_sorter(a, b) do
@@ -97,8 +101,16 @@ defmodule Cldr.Unit.Conversion.Derived do
   end
 
   @si_order @si_factors
-  |> Map.keys()
-  |> Enum.reverse
+  |> Enum.map(fn
+    {k, v} when is_integer(v) -> {k, v /  1.0}
+    {k, v} -> {k, Ratio.to_float(v)}
+  end)
+  |> Enum.sort(fn
+    {_k1, v1}, {_k2, v2} -> v1 > v2
+  end)
+  |> Enum.map(fn
+    {k, _v} -> k
+  end)
   |> Enum.with_index
 
   for {prefix, order} <- @si_order do
