@@ -24,14 +24,16 @@ defmodule Cldr.Unit do
 
   """
 
-  alias Cldr.Substitution
-  alias Cldr.LanguageTag
-  alias Cldr.Locale
-  alias Cldr.Unit.Conversion
-  alias Cldr.Unit.Alias
   alias Cldr.Unit
   alias Cldr.Unit.Math
+  alias Cldr.Unit.Alias
+  alias Cldr.Unit.Conversion
+  alias Cldr.Unit.Conversions
   alias Cldr.Unit.Preference
+
+  alias Cldr.Locale
+  alias Cldr.LanguageTag
+  alias Cldr.Substitution
 
   @enforce_keys [:unit, :value]
   defstruct unit: nil, value: 0
@@ -698,14 +700,9 @@ defmodule Cldr.Unit do
 
   """
   def base_unit(unit_name) when is_atom(unit_name) do
-    case unit_category(unit_name) do
-      {:error, reason} ->
-        {:error, reason}
-      category ->
-        case Map.fetch(base_units(), category) do
-          {:ok, base_unit} -> {:ok, base_unit}
-          :error -> {:error, unknown_base_unit_error(unit_name)}
-        end
+    case Map.fetch(Conversions.conversions(), unit_name) do
+      {:ok, conversion} -> {:ok, conversion.base_unit}
+      :error -> {:error, unknown_base_unit_error(unit_name)}
     end
   end
 

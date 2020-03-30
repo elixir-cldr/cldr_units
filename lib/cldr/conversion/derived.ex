@@ -41,14 +41,17 @@ defmodule Cldr.Unit.Conversion.Derived do
 
   @per "_per_"
 
-  def normalize_unit(unit_string, _conversions \\ Conversions.conversions()) do
+  def parse_unit(unit_string, _conversions \\ Conversions.conversions()) do
     unit_string
+    |> String.downcase()
     |> String.replace("-", "_")
     |> String.split(@per, parts: 2)
-    |> Enum.map(&normalize_subunit/1)
+    |> Enum.map(&parse_subunit/1)
+  rescue e in [Cldr.Unit.UnknownBaseUnitError, Cldr.UnknownUnitError] ->
+    {:error, {e.__struct__, e.message}}
   end
 
-  def normalize_subunit(unit_string) do
+  defp parse_subunit(unit_string) do
     unit_string
     |> String.replace(@per, "")
     |> String.split("_")
@@ -58,7 +61,7 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> Enum.sort(&unit_sorter/2)
   end
 
-  def resolve_base_unit(<< "square_", subunit :: binary >> = unit) do
+  defp resolve_base_unit(<< "square_", subunit :: binary >> = unit) do
     with {_, base_unit, scale} <- resolve_base_unit(subunit) do
       {unit, base_unit, Keyword.merge(scale, power: 2)}
     else
@@ -66,7 +69,7 @@ defmodule Cldr.Unit.Conversion.Derived do
     end
   end
 
-  def resolve_base_unit(<< "cubic_", subunit :: binary >> = unit) do
+  defp resolve_base_unit(<< "cubic_", subunit :: binary >> = unit) do
     with {_, base_unit, scale} <- resolve_base_unit(subunit) do
       {unit, base_unit, Keyword.merge(scale, power: 3)}
     else
@@ -75,7 +78,7 @@ defmodule Cldr.Unit.Conversion.Derived do
   end
 
   for {prefix, scale} <- @si_factors do
-    def resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
+    defp resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
       with {:ok, base_unit} <- Unit.base_unit(base_unit) do
         {unit, base_unit, factor: unquote(Macro.escape(scale))}
       else
@@ -84,7 +87,7 @@ defmodule Cldr.Unit.Conversion.Derived do
     end
   end
 
-  def resolve_base_unit(unit) when is_binary(unit) do
+  defp resolve_base_unit(unit) when is_binary(unit) do
     with {:ok, base_unit} <- Unit.base_unit(unit) do
       {unit, base_unit, factor: 1}
     else
@@ -92,19 +95,25 @@ defmodule Cldr.Unit.Conversion.Derived do
     end
   end
 
-  def expand_power_units([]) do
+  # Expand units like `[square, kilometer]` into
+  # `[kilometer, kilometer]` since there may be a
+  # compination of power units and non power units
+  # that we will consolidate in `combine_power_instances/1`
+  # later on
+
+  defp expand_power_units([]) do
     []
   end
 
-  def expand_power_units(["square", unit | rest]) do
+  defp expand_power_units(["square", unit | rest]) do
     [unit, unit | expand_power_units(rest)]
   end
 
-  def expand_power_units(["cubic", unit | rest]) do
+  defp expand_power_units(["cubic", unit | rest]) do
     [unit, unit, unit | expand_power_units(rest)]
   end
 
-  def expand_power_units([unit | rest]) do
+  defp expand_power_units([unit | rest]) do
     [unit | expand_power_units(rest)]
   end
 
@@ -128,17 +137,21 @@ defmodule Cldr.Unit.Conversion.Derived do
     end)
   end
 
-  def unit_sort_key({<< "square_", unit :: binary >>, base_unit, scale}) do
+  defp unit_sort_key({<< "square_", unit :: binary >>, base_unit, scale}) do
     unit_sort_key({unit, base_unit, scale})
   end
 
-  def unit_sort_key({<< "cubic_", unit :: binary >>, base_unit, scale}) do
+  defp unit_sort_key({<< "cubic_", unit :: binary >>, base_unit, scale}) do
     unit_sort_key({unit, base_unit, scale})
   end
+
+  # Take the map of SI factors and transform
+  # it to map of sort keys with the larger prefixes
+  # sorting before the smaller prefixes.
 
   @si_order @si_factors
   |> Enum.map(fn
-    {k, v} when is_integer(v) -> {k, v /  1.0}
+    {k, v} when is_integer(v) -> {k, v *  1.0}
     {k, v} -> {k, Ratio.to_float(v)}
   end)
   |> Enum.sort(fn
@@ -150,12 +163,12 @@ defmodule Cldr.Unit.Conversion.Derived do
   |> Enum.with_index
 
   for {prefix, order} <- @si_order do
-    def unit_sort_key({<< unquote(prefix), unit :: binary >>, base_unit, scale}) do
+    defp unit_sort_key({<< unquote(prefix), unit :: binary >>, base_unit, scale}) do
       {unit_sort_key({unit, base_unit, scale}), unquote(order)}
     end
   end
 
-  def unit_sort_key({_unit, base_unit, _}) do
+  defp unit_sort_key({_unit, base_unit, _}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
 
@@ -165,138 +178,23 @@ defmodule Cldr.Unit.Conversion.Derived do
   |> Enum.with_index
   |> Map.new
 
-  def base_units_in_order do
+  # Maintains the list tof base units in the order
+  # defined by CLDR. We use this order when sorting
+  # subunits within a compound unit
+  defp base_units_in_order do
     @base_units_in_order
   end
 
-  def add_derived_conversions(conversions, [unit | _rest] = units) when is_atom(unit) do
-    string_units = Cldr.Map.stringify_values(units)
-    string_conversions = Cldr.Map.stringify_keys(conversions, level: 1)
-    add_derived_conversions(string_conversions, string_units)
-  end
-
-  def add_derived_conversions(conversions, units) do
-    conversions
-    |> merge(units, &si_factor_conversions/2)
-    |> merge(units, &exponent_unit_conversions/2)
-    |> merge(units, &per_unit_conversions/2)
-    |> merge(units, &compound_unit_conversions/2)
-    |> Cldr.Map.atomize_keys(level: 1)
-  end
-
-  def unconvertible_units do
-    units = Cldr.Unit.known_units |> Enum.map(&Cldr.Unit.Alias.alias/1)
-    conversions = Cldr.Unit.Conversions.conversions()
-
-    for unit <- units, not Map.has_key?(conversions, unit) do
-      unit
+  def check do
+    for {unit, conversion} <- Cldr.Unit.Conversions.conversions() do
+      [Atom.to_string(unit), Atom.to_string(conversion.base_unit)]
     end
-  end
-
-  defp merge(conversions, units, fun) do
-    for unit <- units, not Map.has_key?(conversions, unit) do
-      fun.(conversions, unit)
-    end
+    |> List.flatten
+    |> Enum.map(fn x -> case parse_unit(x) do
+        thing when is_list(thing) -> thing
+        {:error, _other} -> nil
+      end
+    end)
     |> Enum.reject(&is_nil/1)
-    |> Map.new
-    |> Map.merge(conversions)
   end
-
-  defp si_factor_conversions(conversions, unit) do
-    with {:ok, _prefix, base_unit, si_factor} <- resolve_si_prefix(unit) do
-      if Map.has_key?(conversions, base_unit) do
-        base_conversion = Map.fetch!(conversions, base_unit)
-        new_factor = Ratio.mult(base_conversion.factor, si_factor)
-        {unit, %{base_conversion | factor: new_factor}}
-      end
-    else
-      _other -> nil
-    end
-  end
-
-  defp exponent_unit_conversions(conversions, unit) do
-    with {:ok, exponent, prefix, base_unit} <- resolve_exponent_prefix(unit) do
-      if Map.has_key?(conversions, base_unit) do
-        base_conversion = Map.fetch!(conversions, base_unit)
-        new_factor = Ratio.pow(base_conversion.factor, exponent)
-
-        conversion =
-          base_conversion
-          |> Map.put(:factor, new_factor)
-          |> Map.put(:base_unit, String.to_atom("#{prefix}_#{base_unit}"))
-
-        {unit, conversion}
-      end
-    else
-      _other -> nil
-    end
-  end
-
-  defp per_unit_conversions(conversions, unit) do
-    conversion =
-      unit
-      |> String.split("_per_")
-      |> Enum.map(&Map.get(conversions, &1))
-      |> craft_per_unit_conversion()
-
-     if conversion, do: {unit, conversion}, else: nil
-  end
-
-  defp compound_unit_conversions(conversions, unit) do
-    conversion =
-      unit
-      |> String.split("_")
-      |> form_two_subunits
-      |> Enum.map(&Map.get(conversions, &1))
-      |> craft_compound_unit_conversion()
-
-    if conversion, do: {unit, conversion}, else: nil
-  end
-
-  defp craft_per_unit_conversion([nil]), do: nil
-  defp craft_per_unit_conversion([nil, _]), do: nil
-  defp craft_per_unit_conversion([_, nil]), do: nil
-
-  defp craft_per_unit_conversion([c1, c2]) do
-    c1
-    |> Map.put(:base_unit, String.to_atom("#{c1.base_unit}_per_#{c2.base_unit}"))
-    |> Map.put(:factor, Ratio.div(c1.factor, c2.factor))
-  end
-
-  defp form_two_subunits([first, second]), do: [first, second]
-  defp form_two_subunits([first, second, third]), do: ["#{first}_#{second}", third]
-  defp form_two_subunits(_other), do: [nil, nil]
-
-  defp craft_compound_unit_conversion([nil]), do: nil
-  defp craft_compound_unit_conversion([nil, _]), do: nil
-  defp craft_compound_unit_conversion([_, nil]), do: nil
-
-  defp craft_compound_unit_conversion([c1, c2]) do
-    c1
-    |> Map.put(:base_unit, String.to_atom("#{c1.base_unit}_#{c2.base_unit}"))
-    |> Map.put(:factor, Ratio.mult(c1.factor, c2.factor))
-  end
-
-  defp resolve_exponent_prefix(<< "square_", base_unit :: binary >>) do
-    {:ok, 2, "square", base_unit}
-  end
-
-  defp resolve_exponent_prefix(<< "cubic_", base_unit :: binary >>) do
-    {:ok, 3, "cubic", base_unit}
-  end
-
-  defp resolve_exponent_prefix(unit) do
-    {:error, "No known expenent prefix for unit #{unit}"}
-  end
-
-  for {prefix, factor} <- @si_factors do
-    defp resolve_si_prefix(<< unquote(prefix), base_unit :: binary >>) do
-      {:ok, unquote(prefix), base_unit, unquote(Macro.escape(factor))}
-    end
-  end
-
-  defp resolve_si_prefix(unit) do
-    {:error, "No known SI prefix for unit #{unit}"}
-  end
-
 end
