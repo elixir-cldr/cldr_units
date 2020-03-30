@@ -30,3 +30,10 @@ defmodule Cldr.Unit.UnitNotConvertibleError do
   end
 end
 
+defmodule Cldr.Unit.UnknownBaseUnitError do
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end

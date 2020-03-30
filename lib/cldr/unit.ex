@@ -694,13 +694,18 @@ defmodule Cldr.Unit do
       {:ok, :square_meter}
 
       iex> Cldr.Unit.base_unit :square_table
-      {:error, {Cldr.UnknownUnitError, "The unit :square_table is not known."}
+      {:error, {Cldr.UnknownBaseUnitError, "The unit :square_table is not known."}
 
   """
   def base_unit(unit_name) when is_atom(unit_name) do
     case unit_category(unit_name) do
-      {:error, reason} -> {:error, reason}
-      category -> Map.fetch(base_units(), category)
+      {:error, reason} ->
+        {:error, reason}
+      category ->
+        case Map.fetch(base_units(), category) do
+          {:ok, base_unit} -> {:ok, base_unit}
+          :error -> {:error, unknown_base_unit_error(unit_name)}
+        end
     end
   end
 
@@ -713,7 +718,11 @@ defmodule Cldr.Unit do
     |> String.to_existing_atom()
     |> base_unit()
   rescue ArgumentError ->
-    :error
+    {:error, unknown_base_unit_error(unit_name)}
+  end
+
+  def unknown_base_unit_error(unit_name) do
+    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect unit_name} is not known"}
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"

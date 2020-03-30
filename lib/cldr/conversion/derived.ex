@@ -58,17 +58,37 @@ defmodule Cldr.Unit.Conversion.Derived do
     |> Enum.sort(&unit_sorter/2)
   end
 
-  def resolve_base_unit(<< "square_", base_unit :: binary >> = unit) do
-    {unit, Unit.base_unit(base_unit), 2}
+  def resolve_base_unit(<< "square_", subunit :: binary >> = unit) do
+    with {_, base_unit, scale} <- resolve_base_unit(subunit) do
+      {unit, base_unit, Keyword.merge(scale, power: 2)}
+    else
+      {:error, {exception, reason}} -> raise(exception, reason)
+    end
   end
 
-  def resolve_base_unit(<< "cubic_", base_unit :: binary >> = unit) do
-    {unit, Unit.base_unit(base_unit), 3}
+  def resolve_base_unit(<< "cubic_", subunit :: binary >> = unit) do
+    with {_, base_unit, scale} <- resolve_base_unit(subunit) do
+      {unit, base_unit, Keyword.merge(scale, power: 3)}
+    else
+      {:error, {exception, reason}} -> raise(exception, reason)
+    end
   end
 
   for {prefix, scale} <- @si_factors do
     def resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
-      {unit, Unit.base_unit(base_unit), unquote(Macro.escape(scale))}
+      with {:ok, base_unit} <- Unit.base_unit(base_unit) do
+        {unit, base_unit, factor: unquote(Macro.escape(scale))}
+      else
+        {:error, {exception, reason}} -> raise(exception, reason)
+      end
+    end
+  end
+
+  def resolve_base_unit(unit) when is_binary(unit) do
+    with {:ok, base_unit} <- Unit.base_unit(unit) do
+      {unit, base_unit, factor: 1}
+    else
+      {:error, {exception, reason}} -> raise(exception, reason)
     end
   end
 
@@ -93,7 +113,7 @@ defmodule Cldr.Unit.Conversion.Derived do
       {{key, order_1}, {key, order_2}} -> order_1 < order_2
       {{key_1, _order_1}, key_2} when is_integer(key_2) -> key_1 < key_2
       {key_1, {key_2, _order_2}} when is_integer(key_1) -> key_1 < key_2
-      {key_1, key_2} -> key_1 < key_2
+      {key_1, key_2} when is_integer(key_1) and is_integer(key_2) -> key_1 < key_2
       _other -> true
     end
   end
@@ -108,12 +128,12 @@ defmodule Cldr.Unit.Conversion.Derived do
     end)
   end
 
-  def unit_sort_key(<< "square_", unit :: binary >>) do
-    unit_sort_key(unit)
+  def unit_sort_key({<< "square_", unit :: binary >>, base_unit, scale}) do
+    unit_sort_key({unit, base_unit, scale})
   end
 
-  def unit_sort_key(<< "cubic_", unit :: binary >>) do
-    unit_sort_key(unit)
+  def unit_sort_key({<< "cubic_", unit :: binary >>, base_unit, scale}) do
+    unit_sort_key({unit, base_unit, scale})
   end
 
   @si_order @si_factors
@@ -130,17 +150,13 @@ defmodule Cldr.Unit.Conversion.Derived do
   |> Enum.with_index
 
   for {prefix, order} <- @si_order do
-    def unit_sort_key(<< unquote(prefix), unit :: binary >>) do
-      {unit_sort_key(unit), unquote(order)}
+    def unit_sort_key({<< unquote(prefix), unit :: binary >>, base_unit, scale}) do
+      {unit_sort_key({unit, base_unit, scale}), unquote(order)}
     end
   end
 
-  def unit_sort_key(unit) do
-    with {:ok, base_unit} <- Unit.base_unit(unit) do
-      Map.get(base_units_in_order(), base_unit)
-    else
-      _other -> 0
-    end
+  def unit_sort_key({_unit, base_unit, _}) do
+    Map.fetch!(base_units_in_order(), base_unit)
   end
 
   @base_units_in_order Cldr.Config.units
