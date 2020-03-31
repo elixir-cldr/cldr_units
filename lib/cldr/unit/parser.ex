@@ -41,6 +41,19 @@ defmodule Cldr.Unit.Parser do
     "yotta" =>  1_000_000_000_000_000_000_000_000
   }
 
+  @si_sort_order @si_factors
+  |> Enum.map(fn
+    {k, v} when is_integer(v) -> {k, v /  1.0}
+    {k, v} -> {k, Ratio.to_float(v)}
+  end)
+  |> Enum.sort(fn
+    {_k1, v1}, {_k2, v2} -> v1 > v2
+  end)
+  |> Enum.map(fn
+    {k, _v} -> k
+  end)
+  |> Enum.with_index
+
   @per "_per_"
 
   def parse_unit(unit_string) do
@@ -73,7 +86,7 @@ defmodule Cldr.Unit.Parser do
   |> Enum.uniq
   |> Enum.sort(fn a, b -> String.length(a) > String.length(b) end)
 
-  # in order to tokenize a unit string we need to split
+  # In order to tokenize a unit string it needs to be split
   # at the boundaries of known units - after we strip
   # any SI prefixes and any power (square, cubic) prefixes.
   #
@@ -125,10 +138,9 @@ defmodule Cldr.Unit.Parser do
   end
 
   # In order to correctly identify the units with their
-  # correct power (square or cubic) we have to expand
-  # any power units that are already powers so that
-  # later on we can group them with any single units of
-  # the same name.
+  # correct power (square or cubic) any existing power units
+  # have to be expanded so that later on we can group
+  # them with any single units of the same name.
 
   defp expand_power_instances([]) do
     []
@@ -160,11 +172,11 @@ defmodule Cldr.Unit.Parser do
     end)
   end
 
-  # For each unit, resolve its base unit. we First
+  # For each unit, resolve its base unit. First
   # ignore any power prefix or any SI unit prefix and then
-  # look up the base unit. Afterwards we take a note of any
+  # look up the base unit. Afterwards take a note of any
   # scale or power that need to be abplied to the base unit
-  # to reflect the power or SI unit.
+  # to reflect the power and/or SI unit.
 
   for {prefix, scale} <- @si_factors do
     defp resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
@@ -185,7 +197,7 @@ defmodule Cldr.Unit.Parser do
     defp resolve_base_unit(<< unquote(prefix) <> "_", subunit :: binary >> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
         factor = Ratio.pow(conversion.factor, unquote(power))
-        base_unit = [String.to_existing_atom(unquote(prefix)) | conversion.base_unit]
+        base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
         {unit, %{conversion | base_unit: base_unit, factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
@@ -209,8 +221,8 @@ defmodule Cldr.Unit.Parser do
     [:kilogram]
   end
 
-  def maybe_adjust_for_kilogram([prefix, :kilogram]) do
-    [prefix, :gram]
+  def maybe_adjust_for_kilogram([_prefix, :kilogram]) do
+    [:kilogram]
   end
 
   def maybe_adjust_for_kilogram(other) do
@@ -240,20 +252,7 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  @si_order @si_factors
-  |> Enum.map(fn
-    {k, v} when is_integer(v) -> {k, v /  1.0}
-    {k, v} -> {k, Ratio.to_float(v)}
-  end)
-  |> Enum.sort(fn
-    {_k1, v1}, {_k2, v2} -> v1 > v2
-  end)
-  |> Enum.map(fn
-    {k, _v} -> k
-  end)
-  |> Enum.with_index
-
-  for {prefix, order} <- @si_order do
+  for {prefix, order} <- @si_sort_order do
     defp unit_sort_key({<< unquote(prefix), unit :: binary >>, conversion}) do
       {unit_sort_key({unit, conversion}), unquote(order)}
     end
@@ -281,29 +280,30 @@ defmodule Cldr.Unit.Parser do
     @base_units_in_order
   end
 
-  @doc false
-  def unconvertible_units do
-    units = Cldr.Unit.known_units |> Enum.map(&Cldr.Unit.Alias.alias/1)
+  if Mix.env() == :dev do
+    @doc false
+    def unconvertible_units do
+      units = Cldr.Unit.known_units |> Enum.map(&Cldr.Unit.Alias.alias/1)
 
-    for unit <- units do
-      parse_unit(to_string(unit))
-    end
-    |> Enum.reject(&is_list(elem(&1, 1)))
-  end
-
-  @doc false
-  def unparseable_units do
-    for {unit, conversion} <- Cldr.Unit.Conversions.conversions() do
-      [Atom.to_string(unit), Atom.to_string(conversion.base_unit)]
-    end
-    |> List.flatten
-    |> Enum.map(fn x ->
-      case parse_unit(x) do
-        {:ok, thing} when is_list(thing) -> nil
-        {:error, other} -> other
+      for unit <- units do
+        parse_unit(to_string(unit))
       end
-    end)
-    |> Enum.reject(&is_nil/1)
-  end
+      |> Enum.reject(&is_list(elem(&1, 1)))
+    end
 
+    @doc false
+    def unparseable_units do
+      for {unit, conversion} <- Cldr.Unit.Conversions.conversions() do
+        [Atom.to_string(unit), Atom.to_string(hd(conversion.base_unit))]
+      end
+      |> List.flatten
+      |> Enum.map(fn x ->
+        case parse_unit(x) do
+          {:ok, thing} when is_list(thing) -> nil
+          {:error, other} -> other
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+    end
+  end
 end

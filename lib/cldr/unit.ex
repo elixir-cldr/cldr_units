@@ -718,10 +718,6 @@ defmodule Cldr.Unit do
     {:error, unknown_base_unit_error(unit_name)}
   end
 
-  def base_unit([_power, _prefix, :gram]) do
-    {:ok, :kilogram}
-  end
-
   def base_unit([_power, _prefix, base_unit]) do
     {:ok, base_unit}
   end
@@ -735,6 +731,10 @@ defmodule Cldr.Unit do
   end
 
   defp unwrap([item]) do
+    item
+  end
+
+  defp unwrap(item) do
     item
   end
 

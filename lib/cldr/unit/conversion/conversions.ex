@@ -20,13 +20,14 @@ defmodule Cldr.Unit.Conversions do
          {unit, %{conversion | offset: Ratio.new(offset.numerator, offset.denominator)}}
   end)
   |> Enum.map(fn
-      {unit, %{base_unit: base_unit} = conversion} ->
-        {unit, %{conversion | base_unit: [base_unit]}}
+    {unit, %{base_unit: base_unit} = conversion} ->
+      {unit, %{conversion | base_unit: [base_unit]}}
   end)
   |> Map.new
 
   @identity_conversions Enum.map(@conversions, fn
-    {_k, v} -> {Enum.join(v.base_unit, "_"), %Conversion{base_unit: v.base_unit}}
+    {_k, v} ->
+      {hd(v.base_unit), %Conversion{base_unit: v.base_unit}}
   end)
   |> Map.new
 
