@@ -8,7 +8,6 @@ defmodule Cldr.Unit.Conversion do
   defstruct [
     factor: 1,
     offset: 0,
-    power: 0,
     base_unit: nil
   ]
 

@@ -701,7 +701,7 @@ defmodule Cldr.Unit do
   """
   def base_unit(unit_name) when is_atom(unit_name) do
     case Map.fetch(Conversions.conversions(), unit_name) do
-      {:ok, conversion} -> {:ok, conversion.base_unit}
+      {:ok, conversion} -> {:ok, unwrap(conversion.base_unit)}
       :error -> {:error, unknown_base_unit_error(unit_name)}
     end
   end
@@ -716,6 +716,26 @@ defmodule Cldr.Unit do
     |> base_unit()
   rescue ArgumentError ->
     {:error, unknown_base_unit_error(unit_name)}
+  end
+
+  def base_unit([_power, _prefix, :gram]) do
+    {:ok, :kilogram}
+  end
+
+  def base_unit([_power, _prefix, base_unit]) do
+    {:ok, base_unit}
+  end
+
+  def base_unit([_prefix, base_unit]) do
+    {:ok, base_unit}
+  end
+
+  def base_unit([base_unit]) do
+    {:ok, base_unit}
+  end
+
+  defp unwrap([item]) do
+    item
   end
 
   def unknown_base_unit_error(unit_name) do

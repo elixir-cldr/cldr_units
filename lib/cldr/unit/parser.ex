@@ -19,6 +19,7 @@ defmodule Cldr.Unit.Parser do
   # * if its not an SI prefixed unit, move on
 
   alias Cldr.Unit.Conversions
+  alias Cldr.Unit.Conversion
 
   @power_units [{"square", 2}, {"cubic", 3}]
 
@@ -69,6 +70,7 @@ defmodule Cldr.Unit.Parser do
   @unit_strings Conversions.conversions()
   |> Map.keys
   |> Cldr.Map.stringify_values
+  |> Enum.uniq
   |> Enum.sort(fn a, b -> String.length(a) > String.length(b) end)
 
   # in order to tokenize a unit string we need to split
@@ -164,21 +166,27 @@ defmodule Cldr.Unit.Parser do
   # scale or power that need to be abplied to the base unit
   # to reflect the power or SI unit.
 
-  for {prefix, power} <- @power_units do
-    defp resolve_base_unit(<< unquote(prefix) <> "_", subunit :: binary >> = unit) do
-      with {_, conversion} <- resolve_base_unit(subunit) do
-        {unit, %{conversion | power: unquote(power)}}
+  for {prefix, scale} <- @si_factors do
+    defp resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
+      with {_, conversion} <- resolve_base_unit(base_unit) do
+        factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
+        base_unit =
+          [String.to_atom(unquote(prefix)) | conversion.base_unit]
+          |> maybe_adjust_for_kilogram
+
+        {unit, %{conversion | base_unit: base_unit, factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
     end
   end
 
-  for {prefix, scale} <- @si_factors do
-    defp resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
-      with {:ok, conversion} <- Conversions.conversion_for(base_unit) do
-        factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
-        {unit, %{conversion | factor: factor, power: 0}}
+  for {prefix, power} <- @power_units do
+    defp resolve_base_unit(<< unquote(prefix) <> "_", subunit :: binary >> = unit) do
+      with {_, conversion} <- resolve_base_unit(subunit) do
+        factor = Ratio.pow(conversion.factor, unquote(power))
+        base_unit = [String.to_existing_atom(unquote(prefix)) | conversion.base_unit]
+        {unit, %{conversion | base_unit: base_unit, factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
@@ -191,6 +199,22 @@ defmodule Cldr.Unit.Parser do
     else
       {:error, {exception, reason}} -> raise(exception, reason)
     end
+  end
+
+  # These adjustments are necessary because uniquely kilogram
+  # is both a base unit and has an SI prefix and we need
+  # to disambiguate accordingly.
+
+  def maybe_adjust_for_kilogram([:kilo, :kilogram]) do
+    [:kilogram]
+  end
+
+  def maybe_adjust_for_kilogram([prefix, :kilogram]) do
+    [prefix, :gram]
+  end
+
+  def maybe_adjust_for_kilogram(other) do
+    other
   end
 
   # Units are sorted in the order present in the base units
@@ -235,8 +259,12 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  defp unit_sort_key({_unit, conversion}) do
-    Map.fetch!(base_units_in_order(), conversion.base_unit)
+  defp unit_sort_key({_unit, %Conversion{base_unit: [_prefix, base_unit]}}) do
+    Map.fetch!(base_units_in_order(), base_unit)
+  end
+
+  defp unit_sort_key({_unit, %Conversion{base_unit: base_unit}}) do
+    Map.fetch!(base_units_in_order(), base_unit)
   end
 
   @base_units_in_order Cldr.Config.units
@@ -256,7 +284,7 @@ defmodule Cldr.Unit.Parser do
     for unit <- units do
       parse_unit(to_string(unit))
     end
-    |> Enum.reject(&is_list/1)
+    |> Enum.reject(&is_list(elem(&1, 1)))
   end
 
   @doc false
@@ -265,8 +293,9 @@ defmodule Cldr.Unit.Parser do
       [Atom.to_string(unit), Atom.to_string(conversion.base_unit)]
     end
     |> List.flatten
-    |> Enum.map(fn x -> case parse_unit(x) do
-        thing when is_list(thing) -> nil
+    |> Enum.map(fn x ->
+      case parse_unit(x) do
+        {:ok, thing} when is_list(thing) -> nil
         {:error, other} -> other
       end
     end)
