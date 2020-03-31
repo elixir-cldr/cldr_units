@@ -5,9 +5,17 @@ defmodule Cldr.Unit.Conversion do
 
   """
 
+  defstruct [
+    factor: 1,
+    offset: 0,
+    power: 0,
+    base_unit: nil
+  ]
+
   alias Cldr.Unit
+  alias Cldr.Unit.Conversions
+
   import Unit, only: [incompatible_units_error: 2]
-  import Cldr.Unit.Conversions, only: [conversion_factor: 1]
 
   defmodule Options do
     defstruct [usage: nil, locale: nil, backend: nil, territory: nil]
@@ -54,22 +62,13 @@ defmodule Cldr.Unit.Conversion do
   def convert(%Unit{unit: from_unit, value: value}, to_unit) do
     with {:ok, to_unit} <- Unit.validate_unit(to_unit),
          true <- Unit.compatible?(from_unit, to_unit),
-         {:ok, from_conversion} <- get_conversions(from_unit),
-         {:ok, to_conversion} <- get_conversions(to_unit),
+         {:ok, from_conversion} <- Conversions.conversion_for(from_unit),
+         {:ok, to_conversion} <- Conversions.conversion_for(to_unit),
          {:ok, converted} <- convert(value, from_conversion, to_conversion) do
       Unit.new(to_unit, converted)
     else
       {:error, _} = error -> error
       false -> {:error, incompatible_units_error(from_unit, to_unit)}
-    end
-  end
-
-  defp get_conversions(unit) do
-    if factors = conversion_factor(unit) do
-      {:ok, factors}
-    else
-      {:error,  {Cldr.Unit.UnitNotConvertibleError,
-        "No conversion is possible for #{inspect unit}"}}
     end
   end
 

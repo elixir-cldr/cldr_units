@@ -18,7 +18,6 @@ defmodule Cldr.Unit.Parser do
   #
   # * if its not an SI prefixed unit, move on
 
-  alias Cldr.Unit
   alias Cldr.Unit.Conversions
 
   @power_units [{"square", 2}, {"cubic", 3}]
@@ -48,6 +47,7 @@ defmodule Cldr.Unit.Parser do
     |> String.replace("-", "_")
     |> String.split(@per, parts: 2)
     |> Enum.map(&parse_subunit/1)
+    |> wrap_ok
   rescue e in [Cldr.UnknownUnitError, Cldr.Unit.UnknownBaseUnitError] ->
     {:error, {e.__struct__, e.message}}
   end
@@ -60,6 +60,10 @@ defmodule Cldr.Unit.Parser do
     |> combine_power_instances()
     |> Enum.map(&resolve_base_unit/1)
     |> Enum.sort(&unit_sorter/2)
+  end
+
+  defp wrap_ok(result) do
+    {:ok, result}
   end
 
   @unit_strings Conversions.conversions()
@@ -91,23 +95,27 @@ defmodule Cldr.Unit.Parser do
     []
   end
 
+  for unit <- @unit_strings do
+    defp split_into_units(<< unquote(unit), rest :: binary >>) do
+      [unquote(unit) | split_into_units(rest)]
+    end
+  end
+
   for {prefix, _power} <- @power_units do
     defp split_into_units(<< unquote(prefix) <> "_", rest :: binary >>) do
       [unquote(prefix) | split_into_units(rest)]
     end
   end
 
-  for unit <- @unit_strings do
-    defp split_into_units(<< unquote(unit), rest :: binary >>) do
-      [unquote(unit) | split_into_units(String.trim_leading(rest, "_"))]
+  for {prefix, _scale} <- @si_factors do
+    defp split_into_units(<< unquote(prefix), rest :: binary >>) do
+      [head | rest] = split_into_units(rest)
+      [unquote(prefix) <> head | rest]
     end
   end
 
-  for {prefix, _scale} <- @si_factors do
-    defp split_into_units(<< unquote(prefix), rest :: binary >>) do
-      [head | rest] = split_into_units(String.trim_leading(rest, "_"))
-      [unquote(prefix) <> head | rest]
-    end
+  defp split_into_units(<< "_", rest :: binary >>) do
+    split_into_units(rest)
   end
 
   defp split_into_units(other) do
@@ -158,8 +166,8 @@ defmodule Cldr.Unit.Parser do
 
   for {prefix, power} <- @power_units do
     defp resolve_base_unit(<< unquote(prefix) <> "_", subunit :: binary >> = unit) do
-      with {_, base_unit, scale, _power} <- resolve_base_unit(subunit) do
-        {unit, base_unit, scale, unquote(power)}
+      with {_, conversion} <- resolve_base_unit(subunit) do
+        {unit, %{conversion | power: unquote(power)}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
@@ -168,9 +176,9 @@ defmodule Cldr.Unit.Parser do
 
   for {prefix, scale} <- @si_factors do
     defp resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
-      with {:ok, base_unit} <- Unit.base_unit(base_unit) do
-        scale = maybe_adjust_mass_scale(base_unit, unquote(Macro.escape(scale)))
-        {unit, base_unit, scale, 0}
+      with {:ok, conversion} <- Conversions.conversion_for(base_unit) do
+        factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
+        {unit, %{conversion | factor: factor, power: 0}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
@@ -178,24 +186,11 @@ defmodule Cldr.Unit.Parser do
   end
 
   defp resolve_base_unit(unit) when is_binary(unit) do
-    with {:ok, base_unit} <- Unit.base_unit(unit) do
-      scale = maybe_adjust_mass_scale(base_unit, 1)
-      {unit, base_unit, scale, 0}
+    with {:ok, conversion} <- Conversions.conversion_for(unit) do
+      {unit, conversion}
     else
       {:error, {exception, reason}} -> raise(exception, reason)
     end
-  end
-
-  # The SI base unit of mass is a kilogram. But it also has an SI
-  # prefix. So in order to get the scale right we need to divide by
-  # the scale of the kilogram, which is 1_000.
-
-  defp maybe_adjust_mass_scale(:kilogram, scale) do
-    Ratio.div(scale, 1000)
-  end
-
-  defp maybe_adjust_mass_scale(_, scale) do
-    scale
   end
 
   # Units are sorted in the order present in the base units
@@ -216,8 +211,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, _power} <- @power_units do
-    defp unit_sort_key({<< unquote(prefix) <> "_", unit :: binary >>, base_unit, scale}) do
-      unit_sort_key({unit, base_unit, scale})
+    defp unit_sort_key({<< unquote(prefix) <> "_", unit :: binary >>, conversion}) do
+      unit_sort_key({unit, conversion})
     end
   end
 
@@ -235,13 +230,13 @@ defmodule Cldr.Unit.Parser do
   |> Enum.with_index
 
   for {prefix, order} <- @si_order do
-    defp unit_sort_key({<< unquote(prefix), unit :: binary >>, base_unit, scale}) do
-      {unit_sort_key({unit, base_unit, scale}), unquote(order)}
+    defp unit_sort_key({<< unquote(prefix), unit :: binary >>, conversion}) do
+      {unit_sort_key({unit, conversion}), unquote(order)}
     end
   end
 
-  defp unit_sort_key({_unit, base_unit, _}) do
-    Map.fetch!(base_units_in_order(), base_unit)
+  defp unit_sort_key({_unit, conversion}) do
+    Map.fetch!(base_units_in_order(), conversion.base_unit)
   end
 
   @base_units_in_order Cldr.Config.units
