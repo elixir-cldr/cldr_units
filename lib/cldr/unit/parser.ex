@@ -259,11 +259,15 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  defp unit_sort_key({_unit, %Conversion{base_unit: [_, :gram]}}) do
+    Map.fetch!(base_units_in_order(), :kilogram)
+  end
+
   defp unit_sort_key({_unit, %Conversion{base_unit: [_prefix, base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
 
-  defp unit_sort_key({_unit, %Conversion{base_unit: base_unit}}) do
+  defp unit_sort_key({_unit, %Conversion{base_unit: [base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
 
