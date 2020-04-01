@@ -5,7 +5,11 @@ defimpl String.Chars, for: Cldr.Unit do
 end
 
 defimpl Inspect, for: Cldr.Unit do
-  def inspect(unit, _opts) do
-    "#Unit<#{inspect(unit.unit)}, #{inspect(unit.value)}>"
+  def inspect(%{unit: name, value: value}, _opts) when is_atom(name) do
+    "#Unit<#{inspect(name)}, #{inspect(value)}>"
+  end
+
+  def inspect(%{unit: {name, _}, value: value}, _opts) do
+    "#Unit<#{inspect(name)}, #{inspect(value)}>"
   end
 end

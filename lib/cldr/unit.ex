@@ -25,15 +25,10 @@ defmodule Cldr.Unit do
   """
 
   alias Cldr.Unit
-  alias Cldr.Unit.Math
-  alias Cldr.Unit.Alias
-  alias Cldr.Unit.Conversion
-  alias Cldr.Unit.Conversions
-  alias Cldr.Unit.Preference
-
   alias Cldr.Locale
   alias Cldr.LanguageTag
   alias Cldr.Substitution
+  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
 
   @enforce_keys [:unit, :value]
   defstruct unit: nil, value: 0
@@ -1249,7 +1244,7 @@ defmodule Cldr.Unit do
 
   def validate_unit(unit) when is_binary(unit) do
     with {:ok, parsed} <- Parser.parse_unit(unit) do
-      canonical_name = Parser.canonical_name(parsed)
+      canonical_name = Parser.canonical_unit_name(parsed)
       {:ok, {canonical_name, parsed}}
     end
   end
