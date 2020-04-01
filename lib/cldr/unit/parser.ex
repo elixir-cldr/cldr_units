@@ -20,6 +20,7 @@ defmodule Cldr.Unit.Parser do
 
   alias Cldr.Unit.Conversions
   alias Cldr.Unit.Conversion
+  alias Cldr.Unit.Alias
 
   @power_units [{"square", 2}, {"cubic", 3}]
 
@@ -66,6 +67,73 @@ defmodule Cldr.Unit.Parser do
     {:error, {e.__struct__, e.message}}
   end
 
+  @doc """
+  Returns the canonical unit name
+  for a unit
+
+  ## Arguments
+
+  * `unit_string` is any string representing
+    a unit such as `light_year_per_week`.
+
+  ## Returns
+
+  * `{:ok, canonical_name}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Examples
+
+
+  """
+  def canonical_unit_name(unit_string) when is_binary(unit_string) do
+    with {:ok, parsed} <- parse_unit(unit_string) do
+      {:ok, canonical_unit_name(parsed)}
+    end
+  end
+
+  def canonical_unit_name([numerator, denominator]) do
+    canonical_subunit_name(numerator) <> @per <> canonical_subunit_name(denominator)
+  end
+
+  def canonical_unit_name([numerator]) do
+    canonical_subunit_name(numerator)
+  end
+
+  @doc """
+  Returns the canonical unit name
+  for a unit or raises on error
+
+  ## Arguments
+
+  * `unit_string` is any string representing
+    a unit such as `light_year_per_week`.
+
+  ## Returns
+
+  * `{:ok, canonical_name}` or
+
+  * raises an exception
+
+  ## Examples
+
+
+  """
+  def canonical_unit_name!(unit_string) when is_binary(unit_string) do
+    case canonical_unit_name(unit_string) do
+      {:ok, unit_name} -> unit_name
+      {:eror, {exception, reason}} -> raise exception, reason
+    end
+  end
+
+  defp canonical_subunit_name([{unit_name, _}]) do
+    unit_name
+  end
+
+  defp canonical_subunit_name([{first, _}, {second, _} | rest]) do
+    canonical_subunit_name([{first <> "_" <> second, nil} | rest])
+  end
+
   defp parse_subunit(unit_string) do
     unit_string
     |> String.replace(@per, "")
@@ -92,22 +160,30 @@ defmodule Cldr.Unit.Parser do
   #
   # The process is:
   #
-  # 1. Ignore "square" and "cubic" prefixes, they
+  # 1. Replace any aliases
+  #
+  # 2. Ignore "square" and "cubic" prefixes, they
   #    are just passed through for later use
   #
-  # 2. For each known unit, defined as a key on
+  # 3. For each known unit, defined as a key on
   #    the map returned by `Cldr.Unit.Conversions.conversions/0`,
   #    sorted in descending order of length so we match
   #    longest first, generate a function matching the head
   #    of the string. This will match any unit except those
   #    with an SI prefix
   #
-  # 3. Match the beginning of the string to an SI prefix and
+  # 4. Match the beginning of the string to an SI prefix and
   #    then match the remaining string. Reassemble the prefix
   #    to the base unit before returning.
 
   defp split_into_units("") do
     []
+  end
+
+  for {unit_alias, unit} <- Alias.aliases() do
+    defp split_into_units(<< unquote(to_string(unit_alias)), rest :: binary >>) do
+      split_into_units(unquote(to_string(unit)) <> rest)
+    end
   end
 
   for unit <- @unit_strings do
@@ -262,11 +338,15 @@ defmodule Cldr.Unit.Parser do
     Map.fetch!(base_units_in_order(), :kilogram)
   end
 
+  defp unit_sort_key({_unit, %Conversion{base_unit: [base_unit]}}) do
+    Map.fetch!(base_units_in_order(), base_unit)
+  end
+
   defp unit_sort_key({_unit, %Conversion{base_unit: [_prefix, base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
 
-  defp unit_sort_key({_unit, %Conversion{base_unit: [base_unit]}}) do
+  defp unit_sort_key({_unit, %Conversion{base_unit: [_power, _prefix, base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
 

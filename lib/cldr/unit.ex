@@ -1248,22 +1248,18 @@ defmodule Cldr.Unit do
   end
 
   def validate_unit(unit) when is_binary(unit) do
-    unit
-    |> String.downcase()
-    |> String.replace("-", "_")
-    |> String.to_existing_atom()
-    |> validate_unit()
-  rescue
-    ArgumentError ->
-      {:error, unit_error(unit)}
+    with {:ok, parsed} <- Parser.parse_unit(unit) do
+      canonical_name = Parser.canonical_name(parsed)
+      {:ok, {canonical_name, parsed}}
+    end
   end
 
   def validate_unit(%Unit{unit: unit}) do
     {:ok, unit}
   end
 
-  def validate_unit(unit) do
-    {:error, unit_error(unit)}
+  def validate_unit(unknown_unit) do
+    {:error, unit_error(unknown_unit)}
   end
 
   defp validate_per_unit(nil) do
