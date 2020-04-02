@@ -1,22 +1,12 @@
 defmodule Cldr.Unit.Parser do
-  @moduledoc false
+  @moduledoc """
+  Parse unit strings into composable
+  unit structures.  These structures can
+  then be used to produced localized output,
+  or to be converted to another unit of the
+  same type.
 
-  # The localisable units (the units parameter here) includes
-  # several SI prefixes (like kilo and milli) that are not included
-  # in the CLDR conversion byt design. It is intended that these be
-  # derived and that is what this function does.
-  #
-  # We hold the strategy that the only valid units are ones that
-  # can be localised so we:
-  #
-  # * iterate over the list of known units
-  #
-  # * if the unit is already convertible them move on
-  #
-  # * if its an SI prefixed unit and the base unit is convertible, create a
-  #   new conversion with the SI prefix and scaled factor
-  #
-  # * if its not an SI prefixed unit, move on
+  """
 
   alias Cldr.Unit.Conversions
   alias Cldr.Unit.Conversion
@@ -126,28 +116,6 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  defp canonical_subunit_name([{unit_name, _}]) do
-    unit_name
-  end
-
-  defp canonical_subunit_name([{first, _}, {second, _} | rest]) do
-    canonical_subunit_name([{first <> "_" <> second, nil} | rest])
-  end
-
-  defp parse_subunit(unit_string) do
-    unit_string
-    |> String.replace(@per, "")
-    |> split_into_units
-    |> expand_power_instances()
-    |> combine_power_instances()
-    |> Enum.map(&resolve_base_unit/1)
-    |> Enum.sort(&unit_sorter/2)
-  end
-
-  defp wrap_ok(result) do
-    {:ok, result}
-  end
-
   @doc """
   Returns the canonical base unit name
   for a unit.
@@ -213,6 +181,28 @@ defmodule Cldr.Unit.Parser do
       {:ok, unit_name} -> unit_name
       {:eror, {exception, reason}} -> raise exception, reason
     end
+  end
+
+  defp canonical_subunit_name([{unit_name, _}]) do
+    unit_name
+  end
+
+  defp canonical_subunit_name([{first, _}, {second, _} | rest]) do
+    canonical_subunit_name([{first <> "_" <> second, nil} | rest])
+  end
+
+  defp parse_subunit(unit_string) do
+    unit_string
+    |> String.replace(@per, "")
+    |> split_into_units
+    |> expand_power_instances()
+    |> combine_power_instances()
+    |> Enum.map(&resolve_base_unit/1)
+    |> Enum.sort(&unit_sorter/2)
+  end
+
+  defp wrap_ok(result) do
+    {:ok, result}
   end
 
   defp canonical_base_subunit([conversion]) do
