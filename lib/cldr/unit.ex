@@ -30,13 +30,15 @@ defmodule Cldr.Unit do
   alias Cldr.Substitution
   alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
 
-  @enforce_keys [:unit, :value]
-  defstruct unit: nil, value: 0
+  @enforce_keys [:unit, :value, :base_conversion]
+  defstruct unit: nil, value: 0, base_conversion: []
 
   @type unit :: atom()
   @type style :: atom()
   @type value :: Cldr.Math.number_or_decimal()
-  @type t :: %Unit{unit: unit, value: value}
+
+  @type conversion :: Cldr.Unit.Conversion.t() | list()
+  @type t :: %Unit{unit: unit, value: value, base_conversion: conversion}
 
   @default_style :long
   @styles [:long, :short, :narrow]
@@ -92,8 +94,8 @@ defmodule Cldr.Unit do
   @spec new(unit() | value(), value() | unit()) :: t() | {:error, {module(), String.t()}}
 
   def new(value, unit) when is_number(value) do
-    with {:ok, unit} <- validate_unit(unit) do
-      %Unit{unit: unit, value: value}
+    with {:ok, unit, base_conversion} <- validate_unit(unit) do
+      %Unit{unit: unit, value: value, base_conversion: base_conversion}
     end
   end
 
@@ -102,8 +104,8 @@ defmodule Cldr.Unit do
   end
 
   def new(%Decimal{} = value, unit) do
-    with {:ok, unit} <- validate_unit(unit) do
-      %Unit{unit: unit, value: value}
+    with {:ok, unit, base_conversion} <- validate_unit(unit) do
+      %Unit{unit: unit, value: value, base_conversion: base_conversion}
     end
   end
 
@@ -1232,7 +1234,7 @@ defmodule Cldr.Unit do
 
   """
   def validate_unit(unit) when unit in @units do
-    {:ok, unit}
+    {:ok, unit, Conversions.conversion_for!(unit)}
   end
 
   @aliases Alias.aliases() |> Map.keys()
@@ -1245,7 +1247,7 @@ defmodule Cldr.Unit do
   def validate_unit(unit) when is_binary(unit) do
     with {:ok, parsed} <- Parser.parse_unit(unit) do
       canonical_name = Parser.canonical_unit_name(parsed)
-      {:ok, {canonical_name, parsed}}
+      {:ok, canonical_name, parsed}
     end
   end
 

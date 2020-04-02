@@ -2,6 +2,7 @@ defmodule Cldr.Unit.Conversions do
   @moduledoc false
 
   alias Cldr.Unit.Conversion
+  alias Cldr.Unit.Parser
 
   @conversions Map.get(Cldr.Config.units(), :conversions)
   |> Enum.map(fn
@@ -27,7 +28,7 @@ defmodule Cldr.Unit.Conversions do
 
   @identity_conversions Enum.map(@conversions, fn
     {_k, v} ->
-      {hd(v.base_unit), %Conversion{base_unit: v.base_unit}}
+      {hd(v.base_unit), %Conversion{base_unit: v.base_unit, offset: 0, factor: 1}}
   end)
   |> Map.new
 
@@ -38,10 +39,12 @@ defmodule Cldr.Unit.Conversions do
   end
 
   def conversion_for(unit) when is_atom(unit) do
-    with {:ok, conversion} <- Map.fetch(conversions(), unit) do
-      {:ok, conversion}
-    else
-      :error -> {:error, Cldr.Unit.unit_error(unit)}
+    case  Map.fetch(conversions(), unit) do
+      {:ok, conversion} ->
+        {:ok, conversion}
+      :error ->
+        unit_string = Atom.to_string(unit)
+        Parser.parse_unit(unit_string)
     end
   end
 
@@ -51,6 +54,13 @@ defmodule Cldr.Unit.Conversions do
     |> conversion_for()
   rescue ArgumentError ->
     {:error, Cldr.Unit.unit_error(unit)}
+  end
+
+  def conversion_for!(unit) do
+    case conversion_for(unit) do
+      {:ok, conversion} -> conversion
+      {:error, {exception, reason}} -> raise exception, reason
+    end
   end
 
 end

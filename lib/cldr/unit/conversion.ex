@@ -5,14 +5,20 @@ defmodule Cldr.Unit.Conversion do
 
   """
 
+  @enforce_keys [:factor, :offset, :base_unit]
   defstruct [
     factor: 1,
     offset: 0,
     base_unit: nil
   ]
 
+  @type t :: %{
+    factor: integer | float | Ratio.t(),
+    base_unit: [atom(), ...],
+    offset: integer | float
+  }
+
   alias Cldr.Unit
-  alias Cldr.Unit.Conversions
 
   import Unit, only: [incompatible_units_error: 2]
 
@@ -58,11 +64,9 @@ defmodule Cldr.Unit.Conversion do
     unit
   end
 
-  def convert(%Unit{unit: from_unit, value: value}, to_unit) do
-    with {:ok, to_unit} <- Unit.validate_unit(to_unit),
+  def convert(%Unit{unit: from_unit, value: value, base_conversion: from_conversion}, to_unit) do
+    with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
          true <- Unit.compatible?(from_unit, to_unit),
-         {:ok, from_conversion} <- Conversions.conversion_for(from_unit),
-         {:ok, to_conversion} <- Conversions.conversion_for(to_unit),
          {:ok, converted} <- convert(value, from_conversion, to_conversion) do
       Unit.new(to_unit, converted)
     else
