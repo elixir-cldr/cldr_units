@@ -262,7 +262,7 @@ defmodule Cldr.Unit.Backend do
         ### Examples
 
             iex> meter = Cldr.Unit.new :meter, 1
-            #Unit<:meter, 1>
+            #Cldr.Unit<:meter, 1>
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
             {:ok, [:foot, :inch]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
@@ -326,7 +326,7 @@ defmodule Cldr.Unit.Backend do
         ### Examples
 
             iex> meter = Cldr.Unit.new :meter, 1
-            #Unit<:meter, 1>
+            #Cldr.Unit<:meter, 1>
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person, alt: :informal
             [:foot, :inch]
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person

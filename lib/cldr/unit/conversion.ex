@@ -45,17 +45,17 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Unit<:fahrenheit, 32>
+      #Cldr.Unit<:fahrenheit, 32>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:fahrenheit, 32), :celsius
-      #Unit<:celsius, 0>
+      #Cldr.Unit<:celsius, 0>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :foot
-      #Unit<:foot, 5280>
+      #Cldr.Unit<:foot, 5280>
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :gallon
       {:error, {Cldr.Unit.IncompatibleUnitsError,
-        "Operations can only be performed between units of the same type. Received :mile and :gallon"}}
+        "Operations can only be performed between units of the same category. Received :mile and :gallon"}}
 
   """
   @spec convert(Unit.t(), Unit.unit()) :: Unit.t() | {:error, {module(), String.t()}}
@@ -64,7 +64,9 @@ defmodule Cldr.Unit.Conversion do
     unit
   end
 
-  def convert(%Unit{unit: from_unit, value: value, base_conversion: from_conversion}, to_unit) do
+  def convert(%Unit{} = unit, to_unit) do
+    %{unit: from_unit, value: value, base_conversion: from_conversion} = unit
+
     with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
          true <- Unit.compatible?(from_unit, to_unit),
          {:ok, converted} <- convert(value, from_conversion, to_conversion) do
@@ -75,7 +77,7 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(value, from, to) when is_number(value) do
+  defp convert(value, %__MODULE__{} = from, %__MODULE__{} = to) when is_number(value) do
     use Ratio
 
     %{factor: from_factor, offset: from_offset} = from
@@ -93,7 +95,7 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(%Decimal{} = value, from, to) do
+  defp convert(%Decimal{} = value, %__MODULE__{} = from, %__MODULE__{} = to) do
     use Ratio
 
     %{factor: from_factor, offset: from_offset} = from
@@ -148,10 +150,10 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.Conversion.convert! Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Unit<:fahrenheit, 32>
+      #Cldr.Unit<:fahrenheit, 32>
 
       iex> Cldr.Unit.Conversion.convert! Cldr.Unit.new!(:fahrenheit, 32), :celsius
-      #Unit<:celsius, 0>
+      #Cldr.Unit<:celsius, 0>
 
       Cldr.Unit.Conversion.convert Cldr.Unit.new!(:mile, 1), :gallon
       ** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units of the same type. Received :mile and :gallon
@@ -187,9 +189,9 @@ defmodule Cldr.Unit.Conversion do
   ## Example
 
       iex> u = Cldr.Unit.new(:kilometer, 10)
-      #Unit<:kilometer, 10>
+      #Cldr.Unit<:kilometer, 10>
       iex> Cldr.Unit.Conversion.convert_to_base_unit u
-      #Unit<:meter, 10000>
+      #Cldr.Unit<:meter, 10000>
 
   """
   def convert_to_base_unit(%Unit{} = unit) do
@@ -203,10 +205,9 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def convert_to_base_unit(unit) when is_atom(unit) do
-    case Unit.new(unit, 1) do
-      {:error, reason} -> {:error, reason}
-      unit -> convert_to_base_unit(unit)
-    end
+    unit
+    |> Unit.new(1)
+    |> convert_to_base_unit()
   end
 
   def convert_to_base_unit([unit | _rest]) when is_atom(unit) do
@@ -235,9 +236,9 @@ defmodule Cldr.Unit.Conversion do
   ## Example
 
       iex> u = Cldr.Unit.new(:kilometer, 10)
-      #Unit<:kilometer, 10>
+      #Cldr.Unit<:kilometer, 10>
       iex> Cldr.Unit.Conversion.convert_to_base_unit u
-      #Unit<:meter, 10000>
+      #Cldr.Unit<:meter, 10000>
 
   """
   def convert_to_base_unit!(%Unit{} = unit) do

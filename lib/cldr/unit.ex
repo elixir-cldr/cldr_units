@@ -81,10 +81,10 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.new(23, :gallon)
-      #Unit<:gallon, 23>
+      #Cldr.Unit<:gallon, 23>
 
       iex> Cldr.Unit.new(:gallon, 23)
-      #Unit<:gallon, 23>
+      #Cldr.Unit<:gallon, 23>
 
       iex> Cldr.Unit.new(14, :gadzoots)
       {:error, {Cldr.UnknownUnitError,
@@ -131,7 +131,7 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.new! 23, :gallon
-      #Unit<:gallon, 23>
+      #Cldr.Unit<:gallon, 23>
 
       Cldr.Unit.new! 14, :gadzoots
       ** (Cldr.UnknownUnitError) The unit :gadzoots is not known.
@@ -149,12 +149,12 @@ defmodule Cldr.Unit do
 
   @doc """
   Returns a boolean indicating if two units are
-  of the same unit type.
+  of the same unit category.
 
   ## Arguments
 
   * `unit_1` and `unit_2` are any units returned by
-    `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
+    `Cldr.Unit.new/2` or a valid unit name.
 
   ## Returns
 
@@ -171,12 +171,17 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.compatible? :foot, :liter
       false
 
+      iex> Cldr.Unit.compatible? "light_year_per_second", "meter_per_gallon"
+      false
+
   """
   @spec compatible?(unit(), unit()) :: boolean
   def compatible?(unit_1, unit_2) do
-    with {:ok, unit_1} <- validate_unit(unit_1),
-         {:ok, unit_2} <- validate_unit(unit_2) do
-      unit_category(unit_1) == unit_category(unit_2)
+    with {:ok, _unit_1, conversion_1} <- validate_unit(unit_1),
+         {:ok, _unit_2, conversion_2} <- validate_unit(unit_2),
+         {:ok, base_unit_1} <-  base_unit(conversion_1),
+         {:ok, base_unit_2} <-  base_unit(conversion_2) do
+      Kernel.to_string(base_unit_1) == Kernel.to_string(base_unit_2)
     else
       _ -> false
     end
@@ -312,7 +317,7 @@ defmodule Cldr.Unit do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style),
-         {:ok, unit} <- validate_unit(options[:unit]) do
+         {:ok, unit, _conversion} <- validate_unit(options[:unit]) do
       {:ok, to_string(number, unit, locale, style, backend, options)}
     end
   end
@@ -526,8 +531,8 @@ defmodule Cldr.Unit do
   Use this function if you have a unit which
   should be presented in a user interface using
   units relevant to the audience. For example, a
-  unit `#Unit<100, :meter>` might be better
-  presented to a US audiance as `#Unit<328, :foot>`.
+  unit `#Cldr.Unit100, :meter>` might be better
+  presented to a US audiance as `#Cldr.Unit328, :foot>`.
 
   ## Arguments
 
@@ -576,9 +581,9 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> u = Cldr.Unit.new(:foot, 23.3)
-      #Unit<:foot, 23.3>
+      #Cldr.Unit<:foot, 23.3>
       iex> Cldr.Unit.zero(u)
-      #Unit<:foot, 0.0>
+      #Cldr.Unit<:foot, 0.0>
 
   """
   def zero(%Unit{value: value} = unit) when is_integer(value) do
@@ -604,12 +609,12 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> u = Cldr.Unit.new(:foot, 23.3)
-      #Unit<:foot, 23.3>
+      #Cldr.Unit<:foot, 23.3>
       iex> Cldr.Unit.zero?(u)
       false
 
       iex> u = Cldr.Unit.new(:foot, 0)
-      #Unit<:foot, 0>
+      #Cldr.Unit<:foot, 0>
       iex> Cldr.Unit.zero?(u)
       true
 
@@ -693,46 +698,29 @@ defmodule Cldr.Unit do
       {:ok, :square_meter}
 
       iex> Cldr.Unit.base_unit :square_table
-      {:error, {Cldr.UnknownBaseUnitError, "The unit :square_table is not known."}
+      {:error, {Cldr.UnknownUnitError, "The unit :square_table is not known."}}
 
   """
-  def base_unit(unit_name) when is_atom(unit_name) do
-    case Map.fetch(Conversions.conversions(), unit_name) do
-      {:ok, conversion} -> {:ok, unwrap(conversion.base_unit)}
-      :error -> {:error, unknown_base_unit_error(unit_name)}
+  def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
+    with {:ok, _unit, conversion} <- validate_unit(unit_name) do
+      base_unit(conversion)
     end
   end
 
-  def base_unit(%Unit{unit: unit_name}) do
-    base_unit(unit_name)
+  def base_unit(%{base_unit: [base_name]}) do
+    {:ok, base_name}
   end
 
-  def base_unit(unit_name) when is_binary(unit_name) do
-    unit_name
-    |> String.to_existing_atom()
-    |> base_unit()
-  rescue ArgumentError ->
-    {:error, unknown_base_unit_error(unit_name)}
+  def base_unit(%Unit{base_conversion: %{base_unit: [base_name]}}) do
+    {:ok, base_name}
   end
 
-  def base_unit([_power, _prefix, base_unit]) do
-    {:ok, base_unit}
+  def base_unit(%Unit{base_conversion: conversion}) do
+    {:ok, Parser.canonical_base_unit(conversion)}
   end
 
-  def base_unit([_prefix, base_unit]) do
-    {:ok, base_unit}
-  end
-
-  def base_unit([base_unit]) do
-    {:ok, base_unit}
-  end
-
-  defp unwrap([item]) do
-    item
-  end
-
-  defp unwrap(item) do
-    item
+  def base_unit(conversion) when is_list(conversion) do
+    {:ok, Parser.canonical_base_unit(conversion)}
   end
 
   def unknown_base_unit_error(unit_name) do
@@ -768,7 +756,7 @@ defmodule Cldr.Unit do
   @spec unit_category(Unit.t() | String.t() | atom()) ::
           atom() | {:error, {module(), String.t()}}
   def unit_category(unit) do
-    with {:ok, unit} <- validate_unit(unit) do
+    with {:ok, unit, _conversion} <- validate_unit(unit) do
       Map.get(unit_category_map(), unit)
     end
   end
@@ -1031,7 +1019,7 @@ defmodule Cldr.Unit do
   end
 
   def compatible_units(unit, %{jaro: false}) do
-    with {:ok, unit} <- validate_unit(unit) do
+    with {:ok, unit, _conversion} <- validate_unit(unit) do
       type = unit_category(unit)
       unit_tree()[type]
     end
@@ -1056,7 +1044,7 @@ defmodule Cldr.Unit do
   @spec compatible_list([{float, unit}, ...], unit) :: [{float, unit}, ...] | []
 
   defp compatible_list(jaro_list, unit) when is_list(jaro_list) do
-    with {:ok, unit} <- validate_unit(unit) do
+    with {:ok, unit, _conversion} <- validate_unit(unit) do
       Enum.filter(jaro_list, fn
         {_distance, u} -> unit_category(u) == unit_category(unit)
         u -> unit_category(u) == unit_category(unit)
@@ -1184,7 +1172,7 @@ defmodule Cldr.Unit do
   @doc false
   def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
     with {:ok, style} <- validate_style(style),
-         {:ok, unit} <- validate_unit(unit) do
+         {:ok, unit, _conversion} <- validate_unit(unit) do
       units = units_for(locale_name, style, backend)
       pattern = Map.get(units, unit)
       {:ok, pattern}
@@ -1199,7 +1187,7 @@ defmodule Cldr.Unit do
 
   def per_pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
     with {:ok, style} <- validate_style(style),
-         {:ok, unit} <- validate_unit(unit) do
+         {:ok, unit, _conversion} <- validate_unit(unit) do
       units = units_for(locale_name, style, backend)
       pattern = get_in(units, [unit, :per_unit_pattern])
       default_pattern = get_in(units, [:per, :compound_unit_pattern])
@@ -1273,6 +1261,12 @@ defmodule Cldr.Unit do
     end
   end
 
+  def validate_unit(unit_name) when is_atom(unit_name) do
+    unit_name
+    |> Atom.to_string
+    |> validate_unit
+  end
+
   def validate_unit(%Unit{unit: unit_name, base_conversion: base_conversion}) do
     {:ok, unit_name, base_conversion}
   end
@@ -1338,7 +1332,7 @@ defmodule Cldr.Unit do
   def incompatible_units_error(unit_1, unit_2) do
     {
       Unit.IncompatibleUnitsError,
-      "Operations can only be performed between units of the same type. " <>
+      "Operations can only be performed between units of the same category. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }
   end
