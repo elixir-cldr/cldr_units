@@ -1229,30 +1229,52 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Validates a unit name and normalizes it to a
-  standard downcased atom form
+  Validates a unit name and normalizes it,
+
+  A unit name can be expressed as:
+
+  * an `atom()` in which case the unit must be
+    localizable in CLDR directly
+
+  * or a `String.t()` in which case it is parsed
+    into a list of composable subunits that
+    can be converted but are not guaranteed to
+    be output as a localized string.
+
+  ## Arguments
+
+  * `unit_name` is an `atom()` or `String.t()`
+
+  ## Returns
+
+  * `{:ok, canonical_unit_name, conversion}` where
+    `canonical_unit_name` is the normalized unit name
+    and `conversion` is an opaque structure used
+    to convert this this unit into its base unit or
+
+  * `{:error, {exception, reason}}`
 
   """
-  def validate_unit(unit) when unit in @units do
-    {:ok, unit, Conversions.conversion_for!(unit)}
+  def validate_unit(unit_name) when unit_name in @units do
+    {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
 
   @aliases Alias.aliases() |> Map.keys()
-  def validate_unit(unit) when unit in @aliases do
-    unit
+  def validate_unit(unit_name) when unit_name in @aliases do
+    unit_name
     |> Alias.alias()
     |> validate_unit
   end
 
-  def validate_unit(unit) when is_binary(unit) do
-    with {:ok, parsed} <- Parser.parse_unit(unit) do
+  def validate_unit(unit_name) when is_binary(unit_name) do
+    with {:ok, parsed} <- Parser.parse_unit(unit_name) do
       canonical_name = Parser.canonical_unit_name(parsed)
       {:ok, canonical_name, parsed}
     end
   end
 
-  def validate_unit(%Unit{unit: unit}) do
-    {:ok, unit}
+  def validate_unit(%Unit{unit: unit_name, base_conversion: base_conversion}) do
+    {:ok, unit_name, base_conversion}
   end
 
   def validate_unit(unknown_unit) do
