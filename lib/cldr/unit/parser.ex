@@ -148,6 +148,87 @@ defmodule Cldr.Unit.Parser do
     {:ok, result}
   end
 
+  @doc """
+  Returns the canonical base unit name
+  for a unit.
+
+  The base unit is the common unit through which
+  conversions are executed.
+
+  ## Arguments
+
+  * `unit_string` is any string representing
+    a unit such as `light_year_per_week`.
+
+  ## Returns
+
+  * `{:ok, canonical_base_unit}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Examples
+
+
+  """
+  def canonical_base_unit(unit_string) when is_binary(unit_string) do
+    with {:ok, parsed} <- parse_unit(unit_string) do
+      parsed
+      |> canonical_base_unit
+      |> canonical_unit_name
+    end
+  end
+
+  def canonical_base_unit([numerator, denominator]) do
+    canonical_base_subunit(numerator) <> @per <> canonical_base_subunit(denominator)
+  end
+
+  def canonical_base_unit([numerator]) do
+    canonical_base_subunit(numerator)
+  end
+
+  @doc """
+  Returns the canonical base unit name
+  for a unit.
+
+  The base unit is the common unit through which
+  conversions are executed.
+
+  ## Arguments
+
+  * `unit_string` is any string representing
+    a unit such as `light_year_per_week`.
+
+  ## Returns
+
+  * `canonical_base_unit` or
+
+  * raise an exception
+
+  ## Examples
+
+
+  """
+  def canonical_base_unit!(unit_string) when is_binary(unit_string) do
+    case canonical_base_unit(unit_string) do
+      {:ok, unit_name} -> unit_name
+      {:eror, {exception, reason}} -> raise exception, reason
+    end
+  end
+
+  defp canonical_base_subunit([conversion]) do
+    extract_base_unit(conversion)
+  end
+
+  defp canonical_base_subunit([head | rest]) do
+    extract_base_unit(head) <> "_" <> canonical_base_subunit(rest)
+  end
+
+  defp extract_base_unit({_unit_name, %{base_unit: base_units}}) do
+    base_units
+    |> Enum.map(&Atom.to_string/1)
+    |> Enum.join("_")
+  end
+
   @unit_strings Conversions.conversions()
   |> Map.keys
   |> Cldr.Map.stringify_values
@@ -222,12 +303,14 @@ defmodule Cldr.Unit.Parser do
     []
   end
 
-  defp expand_power_instances(["square", unit | rest]) do
-    [unit, unit | expand_power_instances(rest)]
-  end
+  for {prefix, power} <- @power_units do
+    defp expand_power_instances([unquote(prefix), unit | rest]) do
+      List.duplicate(unit, unquote(power)) ++ expand_power_instances(rest)
+    end
 
-  defp expand_power_instances(["cubic", unit | rest]) do
-    [unit, unit, unit | expand_power_instances(rest)]
+    defp expand_power_instances([<< unquote(prefix) <> "_" <> unit >> | rest]) do
+       List.duplicate(unit, unquote(power)) ++ expand_power_instances(rest)
+    end
   end
 
   defp expand_power_instances([unit | rest]) do
@@ -258,11 +341,7 @@ defmodule Cldr.Unit.Parser do
     defp resolve_base_unit(<< unquote(prefix), base_unit :: binary >> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
         factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
-        base_unit =
-          [String.to_atom(unquote(prefix)) | conversion.base_unit]
-          |> maybe_adjust_for_kilogram
-
-        {unit, %{conversion | base_unit: base_unit, factor: factor}}
+        {unit, %{conversion | factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
@@ -287,22 +366,6 @@ defmodule Cldr.Unit.Parser do
     else
       {:error, {exception, reason}} -> raise(exception, reason)
     end
-  end
-
-  # These adjustments are necessary because uniquely kilogram
-  # is both a base unit and has an SI prefix and we need
-  # to disambiguate accordingly.
-
-  def maybe_adjust_for_kilogram([:kilo, :kilogram]) do
-    [:kilogram]
-  end
-
-  def maybe_adjust_for_kilogram([_prefix, :kilogram]) do
-    [:kilogram]
-  end
-
-  def maybe_adjust_for_kilogram(other) do
-    other
   end
 
   # Units are sorted in the order present in the base units
