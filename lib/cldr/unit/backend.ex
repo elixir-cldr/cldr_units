@@ -148,7 +148,7 @@ defmodule Cldr.Unit.Backend do
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
             iex> #{inspect(__MODULE__)}.to_string 123, unit: :blabber, locale: "en"
-            {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
+            {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"blabber\\""}}
 
         """
         @spec to_string(

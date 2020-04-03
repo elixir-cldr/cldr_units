@@ -77,15 +77,45 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(value, %__MODULE__{} = from, %__MODULE__{} = to) when is_number(value) do
+  defp convert(value, from, to) when is_number(value) or is_map(value) do
     use Ratio
 
-    %{factor: from_factor, offset: from_offset} = from
-    %{factor: to_factor, offset: to_offset} = to
+    value
+    |> Ratio.new
+    |> convert_to_base(from)
+    |> convert_from_base(to)
+    |> to_original_number_type(value)
+    |> maybe_truncate
+  end
 
-    base = (value * from_factor) + from_offset
-    converted = ((base - to_offset) / to_factor) |> Ratio.to_float
+  defp convert(_value, from, to) do
+    {:error,
+     {Cldr.Unit.UnitNotConvertibleError,
+      "No conversion is possible between #{inspect(to)} and #{inspect(from)}"}}
+  end
 
+  defp to_original_number_type(%Ratio{} = converted, value) when is_number(value) do
+    %Ratio{numerator: numerator, denominator: denominator} = converted
+
+    numerator / denominator
+  end
+
+  defp to_original_number_type(%Ratio{} = converted, %Decimal{} = _value) do
+    %Ratio{numerator: numerator, denominator: denominator} = converted
+
+    Decimal.new(numerator)
+    |> Decimal.div(Decimal.new(denominator))
+  end
+
+  defp to_original_number_type(converted, value) when is_number(value) do
+    converted
+  end
+
+  defp to_original_number_type(converted, %Decimal{} = _value) do
+    Decimal.new(converted)
+  end
+
+  def maybe_truncate(converted) when is_number(converted) do
     truncated = trunc(converted)
 
     if converted == truncated do
@@ -95,39 +125,68 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  defp convert(%Decimal{} = value, %__MODULE__{} = from, %__MODULE__{} = to) do
+  def maybe_truncate(%Decimal{} = converted) do
+    truncated = Decimal.round(converted, 0, :down)
+
+    if converted == truncated do
+      {:ok, truncated}
+    else
+      {:ok, converted}
+    end
+  end
+
+  def convert_to_base(value, %__MODULE__{} = from) do
     use Ratio
 
     %{factor: from_factor, offset: from_offset} = from
+    (value * from_factor) + from_offset
+  end
+
+  def convert_to_base(value, {_, %__MODULE__{} = from}) do
+    convert_to_base(value, from)
+  end
+
+  def convert_to_base(value, [numerator, denominator]) do
+    use Ratio
+
+    convert_to_base(value, numerator) / convert_to_base(value, denominator)
+  end
+
+  def convert_to_base(value, []) do
+    value
+  end
+
+  def convert_to_base(value, [numerator | rest]) do
+    use Ratio
+
+    convert_to_base(value, numerator) |> convert_to_base(rest)
+  end
+
+  def convert_from_base(value, %__MODULE__{} = to) do
+    use Ratio
+
     %{factor: to_factor, offset: to_offset} = to
-
-    base =
-      Ratio.new(value)
-      |> Ratio.mult(Ratio.new(from_factor))
-      |> Ratio.add(Ratio.new(from_offset))
-
-    converted =
-      base
-      |> Ratio.sub(Ratio.new(to_offset))
-      |> Ratio.div(Ratio.new(to_factor))
-      |> to_decimal
-
-    {:ok, converted}
+    ((value - to_offset) / to_factor)
   end
 
-  defp convert(_value, from, to) do
-    {:error,
-     {Cldr.Unit.UnitNotConvertibleError,
-      "No conversion is possible between #{inspect(to)} and #{inspect(from)}"}}
+  def convert_from_base(value, {_, %__MODULE__{} = to}) do
+    convert_from_base(value, to)
   end
 
-  def to_decimal(%Ratio{numerator: numerator, denominator: denominator}) do
-    Decimal.new(numerator)
-    |> Decimal.div(Decimal.new(denominator))
+  def convert_from_base(value, [numerator, denominator]) do
+    use Ratio
+
+    convert_from_base(value, numerator) / convert_from_base(value, denominator)
   end
 
-  def to_decimal(number) when is_integer(number) do
-    Decimal.new(number)
+  def convert_from_base(value, []) do
+    value
+  end
+
+  def convert_from_base(value, [numerator | rest]) do
+    use Ratio
+
+    convert_from_base(value, numerator) |> convert_from_base(rest)
   end
 
   @doc """
@@ -195,12 +254,8 @@ defmodule Cldr.Unit.Conversion do
 
   """
   def convert_to_base_unit(%Unit{} = unit) do
-    case Unit.base_unit(unit) do
-      {:ok, base_unit} ->
-        convert(unit, base_unit)
-      _ ->
-        {:error, {Cldr.Unit.UnitNotConvertibleError,
-          "No base unit for #{inspect unit} is known"}}
+    with {:ok, base_unit} <- Unit.base_unit(unit) do
+      convert(unit, base_unit)
     end
   end
 

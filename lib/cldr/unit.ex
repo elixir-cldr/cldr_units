@@ -88,7 +88,7 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.new(14, :gadzoots)
       {:error, {Cldr.UnknownUnitError,
-        "The unit :gadzoots is not known."}}
+        "Unknown unit was detected at \\"gadzoots\\""}}
 
   """
   @spec new(unit() | value(), value() | unit()) :: t() | {:error, {module(), String.t()}}
@@ -273,7 +273,8 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
       iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :blabber, locale: "en"
-      {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
+      {:error, {Cldr.UnknownUnitError,
+        "Unknown unit was detected at \"blabber\""}}
 
   """
   @spec to_string(
@@ -695,10 +696,10 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.base_unit :square_kilometer
-      {:ok, :square_meter}
+      {:ok, "square_meter"}
 
       iex> Cldr.Unit.base_unit :square_table
-      {:error, {Cldr.UnknownUnitError, "The unit :square_table is not known."}}
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
 
   """
   def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
