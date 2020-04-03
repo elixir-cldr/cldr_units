@@ -720,7 +720,7 @@ defmodule Cldr.Unit do
     {:ok, Parser.canonical_base_unit(conversion)}
   end
 
-  def base_unit(conversion) when is_list(conversion) do
+  def base_unit(conversion) when is_list(conversion) or is_tuple(conversion) do
     {:ok, Parser.canonical_base_unit(conversion)}
   end
 

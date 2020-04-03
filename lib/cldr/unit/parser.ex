@@ -20,7 +20,8 @@ defmodule Cldr.Unit.Parser do
     "micro" =>  Ratio.new(1, 1_000_000),
     "milli" =>  Ratio.new(1, 1_000),
     "centi" =>  Ratio.new(1, 100),
-    "deci"  =>  10,
+    "deci"  =>  Ratio.new(1, 10),
+    "deka"  =>  10,
     "hecto" =>  100,
     "kilo"  =>  1_000,
     "mega"  =>  1_000_000,
@@ -82,11 +83,11 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  def canonical_unit_name([numerator, denominator]) do
+  def canonical_unit_name({numerator, denominator}) do
     canonical_subunit_name(numerator) <> @per <> canonical_subunit_name(denominator)
   end
 
-  def canonical_unit_name([numerator]) do
+  def canonical_unit_name(numerator) do
     canonical_subunit_name(numerator)
   end
 
@@ -146,11 +147,11 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  def canonical_base_unit([numerator, denominator]) do
+  def canonical_base_unit({numerator, denominator}) do
     canonical_base_subunit(numerator) <> @per <> canonical_base_subunit(denominator)
   end
 
-  def canonical_base_unit([numerator]) do
+  def canonical_base_unit(numerator) do
     canonical_base_subunit(numerator)
   end
 
@@ -201,8 +202,15 @@ defmodule Cldr.Unit.Parser do
     |> Enum.sort(&unit_sorter/2)
   end
 
-  defp wrap_ok(result) do
-    {:ok, result}
+  # We wrap in a tuple since a nested list can
+  # create ambiguous processing in other places
+
+  defp wrap_ok([numerator, denominator]) do
+    {:ok, {numerator, denominator}}
+  end
+
+  defp wrap_ok([numerator]) do
+    {:ok, numerator}
   end
 
   defp canonical_base_subunit([conversion]) do

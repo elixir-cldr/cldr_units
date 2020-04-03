@@ -88,4 +88,13 @@ defmodule Cldr.Unit.TestData do
     String.to_float(integer <> "." <> fraction)
   end
 
+  def round(%Cldr.Unit{value: value} = unit, rounding) when is_float(value) do
+    value = Float.round(value, rounding)
+    %{unit | value: value}
+  end
+
+  def round(%Cldr.Unit{value: value} = unit, _rounding) when is_integer(value) do
+    unit
+  end
+
 end
