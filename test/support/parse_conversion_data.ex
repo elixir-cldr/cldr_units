@@ -24,9 +24,9 @@ defmodule Cldr.Unit.Test.ConversionData do
     |> Map.new
   end
 
-  def zip(fields, data) do
-    data
-    |> Enum.zip(fields)
+  def zip(data, fields) do
+    fields
+    |> Enum.zip(data)
   end
 
   def transform({:factor, factor}) do
