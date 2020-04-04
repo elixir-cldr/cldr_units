@@ -87,8 +87,9 @@ defmodule Cldr.Unit.Conversion do
     |> convert_from_base(to)
     # |> IO.inspect(label: "To conversion")
     |> to_original_number_type(value)
+    # |> IO.inspect(label: "After type conversion with #{inspect value}")
+    |> maybe_truncate
     |> wrap_ok
-    # |> maybe_truncate
   end
 
   defp convert(_value, from, to) do
@@ -99,8 +100,7 @@ defmodule Cldr.Unit.Conversion do
 
   def convert_to_base(value, %__MODULE__{} = from) do
     use Ratio
-    # IO.inspect value, label: "Value"
-    # IO.inspect from, label: "From Conversion factor"
+
     %{factor: from_factor, offset: from_offset} = from
     (value * from_factor) + from_offset
   end
@@ -112,7 +112,7 @@ defmodule Cldr.Unit.Conversion do
   def convert_to_base(value, {numerator, denominator}) do
     use Ratio
 
-    convert_to_base(value, numerator) / convert_to_base(value, denominator)
+    convert_to_base(1, numerator) / convert_to_base(1, denominator) * value
   end
 
   def convert_to_base(value, []) do
@@ -120,15 +120,11 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def convert_to_base(value, [numerator | rest]) do
-    use Ratio
-
     convert_to_base(value, numerator) |> convert_to_base(rest)
   end
 
   def convert_from_base(value, %__MODULE__{} = to) do
     use Ratio
-    # IO.inspect value, label: "Value"
-    # IO.inspect to, label: "To Conversion factor"
     %{factor: to_factor, offset: to_offset} = to
     ((value - to_offset) / to_factor)
   end
@@ -139,8 +135,8 @@ defmodule Cldr.Unit.Conversion do
 
   def convert_from_base(value, {numerator, denominator}) do
     use Ratio
-    # IO.inspect [numerator, denominator], label: "num/denom"
-    convert_from_base(value, numerator) / convert_from_base(value, denominator)
+
+    convert_from_base(1, numerator) / convert_from_base(1, denominator) * value
   end
 
   def convert_from_base(value, []) do
@@ -148,15 +144,21 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def convert_from_base(value, [numerator | rest]) do
-    use Ratio
-
     convert_from_base(value, numerator) |> convert_from_base(rest)
   end
 
-  defp to_original_number_type(%Ratio{} = converted, value) when is_number(value) do
+  defp to_original_number_type(%Ratio{} = converted, value) when is_float(value) do
     %Ratio{numerator: numerator, denominator: denominator} = converted
 
     numerator / denominator
+  end
+
+  defp to_original_number_type(%Ratio{} = converted, value) when is_integer(value) do
+    %Ratio{numerator: numerator, denominator: denominator} = converted
+
+   (numerator / denominator)
+   |> Float.round(0)
+   |> trunc
   end
 
   defp to_original_number_type(%Ratio{} = converted, %Decimal{} = _value) do
@@ -187,7 +189,7 @@ defmodule Cldr.Unit.Conversion do
   def maybe_truncate(%Decimal{} = converted) do
     truncated = Decimal.round(converted, 0, :down)
 
-    if converted == truncated do
+    if Decimal.equal?(converted, truncated) do
       truncated
     else
       converted

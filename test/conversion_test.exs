@@ -1,6 +1,8 @@
 defmodule Cldr.Unit.Conversion.Test do
   use ExUnit.Case
 
+  alias Cldr.Unit.TestData
+
   for t <- Cldr.Unit.TestData.conversions() do
     test "that #{t.from} is convertible to #{t.to}" do
       {:ok, from} = Cldr.Unit.Parser.canonical_base_unit(unquote(t.from))
@@ -10,16 +12,16 @@ defmodule Cldr.Unit.Conversion.Test do
   end
 
   for t <- Cldr.Unit.TestData.conversions() do
-    test "that #{t.from} comverted to #{t.to} is #{inspect t.result}" do
+    test "that #{t.from} converted to #{t.to} is #{inspect t.result}" do
       unit = Cldr.Unit.new(unquote(t.from), 1000)
-      {expected_result, rounding} = unquote(t.result)
+      {expected_result, round_digits, round_significant} = unquote(Macro.escape(t.result))
 
       result =
         unit
         |> Cldr.Unit.Conversion.convert(unquote(t.to))
-        |> Cldr.Unit.TestData.round(rounding)
+        |> TestData.round(round_digits, round_significant)
 
-      assert result.value == expected_result
+      assert_in_delta result.value, expected_result, 0.5
     end
   end
 end

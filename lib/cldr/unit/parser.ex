@@ -141,18 +141,21 @@ defmodule Cldr.Unit.Parser do
   """
   def canonical_base_unit(unit_string) when is_binary(unit_string) do
     with {:ok, parsed} <- parse_unit(unit_string) do
-      parsed
-      |> canonical_base_unit
-      |> canonical_unit_name
+      canonical_base_unit(parsed)
     end
   end
 
   def canonical_base_unit({numerator, denominator}) do
-    canonical_base_subunit(numerator) <> @per <> canonical_base_subunit(denominator)
+    [numerator, denominator]
+    |> Enum.map(&canonical_base_subunit/1)
+    |> Enum.join(@per)
+    |> canonical_unit_name
   end
 
   def canonical_base_unit(numerator) do
-    canonical_base_subunit(numerator)
+    numerator
+    |> canonical_base_subunit
+    |> canonical_unit_name
   end
 
   @doc """

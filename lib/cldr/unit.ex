@@ -708,20 +708,16 @@ defmodule Cldr.Unit do
     end
   end
 
-  def base_unit(%{base_unit: [base_name]}) do
-    {:ok, base_name}
-  end
-
-  def base_unit(%Unit{base_conversion: %{base_unit: [base_name]}}) do
+  def base_unit(%{base_unit: [base_name]}) when is_atom(base_name) do
     {:ok, base_name}
   end
 
   def base_unit(%Unit{base_conversion: conversion}) do
-    {:ok, Parser.canonical_base_unit(conversion)}
+    base_unit(conversion)
   end
 
   def base_unit(conversion) when is_list(conversion) or is_tuple(conversion) do
-    {:ok, Parser.canonical_base_unit(conversion)}
+    Parser.canonical_base_unit(conversion)
   end
 
   def unknown_base_unit_error(unit_name) do

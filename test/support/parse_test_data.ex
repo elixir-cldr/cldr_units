@@ -43,14 +43,23 @@ defmodule Cldr.Unit.TestData do
     {:factor, factor}
   end
 
-  @float ~r/^([-+]?[0-9]*)\.([0-9]+)([eE][-+]?[0-9]+)?$/
+  @float ~r/^([-+]?[0-9]*)\.([0-9]+)([eE]([-+]?[0-9]+))?$/
   def transform({:result, result}) do
     result = String.replace(result, ",", "")
 
     result =
       case Regex.run(@float, result) do
-        [float, _integer, fraction] -> {String.to_float(float), String.length(fraction)}
-        [float, _integer, fraction, _exp] -> {String.to_float(float), String.length(fraction)}
+        [float, _integer, fraction] ->
+          {String.to_float(float), String.length(fraction), 9}
+        [float, integer, fraction, _, exp] ->
+          # Its a bigint
+          if (p = String.to_integer(exp) - String.length(fraction)) > 0 do
+            int =
+              String.to_integer(integer <> fraction <> String.duplicate("0", p))
+            {int, 0, String.length(fraction) + String.length(integer)}
+          else
+            {String.to_float(float), String.length(fraction), 9}
+          end
       end
 
     {:result, result}
@@ -88,13 +97,38 @@ defmodule Cldr.Unit.TestData do
     String.to_float(integer <> "." <> fraction)
   end
 
-  def round(%Cldr.Unit{value: value} = unit, rounding) when is_float(value) do
-    value = Float.round(value, rounding)
+  def round(%Cldr.Unit{value: value} = unit, digits, significant) when is_number(value) do
+    value =
+      value
+      |> round(digits)
+      |> round_significant(significant)
+
     %{unit | value: value}
   end
 
-  def round(%Cldr.Unit{value: value} = unit, _rounding) when is_integer(value) do
-    unit
+  def round(float, digits) when is_float(float) do
+    Float.round(float, digits)
   end
 
+  def round(other, _digits) do
+    other
+  end
+
+  def round_significant(0.0 = value, _) do
+    value
+  end
+
+  def round_significant(integer, round_digits) when is_integer(integer) do
+    number_of_digits = Cldr.Digits.number_of_integer_digits(integer)
+    rounding = number_of_digits - round_digits - 1
+    p = if rounding > 0, do: Cldr.Math.power(10, rounding) |> trunc(), else: 1
+
+    integer
+    |> div(p)
+    |> Kernel.*(p)
+  end
+
+  def round_significant(float, digits) when is_float(float) do
+    Cldr.Math.round_significant(float, digits)
+  end
 end

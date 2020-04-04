@@ -210,9 +210,9 @@ defmodule Cldr.Unit.Preference do
               when region in unquote(regions) and value >= unquote(geq) do
            {:ok, unquote(units)}
           end
-        else _other ->
-          # IO.puts "Unable to generate functions for #{inspect preference}"
-          # IO.inspect other
+        else other ->
+          IO.puts "Unable to generate functions for #{inspect preference}"
+          IO.inspect other
           nil
         end
       end
