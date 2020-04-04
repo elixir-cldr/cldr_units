@@ -21,7 +21,11 @@ defmodule Cldr.Unit.Conversion.Test do
         |> Cldr.Unit.Conversion.convert(unquote(t.to))
         |> TestData.round(round_digits, round_significant)
 
-      assert_in_delta result.value, expected_result, 0.5
+      if is_integer(result.value) and is_float(expected_result) do
+        assert result.value == trunc(Float.round(expected_result))
+      else
+        assert_in_delta result.value, expected_result, 0.3
+      end
     end
   end
 end

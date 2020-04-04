@@ -101,7 +101,7 @@ defmodule Cldr.Unit.TestData do
     value =
       value
       |> round(digits)
-      |> round_significant(significant)
+      |> round_precision(significant)
 
     %{unit | value: value}
   end
@@ -114,21 +114,23 @@ defmodule Cldr.Unit.TestData do
     other
   end
 
-  def round_significant(0.0 = value, _) do
+  def round_precision(0.0 = value, _) do
     value
   end
 
-  def round_significant(integer, round_digits) when is_integer(integer) do
+  def round_precision(integer, round_digits) when is_integer(integer) do
     number_of_digits = Cldr.Digits.number_of_integer_digits(integer)
-    rounding = number_of_digits - round_digits - 1
-    p = if rounding > 0, do: Cldr.Math.power(10, rounding) |> trunc(), else: 1
+    p = Cldr.Math.power(10, number_of_digits) |> Decimal.new
+    d = Decimal.new(integer)
 
-    integer
-    |> div(p)
-    |> Kernel.*(p)
+    d
+    |> Decimal.div(p)
+    |> Decimal.round(round_digits)
+    |> Decimal.mult(p)
+    |> Decimal.to_integer
   end
 
-  def round_significant(float, digits) when is_float(float) do
+  def round_precision(float, digits) when is_float(float) do
     Cldr.Math.round_significant(float, digits)
   end
 end
