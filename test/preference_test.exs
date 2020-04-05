@@ -1,4 +1,4 @@
-defmodule Cldr.Unit.Conversion.Test do
+defmodule Cldr.Unit.Preference.Test do
   use ExUnit.Case
 
   alias Cldr.Unit.Test.PreferenceData
