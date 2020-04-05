@@ -38,7 +38,7 @@ defmodule Cldr.Unit.Test.PreferenceData do
   def transform({:output, [first_rational, first_unit, output_rational, output_double, output_unit]}) do
     {:output,
       [
-        {first_unit, [first_rational, first_rational]},
+        {first_unit, [first_rational, nil]},
         {output_unit, [output_rational, output_double]}
       ]
     }

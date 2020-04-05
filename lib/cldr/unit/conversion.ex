@@ -68,34 +68,27 @@ defmodule Cldr.Unit.Conversion do
     %{unit: from_unit, value: value, base_conversion: from_conversion} = unit
 
     with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
-         true <- Unit.compatible?(from_unit, to_unit),
          {:ok, converted} <- convert(value, from_conversion, to_conversion) do
       Unit.new(to_unit, converted)
     else
-      {:error, _} = error -> error
-      false -> {:error, incompatible_units_error(from_unit, to_unit)}
+      {:error, {Cldr.Unit.IncompatibleUnitsError, _}} ->
+        {:error, incompatible_units_error(from_unit, to_unit)}
+      other -> other
     end
   end
 
   defp convert(value, from, to) when is_number(value) or is_map(value) do
     use Ratio
 
-    value
-    |> Ratio.new
-    |> convert_to_base(from)
-    # |> IO.inspect(label: "Base conversion")
-    |> convert_from_base(to)
-    # |> IO.inspect(label: "To conversion")
-    |> to_original_number_type(value)
-    # |> IO.inspect(label: "After type conversion with #{inspect value}")
-    |> maybe_truncate
-    |> wrap_ok
-  end
-
-  defp convert(_value, from, to) do
-    {:error,
-     {Cldr.Unit.UnitNotConvertibleError,
-      "No conversion is possible between #{inspect(to)} and #{inspect(from)}"}}
+    with {:ok, from, to} <- compatible(from, to) do
+      value
+      |> Ratio.new
+      |> convert_to_base(from)
+      |> convert_from_base(to)
+      |> to_original_number_type(value)
+      |> maybe_truncate
+      |> wrap_ok
+    end
   end
 
   def convert_to_base(value, %__MODULE__{} = from) do
@@ -176,7 +169,46 @@ defmodule Cldr.Unit.Conversion do
     Decimal.new(converted)
   end
 
-  def maybe_truncate(converted) when is_number(converted) do
+  # Establish whether the two units are compatible. If not
+  # then also see if the inverse units are compatible
+  defp compatible(from, to, direction \\ :normal)
+
+  defp compatible(from, to, :normal) do
+    with {:ok, base_unit_from} <- Unit.base_unit(from),
+         {:ok, base_unit_to} <- Unit.base_unit(to),
+         true <- to_string(base_unit_from) == to_string(base_unit_to) do
+      {:ok, from, to}
+    else
+      _ -> compatible(from, to, :invert)
+    end
+  end
+
+  defp compatible(from, to, :invert) do
+    inverted_base = invert_base_name(from)
+
+    with {:ok, base_unit_from} <- Unit.base_unit(inverted_base),
+         {:ok, base_unit_to} <- Unit.base_unit(to),
+         true <- to_string(base_unit_from) == to_string(base_unit_to) do
+      {:ok, invert_factors(from), to}
+    end
+  end
+
+  defp invert_base_name({numerator, denominator}) do
+    {denominator, numerator}
+  end
+
+  defp invert_base_name(other) do
+    other
+  end
+
+  # To invert the conversion we invert each of the
+  # terms of the conversion.
+  # TODO: Implement it properly
+  defp invert_factors({numerator, denominator}) do
+    {numerator, denominator}
+  end
+
+  defp maybe_truncate(converted) when is_number(converted) do
     truncated = trunc(converted)
 
     if converted == truncated do
@@ -186,7 +218,7 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  def maybe_truncate(%Decimal{} = converted) do
+  defp maybe_truncate(%Decimal{} = converted) do
     truncated = Decimal.round(converted, 0, :down)
 
     if Decimal.equal?(converted, truncated) do
@@ -196,7 +228,7 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  def wrap_ok(unit) do
+  defp wrap_ok(unit) do
     {:ok, unit}
   end
 
