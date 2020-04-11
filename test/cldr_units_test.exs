@@ -90,7 +90,6 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
              {:error, {Cldr.Unit.UnknownUsageError,
                "The unit category :length does not define a usage :unknown"}}
-
   end
 
   if function_exported?(Code, :fetch_docs, 1) do

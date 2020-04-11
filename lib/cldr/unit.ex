@@ -594,7 +594,6 @@ defmodule Cldr.Unit do
 
   def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
     with {:ok, unit_list} <- Preference.preferred_units(unit, backend, options) do
-      IO.inspect unit_list
       decompose(unit, unit_list)
     end
   end
