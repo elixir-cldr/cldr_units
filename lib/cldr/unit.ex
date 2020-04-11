@@ -906,7 +906,24 @@ defmodule Cldr.Unit do
   @unit_preferences Cldr.Config.units() |> Map.get(:preferences)
   @spec unit_preferences() :: map()
   def unit_preferences do
-    @unit_preferences
+    for {category, usages} <- @unit_preferences, into: Map.new() do
+      usages = for {usage, preferences} <- usages, into: Map.new() do
+        preferences =
+          Cldr.Enum.reduce_peeking(preferences, [], fn
+            %{regions: regions} = pref, [%{regions: regions} | _rest], acc ->
+              %{units: units, geq: geq} = pref
+              {:ok, unit} = Unit.new(hd(units), geq)
+              {:ok, %Unit{value: value}} = Conversion.convert_to_base_unit(unit)
+              {:cont, acc ++ [%{pref | geq: value}]}
+
+            pref, _rest, acc ->
+              pref = %{pref | geq: 0}
+              {:cont, acc ++ [pref]}
+          end)
+        {usage, preferences}
+      end
+      {category, usages}
+    end
   end
 
   @doc false

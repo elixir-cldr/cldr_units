@@ -96,24 +96,16 @@ defmodule Cldr.Unit.Preference do
     {:ok, territory_chain} = Cldr.territory_chain(territory)
     {:ok, category} = Unit.unit_category(unit)
     {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
+
     geq = Unit.value(base_unit)
 
     with {:ok, usage} <- validate_usage(category, usage) do
+      usage = [usage, :default]
       preferred_units(category, usage, territory_chain, geq)
-    else
-      {:error, {Cldr.Unit.UnknownUsageError, _}} ->
-        case preferred_units(category, :default, territory_chain, geq) do
-          {:error, {Cldr.Unit.UnknownUnitPreferenceError, _}} ->
-            {:error, unknown_preferences_error(category, usage, territory_chain, geq)}
-          other -> other
-        end
-
-      other ->
-        other
     end
   end
 
-  defp validate_usage(category, usage) do
+  def validate_usage(category, usage) do
     if get_in(Unit.unit_preferences(), [category, usage]) do
       {:ok, usage}
     else
@@ -210,29 +202,47 @@ defmodule Cldr.Unit.Preference do
   for {category, usages} <- Unit.unit_preferences() do
     for {usage, preferences} <- usages do
       for preference <- preferences do
-        with %{geq: geq, regions: regions, units: units} <- preference,
-             {:ok, %Unit{value: value}} <- Conversion.convert_to_base_unit(units) do
-          geq = value * geq
-          def preferred_units(unquote(category), unquote(usage), region, value)
-              when region in unquote(regions) and value >= unquote(geq) do
+        %{geq: geq, regions: regions, units: units} = preference
+        if geq == 0 do
+          def preferred_units(unquote(category), unquote(usage), region, _value)
+              when is_atom(region) and region in unquote(regions) do
+           # debug(unquote(category), unquote(usage), region, value, 0)
            {:ok, unquote(units)}
           end
-        else other ->
-          IO.warn "Unable to generate unit preference functions for #{inspect preference}"
-          IO.warn inspect(other)
-          nil
+        else
+          def preferred_units(unquote(category), unquote(usage), region, value)
+              when is_atom(region) and region in unquote(regions) and value >= unquote(geq) do
+            # debug(unquote(category), unquote(usage), region, value, unquote(geq))
+            {:ok, unquote(units)}
+          end
         end
       end
     end
   end
 
-  # First we walk the territory chain with the usage
+  # First we process the potential usage we were offered
+  def preferred_units(category, [usage], region, value) do
+    # debug(category, usage, region, value)
+    preferred_units(category, usage, region, value)
+  end
+
+  def preferred_units(category, [usage | other_usage], region, value) do
+    # debug(category, usage, region, value)
+    case preferred_units(category, usage, region, value) do
+      {:ok, units} -> {:ok, units}
+      _other -> preferred_units(category, other_usage, region, value)
+    end
+  end
+
+  # Second we walk the territory chain with the usage
   # we were provided
   def preferred_units(category, usage, [region], value) do
+    # debug(category, usage, region, value)
     preferred_units(category, usage, region, value)
   end
 
   def preferred_units(category, usage, [region | other_regions], value) do
+    # debug(category, usage, region, value)
     case preferred_units(category, usage, region, value) do
       {:ok, units} -> {:ok, units}
       _other -> preferred_units(category, usage, other_regions, value)
@@ -241,13 +251,29 @@ defmodule Cldr.Unit.Preference do
 
   # If we get here then try with the default case
   # Which should basically always work
-  def preferred_units(category, usage, region, value) when usage != :default do
-   preferred_units(category, :default, region, value)
-  end
+  # def preferred_units(category, usage, region, value) when usage != :default do
+  #  preferred_units(category, :default, region, value)
+  # end
 
   # And it we get here is't game over
   def preferred_units(category, usage, region, value) do
     {:error, unknown_preferences_error(category, usage, region, value)}
+  end
+
+  def debug(category, usage, region, value) do
+    IO.inspect("""
+    Category: #{inspect category} with usage #{inspect usage} for
+    region #{inspect region} and value #{inspect value}
+    """
+    |> String.replace("\n"," "))
+  end
+
+  def debug(category, usage, region, value, geq) do
+    IO.inspect("""
+    Preference: #{inspect category} with usage #{inspect usage} for
+    region #{inspect region} and value #{inspect value} with >= #{inspect geq}
+    """
+    |> String.replace("\n"," "))
   end
 
   def unknown_preferences_error(category, usage, regions, value) do

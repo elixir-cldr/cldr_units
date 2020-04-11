@@ -302,7 +302,7 @@ defmodule Cldr.Unit.Conversion do
 
   def convert_to_base_unit(unit) when is_atom(unit) do
     unit
-    |> Unit.new!(1)
+    |> Unit.new!(1.0)
     |> convert_to_base_unit()
   end
 

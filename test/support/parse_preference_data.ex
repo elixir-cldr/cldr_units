@@ -49,7 +49,9 @@ defmodule Cldr.Unit.Test.PreferenceData do
   end
 
   def set_output_units(test) do
-    Keyword.put(test, :output_units, Enum.map(Keyword.get(test, :output), &elem(&1, 0)))
+    output = Keyword.get(test, :output)
+    units = Enum.map(output, &(elem(&1, 0) |> String.replace("-","_") |> String.to_atom()))
+    Keyword.put(test, :output_units, units)
   end
 
   def transform({:output, [first_rational, first_unit, output_rational, output_double, output_unit]}) do
