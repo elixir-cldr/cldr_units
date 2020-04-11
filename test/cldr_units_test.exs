@@ -59,7 +59,7 @@ defmodule Cldr.UnitsTest do
 
   test "formatting a list" do
     list = [Cldr.Unit.new!(23, :foot), Cldr.Unit.new!(5, :inch)]
-    assert Cldr.Unit.to_string(list) == {:ok, "23 feet and 5 inches"}
+    assert Cldr.Unit.to_string(list, MyApp.Cldr, []) == {:ok, "23 feet and 5 inches"}
   end
 
   test "per pattern for a defined per_unit_pattern" do
@@ -81,31 +81,16 @@ defmodule Cldr.UnitsTest do
   test "localize a unit" do
     unit = Cldr.Unit.new!(100, :meter)
 
-    assert Cldr.Unit.localize(unit, :person, territory: :US) ==
+    assert Cldr.Unit.localize(unit, usage: :person, territory: :US) ==
              [Cldr.Unit.new!(:inch, 3937)]
 
-    assert Cldr.Unit.localize(unit, :person, territory: :US, style: :informal) ==
-             [Cldr.Unit.new!(:foot, 328), Cldr.Unit.new!(:inch, 1)]
+    assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US, style: :informal) ==
+             [Cldr.Unit.new!(:foot, 328)]
 
-    assert Cldr.Unit.localize(unit, :unknown, territory: :US) ==
-             {:error,
-              {Cldr.Unit.UnknownUnitPreferenceError,
-               "No known unit preference for usage :unknown"}}
+    assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
+             {:error, {Cldr.Unit.UnknownUsageError,
+               "The unit category :length does not define a usage :unknown"}}
 
-    assert Cldr.Unit.localize(unit, :person, territory: :US, style: :unknown) ==
-             {:error,
-              {Cldr.Unit.UnknownUnitPreferenceError,
-               "Style :unknown is not known. It should be :informal or nil"}}
-
-    assert Cldr.Unit.localize(unit, :person, territory: :US, scope: :unknown) ==
-             {:error,
-              {Cldr.Unit.UnknownUnitPreferenceError,
-               "Scope :unknown is not known. It should be :small or nil"}}
-
-    assert Cldr.Unit.localize(unit, :person, territory: :US, scope: :unknown1, style: :unknown2) ==
-             {:error,
-              {Cldr.Unit.UnknownUnitPreferenceError,
-               "No known scope :unknown1 and no known style :unknown2"}}
   end
 
   if function_exported?(Code, :fetch_docs, 1) do

@@ -63,7 +63,7 @@ defmodule Cldr.Unit.Math do
 
   def add(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      add(unit_1, Conversion.convert(unit_2, unit_category_1))
+      add(unit_1, Conversion.convert!(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -150,7 +150,7 @@ defmodule Cldr.Unit.Math do
 
   def sub(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      sub(unit_1, Conversion.convert(unit_2, unit_category_1))
+      sub(unit_1, Conversion.convert!(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -237,7 +237,7 @@ defmodule Cldr.Unit.Math do
 
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      mult(unit_1, Conversion.convert(unit_2, unit_category_1))
+      mult(unit_1, Conversion.convert!(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -324,7 +324,7 @@ defmodule Cldr.Unit.Math do
 
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      div(unit_1, Conversion.convert(unit_2, unit_category_1))
+      div(unit_1, Conversion.convert!(unit_2, unit_category_1))
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -459,7 +459,7 @@ defmodule Cldr.Unit.Math do
   end
 
   def compare(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
-    unit_2 = Unit.Conversion.convert(unit_2, unit_1.unit)
+    unit_2 = Unit.Conversion.convert!(unit_2, unit_1.unit)
     compare(unit_1, unit_2)
   end
 
@@ -478,7 +478,7 @@ defmodule Cldr.Unit.Math do
 
     unit_2 =
       unit_2
-      |> Unit.Conversion.convert(unit_1.unit)
+      |> Unit.Conversion.convert!(unit_1.unit)
       |> round(1, :half_even)
 
     compare(unit_1, unit_2)

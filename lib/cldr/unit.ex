@@ -91,10 +91,10 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.new(23, :gallon)
-      {:ok, #Cldr.Unit<:gallon, 23>}
+      {:ok, Cldr.Unit.new!(:gallon, 23)}
 
       iex> Cldr.Unit.new(:gallon, 23)
-      {:ok, #Cldr.Unit<:gallon, 23>}
+      {:ok, Cldr.Unit.new!(:gallon, 23)}
 
       iex> Cldr.Unit.new(14, :gadzoots)
       {:error, {Cldr.UnknownUnitError,
@@ -292,7 +292,7 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :blabber, locale: "en"
       {:error, {Cldr.UnknownUnitError,
-        "Unknown unit was detected at \"blabber\""}}
+        "Unknown unit was detected at \\"blabber\\""}}
 
   """
   @spec to_string(
@@ -302,10 +302,11 @@ defmodule Cldr.Unit do
         ) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
-  def to_string(list_or_number, backend \\ Cldr.default_backend(), options \\ [])
+  def to_string(list_or_number, backend, options \\ [])
 
   def to_string(list_or_number, options, []) when is_list(options) do
-    to_string(list_or_number, Cldr.default_backend(), options)
+    locale = Cldr.get_locale()
+    to_string(list_or_number, locale.backend, options)
   end
 
   def to_string(unit_list, backend, options) when is_list(unit_list) do
@@ -579,8 +580,8 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> unit = Cldr.Unit.new!(1.83, :meter)
-      iex> Cldr.Unit.localize(unit, usage: :person, territory: :US)
-      [Cldr.Unit.new!(:inch, 3937)]
+      iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
+      [#Cldr.Unit<:foot, 6>]
 
   """
   def localize(unit, backend, options \\ [])
@@ -1028,7 +1029,7 @@ defmodule Cldr.Unit do
   end
 
   defp normalize_options(backend, options) do
-    with {:ok, per_unit} <- validate_per_unit(options[:per]) do
+    with {:ok, per_unit, _} <- validate_per_unit(options[:per]) do
       locale = Keyword.get(options, :locale, backend.get_locale())
       style = Keyword.get(options, :style, @default_style)
 
@@ -1113,7 +1114,7 @@ defmodule Cldr.Unit do
   end
 
   defp validate_per_unit(nil) do
-    {:ok, nil}
+    {:ok, nil, nil}
   end
 
   defp validate_per_unit(unit) do

@@ -13,12 +13,12 @@ defmodule Cldr.Unit.Conversion.Test do
 
   for t <- ConversionData.conversions() do
     test "that #{t.from} converted to #{t.to} is #{inspect t.result}" do
-      unit = Cldr.Unit.new(unquote(t.from), 1000)
+      unit = Cldr.Unit.new!(unquote(t.from), 1000)
       {expected_result, round_digits, round_significant} = unquote(Macro.escape(t.result))
 
       result =
         unit
-        |> Cldr.Unit.Conversion.convert(unquote(t.to))
+        |> Cldr.Unit.Conversion.convert!(unquote(t.to))
         |> ConversionData.round(round_digits, round_significant)
 
       if is_integer(result.value) and is_float(expected_result) do
