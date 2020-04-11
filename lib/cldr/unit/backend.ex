@@ -232,15 +232,7 @@ defmodule Cldr.Unit.Backend do
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
-          be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`.
-
-        * `:scope` is either `:small` or `nil`. In some usage, the units
-          used are different when the unit size is small. It is up to the
-          developer to determine when `scope: :small` is appropriate.
-
-        * `:alt` is either `:informal` or `nil`. Like `:scope`, the units
-          in use depend on whether they are being used in a formal or informal
-          context.
+          be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`
 
         * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
@@ -252,8 +244,7 @@ defmodule Cldr.Unit.Backend do
 
         ### Examples
 
-            iex> meter = Cldr.Unit.new :meter, 1
-            #Cldr.Unit<:meter, 1>
+            iex> meter = Cldr.Unit.new!(:meter, 1)
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
             {:ok, [:foot, :inch]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
@@ -316,12 +307,9 @@ defmodule Cldr.Unit.Backend do
 
         ### Examples
 
-            iex> meter = Cldr.Unit.new :meter, 1
-            #Cldr.Unit<:meter, 1>
-            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person, alt: :informal
+            iex> meter = Cldr.Unit.new!(:meter, 2)
+            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person_height
             [:foot, :inch]
-            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person
-            [:inch]
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :person
             [:centimeter]
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :road

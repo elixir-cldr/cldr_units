@@ -45,13 +45,13 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      #Cldr.Unit<:fahrenheit, 32>
+      {:ok, Cldr.Unit.new!(:fahrenheit, 32)}
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:fahrenheit, 32), :celsius
-      #Cldr.Unit<:celsius, 0>
+      {:ok, Cldr.Unit.new!(:celsius, 0)}
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :foot
-      #Cldr.Unit<:foot, 5280>
+      {:ok, Cldr.Unit.new!(:foot, 5280)}
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :gallon
       {:error, {Cldr.Unit.IncompatibleUnitsError,
@@ -170,41 +170,16 @@ defmodule Cldr.Unit.Conversion do
 
   # Establish whether the two units are compatible. If not
   # then also see if the inverse units are compatible
-  defp compatible(from, to, direction \\ :normal)
+  defp compatible(from, to)
 
-  defp compatible(from, to, :normal) do
+  defp compatible(from, to) do
     with {:ok, base_unit_from} <- Unit.base_unit(from),
          {:ok, base_unit_to} <- Unit.base_unit(to),
          true <- to_string(base_unit_from) == to_string(base_unit_to) do
       {:ok, from, to}
     else
-      _ -> compatible(from, to, :invert)
+      _ -> {:error, incompatible_units_error(from, to)}
     end
-  end
-
-  defp compatible(from, to, :invert) do
-    inverted_base = invert_base_name(from)
-
-    with {:ok, base_unit_from} <- Unit.base_unit(inverted_base),
-         {:ok, base_unit_to} <- Unit.base_unit(to),
-         true <- to_string(base_unit_from) == to_string(base_unit_to) do
-      {:ok, invert_factors(from), to}
-    end
-  end
-
-  defp invert_base_name({numerator, denominator}) do
-    {denominator, numerator}
-  end
-
-  defp invert_base_name(other) do
-    other
-  end
-
-  # To invert the conversion we invert each of the
-  # terms of the conversion.
-  # TODO: Implement it properly
-  defp invert_factors({numerator, denominator}) do
-    {numerator, denominator}
   end
 
   defp maybe_truncate(converted) when is_number(converted) do
@@ -291,7 +266,7 @@ defmodule Cldr.Unit.Conversion do
 
       iex> u = Cldr.Unit.new!(:kilometer, 10)
       iex> Cldr.Unit.Conversion.convert_to_base_unit u
-      {:ok, #Cldr.Unit<:meter, 10000>}
+      {:ok, Cldr.Unit.new!(:meter, 10000)}
 
   """
   def convert_to_base_unit(%Unit{} = unit) do

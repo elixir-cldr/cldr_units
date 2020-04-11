@@ -581,7 +581,7 @@ defmodule Cldr.Unit do
 
       iex> unit = Cldr.Unit.new!(1.83, :meter)
       iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
-      [#Cldr.Unit<:foot, 6>]
+      [Cldr.Unit.new!(:foot, 6)]
 
   """
   def localize(unit, backend, options \\ [])
