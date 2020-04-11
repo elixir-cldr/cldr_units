@@ -51,15 +51,15 @@ defmodule Cldr.Unit.Preference do
 
       iex> meter = Cldr.Unit.new :meter, 1
       #Unit<:meter, 1>
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal
+      iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal
       {:ok, [:foot, :inch]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
+      iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
       {:ok, [:inch]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
+      iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
       {:ok, [:centimeter]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
+      iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
       {:ok, [:mile]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
+      iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
       {:ok, [:kilometer]}
 
   ### Notes
@@ -69,12 +69,12 @@ defmodule Cldr.Unit.Preference do
   accomplished with a combination of `Cldr.Unit.Conversion.preferred_units/2`
   and `Cldr.Unit.decompose/2`. For example:
 
-      iex> meter = Cldr.Unit.new(:meter, 1)
-      iex> preferred_units = Cldr.Unit.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
+      iex> meter = Cldr.Unit.new!(:meter, 1)
+      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
       iex> with {:ok, preferred_units} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
-      [Cldr.Unit.new(:foot, 3), Cldr.Unit.new(:inch, 3)]
+      [Cldr.Unit.new!(:foot, 3), Cldr.Unit.new!(:inch, 3)]
 
   """
   def preferred_units(unit, backend, options \\ [])
@@ -93,17 +93,23 @@ defmodule Cldr.Unit.Preference do
 
   def preferred_units(%Unit{} = unit, _backend, %Options{} = options) do
     %{usage: usage, territory: territory} = options
-    geq = Conversion.convert_to_base_unit(unit) |> Unit.value
-    category = Unit.unit_category(unit)
+    {:ok, territory_chain} = Cldr.territory_chain(territory)
+    {:ok, category} = Unit.unit_category(unit)
+    {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
+    geq = Unit.value(base_unit)
 
     with {:ok, usage} <- validate_usage(category, usage) do
-      territory_chain =
-        territory
-        |> Cldr.territory_chain
-        |> List.insert_at(0, territory)
-        |> Enum.uniq
-
       preferred_units(category, usage, territory_chain, geq)
+    else
+      {:error, {Cldr.Unit.UnknownUsageError, _}} ->
+        case preferred_units(category, :default, territory_chain, geq) do
+          {:error, {Cldr.Unit.UnknownUnitPreferenceError, _}} ->
+            {:error, unknown_preferences_error(category, usage, territory_chain, geq)}
+          other -> other
+        end
+
+      other ->
+        other
     end
   end
 
@@ -111,7 +117,7 @@ defmodule Cldr.Unit.Preference do
     if get_in(Unit.unit_preferences(), [category, usage]) do
       {:ok, usage}
     else
-      {:error, "undefined usage"}
+      {:error, unknown_usage_error(category, usage)}
     end
   end
 
@@ -162,15 +168,15 @@ defmodule Cldr.Unit.Preference do
 
       iex> meter = Cldr.Unit.new :meter, 1
       #Unit<:meter, 1>
-      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person
+      iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person_height
       [:foot, :inch]
-      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person
+      iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person
       [:inch]
-      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-AU", usage: :person
+      iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-AU", usage: :person
       [:centimeter]
-      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :road
+      iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :road
       [:mile]
-      iex> Cldr.Unit.Conversion.preferred_units! meter, MyApp.Cldr, locale: "en-AU", usage: :road
+      iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-AU", usage: :road
       [:kilometer]
 
   """
@@ -190,10 +196,11 @@ defmodule Cldr.Unit.Preference do
   defp validate_preference_options(options) when is_list(options) do
     backend = Keyword.get_lazy(options, :backend, &Cldr.default_backend/0)
     locale = Keyword.get_lazy(options, :locale, &backend.get_locale/0)
-    territory = Keyword.get(options, :territory, locale.territory)
     usage = Keyword.get(options, :usage, :default)
 
     with {:ok, locale} <- backend.validate_locale(locale),
+         territory = Keyword.get_lazy(options, :territory,
+           fn -> Cldr.Locale.territory_from_locale(locale) end),
          {:ok, territory} <- Cldr.validate_territory(territory) do
       options = [locale: locale, territory: territory, usage: usage, backend: backend]
       {:ok, struct(Options, options)}
@@ -204,25 +211,23 @@ defmodule Cldr.Unit.Preference do
     for {usage, preferences} <- usages do
       for preference <- preferences do
         with %{geq: geq, regions: regions, units: units} <- preference,
-             %Unit{value: value} <- Conversion.convert_to_base_unit(units) do
+             {:ok, %Unit{value: value}} <- Conversion.convert_to_base_unit(units) do
           geq = value * geq
           def preferred_units(unquote(category), unquote(usage), region, value)
               when region in unquote(regions) and value >= unquote(geq) do
            {:ok, unquote(units)}
           end
         else other ->
-          IO.puts "Unable to generate functions for #{inspect preference}"
-          IO.inspect other
+          IO.warn "Unable to generate unit preference functions for #{inspect preference}"
+          IO.warn inspect(other)
           nil
         end
       end
     end
   end
 
-  def preferred_units(category, usage, region, value) when is_atom(region) do
-    {:error, unknown_preferences_error(category, usage, region, value)}
-  end
-
+  # First we walk the territory chain with the usage
+  # we were provided
   def preferred_units(category, usage, [region], value) do
     preferred_units(category, usage, region, value)
   end
@@ -234,6 +239,17 @@ defmodule Cldr.Unit.Preference do
     end
   end
 
+  # If we get here then try with the default case
+  # Which should basically always work
+  def preferred_units(category, usage, region, value) when usage != :default do
+   preferred_units(category, :default, region, value)
+  end
+
+  # And it we get here is't game over
+  def preferred_units(category, usage, region, value) do
+    {:error, unknown_preferences_error(category, usage, region, value)}
+  end
+
   def unknown_preferences_error(category, usage, regions, value) do
     {
       Cldr.Unit.UnknownUnitPreferenceError,
@@ -241,6 +257,13 @@ defmodule Cldr.Unit.Preference do
       "with usage #{inspect usage} " <>
       "for region #{inspect regions} and " <>
       "value #{inspect value}"
+    }
+  end
+
+  def unknown_usage_error(category, usage) do
+    {
+      Cldr.Unit.UnknownUsageError,
+      "The unit category #{inspect category} does not define a usage #{inspect usage}"
     }
   end
 end

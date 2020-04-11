@@ -33,8 +33,6 @@ defmodule Cldr.Unit.Backend do
         defdelegate measurement_system_for(territory, category), to: Cldr.Unit
 
         defdelegate known_units, to: Cldr.Unit
-        defdelegate units(type), to: Cldr.Unit
-        defdelegate unit_tree, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
         defdelegate styles, to: Cldr.Unit
         defdelegate default_style, to: Cldr.Unit
@@ -42,13 +40,6 @@ defmodule Cldr.Unit.Backend do
         defdelegate validate_style(unit), to: Cldr.Unit
 
         defdelegate unit_category(unit), to: Cldr.Unit
-        defdelegate jaro_match(unit), to: Cldr.Unit
-        defdelegate jaro_match(unit, distance), to: Cldr.Unit
-        defdelegate best_match(unit), to: Cldr.Unit
-        defdelegate best_match(unit, distance), to: Cldr.Unit
-
-        defdelegate compatible_units(unit), to: Cldr.Unit
-        defdelegate compatible_units(unit, options), to: Cldr.Unit
 
         defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
         defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
@@ -91,7 +82,7 @@ defmodule Cldr.Unit.Backend do
         * `:per` allows compound units to be formatted. For example, assume
           we want to format a string which represents "kilograms per second".
           There is no such unit defined in CLDR (or perhaps anywhere!).
-          If however we define the unit `unit = Cldr.Unit.new(:kilogram, 20)`
+          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
           we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
           Each locale defines a specific way to format such a compount unit.
           Usually it will return something like `20 kilograms/second`

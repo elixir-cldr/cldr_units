@@ -400,13 +400,13 @@ defmodule Cldr.Unit.Math do
 
   ## Examples
 
-      iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1
+      iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1
       #Cldr.Unit<:yard, 1031.6>
 
-      iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 2
+      iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 2
       #Cldr.Unit<:yard, 1031.61>
 
-      iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1, :up
+      iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1, :up
       #Cldr.Unit<:yard, 1031.7>
 
   """
@@ -418,7 +418,7 @@ defmodule Cldr.Unit.Math do
 
   def round(%Unit{unit: unit, value: value}, places \\ 0, mode \\ :half_up) do
     rounded_value = Cldr.Math.round(value, places, mode)
-    Unit.new(unit, rounded_value)
+    Unit.new!(unit, rounded_value)
   end
 
   def trunc(%Unit{value: value} = unit) when is_float(value) do
@@ -445,8 +445,8 @@ defmodule Cldr.Unit.Math do
 
   ## Example
 
-      iex> x = Cldr.Unit.new(:kilometer, 1)
-      iex> y = Cldr.Unit.new(:meter, 1000)
+      iex> x = Cldr.Unit.new!(:kilometer, 1)
+      iex> y = Cldr.Unit.new!(:meter, 1000)
       iex> Cldr.Unit.Math.compare x, y
       :eq
 

@@ -61,7 +61,7 @@ defmodule Cldr.Unit.Conversion do
   @spec convert(Unit.t(), Unit.unit()) :: Unit.t() | {:error, {module(), String.t()}}
 
   def convert(%Unit{unit: from_unit, value: _value} = unit, from_unit) do
-    unit
+    {:ok, unit}
   end
 
   def convert(%Unit{} = unit, to_unit) do
@@ -69,11 +69,10 @@ defmodule Cldr.Unit.Conversion do
 
     with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
          {:ok, converted} <- convert(value, from_conversion, to_conversion) do
-      Unit.new(to_unit, converted)
+      Unit.new(to_unit, converted, localize: unit.localize)
     else
       {:error, {Cldr.Unit.IncompatibleUnitsError, _}} ->
         {:error, incompatible_units_error(from_unit, to_unit)}
-      other -> other
     end
   end
 
@@ -266,7 +265,7 @@ defmodule Cldr.Unit.Conversion do
   def convert!(%Unit{} = unit, to_unit) do
     case convert(unit, to_unit) do
       {:error, {exception, reason}} -> raise exception, reason
-      unit -> unit
+      {:ok, unit} -> unit
     end
   end
 
@@ -290,10 +289,9 @@ defmodule Cldr.Unit.Conversion do
 
   ## Example
 
-      iex> u = Cldr.Unit.new(:kilometer, 10)
-      #Cldr.Unit<:kilometer, 10>
+      iex> u = Cldr.Unit.new!(:kilometer, 10)
       iex> Cldr.Unit.Conversion.convert_to_base_unit u
-      #Cldr.Unit<:meter, 10000>
+      {:ok, #Cldr.Unit<:meter, 10000>}
 
   """
   def convert_to_base_unit(%Unit{} = unit) do
@@ -304,7 +302,7 @@ defmodule Cldr.Unit.Conversion do
 
   def convert_to_base_unit(unit) when is_atom(unit) do
     unit
-    |> Unit.new(1)
+    |> Unit.new!(1)
     |> convert_to_base_unit()
   end
 
@@ -333,16 +331,15 @@ defmodule Cldr.Unit.Conversion do
 
   ## Example
 
-      iex> u = Cldr.Unit.new(:kilometer, 10)
-      #Cldr.Unit<:kilometer, 10>
-      iex> Cldr.Unit.Conversion.convert_to_base_unit u
+      iex> u = Cldr.Unit.new!(:kilometer, 10)
+      iex> Cldr.Unit.Conversion.convert_to_base_unit! u
       #Cldr.Unit<:meter, 10000>
 
   """
   def convert_to_base_unit!(%Unit{} = unit) do
     case convert_to_base_unit(unit) do
       {:error, {exception, reason}} -> raise exception, reason
-      unit -> unit
+      {:ok, unit} -> unit
     end
   end
 

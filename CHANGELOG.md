@@ -2,42 +2,47 @@
 
 This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
+### Summary
+
+* New unit creation
+
+* Base unit calculation
+
+* New unit preferences
+
+* New conversion engine
+
+### Breaking changes
+
+* `Cldr.Unit.new/2` is now `Cldr.Unit/{2, 3}` and it returns a standard `{:ok, unit}` tuple on success. Use `Cldr.Unit.new!/{2,3}` if you want to retain the previous behaviour.
+
+* Removed `Cldr.Unit.unit_tree/0`
+
+* Removed `Cldr.Unit.units/1`
+
+* Removed `Cldr.Unit.compatible_units/2`
+
+* Removed `Cldr.Unit.best_match/1`
+
+* Removed `Cldr.Unit.jaro_match/1`
+
+* Removed `Cldr.Unit.unit_category_map/0` (replaced with `Cldr.Unit.base_unit_category_map/0`)
+
 ### Deprecations
 
 * Deprecate 'Cldr.Unit.unit_categories/0` in favour of `Cldr.Unit.known_unit_categories/0` to be consistent across CLDR.
 
 ### Enhancements
 
-* Incorporate CLDR's unit conversion data into the conversion engine
+* Incorporate CLDR's unit conversion data into the new conversion engine
+
+* Add an option `:localize` to `Cldr.Unit.new/{2,3}`. It takes a truthy value (default `true`) which is used to determine if this unit should be localizable. Localizing a unit means converting to the preferred units for a given locale or territory. For example, `1 meter` when localised for the territory `:US` most commonly would be converted to `3 feet 3 inches`. However some units should not be converted no matter the locale or territory. For example, a `24mm camera lens` is always a `24mm camera lens` and never `1 inch camera lens`
 
 * Add `Cldr.Unit.known_measurement_sytems/0` to return the known measurement systems
 
-* Add `Cldr.Unit.Conversion.preferred_units/3` that returns a list of preferred units for a given unit. This makes it straight forward to take a unit and convert it to the units preferred by the user for a given unit type, locale and use case.  For example:
+* Add `Cldr.Unit.Conversion.preferred_units/3` that returns a list of preferred units for a given unit. This makes it straight forward to take a unit and convert it to the units preferred by the user for a given unit type, locale and use case.
 
-**Examples**
-
-      iex> meter = Cldr.Unit.new :meter, 1
-      #Unit<:meter, 1>
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal
-      {:ok, [:foot, :inch]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
-      {:ok, [:inch]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
-      {:ok, [:centimeter]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
-      {:ok, [:mile]}
-      iex> Cldr.Unit.Conversion.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
-      {:ok, [:kilometer]}
-
-**Converting one unit to a locale specific unit list**
-
-One common pattern is to convert a given unit into the units appropriate for a given local and usage. This can be accomplished with a combination of `Cldr.Unit.Conversion.preferred_units/2`and `Cldr.Unit.decompose/2`. For example:
-
-      iex> meter = Cldr.Unit.new(:meter, 1)
-      iex> with {:ok, preferred_units} <- Cldr.Unit.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal) do
-      ...>   Cldr.Unit.decompose(meter, preferred_units)
-      ...> end
-      [Cldr.Unit.new(:foot, 3), Cldr.Unit.new(:inch, 3)]
+* Add `Cldr.Unit.base_category_map/0` that maps base units to their unit categories. For example, map `mile_per_hour` to `:speed` or `kilogram_square_meter_per_cubic_second_ampere` to `:voltage`. Base units are derived from a unit name and are not normally the concern of the consumer of `ex_cldr_units`.
 
 # Changelog for Cldr_Units v2.7.0
 

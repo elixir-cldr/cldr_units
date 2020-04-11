@@ -41,16 +41,17 @@ defmodule CldrUnits.Mixfile do
       # Requires the version that contains the
       # unit_conversions.xml files
       # {:ex_cldr, "~> 2.14"},
+      # {:ex_cldr_numbers, "~> 2.13"},
 
       {:ex_cldr, path: "../cldr", override: true},
-      {:cldr_utils, path: "../cldr_utils", override: true},
+      {:cldr_utils, github: "elixir-cldr/cldr_utils", override: true},
+      {:ex_cldr_numbers, github: "elixir-cldr/cldr_numbers", override: true},
 
-      {:ex_cldr_numbers, "~> 2.12"},
       {:ex_cldr_lists, "~> 2.2"},
       {:ratio, "~> 2.4"},
 
       {:decimal, "~> 1.6 or ~> 2.0", optional: true},
-      {:dialyxir, "~> 1.0.0-rc", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
       {:jason, "~> 1.0", optional: true},
       {:sweet_xml, "~> 0.6", only: [:dev, :test], optional: true}

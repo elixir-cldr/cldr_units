@@ -1,6 +1,7 @@
 defmodule Cldr.Unit.Test.ConversionData do
 
   @conversion_test_data "test/support/data/conversion_test_data.txt"
+
   def conversion_test_data do
     @conversion_test_data
     |> File.read!

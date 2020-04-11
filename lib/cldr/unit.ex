@@ -30,15 +30,25 @@ defmodule Cldr.Unit do
   alias Cldr.Substitution
   alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
 
-  @enforce_keys [:unit, :value, :base_conversion]
-  defstruct unit: nil, value: 0, base_conversion: []
+  @enforce_keys [:unit, :value, :base_conversion, :localize]
+  defstruct [
+    unit: nil,
+    value: 0,
+    base_conversion: [],
+    localize: true
+  ]
 
   @type unit :: atom()
   @type style :: atom()
   @type value :: Cldr.Math.number_or_decimal()
-
   @type conversion :: Cldr.Unit.Conversion.t() | list()
-  @type t :: %Unit{unit: unit, value: value, base_conversion: conversion}
+
+  @type t :: %__MODULE__{
+    unit: unit(),
+    value: value(),
+    base_conversion: conversion(),
+    localize: boolean()
+  }
 
   @default_style :long
   @styles [:long, :short, :narrow]
@@ -81,36 +91,44 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.new(23, :gallon)
-      #Cldr.Unit<:gallon, 23>
+      {:ok, #Cldr.Unit<:gallon, 23>}
 
       iex> Cldr.Unit.new(:gallon, 23)
-      #Cldr.Unit<:gallon, 23>
+      {:ok, #Cldr.Unit<:gallon, 23>}
 
       iex> Cldr.Unit.new(14, :gadzoots)
       {:error, {Cldr.UnknownUnitError,
         "Unknown unit was detected at \\"gadzoots\\""}}
 
   """
-  @spec new(unit() | value(), value() | unit()) :: t() | {:error, {module(), String.t()}}
+  @spec new(unit() | value(), value() | unit(), Keyword.t()) ::
+    {:ok, t()} | {:error, {module(), String.t()}}
 
-  def new(value, unit) when is_number(value) do
+  def new(value, unit, options \\ [])
+
+  def new(value, unit, options) when is_number(value) do
+    create_unit(value, unit, options)
+  end
+
+  def new(unit, value, options) when is_number(value) do
+    new(value, unit, options)
+  end
+
+  def new(%Decimal{} = value, unit, options) do
+    create_unit(value, unit, options)
+  end
+
+  def new(unit, %Decimal{} = value, options) do
+    new(value, unit, options)
+  end
+
+  defp create_unit(value, unit, options) do
+    localize = Keyword.get(options, :localize, true)
+
     with {:ok, unit, base_conversion} <- validate_unit(unit) do
-      %Unit{unit: unit, value: value, base_conversion: base_conversion}
+      unit = %Unit{unit: unit, value: value, base_conversion: base_conversion, localize: localize}
+      {:ok, unit}
     end
-  end
-
-  def new(unit, value) when is_number(value) do
-    new(value, unit)
-  end
-
-  def new(%Decimal{} = value, unit) do
-    with {:ok, unit, base_conversion} <- validate_unit(unit) do
-      %Unit{unit: unit, value: value, base_conversion: base_conversion}
-    end
-  end
-
-  def new(unit, %Decimal{} = value) do
-    new(value, unit)
   end
 
   @doc """
@@ -142,8 +160,8 @@ defmodule Cldr.Unit do
 
   def new!(unit, value) do
     case new(unit, value) do
+      {:ok, unit} -> unit
       {:error, {exception, message}} -> raise exception, message
-      unit -> unit
     end
   end
 
@@ -215,7 +233,7 @@ defmodule Cldr.Unit do
   * `:per` allows compound units to be formatted. For example, assume
     we want to format a string which represents "kilograms per second".
     There is no such unit defined in CLDR (or perhaps anywhere!).
-    If however we define the unit `unit = Cldr.Unit.new(:kilogram, 20)`
+    If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
     we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
     Each locale defines a specific way to format such a compount unit.
     Usually it will return something like `20 kilograms/second`
@@ -265,7 +283,7 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :foot, per: :second
       {:ok, "1,234 feet per second"}
 
-      iex> unit = Cldr.Unit.new(123, :foot)
+      iex> unit = Cldr.Unit.new!(123, :foot)
       iex> Cldr.Unit.to_string unit, MyApp.Cldr
       {:ok, "123 feet"}
 
@@ -439,7 +457,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.value Cldr.Unit.new(:kilogram, 23)
+      iex> Cldr.Unit.value Cldr.Unit.new!(:kilogram, 23)
       23
 
   """
@@ -482,13 +500,13 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> u = Cldr.Unit.new(10.3, :foot)
+      iex> u = Cldr.Unit.new!(10.3, :foot)
       iex> Cldr.Unit.decompose u, [:foot, :inch]
-      [Cldr.Unit.new(:foot, 10), Cldr.Unit.new(:inch, 4)]
+      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, 4)]
 
-      iex> u = Cldr.Unit.new(:centimeter, 1111)
+      iex> u = Cldr.Unit.new!(:centimeter, 1111)
       iex> Cldr.Unit.decompose u, [:kilometer, :meter, :centimeter, :millimeter]
-      [Cldr.Unit.new(:meter, 11), Cldr.Unit.new(:centimeter, 11)]
+      [Cldr.Unit.new!(:meter, 11), Cldr.Unit.new!(:centimeter, 11)]
 
   """
   @spec decompose(unit :: Unit.t(), decompose_list :: [Unit.unit(), ...]) ::
@@ -560,9 +578,9 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> unit = Cldr.Unit.new(1.83, :meter)
+      iex> unit = Cldr.Unit.new!(1.83, :meter)
       iex> Cldr.Unit.localize(unit, usage: :person, territory: :US)
-      [Cldr.Unit.new(:inch, 3937)]
+      [Cldr.Unit.new!(:inch, 3937)]
 
   """
   def localize(%Unit{} = unit, backend, options \\ []) when is_atom(backend) do
@@ -581,7 +599,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> u = Cldr.Unit.new(:foot, 23.3)
+      iex> u = Cldr.Unit.new!(:foot, 23.3)
       #Cldr.Unit<:foot, 23.3>
       iex> Cldr.Unit.zero(u)
       #Cldr.Unit<:foot, 0.0>
@@ -609,12 +627,12 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> u = Cldr.Unit.new(:foot, 23.3)
+      iex> u = Cldr.Unit.new!(:foot, 23.3)
       #Cldr.Unit<:foot, 23.3>
       iex> Cldr.Unit.zero?(u)
       false
 
-      iex> u = Cldr.Unit.new(:foot, 0)
+      iex> u = Cldr.Unit.new!(:foot, 0)
       #Cldr.Unit<:foot, 0>
       iex> Cldr.Unit.zero?(u)
       true
@@ -733,28 +751,30 @@ defmodule Cldr.Unit do
   ## Options
 
   * `unit` is any unit returned by
-    `Cldr.Unit.new/2` or units returned by `Cldr.Unit.units/0`
+    `Cldr.Unit.new/2`
 
   ## Returns
 
-  * a valid category or
+  * `{:ok, category}` or
 
   * `{:error, {exception, message}}`
 
   ## Examples
 
       iex> Cldr.Unit.unit_category :pint_metric
-      :volume
+      {:ok, :volume}
 
       iex> Cldr.Unit.unit_category :stone
-      :mass
+      {:ok, :mass}
 
   """
   @spec unit_category(Unit.t() | String.t() | atom()) ::
-          atom() | {:error, {module(), String.t()}}
+          {:ok, atom()} | {:error, {module(), String.t()}}
+
   def unit_category(unit) do
-    with {:ok, unit, _conversion} <- validate_unit(unit) do
-      Map.get(unit_category_map(), unit)
+    with {:ok, _unit, conversion} <- validate_unit(unit),
+         {:ok, base_unit} <- base_unit(conversion) do
+      {:ok, Map.get(base_unit_category_map(), Kernel.to_string(base_unit))}
     end
   end
 
@@ -763,63 +783,53 @@ defmodule Cldr.Unit do
     unit_category(unit)
   end
 
+  @base_unit_category_map Cldr.Config.units()
+  |> Map.get(:base_units)
+  |> Enum.map(fn {k, v} -> {to_string(v), k} end)
+  |> Map.new
+
+
   @doc """
-  Returns a list of the unit categories and associated
-  units
+  Returns a mapping of base units to their respective
+  unit categories.
+
+  Base units are a common unit for a given unit
+  category which are used in two scenarios:
+
+  1. When converting between units.  If two units
+    have the same base unit they can be converted
+    to each other. See `Cldr.Unit.Conversion`.
+
+  2. When identifying the preferred units for a given
+    locale or territory, the base unit is used to
+    aid identification of preferences for given use
+    cases. See `Cldr.Unit.Preference`.
 
   ## Example
 
-      Cldr.Unit.unit_tree
-      => %{
-        acceleration: [:g_force, :meter_per_second_squared],
-        angle: [:arc_minute, :arc_second, :degree, :radian, :revolution],
-        area: [:acre, :hectare, :square_centimeter, :square_foot, :square_inch,
-               :square_kilometer, :square_meter, :square_mile, :square_yard],
-        concentr: [:karat, :milligram_per_deciliter, :millimole_per_liter,
-                   :part_per_million]
-        ...
-
-  """
-  @spec unit_tree :: map()
-  def unit_tree do
-    @unit_tree
-  end
-
-  @unit_category_map @unit_tree
-                     |> Enum.map(fn {k, v} ->
-                       k = List.duplicate(k, length(v))
-                       Enum.zip(v, k)
-                     end)
-                     |> List.flatten()
-                     |> Map.new()
-
-  @doc """
-  Returns a mapping of units to their respective
-  unit categories
-
-  ## Example
-
-      => iex> Cldr.Unit.unit_category_map
+      => Cldr.Unit.base_unit_category_map
       %{
-        kilowatt: :power,
-        percent: :concentr,
-        picometer: :length,
-        centiliter: :volume,
-        square_inch: :area,
-        megapascal: :pressure,
-        atmosphere: :pressure,
-        per: :compound,
+        "kilogram_square_meter_per_cubic_second_ampere" => :voltage,
+        "kilogram_meter_per_meter_square_second" => :torque,
+        "square_meter" => :area,
+        "kilogram" => :mass,
+        "kilogram_square_meter_per_square_second" => :energy,
+        "revolution" => :angle,
+        "candela_per_square_meter" => :luminance,
         ...
       }
 
   """
-  @spec unit_category_map :: map()
-  def unit_category_map do
-    @unit_category_map
+  @spec base_unit_category_map :: map()
+  def base_unit_category_map do
+    @base_unit_category_map
   end
 
   @doc """
   Returns the known units.
+
+  Known units means units that can
+  be localised directly.
 
   ## Example
 
@@ -846,213 +856,6 @@ defmodule Cldr.Unit do
 
   @deprecated "Use Cldr.Unit.known_units/0"
   def units, do: known_units()
-
-  @doc """
-  Returns the units for a given unit type
-
-  ## Arguments
-
-  * `type` is any unit type returned by
-    `Cldr.Unit.unit_categories/0`
-
-  ## Returns
-
-  * a list of units
-
-  ## Examples
-
-      iex> Cldr.Unit.units(:length)
-      [:astronomical_unit, :centimeter, :decimeter, :fathom, :foot, :furlong, :inch,
-       :kilometer, :light_year, :meter, :micrometer, :mile, :mile_scandinavian,
-       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point,
-       :solar_radius, :yard]
-
-  """
-  @spec units(atom) :: [atom, ...]
-  def units(category) when category in @unit_categories do
-    Map.get(unit_tree(), category)
-  end
-
-  def units(category) do
-    {:error, unit_category_error(category)}
-  end
-
-  @doc """
-  Returns a list of units that are within the
-  specified jaro distance of the provided unit.
-
-  ## Arguments
-
-  * `unit` is any unit returned by `Cldr.Unit.units/0` or by
-    `Cldr.Unit.new/2`
-
-  * `distance` is a float between 0.0 and 1.0 representing
-    the jaro distance above which a unit must match in order
-    to be returned.  The default is 0.75
-
-  ## Returns
-
-  * a list of tagged tuples of the form `{jaro_distance, unit}`
-    sorted in decending jaro distance order or
-
-  * `{:error, {exception, message}}`
-
-  ## Examples
-
-      iex> Cldr.Unit.jaro_match :foot
-      [{1.0, :foot}]
-
-      iex> Cldr.Unit.jaro_match :meter
-      [
-        {1.0, :meter},
-        {0.7708333333333334, :meter_per_second},
-        {0.7592592592592592, :kilometer_per_hour}
-      ]
-
-  """
-  @default_distance 0.75
-  @spec jaro_match(unit | String.t(), number) :: [{float, unit}, ...] | []
-  def jaro_match(unit, distance \\ @default_distance)
-
-  def jaro_match(%Unit{unit: unit}, distance) do
-    jaro_match(unit, distance)
-  end
-
-  def jaro_match(unit, distance) do
-    unit
-    |> Kernel.to_string()
-    |> match_list(distance)
-  end
-
-  @doc """
-  Returns the unit closed in jaro distance to the
-  provided unit
-
-  ## Arguments
-
-  * `unit` is any unit returned by `Cldr.Unit.units/0` or by
-    `Cldr.Unit.new/2`
-
-  * `distance` is a float between 0.0 and 1.0 representing
-    the jaro distance above which a unit must match in order
-    to be returned.  The default is 0.75
-
-  ## Returns
-
-  * a `Unit.t` struct or
-
-  * `nil`
-
-  ## Examples
-
-      iex> Cldr.Unit.best_match :ft
-      :fathom
-
-      iex> Cldr.Unit.best_match :zippity
-      nil
-
-  """
-  def best_match(unit, distance \\ @default_distance) do
-    unit
-    |> jaro_match(distance)
-    |> return_best_match
-  end
-
-  defp return_best_match([]) do
-    nil
-  end
-
-  defp return_best_match([{_distance, unit} | _rest]) do
-    unit
-  end
-
-  @doc """
-  Returns a list of units that are compatible with the
-  provided unit.
-
-  ## Arguments
-
-  * `unit` is any unit returned by `Cldr.Unit.units/0` or by
-    `Cldr.Unit.new/2`
-
-  * `options` is a keyword list of options
-
-  ## Options
-
-  * `:jaro` is a boolean which determines if the match
-    is to use the jaro distance.  The default is `false`
-
-  * `distance` is a float between 0.0 and 1.0 representing
-    the jaro distance above which a unit must match in order
-    to be returned.  The default is 0.75
-
-  ## Returns
-
-  * a list of tuples of the form `{jaro_distance, unit}`
-    sorted in decending jaro distance order, or
-
-  * `{:error, {exception, message}}`
-
-  ## Examples
-
-      iex> Cldr.Unit.compatible_units :foot
-      [:astronomical_unit, :centimeter, :decimeter, :fathom, :foot, :furlong, :inch,
-       :kilometer, :light_year, :meter, :micrometer, :mile, :mile_scandinavian,
-       :millimeter, :nanometer, :nautical_mile, :parsec, :picometer, :point,
-       :solar_radius, :yard]
-
-      iex> Cldr.Unit.compatible_units :me, jaro: true
-      [{0.7999999999999999, :meter}]
-
-  """
-  @default_options [jaro: false, distance: @default_distance]
-  @spec compatible_units(unit(), Keyword.t() | map()) :: [unit(), ...] | [{float, unit}, ...] | []
-
-  def compatible_units(unit, options \\ @default_options)
-
-  def compatible_units(unit, options) when is_list(options) do
-    options = Keyword.merge(@default_options, options) |> Map.new()
-    compatible_units(unit, options)
-  end
-
-  def compatible_units(unit, %{jaro: false}) do
-    with {:ok, unit, _conversion} <- validate_unit(unit) do
-      type = unit_category(unit)
-      unit_tree()[type]
-    end
-  end
-
-  def compatible_units(unit, %{jaro: true, distance: distance}) when is_number(distance) do
-    unit
-    |> jaro_match(distance)
-    |> compatible_list(unit)
-  end
-
-  @string_units Enum.map(@units, &Atom.to_string/1)
-  @spec match_list(String.t(), float) :: list({float, unit()}) | []
-
-  defp match_list(unit, distance) when is_binary(unit) and is_number(distance) do
-    @string_units
-    |> Enum.map(fn u -> {String.jaro_distance(unit, u), String.to_existing_atom(u)} end)
-    |> Enum.filter(&(elem(&1, 0) >= distance))
-    |> Enum.sort(&(elem(&1, 0) > elem(&2, 0)))
-  end
-
-  @spec compatible_list([{float, unit}, ...], unit) :: [{float, unit}, ...] | []
-
-  defp compatible_list(jaro_list, unit) when is_list(jaro_list) do
-    with {:ok, unit, _conversion} <- validate_unit(unit) do
-      Enum.filter(jaro_list, fn
-        {_distance, u} -> unit_category(u) == unit_category(unit)
-        u -> unit_category(u) == unit_category(unit)
-      end)
-    else
-      _ ->
-        # Use the best match as the match key
-        [{_, unit} | _] = jaro_list
-        compatible_list(jaro_list, unit)
-    end
-  end
 
   @doc """
   Returns the known styles for a unit.
@@ -1253,7 +1056,8 @@ defmodule Cldr.Unit do
 
   def validate_unit(unit_name) when is_binary(unit_name) do
     with {:ok, parsed} <- Parser.parse_unit(unit_name) do
-      canonical_name = Parser.canonical_unit_name(parsed)
+      name = Parser.canonical_unit_name(parsed)
+      canonical_name = maybe_atomize_unit(name)
       {:ok, canonical_name, parsed}
     end
   end
@@ -1270,6 +1074,16 @@ defmodule Cldr.Unit do
 
   def validate_unit(unknown_unit) do
     {:error, unit_error(unknown_unit)}
+  end
+
+  def maybe_atomize_unit(name) do
+    if (atom_name = String.to_existing_atom(name)) && atom_name in @units do
+      atom_name
+    else
+      name
+    end
+  rescue ArgumentError ->
+    name
   end
 
   defp validate_per_unit(nil) do
