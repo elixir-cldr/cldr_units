@@ -583,8 +583,17 @@ defmodule Cldr.Unit do
       [Cldr.Unit.new!(:inch, 3937)]
 
   """
-  def localize(%Unit{} = unit, backend, options \\ []) when is_atom(backend) do
+  def localize(unit, backend, options \\ [])
+
+  def localize(%Unit{} = unit, options, []) when is_list(options) do
+    locale = Cldr.get_locale()
+    options = Keyword.merge([locale: locale], options)
+    localize(unit, locale.backend, options)
+  end
+
+  def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
     with {:ok, unit_list} <- Preference.preferred_units(unit, backend, options) do
+      IO.inspect unit_list
       decompose(unit, unit_list)
     end
   end
