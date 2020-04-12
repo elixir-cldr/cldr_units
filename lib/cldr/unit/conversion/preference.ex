@@ -66,13 +66,12 @@ defmodule Cldr.Unit.Preference do
   accomplished with a combination of `Cldr.Unit.Conversion.preferred_units/2`
   and `Cldr.Unit.decompose/2`. For example:
 
-      iex> meter = Cldr.Unit.new!(:meter, 1.5)
-      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter,
-      ...>   MyApp.Cldr, locale: "en-US", usage: :person_height)
+      iex> meter = Cldr.Unit.new!(:meter, 1)
+      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
       iex> with {:ok, preferred_units} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
-      [Cldr.Unit.new!(:foot, 4), Cldr.Unit.new!(:inch, 11)]
+      [Cldr.Unit.new!(:inch, 39)]
 
   """
   def preferred_units(unit, backend, options \\ [])
@@ -96,7 +95,7 @@ defmodule Cldr.Unit.Preference do
     {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
 
     with {:ok, usage} <- validate_usage(category, usage) do
-      usage = [usage, :default] |> Enum.dedup
+      usage = usage_chain(usage, :default)
       geq = Unit.value(base_unit) |> Ratio.to_float
       preferred_units(category, usage, territory_chain, geq)
     end
@@ -106,8 +105,26 @@ defmodule Cldr.Unit.Preference do
     if get_in(Unit.unit_preferences(), [category, usage]) do
       {:ok, usage}
     else
-      {:error, Unit.unknown_usage_error(category, usage)}
+      {:error, unknown_usage_error(category, usage)}
     end
+  end
+
+  def usage_chain(unit, default) when is_atom(unit) do
+    unit
+    |> Atom.to_string
+    |> String.split("_")
+    |> usage_chain
+    |> Enum.reverse
+    |> Enum.map(&String.to_atom/1)
+    |> Kernel.++([default])
+  end
+
+  def usage_chain([head]) do
+    [head]
+  end
+
+  def usage_chain([head | [next | tail]]) do
+    [head | usage_chain([head <> "_" <> next | tail])]
   end
 
 
@@ -282,4 +299,10 @@ defmodule Cldr.Unit.Preference do
     }
   end
 
+  def unknown_usage_error(category, usage) do
+    {
+      Cldr.Unit.UnknownUsageError,
+      "The unit category #{inspect category} does not define a usage #{inspect usage}"
+    }
+  end
 end
