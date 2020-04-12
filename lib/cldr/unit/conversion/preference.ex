@@ -97,10 +97,9 @@ defmodule Cldr.Unit.Preference do
     {:ok, category} = Unit.unit_category(unit)
     {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
 
-    geq = Unit.value(base_unit)
-
     with {:ok, usage} <- validate_usage(category, usage) do
       usage = [usage, :default]
+      geq = Unit.value(base_unit) |> Ratio.to_float
       preferred_units(category, usage, territory_chain, geq)
     end
   end

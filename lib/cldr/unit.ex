@@ -54,6 +54,8 @@ defmodule Cldr.Unit do
   @styles [:long, :short, :narrow]
 
   defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
+  defdelegate convert!(unit_1, to_unit), to: Cldr.Unit.Conversion
+
   defdelegate preferred_units(unit, backend, options), to: Cldr.Unit.Preference
   defdelegate preferred_units!(unit, backend, options), to: Cldr.Unit.Preference
 
@@ -119,6 +121,14 @@ defmodule Cldr.Unit do
   end
 
   def new(unit, %Decimal{} = value, options) do
+    new(value, unit, options)
+  end
+
+  def new(%Ratio{} = value, unit, options) do
+    create_unit(value, unit, options)
+  end
+
+  def new(unit, %Ratio{} = value, options) do
     new(value, unit, options)
   end
 
@@ -304,11 +314,13 @@ defmodule Cldr.Unit do
 
   def to_string(list_or_number, backend, options \\ [])
 
+  # Options but no backend
   def to_string(list_or_number, options, []) when is_list(options) do
     locale = Cldr.get_locale()
     to_string(list_or_number, locale.backend, options)
   end
 
+  # It's a list of units
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale) do
@@ -328,12 +340,19 @@ defmodule Cldr.Unit do
     end
   end
 
+  # Now we have a unit, a backend and some options
+  def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
+    unit = ratio_to_float(unit)
+    to_string(unit, backend, options)
+  end
+
   def to_string(%Unit{unit: unit, value: value}, backend, options) when is_list(options) do
     options = Keyword.put(options, :unit, unit)
     to_string(value, backend, options)
   end
 
-  def to_string(number, backend, options) when is_list(options) do
+  # Finally we have the right shape to execute
+  def to_string(number, backend, options) when is_list(options) and is_number(number) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style),
@@ -391,7 +410,7 @@ defmodule Cldr.Unit do
   """
   @spec to_string!(value(), Cldr.backend() | Keyword.t(), Keyword.t()) :: String.t() | no_return()
 
-  def to_string!(number, backend \\ Cldr.default_backend(), options \\ []) do
+  def to_string!(number, backend, options \\ []) do
     case to_string(number, backend, options) do
       {:ok, string} -> string
       {:error, {exception, message}} -> raise exception, message
@@ -406,6 +425,10 @@ defmodule Cldr.Unit do
           Cldr.backend(),
           map()
         ) :: String.t()
+
+  defp to_string(%Ratio{} = number, unit, locale, style, backend, options) do
+    to_string(number, unit, locale, style, backend, options)
+  end
 
   defp to_string(number, unit, locale, style, backend, %{per: nil} = options) do
     with {:ok, number_string} <-
@@ -892,26 +915,26 @@ defmodule Cldr.Unit do
     @default_style
   end
 
-  @doc """
-  Returns a map of unit preferences
 
-  Units of measure vary country by country. While
-  most countries standardize on the metric system,
-  others use the US or UK systems of measure.
+  # Returns a map of unit preferences
+  #
+  # Units of measure vary country by country. While
+  # most countries standardize on the metric system,
+  # others use the US or UK systems of measure.
+  #
+  # When presening a unit to an end user it is appropriate
+  # to do so using units familiar and relevant to that
+  # end user.
+  #
+  # The data returned by this function supports the
+  # opportunity to convert a give unit to meet this
+  # requirement.
+  #
+  # Unit preferences can vary by usage, not just territory,
+  # Therefore the data is structured according to unit
+  # category andunit usage.
 
-  When presening a unit to an end user it is appropriate
-  to do so using units familiar and relevant to that
-  end user.
-
-  The data returned by this function supports the
-  opportunity to convert a give unit to meet this
-  requirement.
-
-  Unit preferences can vary by usage, not just territory,
-  Therefore the data is structured according to unit
-  category and unit usage.
-
-  """
+  @doc false
   @unit_preferences Cldr.Config.units() |> Map.get(:preferences)
   @spec unit_preferences() :: map()
   def unit_preferences do
@@ -923,7 +946,7 @@ defmodule Cldr.Unit do
               %{units: units, geq: geq} = pref
               {:ok, unit} = Unit.new(hd(units), geq)
               {:ok, %Unit{value: value}} = Conversion.convert_to_base_unit(unit)
-              {:cont, acc ++ [%{pref | geq: value}]}
+              {:cont, acc ++ [%{pref | geq: Ratio.to_float(value)}]}
 
             pref, _rest, acc ->
               pref = %{pref | geq: 0}
@@ -1141,6 +1164,18 @@ defmodule Cldr.Unit do
 
   def validate_style(style) do
     {:error, style_error(style)}
+  end
+
+  @doc """
+  Convert a ratio Unit to a float unit
+  """
+  def ratio_to_float(%Unit{value: %Ratio{} = value} = unit) do
+    value = Ratio.to_float(value)
+    %{unit | value: value}
+  end
+
+  def ratio_to_float(%Unit{} = unit) do
+    unit
   end
 
   @doc false

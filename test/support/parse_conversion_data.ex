@@ -1,28 +1,40 @@
 defmodule Cldr.Unit.Test.ConversionData do
 
   @conversion_test_data "test/support/data/conversion_test_data.txt"
+  @offset 1
 
   def conversion_test_data do
     @conversion_test_data
     |> File.read!
-    |> String.replace(~r/#.*\n/, "")
-    |> String.split("\n", trim: true)
+    |> String.split("\n")
     |> Enum.map(&String.trim/1)
   end
 
   def conversions do
     conversion_test_data()
+    |> Enum.with_index
     |> Enum.map(&parse_test/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  def parse_test({"", _}) do
+    nil
+  end
+
+  def parse_test({<< "#", _rest :: binary >>, _}) do
+    nil
   end
 
   @fields [:category, :from, :to, :factor, :result]
-  def parse_test(test) do
+
+  def parse_test({test, index}) do
     test
     |> String.split(";")
     |> Enum.map(&String.trim/1)
     |> zip(@fields)
     |> Enum.map(&transform/1)
     |> Map.new
+    |> Map.put(:line, index + @offset)
   end
 
   def zip(data, fields) do
@@ -50,17 +62,16 @@ defmodule Cldr.Unit.Test.ConversionData do
 
     result =
       case Regex.run(@float, result) do
+        [float, _integer, "0"] ->
+          {String.to_float(float), 0, 15}
         [float, _integer, fraction] ->
-          {String.to_float(float), String.length(fraction), 9}
+          {String.to_float(float), String.length(fraction), 15}
         [float, integer, fraction, _, exp] ->
-          # Its a bigint
-          if (p = String.to_integer(exp) - String.length(fraction)) > 0 do
-            int =
-              String.to_integer(integer <> fraction <> String.duplicate("0", p))
-            {int, 0, String.length(fraction) + String.length(integer)}
-          else
-            {String.to_float(float), String.length(fraction), 9}
-          end
+          {
+            String.to_float(float),
+            rounding_from(integer, fraction, exp),
+            precision_from(integer, fraction, exp)
+          }
       end
 
     {:result, result}
@@ -68,6 +79,42 @@ defmodule Cldr.Unit.Test.ConversionData do
 
   def transform(other) do
     other
+  end
+
+  def rounding_from(_integer, "0", << "-", exp :: binary >>) do
+    String.to_integer(exp)
+  end
+
+  def rounding_from(_integer, "0", _exp) do
+    0
+  end
+
+  def rounding_from(_integer, fraction, << "-", exp :: binary >>) do
+    String.length(fraction) + String.to_integer(exp)
+  end
+
+  def rounding_from(_integer, fraction, exp) do
+    if String.to_integer(exp) >= String.length(fraction) do
+      0
+    else
+      String.length(fraction)
+    end
+  end
+
+  def precision_from(integer, "0", _exp) do
+    String.length(integer) + 1
+  end
+
+  def precision_from(integer, fraction, << "-", _exp :: binary >>) do
+    String.length(fraction) + String.length(integer)
+  end
+
+  def precision_from(integer, fraction, exp) do
+    if String.length(fraction) < String.to_integer(exp) do
+      String.length(fraction) + String.length(integer)
+    else
+      String.length(fraction)
+    end
   end
 
   def resolve_factor([factor]) do
@@ -102,12 +149,15 @@ defmodule Cldr.Unit.Test.ConversionData do
     value =
       value
       |> round(digits)
+      |> IO.inspect(label: "After rounding")
       |> round_precision(significant)
+      |> IO.inspect(label: "After rounding significant")
 
     %{unit | value: value}
   end
 
   def round(float, digits) when is_float(float) do
+    IO.puts "Round #{float} precision #{digits}"
     Float.round(float, digits)
   end
 

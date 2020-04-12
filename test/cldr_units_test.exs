@@ -34,15 +34,15 @@ defmodule Cldr.UnitsTest do
   test "decimal functional conversion - celsius" do
     celsius = Cldr.Unit.new!(Decimal.new("100"), :celsius)
     {:ok, fahrenheit} = Cldr.Unit.Conversion.convert(celsius, :fahrenheit)
-    value = Decimal.round(Cldr.Unit.value(fahrenheit))
-    assert Decimal.equal?(value, Decimal.new(212))
+    fahrenheit = Cldr.Unit.ratio_to_float(fahrenheit)
+    assert fahrenheit.value == 212
   end
 
   test "decimal functional conversion - kelvin" do
     celsius = Cldr.Unit.new!(Decimal.new("0"), :celsius)
     {:ok, kelvin} = Cldr.Unit.Conversion.convert(celsius, :kelvin)
-
-    assert Decimal.equal?(Cldr.Unit.value(kelvin), Decimal.new("273.15"))
+    kelvin = Cldr.Unit.ratio_to_float(kelvin)
+    assert kelvin.value == 273.15
   end
 
   test "decimal conversion without function" do

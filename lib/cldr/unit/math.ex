@@ -61,6 +61,16 @@ defmodule Cldr.Unit.Math do
     add(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
+  def add(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.add(value_1, value_2))
+  end
+
+  def add(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.add(value_1, value_2))
+  end
+
   def add(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       add(unit_1, Conversion.convert!(unit_2, unit_category_1))
@@ -115,10 +125,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Cldr.Unit<:kilogram, 4.54640763>
+      #Cldr.Unit<:kilogram, -81900798833369519 <|> 18014398509481984>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, 2.886623581134813>
+      #Cldr.Unit<:pint, -1365882365 <|> 473176473>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Cldr.Unit<:pint, 4>
@@ -146,6 +156,16 @@ defmodule Cldr.Unit.Math do
   def sub(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
       when is_number(value_2) do
     sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
+  end
+
+  def sub(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.sub(value_1, value_2))
+  end
+
+  def sub(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.sub(value_1, value_2))
   end
 
   def sub(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -202,10 +222,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Cldr.Unit<:kilogram, 2.2679618500000003>
+      #Cldr.Unit<:kilogram, 40855968570202005 <|> 18014398509481984>
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, 10.566882094325935>
+      #Cldr.Unit<:pint, 134691990896416015745491897791939562497958760939520 <|> 12746616238742849396626455585282990375683527307233>
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Cldr.Unit<:pint, 5>
@@ -235,9 +255,20 @@ defmodule Cldr.Unit.Math do
     mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
+  def mult(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.mult(value_1, value_2))
+  end
+
+  def mult(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.mult(value_1, value_2))
+  end
+
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      mult(unit_1, Conversion.convert!(unit_2, unit_category_1))
+      {:ok, conversion} = Conversion.convert(unit_2, unit_category_1)
+      mult(unit_1, conversion)
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -288,14 +319,14 @@ defmodule Cldr.Unit.Math do
 
   ## Examples
 
-  iex> Cldr.Unit.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-  #Cldr.Unit<:kilogram, 11.023113109243878>
+      iex> Cldr.Unit.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      #Cldr.Unit<:kilogram, 8171193714040401 <|> 90071992547409920>
 
-  iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-  #Cldr.Unit<:pint, 2.365882365>
+      iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      #Cldr.Unit<:pint, 26938398179283203149098379558387912499591752187904 <|> 63733081193714246983132277926414951878417636536165>
 
-  iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-  #Cldr.Unit<:pint, 5.0>
+      iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      #Cldr.Unit<:pint, 5.0>
 
   """
   @spec div(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
@@ -320,6 +351,16 @@ defmodule Cldr.Unit.Math do
   def div(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
       when is_number(value_2) do
     div(unit_1, Unit.new!(unit, Decimal.new(value_2)))
+  end
+
+  def div(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.div(value_1, value_2))
+  end
+
+  def div(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
+      when is_number(value_2) do
+    Unit.new!(unit, Ratio.div(value_1, value_2))
   end
 
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -416,9 +457,26 @@ defmodule Cldr.Unit.Math do
           mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
         ) :: Unit.t()
 
-  def round(%Unit{unit: unit, value: value}, places \\ 0, mode \\ :half_up) do
+
+  def round(unit, places \\ 0, mode \\ :half_up)
+
+  def round(%Unit{value: %Ratio{} = value} = unit, places, mode) do
+    value = Ratio.to_float(value)
+    round(%{unit | value: value}, places, mode)
+  end
+
+  def round(%Unit{unit: unit, value: value}, places, mode) do
     rounded_value = Cldr.Math.round(value, places, mode)
     Unit.new!(unit, rounded_value)
+  end
+
+  @doc """
+  Truncates a unit's value
+
+  """
+  def trunc(%Unit{value: %Ratio{} = value} = unit) do
+    value = Ratio.to_float(value)
+    trunc(%{unit | value: value})
   end
 
   def trunc(%Unit{value: value} = unit) when is_float(value) do
@@ -430,7 +488,7 @@ defmodule Cldr.Unit.Math do
   end
 
   def trunc(%Unit{value: %Decimal{} = value} = unit) do
-    %{unit | value: Decimal.round(value, 0)}
+    %{unit | value: Decimal.round(value, 0, :floor)}
   end
 
   @doc """

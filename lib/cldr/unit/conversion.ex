@@ -45,7 +45,7 @@ defmodule Cldr.Unit.Conversion do
   ## Examples
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:celsius, 0), :fahrenheit
-      {:ok, Cldr.Unit.new!(:fahrenheit, 32)}
+      {:ok, Cldr.Unit.new!(:fahrenheit, Ratio.new(1407374883553279, 43980465111040))}
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:fahrenheit, 32), :celsius
       {:ok, Cldr.Unit.new!(:celsius, 0)}
@@ -84,8 +84,6 @@ defmodule Cldr.Unit.Conversion do
       |> Ratio.new
       |> convert_to_base(from)
       |> convert_from_base(to)
-      |> to_original_number_type(value)
-      |> maybe_truncate
       |> wrap_ok
     end
   end
@@ -104,7 +102,7 @@ defmodule Cldr.Unit.Conversion do
   def convert_to_base(value, {numerator, denominator}) do
     use Ratio
 
-    convert_to_base(1, numerator) / convert_to_base(1, denominator) * value
+    convert_to_base(1.0, numerator) / convert_to_base(1.0, denominator) * value
   end
 
   def convert_to_base(value, []) do
@@ -128,7 +126,7 @@ defmodule Cldr.Unit.Conversion do
   def convert_from_base(value, {numerator, denominator}) do
     use Ratio
 
-    convert_from_base(1, numerator) / convert_from_base(1, denominator) * value
+    convert_from_base(1.0, numerator) / convert_from_base(1.0, denominator) * value
   end
 
   def convert_from_base(value, []) do
@@ -139,34 +137,34 @@ defmodule Cldr.Unit.Conversion do
     convert_from_base(value, numerator) |> convert_from_base(rest)
   end
 
-  defp to_original_number_type(%Ratio{} = converted, value) when is_float(value) do
-    %Ratio{numerator: numerator, denominator: denominator} = converted
-
-    numerator / denominator
-  end
-
-  defp to_original_number_type(%Ratio{} = converted, value) when is_integer(value) do
-    %Ratio{numerator: numerator, denominator: denominator} = converted
-
-   (numerator / denominator)
-   |> Float.round(0)
-   |> trunc
-  end
-
-  defp to_original_number_type(%Ratio{} = converted, %Decimal{} = _value) do
-    %Ratio{numerator: numerator, denominator: denominator} = converted
-
-    Decimal.new(numerator)
-    |> Decimal.div(Decimal.new(denominator))
-  end
-
-  defp to_original_number_type(converted, value) when is_number(value) do
-    converted
-  end
-
-  defp to_original_number_type(converted, %Decimal{} = _value) do
-    Decimal.new(converted)
-  end
+  # defp to_original_number_type(%Ratio{} = converted, value) when is_float(value) do
+  #   %Ratio{numerator: numerator, denominator: denominator} = converted
+  #
+  #   numerator / denominator
+  # end
+  #
+  # defp to_original_number_type(%Ratio{} = converted, value) when is_integer(value) do
+  #   %Ratio{numerator: numerator, denominator: denominator} = converted
+  #
+  #  (numerator / denominator)
+  #  |> Float.round(0)
+  #  |> trunc
+  # end
+  #
+  # defp to_original_number_type(%Ratio{} = converted, %Decimal{} = _value) do
+  #   %Ratio{numerator: numerator, denominator: denominator} = converted
+  #
+  #   Decimal.new(numerator)
+  #   |> Decimal.div(Decimal.new(denominator))
+  # end
+  #
+  # defp to_original_number_type(converted, value) when is_number(value) do
+  #   converted
+  # end
+  #
+  # defp to_original_number_type(converted, %Decimal{} = _value) do
+  #   Decimal.new(converted)
+  # end
 
   # Establish whether the two units are compatible. If not
   # then also see if the inverse units are compatible
@@ -179,26 +177,6 @@ defmodule Cldr.Unit.Conversion do
       {:ok, from, to}
     else
       _ -> {:error, incompatible_units_error(from, to)}
-    end
-  end
-
-  defp maybe_truncate(converted) when is_number(converted) do
-    truncated = trunc(converted)
-
-    if converted == truncated do
-      truncated
-    else
-      converted
-    end
-  end
-
-  defp maybe_truncate(%Decimal{} = converted) do
-    truncated = Decimal.round(converted, 0, :down)
-
-    if Decimal.equal?(converted, truncated) do
-      truncated
-    else
-      converted
     end
   end
 
