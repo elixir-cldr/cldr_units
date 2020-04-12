@@ -4,7 +4,7 @@ defmodule Cldr.Unit.Preference.Test do
 
   alias Cldr.Unit.Test.PreferenceData
 
-  @maybe_data_bugs [105, 106, 437, 278, 438, 151, 152]
+  @maybe_data_bugs [105, 106, 437, 278, 438, 151, 152, 277]
 
   # Currently we're not handling `-inverse` quantities (categories) so
   # omit those tests for now
@@ -30,15 +30,6 @@ defmodule Cldr.Unit.Preference.Test do
 
 end
 
-# Unit Preference Tests = BUGS TO FIX
-
-# * #404 -# > bug. geq and test data are the same but not matching.
-#
-# * #398 -> Same issue as #404
-#
-# * #402 -> Same issue as #404
-#
-# * #277 -> Maybe conversion bug. The test data is 6.35029318 and the converted unit is 0.635029318
 
 # Bugs reported on the CLDR Jira issue tracker
 
@@ -55,3 +46,5 @@ end
 # * #151 -> data bug. 0.3048 meters is less than 0.9 meters therefore should just be inches.
 #
 # * #152 -> data. 0 meters for CA should be inches, not 3 feet and zero inches
+#
+# * #277 -> Maybe conversion bug. The test data is 6.35029318 and the converted unit is 0.635029318
