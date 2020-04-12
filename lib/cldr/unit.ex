@@ -937,6 +937,7 @@ defmodule Cldr.Unit do
   @doc false
   @unit_preferences Cldr.Config.units() |> Map.get(:preferences)
   @spec unit_preferences() :: map()
+  @rounding 10
   def unit_preferences do
     for {category, usages} <- @unit_preferences, into: Map.new() do
       usages = for {usage, preferences} <- usages, into: Map.new() do
@@ -944,8 +945,12 @@ defmodule Cldr.Unit do
           Cldr.Enum.reduce_peeking(preferences, [], fn
             %{regions: regions} = pref, [%{regions: regions} | _rest], acc ->
               %{units: units, geq: geq} = pref
-              {:ok, unit} = Unit.new(hd(units), geq)
-              {:ok, %Unit{value: value}} = Conversion.convert_to_base_unit(unit)
+              value =
+                Unit.new!(hd(units), geq)
+                |> Conversion.convert_to_base_unit!
+                |> Math.round(@rounding)
+                |> Map.get(:value)
+
               {:cont, acc ++ [%{pref | geq: Ratio.to_float(value)}]}
 
             pref, _rest, acc ->
