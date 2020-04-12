@@ -128,7 +128,7 @@ defmodule Cldr.Unit.Math do
       #Cldr.Unit<:kilogram, -81900798833369519 <|> 18014398509481984>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, -1365882365 <|> 473176473>
+      #Cldr.Unit<:pint, -36794683014431043834033898368027039378825884348261 <|> 12746616238742849396626455585282990375683527307233>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Cldr.Unit<:pint, 4>
