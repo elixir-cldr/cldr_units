@@ -96,7 +96,7 @@ defmodule Cldr.Unit.Preference do
     {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
 
     with {:ok, usage} <- validate_usage(category, usage) do
-      usage = [usage, :default]
+      usage = [usage, :default] |> Enum.dedup
       geq = Unit.value(base_unit) |> Ratio.to_float
       preferred_units(category, usage, territory_chain, geq)
     end
@@ -106,7 +106,7 @@ defmodule Cldr.Unit.Preference do
     if get_in(Unit.unit_preferences(), [category, usage]) do
       {:ok, usage}
     else
-      {:error, unknown_usage_error(category, usage)}
+      {:error, Unit.unknown_usage_error(category, usage)}
     end
   end
 
@@ -282,10 +282,4 @@ defmodule Cldr.Unit.Preference do
     }
   end
 
-  def unknown_usage_error(category, usage) do
-    {
-      Cldr.Unit.UnknownUsageError,
-      "The unit category #{inspect category} does not define a usage #{inspect usage}"
-    }
-  end
 end

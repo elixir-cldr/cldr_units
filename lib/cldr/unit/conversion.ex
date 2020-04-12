@@ -63,7 +63,7 @@ defmodule Cldr.Unit.Conversion do
 
     with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
          {:ok, converted} <- convert(value, from_conversion, to_conversion) do
-      Unit.new(to_unit, converted, use: unit.use)
+      Unit.new(to_unit, converted, usage: unit.usage)
     else
       {:error, {Cldr.Unit.IncompatibleUnitsError, _}} ->
         {:error, incompatible_units_error(from_unit, to_unit)}

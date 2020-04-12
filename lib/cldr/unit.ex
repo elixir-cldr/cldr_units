@@ -30,12 +30,12 @@ defmodule Cldr.Unit do
   alias Cldr.Substitution
   alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
 
-  @enforce_keys [:unit, :value, :base_conversion, :use]
+  @enforce_keys [:unit, :value, :base_conversion, :usage]
   defstruct [
     unit: nil,
     value: 0,
     base_conversion: [],
-    use: nil
+    usage: :default
   ]
 
   @type unit :: atom()
@@ -49,7 +49,7 @@ defmodule Cldr.Unit do
     unit: unit(),
     value: value(),
     base_conversion: conversion(),
-    use: use()
+    usage: use()
   }
 
   @default_style :long
@@ -146,12 +146,33 @@ defmodule Cldr.Unit do
     new(value, unit, options)
   end
 
+  @default_use :default
   defp create_unit(value, unit, options) do
-    use = Keyword.get(options, :use, nil)
+    usage = Keyword.get(options, :usage, @default_use)
 
-    with {:ok, unit, base_conversion} <- validate_unit(unit) do
-      unit = %Unit{unit: unit, value: value, base_conversion: base_conversion, use: use}
+    with {:ok, unit, base_conversion} <- validate_unit(unit),
+         {:ok, usage} <- validate_usage(unit, usage) do
+      unit = %Unit{unit: unit, value: value, base_conversion: base_conversion, usage: usage}
       {:ok, unit}
+    end
+  end
+
+  defp validate_usage(unit, usage) do
+    with {:ok, category} <- unit_category(unit) do
+      validate_category_usage(category, usage)
+    end
+  end
+
+  defp validate_category_usage(:substance_amount, _) do
+    {:ok, nil}
+  end
+
+  defp validate_category_usage(category, usage) do
+    usage_list = Map.get(unit_category_usage(), category)
+    if usage_list && usage in usage_list do
+      {:ok, usage}
+    else
+      {:error, unknown_usage_error(category, usage)}
     end
   end
 
@@ -712,6 +733,20 @@ defmodule Cldr.Unit do
     @measurement_systems
   end
 
+  @category_usage Cldr.Config.units()
+  |> Map.get(:preferences)
+  |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+  |> Map.new
+
+  @doc """
+  Returns a mapping between Unit categories
+  and the uses they define.
+
+  """
+  def unit_category_usage do
+    @category_usage
+  end
+
   @doc """
   Returns a list of the known unit categories.
 
@@ -828,7 +863,6 @@ defmodule Cldr.Unit do
   |> Map.get(:base_units)
   |> Enum.map(fn {k, v} -> {to_string(v), k} end)
   |> Map.new
-
 
   @doc """
   Returns a mapping of base units to their respective
@@ -1220,6 +1254,14 @@ defmodule Cldr.Unit do
       Unit.IncompatibleUnitsError,
       "Operations can only be performed between units of the same category. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
+    }
+  end
+
+  @doc false
+  def unknown_usage_error(category, usage) do
+    {
+      Cldr.Unit.UnknownUsageError,
+      "The unit category #{inspect category} does not define a usage #{inspect usage}"
     }
   end
 
