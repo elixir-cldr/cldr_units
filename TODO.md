@@ -1,9 +1,8 @@
-* Include an argument `localize: false` to `Cldr.Unit.new/3` because some units are always in the system that they defined in.  A 15mm socket is always a 15mm socket as a (probbaly poor) example.
+* pass the preference formatting options to localize
 
-* And then `Cldr.Unit.localize/2` should include a `force: true` to ignore that flag :-)
+* validate the rounding expectations for rounding on preferences
 
-* Need to check operator precedence on the expressions in the XML file when we are parsing and processing them
+* Update readme - needs a lot to explain compound units
 
-* Implement the `Cldr.Chars` protocol (and review the `String.Chars` implementation to derive the backend properly)
-
+* Do the conversion checks that are in the preferences file
 

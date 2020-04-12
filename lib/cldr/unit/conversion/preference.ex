@@ -109,6 +109,10 @@ defmodule Cldr.Unit.Preference do
     end
   end
 
+  # TODO precompute usage chains
+  # This isn't great that we're convering
+  # stuff backwards and forwaard. We should
+  # precompute the usage chains.
   def usage_chain(unit, default) when is_atom(unit) do
     unit
     |> Atom.to_string
