@@ -19,13 +19,11 @@ defmodule Cldr.Unit.Conversion.Test do
       result =
         unit
         |> Cldr.Unit.Conversion.convert!(unquote(t.to))
-        |> IO.inspect(label: "Before ratio_to_float")
         |> Cldr.Unit.ratio_to_float
-        |> IO.inspect(label: "After ratio_to_float")
         |> ConversionData.round(round_digits, round_significant)
 
       if is_integer(result.value) and is_float(expected_result) do
-        assert result.value == trunc(Float.round(expected_result))
+        assert (result.value * 1.0) == expected_result
       else
         assert result.value == expected_result
       end
