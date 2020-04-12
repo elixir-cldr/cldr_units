@@ -85,7 +85,7 @@ defmodule Cldr.UnitsTest do
              [Cldr.Unit.new!(:inch, 3937)]
 
     assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US, style: :informal) ==
-             [Cldr.Unit.new!(:foot, 328)]
+             [Cldr.Unit.new!(:foot, 328), Cldr.Unit.new!(:inch, 1)]
 
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
              {:error, {Cldr.Unit.UnknownUsageError,

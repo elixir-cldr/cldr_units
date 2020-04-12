@@ -245,16 +245,16 @@ defmodule Cldr.Unit.Backend do
         ### Examples
 
             iex> meter = Cldr.Unit.new!(:meter, 1)
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
+            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person_height
             {:ok, [:foot, :inch]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
             {:ok, [:inch]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :person
             {:ok, [:centimeter]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :road
-            {:ok, [:mile]}
+            {:ok, [:foot]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :road
-            {:ok, [:kilometer]}
+            {:ok, [:meter]}
 
         """
         def preferred_units(unit, options \\ []) do
@@ -313,9 +313,9 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :person
             [:centimeter]
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :road
-            [:mile]
+            [:foot]
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :road
-            [:kilometer]
+            [:meter]
 
         """
         def preferred_units!(unit, options \\ []) do

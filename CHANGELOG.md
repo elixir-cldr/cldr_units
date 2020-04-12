@@ -4,7 +4,7 @@ This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older c
 
 ### Summary
 
-* New unit creation
+* New unit creation including rational numbers
 
 * Base unit calculation
 
@@ -35,6 +35,8 @@ This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older c
 ### Enhancements
 
 * Incorporate CLDR's unit conversion data into the new conversion engine
+
+* Unit values may now be rational numbers.  Conversion data and the results of conversions are executed and retained as rationals. New units can be created with integer, float, Decimal or rational numbers. Conversion to floats is done only when the unit is output via `Cldr.Unit.to_string/3` or explicitly through the new function `Cldr.Unit.ratio_to_float/1`
 
 * Add an option `:localize` to `Cldr.Unit.new/{2,3}`. It takes a truthy value (default `true`) which is used to determine if this unit should be localizable. Localizing a unit means converting to the preferred units for a given locale or territory. For example, `1 meter` when localised for the territory `:US` most commonly would be converted to `3 feet 3 inches`. However some units should not be converted no matter the locale or territory. For example, a `24mm camera lens` is always a `24mm camera lens` and never `1 inch camera lens`
 
