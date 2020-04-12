@@ -49,18 +49,15 @@ defmodule Cldr.Unit.Preference do
 
   ### Examples
 
-      iex> meter = Cldr.Unit.new :meter, 1
-      #Unit<:meter, 1>
-      iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person, alt: :informal
-      {:ok, [:foot, :inch]}
+      iex> meter = Cldr.Unit.new!(:meter, 1)
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
       {:ok, [:inch]}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
       {:ok, [:centimeter]}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
-      {:ok, [:mile]}
+      {:ok, [:foot]}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
-      {:ok, [:kilometer]}
+      {:ok, [:meter]}
 
   ### Notes
 
@@ -69,12 +66,13 @@ defmodule Cldr.Unit.Preference do
   accomplished with a combination of `Cldr.Unit.Conversion.preferred_units/2`
   and `Cldr.Unit.decompose/2`. For example:
 
-      iex> meter = Cldr.Unit.new!(:meter, 1)
-      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
+      iex> meter = Cldr.Unit.new!(:meter, 1.5)
+      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter,
+      ...>   MyApp.Cldr, locale: "en-US", usage: :person_height)
       iex> with {:ok, preferred_units} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
-      [Cldr.Unit.new!(:foot, 3), Cldr.Unit.new!(:inch, 3)]
+      [Cldr.Unit.new!(:foot, 4), Cldr.Unit.new!(:inch, 11)]
 
   """
   def preferred_units(unit, backend, options \\ [])
@@ -157,8 +155,7 @@ defmodule Cldr.Unit.Preference do
 
   ### Examples
 
-      iex> meter = Cldr.Unit.new :meter, 1
-      #Unit<:meter, 1>
+      iex> meter = Cldr.Unit.new!(:meter, 1)
       iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person_height
       [:foot, :inch]
       iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person
@@ -166,9 +163,9 @@ defmodule Cldr.Unit.Preference do
       iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-AU", usage: :person
       [:centimeter]
       iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :road
-      [:mile]
+      [:foot]
       iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-AU", usage: :road
-      [:kilometer]
+      [:meter]
 
   """
   def preferred_units!(unit, backend, options \\ []) do

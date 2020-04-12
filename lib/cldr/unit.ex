@@ -30,24 +30,26 @@ defmodule Cldr.Unit do
   alias Cldr.Substitution
   alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
 
-  @enforce_keys [:unit, :value, :base_conversion, :localize]
+  @enforce_keys [:unit, :value, :base_conversion, :use]
   defstruct [
     unit: nil,
     value: 0,
     base_conversion: [],
-    localize: true
+    use: nil
   ]
 
   @type unit :: atom()
+  @type use :: atom()
   @type style :: atom()
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
   @type conversion :: Conversion.t() | list()
+  @type locale :: Locale.locale_name() | LanguageTag.t()
 
   @type t :: %__MODULE__{
     unit: unit(),
     value: value(),
     base_conversion: conversion(),
-    localize: boolean()
+    use: use()
   }
 
   @default_style :long
@@ -80,9 +82,21 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `value` is any float, integer or `Decimal`
+  * `value` is any float, integer, `Ratio` or `Decimal`
 
   * `unit` is any unit returned by `Cldr.Unit.units/0`
+
+  * `options` is Keyword list of options. The default
+    is `[]`
+
+  ## Options
+
+  * `:use` is the intended use of the unit. This
+    is used during localization to convert the unit
+    to that appropriate for the unit category,
+    usage, target territory and unit value. The `:use`
+    must be known for the unit's category. See
+    `Cldr.Unit` for more information.
 
   ## Returns
 
@@ -133,10 +147,10 @@ defmodule Cldr.Unit do
   end
 
   defp create_unit(value, unit, options) do
-    localize = Keyword.get(options, :localize, true)
+    use = Keyword.get(options, :use, nil)
 
     with {:ok, unit, base_conversion} <- validate_unit(unit) do
-      unit = %Unit{unit: unit, value: value, base_conversion: base_conversion, localize: localize}
+      unit = %Unit{unit: unit, value: value, base_conversion: base_conversion, use: use}
       {:ok, unit}
     end
   end
@@ -420,7 +434,7 @@ defmodule Cldr.Unit do
   @spec to_string(
           value(),
           unit(),
-          Locale.locale_name() | LanguageTag.t(),
+          locale(),
           style(),
           Cldr.backend(),
           map()
