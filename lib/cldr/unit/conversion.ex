@@ -52,7 +52,7 @@ defmodule Cldr.Unit.Conversion do
         "Operations can only be performed between units of the same category. Received :mile and :gallon"}}
 
   """
-  @spec convert(Unit.t(), Unit.unit()) :: Unit.t() | {:error, {module(), String.t()}}
+  @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
 
   def convert(%Unit{unit: from_unit, value: _value} = unit, from_unit) do
     {:ok, unit}
@@ -130,39 +130,6 @@ defmodule Cldr.Unit.Conversion do
   def convert_from_base(value, [numerator | rest]) do
     convert_from_base(value, numerator) |> convert_from_base(rest)
   end
-
-  # defp to_original_number_type(%Ratio{} = converted, value) when is_float(value) do
-  #   %Ratio{numerator: numerator, denominator: denominator} = converted
-  #
-  #   numerator / denominator
-  # end
-  #
-  # defp to_original_number_type(%Ratio{} = converted, value) when is_integer(value) do
-  #   %Ratio{numerator: numerator, denominator: denominator} = converted
-  #
-  #  (numerator / denominator)
-  #  |> Float.round(0)
-  #  |> trunc
-  # end
-  #
-  # defp to_original_number_type(%Ratio{} = converted, %Decimal{} = _value) do
-  #   %Ratio{numerator: numerator, denominator: denominator} = converted
-  #
-  #   Decimal.new(numerator)
-  #   |> Decimal.div(Decimal.new(denominator))
-  # end
-  #
-  # defp to_original_number_type(converted, value) when is_number(value) do
-  #   converted
-  # end
-  #
-  # defp to_original_number_type(converted, %Decimal{} = _value) do
-  #   Decimal.new(converted)
-  # end
-
-  # Establish whether the two units are compatible. If not
-  # then also see if the inverse units are compatible
-  defp compatible(from, to)
 
   defp compatible(from, to) do
     with {:ok, base_unit_from} <- Unit.base_unit(from),

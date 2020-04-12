@@ -10,7 +10,7 @@ defmodule FunctionClause do
   clause errors when many clauses are generated
   at compile time.
   """
-  @spec match(module(), atom(), list(any)) :: :ok | no_return()
+  @spec match(module(), atom(), list(any)) :: String.t() | no_return()
   def match(module, function, args) do
     case Exception.blame_mfa(module, function, args) do
       {:ok, kind, clauses} ->

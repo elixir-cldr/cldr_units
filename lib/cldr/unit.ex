@@ -40,8 +40,8 @@ defmodule Cldr.Unit do
 
   @type unit :: atom()
   @type style :: atom()
-  @type value :: Cldr.Math.number_or_decimal()
-  @type conversion :: Cldr.Unit.Conversion.t() | list()
+  @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
+  @type conversion :: Conversion.t() | list()
 
   @type t :: %__MODULE__{
     unit: unit(),
@@ -53,27 +53,27 @@ defmodule Cldr.Unit do
   @default_style :long
   @styles [:long, :short, :narrow]
 
-  defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
-  defdelegate convert!(unit_1, to_unit), to: Cldr.Unit.Conversion
+  defdelegate convert(unit_1, to_unit), to: Conversion
+  defdelegate convert!(unit_1, to_unit), to: Conversion
 
-  defdelegate preferred_units(unit, backend, options), to: Cldr.Unit.Preference
-  defdelegate preferred_units!(unit, backend, options), to: Cldr.Unit.Preference
+  defdelegate preferred_units(unit, backend, options), to: Preference
+  defdelegate preferred_units!(unit, backend, options), to: Preference
 
-  defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate div(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate add(unit_1, unit_2), to: Math
+  defdelegate sub(unit_1, unit_2), to: Math
+  defdelegate mult(unit_1, unit_2), to: Math
+  defdelegate div(unit_1, unit_2), to: Math
 
-  defdelegate add!(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate sub!(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate mult!(unit_1, unit_2), to: Cldr.Unit.Math
-  defdelegate div!(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate add!(unit_1, unit_2), to: Math
+  defdelegate sub!(unit_1, unit_2), to: Math
+  defdelegate mult!(unit_1, unit_2), to: Math
+  defdelegate div!(unit_1, unit_2), to: Math
 
-  defdelegate round(unit, places, mode), to: Cldr.Unit.Math
-  defdelegate round(unit, places), to: Cldr.Unit.Math
-  defdelegate round(unit), to: Cldr.Unit.Math
+  defdelegate round(unit, places, mode), to: Math
+  defdelegate round(unit, places), to: Math
+  defdelegate round(unit), to: Math
 
-  defdelegate compare(unit_1, unit_2), to: Cldr.Unit.Math
+  defdelegate compare(unit_1, unit_2), to: Math
 
   @doc """
   Returns a new `Unit.t` struct.
@@ -418,17 +418,13 @@ defmodule Cldr.Unit do
   end
 
   @spec to_string(
-          Cldr.Math.number_or_decimal(),
-          unit,
+          value(),
+          unit(),
           Locale.locale_name() | LanguageTag.t(),
-          style,
+          style(),
           Cldr.backend(),
           map()
-        ) :: String.t()
-
-  defp to_string(%Ratio{} = number, unit, locale, style, backend, options) do
-    to_string(number, unit, locale, style, backend, options)
-  end
+        ) :: {:ok, String.t()} | {:error, {module(), String.t()}}
 
   defp to_string(number, unit, locale, style, backend, %{per: nil} = options) do
     with {:ok, number_string} <-
@@ -533,8 +529,7 @@ defmodule Cldr.Unit do
       [Cldr.Unit.new!(:meter, 11), Cldr.Unit.new!(:centimeter, 11)]
 
   """
-  @spec decompose(unit :: Unit.t(), decompose_list :: [Unit.unit(), ...]) ::
-          [Unit.t(), ...] | {:error, {module(), String.t()}}
+  @spec decompose(unit :: Unit.t(), decompose_list :: [Unit.unit()]) :: [Unit.t()]
 
   def decompose(unit, []) do
     [unit]
