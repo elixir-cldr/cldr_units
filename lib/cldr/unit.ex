@@ -440,7 +440,8 @@ defmodule Cldr.Unit do
 
   @doc """
   Formats a number into a string according to a unit definition
-  for the current process's locale and backend.
+  for the current process's locale and backend or raises
+  on error.
 
   The curent process's locale is set with
   `Cldr.put_locale/1`.
@@ -460,8 +461,9 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Formats a list using `to_string/3` but raises if there is
-  an error.
+  Formats a number into a string according to a unit definition
+  for the current process's locale and backend or raises
+  on error.
 
   During processing any `:format_options` of a `Unit.t()` are merged with
   `options` with `options` taking precedence.
