@@ -122,10 +122,10 @@ defmodule Cldr.Unit.Preference do
     Enum.map(usage, fn use ->
       chain =
         use
-        |> Atom.to_string
+        |> Atom.to_string()
         |> String.split("_")
-        |> Cldr.Enum.make_pyramid()
-        |> Enum.reverse
+        |> Cldr.Enum.combine_list()
+        |> Enum.reverse()
         |> Enum.map(&String.to_atom/1)
         |> Kernel.++([:default])
       {use, chain}
