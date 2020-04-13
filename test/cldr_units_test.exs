@@ -106,6 +106,14 @@ defmodule Cldr.UnitsTest do
              "#Cldr.Unit<:meter, 1, usage: :default, format_options: [round_nearest: 50]>"
   end
 
+  test "that unit skeletons are in affect for formatting" do
+    unit = Cldr.Unit.new!(311, :meter, usage: :road)
+    localized = Cldr.Unit.localize(unit, MyApp.Cldr, territory: :SE)
+    assert localized ==
+      [Cldr.Unit.new!(:meter, 311, usage: :road, format_options: [round_nearest: 50])]
+    assert Cldr.Unit.to_string!(localized) == "300 metres"
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

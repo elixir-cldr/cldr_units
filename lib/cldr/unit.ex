@@ -263,6 +263,27 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Formats a number into a string according to a unit definition
+  for the current process's locale and backend.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.to_string/3` for full details.
+
+  """
+  @spec to_string(
+          list_or_number :: value | t() | [t()]
+        ) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
+
+  def to_string(unit) do
+    locale = Cldr.get_locale()
+    backend = locale.backend
+    to_string(unit, backend, locale: locale)
+  end
+
+  @doc """
   Formats a number into a string according to a unit definition for a locale.
 
   During processing any `:format_options` of a `Unit.t()` are merged with
@@ -355,6 +376,7 @@ defmodule Cldr.Unit do
         "Unknown unit was detected at \\"blabber\\""}}
 
   """
+
   @spec to_string(
           list_or_number :: value | t() | list(t()),
           backend_or_options :: Cldr.backend() | Keyword.t(),
@@ -414,6 +436,27 @@ defmodule Cldr.Unit do
          {:ok, unit, _conversion} <- validate_unit(options[:unit]) do
       {:ok, to_string(number, unit, locale, style, backend, options)}
     end
+  end
+
+  @doc """
+  Formats a number into a string according to a unit definition
+  for the current process's locale and backend.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.to_string!/3` for full details.
+
+  """
+  @spec to_string!(
+          list_or_number :: value | t() | [t()]
+        ) ::
+          String.t() | no_return()
+
+  def to_string!(unit) do
+    locale = Cldr.get_locale()
+    backend = locale.backend
+    to_string!(unit, backend, locale: locale)
   end
 
   @doc """
@@ -625,6 +668,23 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Localizes a unit according to the current
+  processes locale and backend.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.localize/3` for futher
+  details.
+
+  """
+  def localize(unit) do
+    locale = Cldr.get_locale()
+    backend = locale.backend
+    localize(unit, backend, locale)
+  end
+
+  @doc """
   Localizes a unit according to a territory
 
   A territory can be derived from a `locale_name`
@@ -677,15 +737,7 @@ defmodule Cldr.Unit do
 
   def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
     with {:ok, unit_list, format_options} <- Preference.preferred_units(unit, backend, options) do
-      # We dom't apply preference formatting options
-      # if the unit list has only one unit
-      if length(unit_list) == 1 do
-        saved_format_options = unit.format_options
-        [unit] = decompose(unit, unit_list, format_options)
-        [%{unit | format_options: saved_format_options}]
-      else
-        decompose(unit, unit_list, format_options)
-      end
+      decompose(unit, unit_list, format_options)
     end
   end
 

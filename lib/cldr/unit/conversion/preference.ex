@@ -83,6 +83,7 @@ defmodule Cldr.Unit.Preference do
   end
 
   def preferred_units(%Unit{} = unit, backend, options) when is_list(options) do
+    options = Keyword.put_new(options, :usage, unit.usage)
     with {:ok, options} <- validate_preference_options(backend, options) do
       preferred_units(unit, backend, options)
     end
@@ -96,16 +97,8 @@ defmodule Cldr.Unit.Preference do
 
     with {:ok, usage} <- validate_usage(category, usage) do
       usage = usage_chain(usage, :default)
-      geq = Unit.value(base_unit) |> Ratio.to_float()
+      geq = Unit.value(base_unit) |> Ratio.to_float
       preferred_units(category, usage, territory_chain, geq)
-    end
-  end
-
-  def validate_usage(category, usage) do
-    if get_in(Unit.unit_preferences(), [category, usage]) do
-      {:ok, usage}
-    else
-      {:error, unknown_usage_error(category, usage)}
     end
   end
 
@@ -115,10 +108,10 @@ defmodule Cldr.Unit.Preference do
   # precompute the usage chains.
   def usage_chain(unit, default) when is_atom(unit) do
     unit
-    |> Atom.to_string()
+    |> Atom.to_string
     |> String.split("_")
     |> usage_chain
-    |> Enum.reverse()
+    |> Enum.reverse
     |> Enum.map(&String.to_atom/1)
     |> Kernel.++([default])
   end
@@ -130,6 +123,7 @@ defmodule Cldr.Unit.Preference do
   def usage_chain([head | [next | tail]]) do
     [head | usage_chain([head <> "_" <> next | tail])]
   end
+
 
   @doc """
   Returns a list of the preferred units for a given
@@ -212,13 +206,19 @@ defmodule Cldr.Unit.Preference do
     usage = Keyword.get(options, :usage, :default)
 
     with {:ok, locale} <- backend.validate_locale(locale),
-         territory =
-           Keyword.get_lazy(options, :territory, fn ->
-             Cldr.Locale.territory_from_locale(locale)
-           end),
+         territory = Keyword.get_lazy(options, :territory,
+           fn -> Cldr.Locale.territory_from_locale(locale) end),
          {:ok, territory} <- Cldr.validate_territory(territory) do
       options = [locale: locale, territory: territory, usage: usage, backend: backend]
       {:ok, struct(Options, options)}
+    end
+  end
+
+  def validate_usage(category, usage) do
+    if get_in(Unit.unit_preferences(), [category, usage]) do
+      {:ok, usage}
+    else
+      {:error, unknown_usage_error(category, usage)}
     end
   end
 
@@ -226,7 +226,6 @@ defmodule Cldr.Unit.Preference do
     for {usage, preferences} <- usages do
       for preference <- preferences do
         %{geq: geq, regions: regions, units: units, skeleton: skeleton} = preference
-
         if geq == 0 do
           def preferred_units(unquote(category), unquote(usage), region, _value)
               when is_atom(region) and region in unquote(regions) do
@@ -285,39 +284,35 @@ defmodule Cldr.Unit.Preference do
   end
 
   def debug(category, usage, region, value) do
-    IO.inspect(
-      """
-      Category: #{inspect(category)} with usage #{inspect(usage)} for
-      region #{inspect(region)} and value #{inspect(value)}
-      """
-      |> String.replace("\n", " ")
-    )
+    IO.inspect("""
+    Category: #{inspect category} with usage #{inspect usage} for
+    region #{inspect region} and value #{inspect value}
+    """
+    |> String.replace("\n"," "))
   end
 
   def debug(category, usage, region, value, geq) do
-    IO.inspect(
-      """
-      Preference: #{inspect(category)} with usage #{inspect(usage)} for
-      region #{inspect(region)} and value #{inspect(value)} with >= #{inspect(geq)}
-      """
-      |> String.replace("\n", " ")
-    )
+    IO.inspect("""
+    Preference: #{inspect category} with usage #{inspect usage} for
+    region #{inspect region} and value #{inspect value} with >= #{inspect geq}
+    """
+    |> String.replace("\n"," "))
   end
 
   def unknown_preferences_error(category, usage, regions, value) do
     {
       Cldr.Unit.UnknownUnitPreferenceError,
-      "No preferences found for #{inspect(category)} " <>
-        "with usage #{inspect(usage)} " <>
-        "for region #{inspect(regions)} and " <>
-        "value #{inspect(value)}"
+      "No preferences found for #{inspect category} " <>
+      "with usage #{inspect usage} " <>
+      "for region #{inspect regions} and " <>
+      "value #{inspect value}"
     }
   end
 
   def unknown_usage_error(category, usage) do
     {
       Cldr.Unit.UnknownUsageError,
-      "The unit category #{inspect(category)} does not define a usage #{inspect(usage)}"
+      "The unit category #{inspect category} does not define a usage #{inspect usage}"
     }
   end
 end
