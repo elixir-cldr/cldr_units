@@ -217,7 +217,7 @@ defmodule Cldr.Unit.Backend do
         referred to in `inches`, or informally as `feet and inches`.
         In most of the rest of the world it is `centimeters`.
 
-        ### Arguments
+        ## Arguments
 
         * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
@@ -228,7 +228,7 @@ defmodule Cldr.Unit.Backend do
           `Cldr.Unit.Conversion.Options` struct. The default
           is `[]`.
 
-        ### Options
+        ## Options
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
@@ -236,25 +236,35 @@ defmodule Cldr.Unit.Backend do
 
         * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
-        ### Returns
+        ## Returns
 
-        * `{:ok, unit_list}` or
+        * `{:ok, unit_list, formatting_options}` or
 
         * `{:error, {exception, reason}}`
 
-        ### Examples
+        ## Notes
+
+        `formatting_options` is a keyword list of options
+        that can be passed to `Cldr.Unit.to_string/3`. Its
+        primary intended usage is for localizing a unit that
+        decomposes into more than one unit (for example when
+        2 meters might become 6 feet 6 inches.) In such
+        cases, the last unit in the list (in this case the
+        inches) is formatted with the `formatting_options`.
+
+        ## Examples
 
             iex> meter = Cldr.Unit.new!(:meter, 1)
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person_height
-            {:ok, [:foot, :inch]}
+            {:ok, [:foot, :inch], []}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
-            {:ok, [:inch]}
+            {:ok, [:inch], []}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :person
-            {:ok, [:centimeter]}
+            {:ok, [:centimeter], []}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :road
-            {:ok, [:foot]}
+            {:ok, [:foot], [round_nearest: 10]}
             iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :road
-            {:ok, [:meter]}
+            {:ok, [:meter], [round_nearest: 10]}
 
         """
         def preferred_units(unit, options \\ []) do
@@ -272,7 +282,7 @@ defmodule Cldr.Unit.Backend do
         referred to in `inches`, or informally as `feet and inches`.
         In most of the rest of the world it is `centimeters`.
 
-        ### Arguments
+        ## Arguments
 
         * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
@@ -283,7 +293,7 @@ defmodule Cldr.Unit.Backend do
           `Cldr.Unit.Conversion.Options` struct. The default
           is `[]`.
 
-        ### Options
+        ## Options
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
@@ -299,13 +309,13 @@ defmodule Cldr.Unit.Backend do
 
         * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
-        ### Returns
+        ## Returns
 
         * `unit_list` or
 
         * raises an exception
 
-        ### Examples
+        ## Examples
 
             iex> meter = Cldr.Unit.new!(:meter, 2)
             iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person_height

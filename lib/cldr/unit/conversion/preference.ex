@@ -14,7 +14,7 @@ defmodule Cldr.Unit.Preference do
   referred to in `inches`, or informally as `feet and inches`.
   In most of the rest of the world it is `centimeters`.
 
-  ### Arguments
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
@@ -25,7 +25,7 @@ defmodule Cldr.Unit.Preference do
     `Cldr.Unit.Conversion.Options` struct. The default
     is `[]`.
 
-  ### Options
+  ## Options
 
   * `:usage` is the unit usage. for example `;person` for a unit
     of type `:length`. The available usage for a given unit category can
@@ -41,25 +41,25 @@ defmodule Cldr.Unit.Preference do
 
   * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
-  ### Returns
+  ## Returns
 
   * `{:ok, unit_list}` or
 
   * `{:error, {exception, reason}}`
 
-  ### Examples
+  ## Examples
 
       iex> meter = Cldr.Unit.new!(:meter, 1)
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
-      {:ok, [:inch]}
+      {:ok, [:inch], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
-      {:ok, [:centimeter]}
+      {:ok, [:centimeter], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
-      {:ok, [:foot]}
+      {:ok, [:foot], [round_nearest: 10]}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
-      {:ok, [:meter]}
+      {:ok, [:meter], [round_nearest: 10]}
 
-  ### Notes
+  ## Notes
 
   One common pattern is to convert a given unit into the unit
   appropriate for a given local and usage. This can be
@@ -68,10 +68,10 @@ defmodule Cldr.Unit.Preference do
 
       iex> meter = Cldr.Unit.new!(:meter, 1)
       iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
-      iex> with {:ok, preferred_units} <- preferred_units do
+      iex> with {:ok, preferred_units, _} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
-      [Cldr.Unit.new!(:inch, 39)]
+      [Cldr.Unit.new!(:inch, Ratio.new(216172782113783808, 5490788665690109))]
 
   """
   def preferred_units(unit, backend, options \\ [])
@@ -143,7 +143,7 @@ defmodule Cldr.Unit.Preference do
   referred to in `inches`, or `feet and inches`.
   In most of the rest of the world it is `centimeters`.
 
-  ### Arguments
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
@@ -154,7 +154,7 @@ defmodule Cldr.Unit.Preference do
     `Cldr.Unit.Conversion.Options` struct. The default
     is `[]`.
 
-  ### Options
+  ## Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`
@@ -168,13 +168,18 @@ defmodule Cldr.Unit.Preference do
     to be used.  The available `usage` varyies according
     to the unit category.  See `Cldr.Unit.unit_preferences/0`.
 
-  ### Returns
+  ## Returns
 
   * `unit_list` or
 
   * raises an exception
 
-  ### Examples
+  ## Note
+
+  This function, unline `Cldr.Unit.preferred_units/3` does not
+  return any available formatting hints.
+
+  ## Examples
 
       iex> meter = Cldr.Unit.new!(:meter, 1)
       iex> Cldr.Unit.Preference.preferred_units! meter, MyApp.Cldr, locale: "en-US", usage: :person_height
@@ -191,7 +196,7 @@ defmodule Cldr.Unit.Preference do
   """
   def preferred_units!(unit, backend, options \\ []) do
     case preferred_units(unit, backend, options) do
-      {:ok, preferred_units} -> preferred_units
+      {:ok, preferred_units, _} -> preferred_units
       {:error, {exception, reason}} -> raise exception, reason
     end
   end
@@ -219,18 +224,18 @@ defmodule Cldr.Unit.Preference do
   for {category, usages} <- Unit.unit_preferences() do
     for {usage, preferences} <- usages do
       for preference <- preferences do
-        %{geq: geq, regions: regions, units: units} = preference
+        %{geq: geq, regions: regions, units: units, skeleton: skeleton} = preference
         if geq == 0 do
           def preferred_units(unquote(category), unquote(usage), region, _value)
               when is_atom(region) and region in unquote(regions) do
-           # debug(unquote(category), unquote(usage), region, value, 0)
-           {:ok, unquote(units)}
+            # debug(unquote(category), unquote(usage), region, value, 0)
+            {:ok, unquote(units), unquote(skeleton)}
           end
         else
           def preferred_units(unquote(category), unquote(usage), region, value)
               when is_atom(region) and region in unquote(regions) and value >= unquote(geq) do
             # debug(unquote(category), unquote(usage), region, value, unquote(geq))
-            {:ok, unquote(units)}
+            {:ok, unquote(units), unquote(skeleton)}
           end
         end
       end
@@ -246,7 +251,7 @@ defmodule Cldr.Unit.Preference do
   def preferred_units(category, [usage | other_usage], region, value) do
     # debug(category, usage, region, value)
     case preferred_units(category, usage, region, value) do
-      {:ok, units} -> {:ok, units}
+      {:ok, units, skeleton} -> {:ok, units, skeleton}
       _other -> preferred_units(category, other_usage, region, value)
     end
   end
@@ -261,7 +266,7 @@ defmodule Cldr.Unit.Preference do
   def preferred_units(category, usage, [region | other_regions], value) do
     # debug(category, usage, region, value)
     case preferred_units(category, usage, region, value) do
-      {:ok, units} -> {:ok, units}
+      {:ok, units, skeleton} -> {:ok, units, skeleton}
       _other -> preferred_units(category, usage, other_regions, value)
     end
   end

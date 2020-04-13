@@ -30,16 +30,18 @@ defmodule Cldr.Unit do
   alias Cldr.Substitution
   alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
 
-  @enforce_keys [:unit, :value, :base_conversion, :usage]
+  @enforce_keys [:unit, :value, :base_conversion, :usage, :format_options]
+
   defstruct [
     unit: nil,
     value: 0,
     base_conversion: [],
-    usage: :default
+    usage: :default,
+    format_options: []
   ]
 
   @type unit :: atom()
-  @type use :: atom()
+  @type usage :: atom()
   @type style :: atom()
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
   @type conversion :: Conversion.t() | list()
@@ -49,7 +51,8 @@ defmodule Cldr.Unit do
     unit: unit(),
     value: value(),
     base_conversion: conversion(),
-    usage: use()
+    usage: usage(),
+    format_options: []
   }
 
   @default_style :long
@@ -147,12 +150,23 @@ defmodule Cldr.Unit do
   end
 
   @default_use :default
+  @default_format_options []
+
   defp create_unit(value, unit, options) do
     usage = Keyword.get(options, :usage, @default_use)
+    format_options = Keyword.get(options, :format_options, @default_format_options)
 
     with {:ok, unit, base_conversion} <- validate_unit(unit),
          {:ok, usage} <- validate_usage(unit, usage) do
-      unit = %Unit{unit: unit, value: value, base_conversion: base_conversion, usage: usage}
+
+      unit = %Unit{
+        unit: unit,
+        value: value,
+        base_conversion: base_conversion,
+        usage: usage,
+        format_options: format_options
+      }
+
       {:ok, unit}
     end
   end
@@ -544,9 +558,15 @@ defmodule Cldr.Unit do
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  * `decompose_list` is a list of valid units (one or
-    more from the list returned by `Cldr.units/0`). All
-    units must be from the same category.
+  * `unit_list` is a list of valid units (one or
+    more from the list returned by `Cldr.units/0`. All
+    units must be from the same unit category.
+
+  * `format_options` is a Keyword list of options
+    that is added to the *last* unit in `unit_list`.
+    The `format_options` will be applied when calling
+    `Cldr.Unit.to_string/3` on the `unit`. The
+    default is `[]`.
 
   ## Returns
 
@@ -557,25 +577,31 @@ defmodule Cldr.Unit do
 
       iex> u = Cldr.Unit.new!(10.3, :foot)
       iex> Cldr.Unit.decompose u, [:foot, :inch]
-      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, 4)]
+      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, Ratio.new(18, 5))]
 
       iex> u = Cldr.Unit.new!(:centimeter, 1111)
       iex> Cldr.Unit.decompose u, [:kilometer, :meter, :centimeter, :millimeter]
       [Cldr.Unit.new!(:meter, 11), Cldr.Unit.new!(:centimeter, 11)]
 
   """
-  @spec decompose(unit :: Unit.t(), decompose_list :: [Unit.unit()]) :: [Unit.t()]
+  @spec decompose(unit :: Unit.t(), unit_list :: [Unit.unit()], options :: Keyword.t())
+    :: [Unit.t()]
 
-  def decompose(unit, []) do
+  # TODO Fix decompose with format options
+  # -> Apply format options to the last unit (but not if theres only one)
+  # -> Don't truncate the conversion on the last unit
+
+  def decompose(unit, unit_list, format_options \\ [])
+
+  def decompose(unit, [], _format_options) do
     [unit]
   end
 
-  def decompose(unit, [h | []]) do
+  # This is the last unit
+  def decompose(unit, [h | []], _format_options) do
     new_unit =
       unit
       |> Conversion.convert!(h)
-      |> Math.round()
-      |> Math.trunc()
 
     if zero?(new_unit) do
       []
@@ -584,14 +610,14 @@ defmodule Cldr.Unit do
     end
   end
 
-  def decompose(unit, [h | t]) do
+  def decompose(unit, [h | t], format_options) do
     new_unit = Conversion.convert!(unit, h)
     {integer_unit, remainder} = int_rem(new_unit)
 
     if zero?(integer_unit) do
-      decompose(remainder, t)
+      decompose(remainder, t, format_options)
     else
-      [integer_unit | decompose(remainder, t)]
+      [integer_unit | decompose(remainder, t, format_options)]
     end
   end
 
@@ -634,7 +660,7 @@ defmodule Cldr.Unit do
 
       iex> unit = Cldr.Unit.new!(1.83, :meter)
       iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
-      [Cldr.Unit.new!(:foot, 6)]
+      [Cldr.Unit.new!(:foot, 6), Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725))]
 
   """
   def localize(unit, backend, options \\ [])
@@ -646,8 +672,8 @@ defmodule Cldr.Unit do
   end
 
   def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
-    with {:ok, unit_list} <- Preference.preferred_units(unit, backend, options) do
-      decompose(unit, unit_list)
+    with {:ok, unit_list, format_options} <- Preference.preferred_units(unit, backend, options) do
+      decompose(unit, unit_list, format_options)
     end
   end
 
@@ -705,8 +731,14 @@ defmodule Cldr.Unit do
   end
 
   @decimal_0 Decimal.new(0)
-  def zero?(%Unit{value: value}) do
+  def zero?(%Unit{value: %Decimal{} = value}) do
     Cldr.Math.decimal_compare(value, @decimal_0) == :eq
+  end
+
+  # Ratios that are zero are just integers
+  # so anything that is a %Ratio{} is not zero
+  def zero?(%Unit{value: %Ratio{}}) do
+    false
   end
 
   @doc """

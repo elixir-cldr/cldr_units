@@ -1,4 +1,6 @@
-* pass the preference formatting options to localize
+* Apply the returned formatting options in the last unit of a decomposed one
+
+* Use the formatting options in localize/3
 
 * validate the rounding expectations for rounding on preferences
 
