@@ -1,18 +1,17 @@
 defmodule Cldr.Unit.Test.ConversionData do
-
   @conversion_test_data "test/support/data/conversion_test_data.txt"
   @offset 1
 
   def conversion_test_data do
     @conversion_test_data
-    |> File.read!
+    |> File.read!()
     |> String.split("\n")
     |> Enum.map(&String.trim/1)
   end
 
   def conversions do
     conversion_test_data()
-    |> Enum.with_index
+    |> Enum.with_index()
     |> Enum.map(&parse_test/1)
     |> Enum.reject(&is_nil/1)
   end
@@ -21,7 +20,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     nil
   end
 
-  def parse_test({<< "#", _rest :: binary >>, _}) do
+  def parse_test({<<"#", _rest::binary>>, _}) do
     nil
   end
 
@@ -33,7 +32,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     |> Enum.map(&String.trim/1)
     |> zip(@fields)
     |> Enum.map(&transform/1)
-    |> Map.new
+    |> Map.new()
     |> Map.put(:line, index + @offset)
   end
 
@@ -47,13 +46,14 @@ defmodule Cldr.Unit.Test.ConversionData do
       factor
       |> String.replace(" * x", "")
       |> String.replace(",", "")
-      |> String.trim
+      |> String.trim()
       |> String.split("/")
       |> resolve_factor
 
     {:factor, factor}
-  rescue ArgumentError ->
-    {:factor, factor}
+  rescue
+    ArgumentError ->
+      {:factor, factor}
   end
 
   @float ~r/^([-+]?[0-9]*)\.([0-9]+)([eE]([-+]?[0-9]+))?$/
@@ -64,8 +64,10 @@ defmodule Cldr.Unit.Test.ConversionData do
       case Regex.run(@float, result) do
         [float, _integer, "0"] ->
           {String.to_float(float), 0, 15}
+
         [float, _integer, fraction] ->
           {String.to_float(float), String.length(fraction), 15}
+
         [float, integer, fraction, _, exp] ->
           {
             String.to_float(float),
@@ -81,7 +83,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     other
   end
 
-  def rounding_from(_integer, "0", << "-", exp :: binary >>) do
+  def rounding_from(_integer, "0", <<"-", exp::binary>>) do
     String.to_integer(exp)
   end
 
@@ -89,7 +91,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     0
   end
 
-  def rounding_from(_integer, fraction, << "-", exp :: binary >>) do
+  def rounding_from(_integer, fraction, <<"-", exp::binary>>) do
     String.length(fraction) + String.to_integer(exp)
   end
 
@@ -105,7 +107,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     String.length(integer) + 1
   end
 
-  def precision_from(integer, fraction, << "-", _exp :: binary >>) do
+  def precision_from(integer, fraction, <<"-", _exp::binary>>) do
     String.length(fraction) + String.length(integer)
   end
 
@@ -172,14 +174,14 @@ defmodule Cldr.Unit.Test.ConversionData do
 
   def round_precision(integer, round_digits) when is_integer(integer) do
     number_of_digits = Cldr.Digits.number_of_integer_digits(integer)
-    p = Cldr.Math.power(10, number_of_digits) |> Decimal.new
+    p = Cldr.Math.power(10, number_of_digits) |> Decimal.new()
     d = Decimal.new(integer)
 
     d
     |> Decimal.div(p)
     |> Decimal.round(round_digits)
     |> Decimal.mult(p)
-    |> Decimal.to_integer
+    |> Decimal.to_integer()
   end
 
   # Yes, this is a hacky solution to working

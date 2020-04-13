@@ -32,13 +32,11 @@ defmodule Cldr.Unit do
 
   @enforce_keys [:unit, :value, :base_conversion, :usage, :format_options]
 
-  defstruct [
-    unit: nil,
-    value: 0,
-    base_conversion: [],
-    usage: :default,
-    format_options: []
-  ]
+  defstruct unit: nil,
+            value: 0,
+            base_conversion: [],
+            usage: :default,
+            format_options: []
 
   @type unit :: atom()
   @type usage :: atom()
@@ -48,12 +46,12 @@ defmodule Cldr.Unit do
   @type locale :: Locale.locale_name() | LanguageTag.t()
 
   @type t :: %__MODULE__{
-    unit: unit(),
-    value: value(),
-    base_conversion: conversion(),
-    usage: usage(),
-    format_options: []
-  }
+          unit: unit(),
+          value: value(),
+          base_conversion: conversion(),
+          usage: usage(),
+          format_options: []
+        }
 
   @default_style :long
   @styles [:long, :short, :narrow]
@@ -121,7 +119,7 @@ defmodule Cldr.Unit do
 
   """
   @spec new(unit() | value(), value() | unit(), Keyword.t()) ::
-    {:ok, t()} | {:error, {module(), String.t()}}
+          {:ok, t()} | {:error, {module(), String.t()}}
 
   def new(value, unit, options \\ [])
 
@@ -158,7 +156,6 @@ defmodule Cldr.Unit do
 
     with {:ok, unit, base_conversion} <- validate_unit(unit),
          {:ok, usage} <- validate_usage(unit, usage) do
-
       unit = %Unit{
         unit: unit,
         value: value,
@@ -183,6 +180,7 @@ defmodule Cldr.Unit do
 
   defp validate_category_usage(category, usage) do
     usage_list = Map.get(unit_category_usage(), category)
+
     if usage_list && usage in usage_list do
       {:ok, usage}
     else
@@ -256,8 +254,8 @@ defmodule Cldr.Unit do
   def compatible?(unit_1, unit_2) do
     with {:ok, _unit_1, conversion_1} <- validate_unit(unit_1),
          {:ok, _unit_2, conversion_2} <- validate_unit(unit_2),
-         {:ok, base_unit_1} <-  base_unit(conversion_1),
-         {:ok, base_unit_2} <-  base_unit(conversion_2) do
+         {:ok, base_unit_1} <- base_unit(conversion_1),
+         {:ok, base_unit_2} <- base_unit(conversion_2) do
       Kernel.to_string(base_unit_1) == Kernel.to_string(base_unit_2)
     else
       _ -> false
@@ -375,7 +373,7 @@ defmodule Cldr.Unit do
          {:ok, locale} <- backend.validate_locale(locale) do
       options =
         options
-        |> Map.to_list
+        |> Map.to_list()
         |> Keyword.put(:locale, locale)
 
       list_options =
@@ -544,7 +542,7 @@ defmodule Cldr.Unit do
              |> Map.get(:units)
              |> Map.get(:short)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-             |> Map.new
+             |> Map.new()
 
   @doc """
   Decomposes a unit into subunits.
@@ -584,8 +582,8 @@ defmodule Cldr.Unit do
       [Cldr.Unit.new!(:meter, 11), Cldr.Unit.new!(:centimeter, 11)]
 
   """
-  @spec decompose(unit :: Unit.t(), unit_list :: [Unit.unit()], options :: Keyword.t())
-    :: [Unit.t()]
+  @spec decompose(unit :: Unit.t(), unit_list :: [Unit.unit()], options :: Keyword.t()) ::
+          [Unit.t()]
 
   # TODO Fix decompose with format options
   # -> Apply format options to the last unit (but not if theres only one)
@@ -763,9 +761,9 @@ defmodule Cldr.Unit do
   end
 
   @category_usage Cldr.Config.units()
-  |> Map.get(:preferences)
-  |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-  |> Map.new
+                  |> Map.get(:preferences)
+                  |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+                  |> Map.new()
 
   @doc """
   Returns a mapping between Unit categories
@@ -844,7 +842,7 @@ defmodule Cldr.Unit do
   end
 
   def unknown_base_unit_error(unit_name) do
-    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect unit_name} is not known"}
+    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect(unit_name)} is not known"}
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
@@ -889,9 +887,9 @@ defmodule Cldr.Unit do
   end
 
   @base_unit_category_map Cldr.Config.units()
-  |> Map.get(:base_units)
-  |> Enum.map(fn {k, v} -> {to_string(v), k} end)
-  |> Map.new
+                          |> Map.get(:base_units)
+                          |> Enum.map(fn {k, v} -> {to_string(v), k} end)
+                          |> Map.new()
 
   @doc """
   Returns a mapping of base units to their respective
@@ -987,7 +985,6 @@ defmodule Cldr.Unit do
     @default_style
   end
 
-
   # Returns a map of unit preferences
   #
   # Units of measure vary country by country. While
@@ -1012,25 +1009,29 @@ defmodule Cldr.Unit do
   @rounding 10
   def unit_preferences do
     for {category, usages} <- @unit_preferences, into: Map.new() do
-      usages = for {usage, preferences} <- usages, into: Map.new() do
-        preferences =
-          Cldr.Enum.reduce_peeking(preferences, [], fn
-            %{regions: regions} = pref, [%{regions: regions} | _rest], acc ->
-              %{units: units, geq: geq} = pref
-              value =
-                Unit.new!(hd(units), geq)
-                |> Conversion.convert_to_base_unit!
-                |> Math.round(@rounding)
-                |> Map.get(:value)
+      usages =
+        for {usage, preferences} <- usages, into: Map.new() do
+          preferences =
+            Cldr.Enum.reduce_peeking(preferences, [], fn
+              %{regions: regions} = pref, [%{regions: regions} | _rest], acc ->
+                %{units: units, geq: geq} = pref
 
-              {:cont, acc ++ [%{pref | geq: Ratio.to_float(value)}]}
+                value =
+                  Unit.new!(hd(units), geq)
+                  |> Conversion.convert_to_base_unit!()
+                  |> Math.round(@rounding)
+                  |> Map.get(:value)
 
-            pref, _rest, acc ->
-              pref = %{pref | geq: 0}
-              {:cont, acc ++ [pref]}
-          end)
-        {usage, preferences}
-      end
+                {:cont, acc ++ [%{pref | geq: Ratio.to_float(value)}]}
+
+              pref, _rest, acc ->
+                pref = %{pref | geq: 0}
+                {:cont, acc ++ [pref]}
+            end)
+
+          {usage, preferences}
+        end
+
       {category, usages}
     end
   end
@@ -1042,8 +1043,8 @@ defmodule Cldr.Unit do
   end
 
   @measurement_systems Cldr.Config.territories()
-  |> Enum.map(fn {k, v} -> {k, v.measurement_system} end)
-  |> Map.new
+                       |> Enum.map(fn {k, v} -> {k, v.measurement_system} end)
+                       |> Map.new()
 
   @doc """
   Returns a map of measurement systems by territory
@@ -1086,7 +1087,7 @@ defmodule Cldr.Unit do
 
   """
   @spec measurement_system_for(atom(), atom()) ::
-           :metric | :ussystem | :uk_system | {:error, {module(), String.t()}}
+          :metric | :ussystem | :uk_system | {:error, {module(), String.t()}}
 
   def measurement_system_for(territory, category \\ :default) do
     with {:ok, territory} <- Cldr.validate_territory(territory) do
@@ -1190,7 +1191,7 @@ defmodule Cldr.Unit do
 
   def validate_unit(unit_name) when is_atom(unit_name) do
     unit_name
-    |> Atom.to_string
+    |> Atom.to_string()
     |> validate_unit
   end
 
@@ -1208,8 +1209,9 @@ defmodule Cldr.Unit do
     else
       name
     end
-  rescue ArgumentError ->
-    name
+  rescue
+    ArgumentError ->
+      name
   end
 
   defp validate_per_unit(nil) do
@@ -1290,7 +1292,7 @@ defmodule Cldr.Unit do
   def unknown_usage_error(category, usage) do
     {
       Cldr.Unit.UnknownUsageError,
-      "The unit category #{inspect category} does not define a usage #{inspect usage}"
+      "The unit category #{inspect(category)} does not define a usage #{inspect(usage)}"
     }
   end
 

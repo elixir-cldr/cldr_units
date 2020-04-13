@@ -457,7 +457,6 @@ defmodule Cldr.Unit.Math do
           mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
         ) :: Unit.t()
 
-
   def round(unit, places \\ 0, mode \\ :half_up)
 
   def round(%Unit{value: %Ratio{} = value} = unit, places, mode) do
@@ -546,5 +545,4 @@ defmodule Cldr.Unit.Math do
   def cmp(unit_1, unit_2) do
     compare(unit_1, unit_2)
   end
-
 end

@@ -4,14 +4,14 @@ defmodule Cldr.Unit.Alias do
 
   """
 
-  @aliases  %{
+  @aliases %{
     metre: :meter,
     kilometre: :kilometer
   }
 
   @aliases Cldr.Config.units()
-  |> Map.get(:aliases)
-  |> Map.merge(@aliases)
+           |> Map.get(:aliases)
+           |> Map.merge(@aliases)
 
   def aliases do
     @aliases

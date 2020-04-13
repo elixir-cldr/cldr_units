@@ -255,15 +255,15 @@ defmodule Cldr.Unit.Backend do
         ## Examples
 
             iex> meter = Cldr.Unit.new!(:meter, 1)
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person_height
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :person_height
             {:ok, [:foot, :inch], []}
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :person
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :person
             {:ok, [:inch], []}
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :person
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :person
             {:ok, [:centimeter], []}
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-US", usage: :road
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :road
             {:ok, [:foot], [round_nearest: 10]}
-            iex> #{inspect __MODULE__}.preferred_units meter, locale: "en-AU", usage: :road
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :road
             {:ok, [:meter], [round_nearest: 10]}
 
         """
@@ -318,13 +318,13 @@ defmodule Cldr.Unit.Backend do
         ## Examples
 
             iex> meter = Cldr.Unit.new!(:meter, 2)
-            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :person_height
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-US", usage: :person_height
             [:foot, :inch]
-            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :person
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-AU", usage: :person
             [:centimeter]
-            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-US", usage: :road
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-US", usage: :road
             [:foot]
-            iex> #{inspect __MODULE__}.preferred_units! meter, locale: "en-AU", usage: :road
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-AU", usage: :road
             [:meter]
 
         """

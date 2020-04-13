@@ -82,20 +82,28 @@ defmodule Cldr.UnitsTest do
     unit = Cldr.Unit.new!(100, :meter)
 
     assert Cldr.Unit.localize(unit, usage: :person, territory: :US) ==
-             [Cldr.Unit.new!(:inch, Ratio.new(21617278211378380800, 5490788665690109))]
+             [Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109))]
 
     assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US, style: :informal) ==
-             [Cldr.Unit.new!(:foot, 328), Cldr.Unit.new!(:inch, Ratio.new(5534023222111776, 5490788665690109))]
+             [
+               Cldr.Unit.new!(:foot, 328),
+               Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109))
+             ]
 
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
-             {:error, {Cldr.Unit.UnknownUsageError,
+             {:error,
+              {Cldr.Unit.UnknownUsageError,
                "The unit category :length does not define a usage :unknown"}}
   end
 
   test "inspection when non-default usage or non-default format options" do
     assert inspect(Cldr.Unit.new!(:meter, 1)) == "#Cldr.Unit<:meter, 1>"
-    assert inspect(Cldr.Unit.new!(:meter, 1, usage: :road)) == "#Cldr.Unit<:meter, 1, usage: :road, format_options: []>"
-    assert inspect(Cldr.Unit.new!(:meter, 1, format_options: [round_nearest: 50])) == "#Cldr.Unit<:meter, 1, usage: :default, format_options: [round_nearest: 50]>"
+
+    assert inspect(Cldr.Unit.new!(:meter, 1, usage: :road)) ==
+             "#Cldr.Unit<:meter, 1, usage: :road, format_options: []>"
+
+    assert inspect(Cldr.Unit.new!(:meter, 1, format_options: [round_nearest: 50])) ==
+             "#Cldr.Unit<:meter, 1, usage: :default, format_options: [round_nearest: 50]>"
   end
 
   if function_exported?(Code, :fetch_docs, 1) do

@@ -8,14 +8,14 @@ defmodule Cldr.Unit.Test.PreferenceData do
 
   def preference_test_data do
     @preference_test_data
-    |> File.read!
+    |> File.read!()
     |> String.split("\n")
     |> Enum.map(&String.trim/1)
   end
 
   def preferences do
     preference_test_data()
-    |> Enum.with_index
+    |> Enum.with_index()
     |> Enum.map(&parse_test/1)
     |> Enum.reject(&is_nil/1)
   end
@@ -26,7 +26,7 @@ defmodule Cldr.Unit.Test.PreferenceData do
     nil
   end
 
-  def parse_test({<< "#", _rest :: binary >>, _}) do
+  def parse_test({<<"#", _rest::binary>>, _}) do
     nil
   end
 
@@ -37,7 +37,7 @@ defmodule Cldr.Unit.Test.PreferenceData do
     |> zip(@fields)
     |> Enum.map(&transform/1)
     |> set_output_units()
-    |> Map.new
+    |> Map.new()
     |> Map.put(:line, index + @offset)
   end
 
@@ -45,22 +45,23 @@ defmodule Cldr.Unit.Test.PreferenceData do
     {input, output} = :lists.split(6, data)
 
     fields
-    |> Enum.zip((input ++ [output]))
+    |> Enum.zip(input ++ [output])
   end
 
   def set_output_units(test) do
     output = Keyword.get(test, :output)
-    units = Enum.map(output, &(elem(&1, 0) |> String.replace("-","_") |> String.to_atom()))
+    units = Enum.map(output, &(elem(&1, 0) |> String.replace("-", "_") |> String.to_atom()))
     Keyword.put(test, :output_units, units)
   end
 
-  def transform({:output, [first_rational, first_unit, output_rational, output_double, output_unit]}) do
+  def transform(
+        {:output, [first_rational, first_unit, output_rational, output_double, output_unit]}
+      ) do
     {:output,
-      [
-        {first_unit, [first_rational, nil]},
-        {output_unit, [output_rational, output_double]}
-      ]
-    }
+     [
+       {first_unit, [first_rational, nil]},
+       {output_unit, [output_rational, output_double]}
+     ]}
   end
 
   def transform({:output, [output_rational, output_double, output_unit]}) do
@@ -101,7 +102,7 @@ defmodule Cldr.Unit.Test.PreferenceData do
     case rational do
       [numerator, denominator] -> Ratio.new(numerator, denominator)
       [integer] -> integer
-      _other -> raise ArgumentError, "Can't convert #{inspect string} to a rational"
+      _other -> raise ArgumentError, "Can't convert #{inspect(string)} to a rational"
     end
   end
 end

@@ -139,32 +139,47 @@ defmodule Cldr.Unit.TestSupport do
     format_assertion_error(%{}, struct, [], :infinity, fn _, msg -> msg end, "")
   end
 
-  preference_match = quote do
-    {:assert, _,
-     [
-       {:=, _,
-        [
-          {:ok, _},
-          {{:., _,
-            [
-              {:__aliases__, _, [:Cldr, :Unit, :Preference]},
-              :preferred_units
-            ]}, _,
-           [
-             {{:., _, [{:__aliases__, _, [:Cldr, :Unit]}, :new!]},
-              _, [var!(category), var!(value)]},
-             {:__aliases__, _, [:MyApp, :Cldr]},
-             [usage: var!(usage), region: var!(region)]
-           ]}
-        ]}
-     ]}
-  end
+  preference_match =
+    quote do
+      {:assert, _,
+       [
+         {:=, _,
+          [
+            {:ok, _},
+            {{:., _,
+              [
+                {:__aliases__, _, [:Cldr, :Unit, :Preference]},
+                :preferred_units
+              ]}, _,
+             [
+               {{:., _, [{:__aliases__, _, [:Cldr, :Unit]}, :new!]}, _,
+                [var!(category), var!(value)]},
+               {:__aliases__, _, [:MyApp, :Cldr]},
+               [usage: var!(usage), region: var!(region)]
+             ]}
+          ]}
+       ]}
+    end
 
-  defp format_assertion_error(test, %{expr: unquote(preference_match)} = struct, stack, width, formatter, counter_padding) do
+  defp format_assertion_error(
+         test,
+         %{expr: unquote(preference_match)} = struct,
+         stack,
+         width,
+         formatter,
+         counter_padding
+       ) do
     struct =
-      Map.put(struct, :message,
-        FunctionClause.match_category(Cldr.Unit.Preference,
-          :preferred_units, [category, usage, region, value]))
+      Map.put(
+        struct,
+        :message,
+        FunctionClause.match_category(Cldr.Unit.Preference, :preferred_units, [
+          category,
+          usage,
+          region,
+          value
+        ])
+      )
 
     label_padding_size = if has_value?(struct.right), do: 7, else: 6
     padding_size = label_padding_size + byte_size(@counter_padding)

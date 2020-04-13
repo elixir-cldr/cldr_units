@@ -6,24 +6,22 @@ defmodule Cldr.Unit.Conversion do
   """
 
   @enforce_keys [:factor, :offset, :base_unit]
-  defstruct [
-    factor: 1,
-    offset: 0,
-    base_unit: nil
-  ]
+  defstruct factor: 1,
+            offset: 0,
+            base_unit: nil
 
   @type t :: %{
-    factor: integer | float | Ratio.t(),
-    base_unit: [atom(), ...],
-    offset: integer | float
-  }
+          factor: integer | float | Ratio.t(),
+          base_unit: [atom(), ...],
+          offset: integer | float
+        }
 
   alias Cldr.Unit
 
   import Unit, only: [incompatible_units_error: 2]
 
   defmodule Options do
-    defstruct [usage: nil, locale: nil, backend: nil, territory: nil]
+    defstruct usage: nil, locale: nil, backend: nil, territory: nil
   end
 
   @doc """
@@ -75,7 +73,7 @@ defmodule Cldr.Unit.Conversion do
 
     with {:ok, from, to} <- compatible(from, to) do
       value
-      |> Ratio.new
+      |> Ratio.new()
       |> convert_to_base(from)
       |> convert_from_base(to)
       |> wrap_ok
@@ -86,7 +84,7 @@ defmodule Cldr.Unit.Conversion do
     use Ratio
 
     %{factor: from_factor, offset: from_offset} = from
-    (value * from_factor) + from_offset
+    value * from_factor + from_offset
   end
 
   def convert_to_base(value, {_, %__MODULE__{} = from}) do
@@ -110,7 +108,7 @@ defmodule Cldr.Unit.Conversion do
   def convert_from_base(value, %__MODULE__{} = to) do
     use Ratio
     %{factor: to_factor, offset: to_offset} = to
-    ((value - to_offset) / to_factor)
+    (value - to_offset) / to_factor
   end
 
   def convert_from_base(value, {_, %__MODULE__{} = to}) do
@@ -258,5 +256,4 @@ defmodule Cldr.Unit.Conversion do
       {:ok, unit} -> unit
     end
   end
-
 end
