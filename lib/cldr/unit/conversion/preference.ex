@@ -109,9 +109,9 @@ defmodule Cldr.Unit.Preference do
 
   # TR35 says that for a given usage, if it
   # can't be found, split it at the last
-  # "_", take the head of split and try again.
-  # Repeat until the usage is found or
-  # there is no reduced usage to try.
+  # "_", take the head of the split and try
+  # again. Repeat until the usage is found or
+  # there is nothing more to try.
   #
   # The following precomputes these "usage chains"
   # by taking each known usage and breaking it
@@ -125,9 +125,9 @@ defmodule Cldr.Unit.Preference do
         |> Atom.to_string()
         |> String.split("_")
         |> Cldr.Enum.combine_list()
-        |> Enum.reverse()
         |> Enum.map(&String.to_atom/1)
-        |> Kernel.++([:default])
+        |> List.insert_at(0, :default)
+        |> Enum.reverse()
       {use, chain}
     end)
   end)
