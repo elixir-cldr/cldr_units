@@ -265,6 +265,9 @@ defmodule Cldr.Unit do
   @doc """
   Formats a number into a string according to a unit definition for a locale.
 
+  During processing any `:format_options` of a `Unit.t()` are merged with
+  `options` with `options` taking precedence.
+
   ## Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
@@ -273,7 +276,7 @@ defmodule Cldr.Unit do
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend/0`.
 
-  * `options` is a keyword list of options
+  * `options` is a keyword list of options.
 
   ## Options
 
@@ -393,13 +396,18 @@ defmodule Cldr.Unit do
     to_string(unit, backend, options)
   end
 
-  def to_string(%Unit{unit: unit, value: value}, backend, options) when is_list(options) do
-    options = Keyword.put(options, :unit, unit)
+  def to_string(%Unit{unit: unit, value: value, format_options: format_options}, backend, options)
+      when is_list(options) do
+    options =
+      format_options
+      |> Keyword.merge(options)
+      |> Keyword.put(:unit, unit)
+
     to_string(value, backend, options)
   end
 
   # Finally we have the right shape to execute
-  def to_string(number, backend, options) when is_list(options) and is_number(number) do
+  def to_string(number, backend, options) when is_number(number) and is_list(options) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style),
@@ -411,6 +419,9 @@ defmodule Cldr.Unit do
   @doc """
   Formats a list using `to_string/3` but raises if there is
   an error.
+
+  During processing any `:format_options` of a `Unit.t()` are merged with
+  `options` with `options` taking precedence.
 
   ## Arguments
 
