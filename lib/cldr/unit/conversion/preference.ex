@@ -96,34 +96,47 @@ defmodule Cldr.Unit.Preference do
     {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
 
     with {:ok, usage} <- validate_usage(category, usage) do
-      usage = usage_chain(usage, :default)
+      usage = usage_chain(usage)
       geq = Unit.value(base_unit) |> Ratio.to_float
       preferred_units(category, usage, territory_chain, geq)
     end
   end
 
-  # TODO precompute usage chains
-  # This isn't great that we're convering
-  # stuff backwards and forwaard. We should
-  # precompute the usage chains.
-  def usage_chain(unit, default) when is_atom(unit) do
-    unit
-    |> Atom.to_string
-    |> String.split("_")
-    |> usage_chain
-    |> Enum.reverse
-    |> Enum.map(&String.to_atom/1)
-    |> Kernel.++([default])
+  defp usage_chain(usage) when is_atom(usage) do
+    usage_chain()
+    |> Map.fetch!(usage)
   end
 
-  def usage_chain([head]) do
-    [head]
-  end
+  # TR35 says that for a given usage, if it
+  # can't be found, split it at the last
+  # "_", take the head of split and try again.
+  # Repeat until the usage is found or
+  # there is no reduced usage to try.
+  #
+  # The following precomputes these "usage chains"
+  # by taking each known usage and breaking it
+  # down as required by TR36.
 
-  def usage_chain([head | [next | tail]]) do
-    [head | usage_chain([head <> "_" <> next | tail])]
-  end
+  @usage_chain Cldr.Unit.unit_category_usage()
+  |> Enum.map(fn {_category, usage} ->
+    Enum.map(usage, fn use ->
+      chain =
+        use
+        |> Atom.to_string
+        |> String.split("_")
+        |> Cldr.Enum.make_pyramid()
+        |> Enum.reverse
+        |> Enum.map(&String.to_atom/1)
+        |> Kernel.++([:default])
+      {use, chain}
+    end)
+  end)
+  |> List.flatten
+  |> Map.new
 
+  defp usage_chain do
+    @usage_chain
+  end
 
   @doc """
   Returns a list of the preferred units for a given
