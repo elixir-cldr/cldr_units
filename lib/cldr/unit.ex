@@ -217,8 +217,8 @@ defmodule Cldr.Unit do
   """
   @spec new!(unit() | value(), value() | unit()) :: t() | no_return()
 
-  def new!(unit, value) do
-    case new(unit, value) do
+  def new!(unit, value, options \\ []) do
+    case new(unit, value, options) do
       {:ok, unit} -> unit
       {:error, {exception, message}} -> raise exception, message
     end
@@ -589,7 +589,6 @@ defmodule Cldr.Unit do
 
   # TODO Fix decompose with format options
   # -> Apply format options to the last unit (but not if theres only one)
-  # -> Don't truncate the conversion on the last unit
 
   def decompose(unit, unit_list, format_options \\ [])
 
@@ -598,15 +597,13 @@ defmodule Cldr.Unit do
   end
 
   # This is the last unit
-  def decompose(unit, [h | []], _format_options) do
-    new_unit =
-      unit
-      |> Conversion.convert!(h)
+  def decompose(unit, [h | []], format_options) do
+    new_unit = Conversion.convert!(unit, h)
 
     if zero?(new_unit) do
       []
     else
-      [new_unit]
+      [%{new_unit | format_options: format_options}]
     end
   end
 
