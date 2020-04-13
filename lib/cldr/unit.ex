@@ -585,9 +585,6 @@ defmodule Cldr.Unit do
   @spec decompose(unit :: Unit.t(), unit_list :: [Unit.unit()], options :: Keyword.t()) ::
           [Unit.t()]
 
-  # TODO Fix decompose with format options
-  # -> Apply format options to the last unit (but not if theres only one)
-
   def decompose(unit, unit_list, format_options \\ [])
 
   def decompose(unit, [], _format_options) do
@@ -658,6 +655,7 @@ defmodule Cldr.Unit do
       [Cldr.Unit.new!(:foot, 6), Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725))]
 
   """
+
   def localize(unit, backend, options \\ [])
 
   def localize(%Unit{} = unit, options, []) when is_list(options) do
@@ -668,7 +666,15 @@ defmodule Cldr.Unit do
 
   def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
     with {:ok, unit_list, format_options} <- Preference.preferred_units(unit, backend, options) do
-      decompose(unit, unit_list, format_options)
+      # We dom't apply preference formatting options
+      # if the unit list has only one unit
+      if length(unit_list) == 1 do
+        saved_format_options = unit.format_options
+        [unit] = decompose(unit, unit_list, format_options)
+        [%{unit | format_options: saved_format_options}]
+      else
+        decompose(unit, unit_list, format_options)
+      end
     end
   end
 
