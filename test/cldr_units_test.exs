@@ -114,6 +114,24 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string!(localized) == "300 metres"
   end
 
+  test "creating a compound unit" do
+    assert {:ok, unit} = Cldr.Unit.new("meter_per_kilogram", 1)
+    assert unit.usage == :default
+  end
+
+  test "to_string a compound unit" do
+    assert {:ok, unit} = Cldr.Unit.new("meter_per_kilogram", 1)
+    assert {:ok, string} = Cldr.Unit.to_string(unit)
+  end
+
+  test "to_string a compound unit that can't be translated" do
+    assert {:ok, unit} = Cldr.Unit.new("meter_per_square_kilogram", 1)
+    assert Cldr.Unit.to_string(unit) ==
+      {:error,
+        {Cldr.Unit.UnitNotTranslatableError,
+          "The unit \"meter_per_square_kilogram\" is not translatable"}}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

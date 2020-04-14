@@ -178,10 +178,11 @@ defmodule Cldr.Unit do
     {:ok, nil}
   end
 
+  @default_category_usage [@default_use]
   defp validate_category_usage(category, usage) do
-    usage_list = Map.get(unit_category_usage(), category)
+    usage_list = Map.get(unit_category_usage(), category, @default_category_usage)
 
-    if usage_list && usage in usage_list do
+    if usage in usage_list do
       {:ok, usage}
     else
       {:error, unknown_usage_error(category, usage)}
@@ -311,14 +312,6 @@ defmodule Cldr.Unit do
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
 
-  * `:per` allows compound units to be formatted. For example, assume
-    we want to format a string which represents "kilograms per second".
-    There is no such unit defined in CLDR (or perhaps anywhere!).
-    If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
-    we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
-    Each locale defines a specific way to format such a compount unit.
-    Usually it will return something like `20 kilograms/second`
-
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
     applicable when formatting a list of units.
@@ -357,12 +350,6 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :megahertz, style: :narrow
       {:ok, "1,234MHz"}
-
-      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :foot, style: :narrow, per: :second
-      {:ok, "1,234′/s"}
-
-      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :foot, per: :second
-      {:ok, "1,234 feet per second"}
 
       iex> unit = Cldr.Unit.new!(123, :foot)
       iex> Cldr.Unit.to_string unit, MyApp.Cldr
@@ -433,8 +420,9 @@ defmodule Cldr.Unit do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style),
-         {:ok, unit, _conversion} <- validate_unit(options[:unit]) do
-      {:ok, to_string(number, unit, locale, style, backend, options)}
+         {:ok, unit, _conversion} <- validate_unit(options[:unit]),
+         {:ok, string} <- to_string(number, unit, locale, style, backend, options) do
+      {:ok, string}
     end
   end
 
@@ -497,7 +485,7 @@ defmodule Cldr.Unit do
 
   * `formatted_string` or
 
-  * raises and exception
+  * raises an exception
 
   ## Examples
 
@@ -529,7 +517,13 @@ defmodule Cldr.Unit do
           map()
         ) :: {:ok, String.t()} | {:error, {module(), String.t()}}
 
-  defp to_string(number, unit, locale, style, backend, %{per: nil} = options) do
+
+  # Concrete implementation of to_string
+  # Atom units are tanslatable. String ones are not.
+  # This function is for those units which are known
+  # to be translatable
+  defp to_string(number, unit, locale, style, backend, %{per: nil} = options)
+      when is_atom(unit) do
     with {:ok, number_string} <-
            Cldr.Number.to_string(number, backend, Map.to_list(options)),
          {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
@@ -539,12 +533,35 @@ defmodule Cldr.Unit do
       [number_string]
       |> Substitution.substitute(pattern)
       |> :erlang.iolist_to_binary()
+      |> wrap_ok
     end
   end
 
+  # Its a compound unit which can't be translated directly
+  # So we split it on the `_per_` boundary and try again
+  # with a `:per` options (which is now a private option)
+  defp to_string(number, unit, locale, style, backend, %{per: nil} = options)
+      when is_binary(unit) do
+    [unit, per_unit] =
+      unit
+      |> String.split("_per_", parts: 2)
+      |> Enum.map(&String.to_existing_atom/1)
+
+    options = Map.put(options, :per, per_unit)
+    to_string(number, unit, locale, style, backend, options)
+  rescue ArgumentError ->
+    {:error, unit_not_translatable_error(unit)}
+  end
+
+  # If its a compound option then we pass through here after
+  # the unit has been split. Since its after a split
+  # we need to check that we can in fact translate each of the parts.
   defp to_string(number, unit, locale, style, backend, %{per: per} = options) do
-    with {:ok, per_pattern} <- per_pattern_for(locale, style, per, backend) do
-      unit_string = to_string(number, unit, locale, style, backend, Map.put(options, :per, nil))
+    with {:ok, unit, _} <- validate_unit(unit),
+         {:ok, per, _} <- validate_unit(per),
+         {:ok, per_pattern} <- per_pattern_for(locale, style, per, backend),
+         {:ok, unit_string} <-
+           to_string(number, unit, locale, style, backend, Map.put(options, :per, nil)) do
 
       if length(per_pattern) <= 2 do
         [unit_string]
@@ -554,6 +571,7 @@ defmodule Cldr.Unit do
         |> Substitution.substitute(per_pattern)
       end
       |> :erlang.iolist_to_binary()
+      |> wrap_ok
     end
   end
 
@@ -564,6 +582,14 @@ defmodule Cldr.Unit do
     |> Enum.reject(&is_integer/1)
     |> hd
     |> String.trim()
+  end
+
+  def wrap_ok({:error, _} = error) do
+    error
+  end
+
+  def wrap_ok(other) do
+    {:ok, other}
   end
 
   @doc """
@@ -1364,6 +1390,13 @@ defmodule Cldr.Unit do
     {
       Cldr.Unit.UnknownUsageError,
       "The unit category #{inspect(category)} does not define a usage #{inspect(usage)}"
+    }
+  end
+
+  def unit_not_translatable_error(unit) do
+    {
+       Cldr.Unit.UnitNotTranslatableError,
+       "The unit #{inspect unit} is not translatable"
     }
   end
 
