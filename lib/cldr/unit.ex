@@ -273,9 +273,7 @@ defmodule Cldr.Unit do
   See `Cldr.Unit.to_string/3` for full details.
 
   """
-  @spec to_string(
-          list_or_number :: value | t() | [t()]
-        ) ::
+  @spec to_string(list_or_number :: value | t() | [t()]) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(unit) do
@@ -437,9 +435,7 @@ defmodule Cldr.Unit do
   See `Cldr.Unit.to_string!/3` for full details.
 
   """
-  @spec to_string!(
-          list_or_number :: value | t() | [t()]
-        ) ::
+  @spec to_string!(list_or_number :: value | t() | [t()]) ::
           String.t() | no_return()
 
   def to_string!(unit) do
@@ -517,13 +513,12 @@ defmodule Cldr.Unit do
           map()
         ) :: {:ok, String.t()} | {:error, {module(), String.t()}}
 
-
   # Concrete implementation of to_string
   # Atom units are tanslatable. String ones are not.
   # This function is for those units which are known
   # to be translatable
   defp to_string(number, unit, locale, style, backend, %{per: nil} = options)
-      when is_atom(unit) do
+       when is_atom(unit) do
     with {:ok, number_string} <-
            Cldr.Number.to_string(number, backend, Map.to_list(options)),
          {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
@@ -541,7 +536,7 @@ defmodule Cldr.Unit do
   # So we split it on the `_per_` boundary and try again
   # with a `:per` options (which is now a private option)
   defp to_string(number, unit, locale, style, backend, %{per: nil} = options)
-      when is_binary(unit) do
+       when is_binary(unit) do
     [unit, per_unit] =
       unit
       |> String.split("_per_", parts: 2)
@@ -549,8 +544,9 @@ defmodule Cldr.Unit do
 
     options = Map.put(options, :per, per_unit)
     to_string(number, unit, locale, style, backend, options)
-  rescue ArgumentError ->
-    {:error, unit_not_translatable_error(unit)}
+  rescue
+    ArgumentError ->
+      {:error, unit_not_translatable_error(unit)}
   end
 
   # If its a compound option then we pass through here after
@@ -562,7 +558,6 @@ defmodule Cldr.Unit do
          {:ok, per_pattern} <- per_pattern_for(locale, style, per, backend),
          {:ok, unit_string} <-
            to_string(number, unit, locale, style, backend, Map.put(options, :per, nil)) do
-
       if length(per_pattern) <= 2 do
         [unit_string]
         |> Substitution.substitute(per_pattern)
@@ -1395,8 +1390,8 @@ defmodule Cldr.Unit do
 
   def unit_not_translatable_error(unit) do
     {
-       Cldr.Unit.UnitNotTranslatableError,
-       "The unit #{inspect unit} is not translatable"
+      Cldr.Unit.UnitNotTranslatableError,
+      "The unit #{inspect(unit)} is not translatable"
     }
   end
 

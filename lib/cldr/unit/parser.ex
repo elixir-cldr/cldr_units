@@ -4,7 +4,8 @@ defmodule Cldr.Unit.Parser do
   unit structures.  These structures can
   then be used to produced localized output,
   or to be converted to another unit of the
-  same type.
+  same unit category.
+
 
   """
 
@@ -38,19 +39,69 @@ defmodule Cldr.Unit.Parser do
                    {k, v} when is_integer(v) -> {k, v / 1.0}
                    {k, v} -> {k, Ratio.to_float(v)}
                  end)
-                 |> Enum.sort(fn
-                   {_k1, v1}, {_k2, v2} -> v1 > v2
-                 end)
-                 |> Enum.map(fn
-                   {k, _v} -> k
-                 end)
+                 |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
+                 |> Enum.map(&elem(&1, 0))
                  |> Enum.with_index()
 
-  @per "_per_"
+  @doc """
+  Parses a unit name expressed as a
+  string and returns the parsed
+  name or an error.
 
-  def parse_unit(unit_string) do
+  ## Arguments
+
+  * `unit_string` is a unit name (such as
+  "meter") as a `String.t()`
+
+  ## Returns
+
+  * `{:ok, normalized_unit}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Notes
+
+  A normalised unit is a `2-tuple` with
+  the first element a list of standard units
+  that are before the first "per" in the
+  unit name.  The second element is a list
+  of standard units after the first "per"
+  (if any).
+
+  The structure of the standard unit is
+  `{standard_unit, conversion_to_base_unit}`.
+
+  This function is not normally called by
+  consumers of this library. It is called by
+  `Cldr.Unit.validate_unit/1` which is the
+  main public API.
+
+  ## Example
+
+      iex> Cldr.Unit.Parser.parse_unit "kilogram per light year"
+      {:ok,
+       {[
+          {"kilogram",
+           %Cldr.Unit.Conversion{
+             base_unit: [:kilogram],
+             factor: Ratio.new(144115188075855875, 144115188075855872),
+             offset: 0
+           }}
+        ],
+        [
+          {"light_year",
+           %Cldr.Unit.Conversion{
+             base_unit: [:meter],
+             factor: 9460730000000000,
+             offset: 0
+           }}
+        ]}}
+
+  """
+  @per "_per_"
+  def parse_unit(unit_string) when is_binary(unit_string) do
     unit_string
-    |> String.replace("-", "_")
+    |> String.replace([" ", "-"], "_")
     |> String.split(@per, parts: 2)
     |> Enum.map(&parse_subunit/1)
     |> wrap_ok
@@ -76,6 +127,20 @@ defmodule Cldr.Unit.Parser do
 
   ## Examples
 
+      iex> Cldr.Unit.Parser.canonical_unit_name "meter"
+      {:ok, "meter"}
+
+      iex> Cldr.Unit.Parser.canonical_unit_name "meter meter"
+      {:ok, "square_meter"}
+
+      iex> Cldr.Unit.Parser.canonical_unit_name "meter per kilogram"
+      {:ok, "meter_per_kilogram"}
+
+      iex> Cldr.Unit.Parser.canonical_unit_name "meter kilogram"
+      {:ok, "kilogram_meter"}
+
+      iex> Cldr.Unit.Parser.canonical_unit_name "meter kilogram per fluxom"
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"fluxom\\""}}
 
   """
   def canonical_unit_name(unit_string) when is_binary(unit_string) do
@@ -109,6 +174,21 @@ defmodule Cldr.Unit.Parser do
 
   ## Examples
 
+      iex> Cldr.Unit.Parser.canonical_unit_name! "meter"
+      "meter"
+
+      iex> Cldr.Unit.Parser.canonical_unit_name! "meter meter"
+      "square_meter"
+
+      iex> Cldr.Unit.Parser.canonical_unit_name! "meter per kilogram"
+      "meter_per_kilogram"
+
+      iex> Cldr.Unit.Parser.canonical_unit_name! "meter kilogram"
+      "kilogram_meter"
+
+      => Cldr.Unit.Parser.canonical_unit_name! "meter kilogram per fluxom"
+      ** (CaseClauseError) no case clause matching: {:error,
+          {Cldr.UnknownUnitError, "Unknown unit was detected at \"fluxom\""}}
 
   """
   def canonical_unit_name!(unit_string) when is_binary(unit_string) do
@@ -123,7 +203,7 @@ defmodule Cldr.Unit.Parser do
   for a unit.
 
   The base unit is the common unit through which
-  conversions are executed.
+  conversions are passed.
 
   ## Arguments
 
@@ -138,6 +218,17 @@ defmodule Cldr.Unit.Parser do
 
   ## Examples
 
+      iex> Cldr.Unit.Parser.canonical_base_unit "meter"
+      {:ok, "meter"}
+
+      iex> Cldr.Unit.Parser.canonical_base_unit "meter meter"
+      {:ok, "square_meter"}
+
+      iex> Cldr.Unit.Parser.canonical_base_unit "meter per kilogram"
+      {:ok, "meter_per_kilogram"}
+
+      iex> Cldr.Unit.Parser.canonical_base_unit "yottagram per mile scandinavian"
+      {:ok, "kilogram_per_meter"}
 
   """
   def canonical_base_unit(unit_string) when is_binary(unit_string) do
@@ -164,7 +255,7 @@ defmodule Cldr.Unit.Parser do
   for a unit.
 
   The base unit is the common unit through which
-  conversions are executed.
+  conversions are passed.
 
   ## Arguments
 
@@ -179,6 +270,17 @@ defmodule Cldr.Unit.Parser do
 
   ## Examples
 
+      iex> Cldr.Unit.Parser.canonical_base_unit! "meter"
+      "meter"
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "meter meter"
+      "square_meter"
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "meter per kilogram"
+      "meter_per_kilogram"
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "yottagram per mile scandinavian"
+      "kilogram_per_meter"
 
   """
   def canonical_base_unit!(unit_string) when is_binary(unit_string) do
@@ -413,34 +515,8 @@ defmodule Cldr.Unit.Parser do
                        |> Enum.with_index()
                        |> Map.new()
 
-  def base_units_in_order do
+  defp base_units_in_order do
     @base_units_in_order
   end
 
-  if Mix.env() == :dev do
-    @doc false
-    def unconvertible_units do
-      units = Cldr.Unit.known_units() |> Enum.map(&Cldr.Unit.Alias.alias/1)
-
-      for unit <- units do
-        parse_unit(to_string(unit))
-      end
-      |> Enum.reject(&is_list(elem(&1, 1)))
-    end
-
-    @doc false
-    def unparseable_units do
-      for {unit, conversion} <- Cldr.Unit.Conversions.conversions() do
-        [Atom.to_string(unit), Atom.to_string(hd(conversion.base_unit))]
-      end
-      |> List.flatten()
-      |> Enum.map(fn x ->
-        case parse_unit(x) do
-          {:ok, thing} when is_list(thing) -> nil
-          {:error, other} -> other
-        end
-      end)
-      |> Enum.reject(&is_nil/1)
-    end
-  end
 end

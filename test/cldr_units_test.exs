@@ -109,8 +109,10 @@ defmodule Cldr.UnitsTest do
   test "that unit skeletons are in affect for formatting" do
     unit = Cldr.Unit.new!(311, :meter, usage: :road)
     localized = Cldr.Unit.localize(unit, MyApp.Cldr, territory: :SE)
+
     assert localized ==
-      [Cldr.Unit.new!(:meter, 311, usage: :road, format_options: [round_nearest: 50])]
+             [Cldr.Unit.new!(:meter, 311, usage: :road, format_options: [round_nearest: 50])]
+
     assert Cldr.Unit.to_string!(localized) == "300 metres"
   end
 
@@ -126,10 +128,11 @@ defmodule Cldr.UnitsTest do
 
   test "to_string a compound unit that can't be translated" do
     assert {:ok, unit} = Cldr.Unit.new("meter_per_square_kilogram", 1)
+
     assert Cldr.Unit.to_string(unit) ==
-      {:error,
-        {Cldr.Unit.UnitNotTranslatableError,
-          "The unit \"meter_per_square_kilogram\" is not translatable"}}
+             {:error,
+              {Cldr.Unit.UnitNotTranslatableError,
+               "The unit \"meter_per_square_kilogram\" is not translatable"}}
   end
 
   if function_exported?(Code, :fetch_docs, 1) do
