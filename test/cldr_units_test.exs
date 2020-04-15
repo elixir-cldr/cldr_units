@@ -84,7 +84,7 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.localize(unit, usage: :person, territory: :US) ==
              [Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109))]
 
-    assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US, style: :informal) ==
+    assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US) ==
              [
                Cldr.Unit.new!(:foot, 328),
                Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109))
@@ -127,7 +127,7 @@ defmodule Cldr.UnitsTest do
              "#Cldr.Unit<:meter, 1, usage: :default, format_options: [round_nearest: 50]>"
   end
 
-  test "that unit skeletons are in affect for formatting" do
+  test "that unit skeletons are used for formatting" do
     unit = Cldr.Unit.new!(311, :meter, usage: :road)
     localized = Cldr.Unit.localize(unit, MyApp.Cldr, territory: :SE)
 
