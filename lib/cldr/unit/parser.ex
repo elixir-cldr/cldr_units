@@ -6,7 +6,6 @@ defmodule Cldr.Unit.Parser do
   or to be converted to another unit of the
   same unit category.
 
-
   """
 
   alias Cldr.Unit.Conversions
@@ -51,7 +50,7 @@ defmodule Cldr.Unit.Parser do
   ## Arguments
 
   * `unit_string` is a unit name (such as
-  "meter") as a `String.t()`
+    "meter") as a `String.t()`
 
   ## Returns
 
@@ -266,7 +265,7 @@ defmodule Cldr.Unit.Parser do
 
   * `canonical_base_unit` or
 
-  * raise an exception
+  * raises an exception
 
   ## Examples
 
