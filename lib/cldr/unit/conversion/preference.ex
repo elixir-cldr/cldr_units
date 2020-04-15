@@ -98,9 +98,21 @@ defmodule Cldr.Unit.Preference do
 
     with {:ok, usage} <- validate_usage(category, usage) do
       usage = usage_chain(usage)
-      geq = Unit.value(base_unit) |> Ratio.to_float()
+      geq = Unit.value(base_unit) |> to_float()
       preferred_units(category, usage, territory_chain, geq)
     end
+  end
+
+  defp to_float(%Ratio{} = value) do
+    Ratio.to_float(value)
+  end
+
+  defp to_float(%Decimal{} = value) do
+    Decimal.to_float(value)
+  end
+
+  defp to_float(other) do
+    other
   end
 
   defp usage_chain(usage) when is_atom(usage) do

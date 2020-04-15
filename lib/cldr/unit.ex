@@ -414,7 +414,7 @@ defmodule Cldr.Unit do
   end
 
   # Finally we have the right shape to execute
-  def to_string(number, backend, options) when is_number(number) and is_list(options) do
+  def to_string(number, backend, options) when is_list(options) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style),

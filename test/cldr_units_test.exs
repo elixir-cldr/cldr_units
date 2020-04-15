@@ -96,6 +96,27 @@ defmodule Cldr.UnitsTest do
                "The unit category :length does not define a usage :unknown"}}
   end
 
+  test "localize a decimal unit" do
+    u = Cldr.Unit.new! Decimal.new(20), :meter
+    assert Cldr.Unit.localize(u, territory: :US) ==
+      [Cldr.Unit.new!(:foot, Ratio.new(360287970189639680, 5490788665690109))]
+  end
+
+  test "localize a ratio unit" do
+    u = Cldr.Unit.new!(:foot, Ratio.new(360287970189639680, 5490788665690109))
+    assert Cldr.Unit.localize(u, territory: :AU) == [Cldr.Unit.new!(:meter, 20)]
+  end
+
+  test "to_string a decimal unit" do
+    u = Cldr.Unit.new! Decimal.new(20), :meter
+    assert Cldr.Unit.to_string(u) == {:ok, "20 metres"}
+  end
+
+  test "to_string a ratio unit" do
+    u = Cldr.Unit.new!(:foot, Ratio.new(360287970189639680, 5490788665690109))
+    assert Cldr.Unit.to_string(u) == {:ok, "65.617 feet"}
+  end
+
   test "inspection when non-default usage or non-default format options" do
     assert inspect(Cldr.Unit.new!(:meter, 1)) == "#Cldr.Unit<:meter, 1>"
 
