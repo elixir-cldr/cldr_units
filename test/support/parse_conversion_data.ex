@@ -184,14 +184,6 @@ defmodule Cldr.Unit.Test.ConversionData do
     |> Decimal.to_integer()
   end
 
-  # Yes, this is a hacky solution to working
-  # with floats and rounding. This is for the test
-  # at line 29 of the test data
-  def round_precision(6.0221407599999996e26 = float, 7) do
-    Cldr.Math.round_significant(float, 7)
-    |> Cldr.Math.round_significant(8)
-  end
-
   def round_precision(float, digits) when is_float(float) do
     Cldr.Math.round_significant(float, digits)
   end
