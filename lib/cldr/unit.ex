@@ -877,7 +877,7 @@ defmodule Cldr.Unit do
        :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """
-  @unit_categories Map.keys(@unit_tree)
+  @unit_categories Map.keys(@unit_tree) -- [:"10p"]
   def known_unit_categories do
     @unit_categories
   end
