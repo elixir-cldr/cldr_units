@@ -1302,6 +1302,49 @@ defmodule Cldr.Unit do
 
   * `{:error, {exception, reason}}`
 
+  ## Notes
+
+  A returned `unit_name` that is an atom is directly
+  localisable (CLDR has translation data for the unit).
+
+  A `unit_name` that is a `String.t()` is composed of
+  one or more unit names that need to be resolved in
+  order for the `unit_name` to be localised.
+
+  The difference is an implementation detail and should
+  not be of concern to the user of this library.
+
+  ## Examples
+
+      iex> Cldr.Unit.validate_unit :meter
+      {:ok, :meter, %Cldr.Unit.Conversion{base_unit: [:meter], factor: 1, offset: 0}}
+
+      iex> Cldr.Unit.validate_unit "meter"
+      {:ok, :meter,
+       [{"meter", %Cldr.Unit.Conversion{base_unit: [:meter], factor: 1, offset: 0}}]}
+
+      iex> Cldr.Unit.validate_unit "miles_per_liter"
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"s\\""}}
+
+      iex> Cldr.Unit.validate_unit "mile_per_liter"
+      {:ok, "mile_per_liter",
+       {[
+          {"mile",
+           %Cldr.Unit.Conversion{
+             base_unit: [:meter],
+             factor: Ratio.new(905980129838867985, 562949953421312),
+             offset: 0
+           }}
+        ],
+        [
+          {"liter",
+           %Cldr.Unit.Conversion{
+             base_unit: [:cubic_meter],
+             factor: Ratio.new(1152921504606847, 1152921504606846976),
+             offset: 0
+           }}
+        ]}}
+
   """
   def validate_unit(unit_name) when unit_name in @translatable_units do
     {:ok, unit_name, Conversions.conversion_for!(unit_name)}
