@@ -688,7 +688,7 @@ defmodule Cldr.Unit do
          [head | merge_prefix(prefix, rest)]
 
        other ->
-         [String.replace(other, ~r/([^\s]+)/u, "#{prefix}\\1") | rest]
+         [String.replace(other, ~r/([^\s]+)$/u, "#{prefix}\\1") | rest]
     end
   end
 
@@ -1012,7 +1012,7 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.base_unit :square_kilometer
-      {:ok, "square_meter"}
+      {:ok, :square_meter}
 
       iex> Cldr.Unit.base_unit :square_table
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
@@ -1348,7 +1348,7 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.validate_unit "meter"
       {:ok, :meter,
-       [{"meter", %Cldr.Unit.Conversion{base_unit: [:meter], factor: 1, offset: 0}}]}
+       [meter: %Cldr.Unit.Conversion{base_unit: [:meter], factor: 1, offset: 0}]}
 
       iex> Cldr.Unit.validate_unit "miles_per_liter"
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"s\\""}}
@@ -1356,20 +1356,20 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.validate_unit "mile_per_liter"
       {:ok, "mile_per_liter",
        {[
-          {"mile",
+          mile:
            %Cldr.Unit.Conversion{
              base_unit: [:meter],
              factor: Ratio.new(905980129838867985, 562949953421312),
              offset: 0
-           }}
+          }
         ],
         [
-          {"liter",
+          liter:
            %Cldr.Unit.Conversion{
              base_unit: [:cubic_meter],
              factor: Ratio.new(1152921504606847, 1152921504606846976),
              offset: 0
-           }}
+          }
         ]}}
 
   """
