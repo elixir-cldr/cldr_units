@@ -593,13 +593,18 @@ defmodule Cldr.Unit do
   # is there an SI prefix? If so, try reformatting the unit again
   for {prefix, power} <- Prefix.si_power_prefixes() do
     localize_key = "10p#{power}" |> String.replace("-", "_") |> String.to_atom()
-    match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
+    match = quote do: <<unquote(prefix), var!(unit)::binary>>
 
     defp to_string(number, unquote(match), locale, style, backend, options) do
-      with {:ok, string} <- to_string(number, unit, locale, style, backend, options) do
+      per_options = Keyword.put(options, :per, true)
+      with {:ok, format_list} <- to_string(number, unit, locale, style, backend, per_options) do
         units = units_for(locale, style, backend)
-        pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
-        {:ok, Substitution.substitute([string], pattern)}
+        prefix_pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
+        io_list = merge_prefix(prefix_pattern, format_list)
+
+        io_list
+        |> maybe_to_binary(Keyword.get(options, :per))
+        |> wrap_ok
       end
     end
   end
@@ -633,7 +638,7 @@ defmodule Cldr.Unit do
       [string, localized_unit_from(per_list)]
       |> Enum.take(number_of_substitutions(per_pattern))
       |> Substitution.substitute(per_pattern)
-      |> :erlang.iolist_to_binary()
+      |> :erlang.iolist_to_binary
       |> String.replace(~r/(\s)+/u, "\\1")
       |> wrap_ok
     end
@@ -658,8 +663,8 @@ defmodule Cldr.Unit do
   end
 
   defp localized_unit_from([first | rest]) when is_binary(first) do
-    case Integer.parse(first) do
-      {_i, ""} -> localized_unit_from(rest)
+    case first do
+      << c :: utf8, _rest :: binary >> when c in ?0..?9 -> localized_unit_from(rest)
       _other -> [first | localized_unit_from(rest)]
     end
   end
@@ -667,6 +672,28 @@ defmodule Cldr.Unit do
   defp localized_unit_from([first | rest]) do
     [localized_unit_from(first) | localized_unit_from(rest)]
   end
+
+  # We ahve two patterns. The prefix pattern
+  # has the prefix string somewhere in iy.
+  # This needs to be extracts and prepended
+  # onto the right part of the format list.
+  defp merge_prefix(prefix_pattern, format_list) when is_list(prefix_pattern) do
+    prefix = extract_prefix(prefix_pattern)
+    merge_prefix(prefix, format_list)
+  end
+
+  defp merge_prefix(prefix, [head | rest]) do
+    case head do
+       << c :: utf8, _rest :: binary >> when c in ?0..?9 ->
+         [head | merge_prefix(prefix, rest)]
+
+       other ->
+         [String.replace(other, ~r/([^\s]+)/u, "#{prefix}\\1") | rest]
+    end
+  end
+
+  def extract_prefix([0, prefix]), do: prefix
+  def extract_prefix([prefix, 0]), do: prefix
 
   defp number_of_substitutions(list) when length(list) <= 2, do: 1
   defp number_of_substitutions(_list), do: 2
