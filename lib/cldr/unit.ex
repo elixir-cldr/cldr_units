@@ -443,6 +443,7 @@ defmodule Cldr.Unit do
              |> Map.get(:short)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
              |> Enum.into(%{})
+             |> Map.delete(:"10p")
 
   @doc """
   Decomposes a unit into subunits.
@@ -870,13 +871,6 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.jaro_match :foot
       [{1.0, :foot}]
-
-      iex> Cldr.Unit.jaro_match :meter
-      [
-        {1.0, :meter},
-        {0.7708333333333334, :meter_per_second},
-        {0.7592592592592592, :kilometer_per_hour}
-      ]
 
   """
   @default_distance 0.75

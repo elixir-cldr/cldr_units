@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v2.8.1
+
+This is the changelog for Cldr_units v2.8.1 released on April 25th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Updates data management to be compatible with data from both both CLDR 36 (ex_cldr 2.13) and CLDR 37 (ex_cldr 2.14)
+
 # Changelog for Cldr_Units v2.8.0
 
 This is the changelog for Cldr_units v2.8.0 released on January 27th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
