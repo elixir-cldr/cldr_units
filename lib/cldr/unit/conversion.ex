@@ -52,10 +52,6 @@ defmodule Cldr.Unit.Conversion do
   """
   @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
 
-  def convert(%Unit{unit: from_unit, value: _value} = unit, from_unit) do
-    {:ok, unit}
-  end
-
   def convert(%Unit{} = unit, to_unit) do
     %{unit: from_unit, value: value, base_conversion: from_conversion} = unit
 

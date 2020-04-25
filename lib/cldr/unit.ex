@@ -688,7 +688,7 @@ defmodule Cldr.Unit do
          [head | merge_prefix(prefix, rest)]
 
        other ->
-         [String.replace(other, ~r/([^\s]+)$/u, "#{prefix}\\1") | rest]
+         [String.replace(other, ~r/([^\s]+)/u, "#{prefix}\\1") | rest]
     end
   end
 
@@ -1361,7 +1361,7 @@ defmodule Cldr.Unit do
              base_unit: [:meter],
              factor: Ratio.new(905980129838867985, 562949953421312),
              offset: 0
-          }
+           }
         ],
         [
           liter:
@@ -1369,7 +1369,7 @@ defmodule Cldr.Unit do
              base_unit: [:cubic_meter],
              factor: Ratio.new(1152921504606847, 1152921504606846976),
              offset: 0
-          }
+           }
         ]}}
 
   """
