@@ -23,6 +23,12 @@ defmodule FunctionClause do
     end
   end
 
+  def match_category(unit, usage, territory, number) do
+    match_category(Cldr.Unit.Preference, :preferred_units, [unit, usage, territory, number])
+    |> IO.puts
+    :ok
+  end
+
   def match_category(module, function, args) do
     unit = Cldr.Unit.new!(hd(args), 1)
     {:ok, category} = Cldr.Unit.unit_category(unit)
