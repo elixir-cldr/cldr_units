@@ -40,7 +40,7 @@ defmodule Cldr.Unit do
             usage: :default,
             format_options: []
 
-  @type unit :: atom()
+  @type unit :: atom() | String.t()
   @type usage :: atom()
   @type style :: atom()
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
@@ -553,7 +553,7 @@ defmodule Cldr.Unit do
   end
 
   @spec to_string(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
-          {:ok, String.t()} | {:error, {module(), String.t()}}
+          {:ok, String.t() | list()} | {:error, {module(), String.t()}}
 
   # Concrete implementation of to_string
   defp to_string(number, unit, locale, style, backend, options) when unit in @translatable_units do
@@ -652,6 +652,7 @@ defmodule Cldr.Unit do
   # Remove any list element that
   # can be converted to an integer.
   # TODO can do better
+  @spec localized_unit_from(list()) :: list()
   defp localized_unit_from([]) do
     []
   end
@@ -670,7 +671,7 @@ defmodule Cldr.Unit do
   defp number_of_substitutions(list) when length(list) <= 2, do: 1
   defp number_of_substitutions(_list), do: 2
 
-  defp wrap_ok({:error, _} = error), do: error
+  @spec wrap_ok(any()) :: {:ok, any()}
   defp wrap_ok(other), do: {:ok, other}
 
   @doc """
@@ -1336,7 +1337,8 @@ defmodule Cldr.Unit do
   end
 
   def maybe_translatable_unit(name) do
-    if (atom_name = String.to_existing_atom(name)) && atom_name in @translatable_units do
+    atom_name = String.to_existing_atom(name)
+    if Enum.find(@translatable_units, &(atom_name == &1)) do
       atom_name
     else
       name
