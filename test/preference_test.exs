@@ -31,4 +31,3 @@ defmodule Cldr.Unit.Preference.Test do
     end
   end
 end
-

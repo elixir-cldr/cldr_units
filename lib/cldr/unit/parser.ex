@@ -11,36 +11,7 @@ defmodule Cldr.Unit.Parser do
   alias Cldr.Unit.Conversions
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Alias
-
-  @power_units [{"square", 2}, {"cubic", 3}]
-
-  @si_factors %{
-    "pico" => Ratio.new(1, 1_000_000_000_000),
-    "nano" => Ratio.new(1, 1_000_000_000),
-    "micro" => Ratio.new(1, 1_000_000),
-    "milli" => Ratio.new(1, 1_000),
-    "centi" => Ratio.new(1, 100),
-    "deci" => Ratio.new(1, 10),
-    "deka" => 10,
-    "hecto" => 100,
-    "kilo" => 1_000,
-    "mega" => 1_000_000,
-    "giga" => 1_000_000_000,
-    "tera" => 1_000_000_000_000,
-    "peta" => 1_000_000_000_000_000,
-    "exa" => 1_000_000_000_000_000_000,
-    "zetta" => 1_000_000_000_000_000_000_000,
-    "yotta" => 1_000_000_000_000_000_000_000_000
-  }
-
-  @si_sort_order @si_factors
-                 |> Enum.map(fn
-                   {k, v} when is_integer(v) -> {k, v / 1.0}
-                   {k, v} -> {k, Ratio.to_float(v)}
-                 end)
-                 |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
-                 |> Enum.map(&elem(&1, 0))
-                 |> Enum.with_index()
+  alias Cldr.Unit.Prefix
 
   @doc """
   Parses a unit name expressed as a
@@ -376,13 +347,13 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  for {prefix, _power} <- @power_units do
+  for {prefix, _power} <- Prefix.power_units() do
     defp split_into_units(<<unquote(prefix) <> "_", rest::binary>>) do
       [unquote(prefix) | split_into_units(rest)]
     end
   end
 
-  for {prefix, _scale} <- @si_factors do
+  for {prefix, _scale} <- Prefix.si_factors() do
     defp split_into_units(<<unquote(prefix), rest::binary>>) do
       [head | rest] = split_into_units(rest)
       [unquote(prefix) <> head | rest]
@@ -406,7 +377,7 @@ defmodule Cldr.Unit.Parser do
     []
   end
 
-  for {prefix, power} <- @power_units do
+  for {prefix, power} <- Prefix.power_units() do
     defp expand_power_instances([unquote(prefix), unit | rest]) do
       List.duplicate(unit, unquote(power)) ++ expand_power_instances(rest)
     end
@@ -440,7 +411,7 @@ defmodule Cldr.Unit.Parser do
   # scale or power that need to be abplied to the base unit
   # to reflect the power and/or SI unit.
 
-  for {prefix, scale} <- @si_factors do
+  for {prefix, scale} <- Prefix.si_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
         factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
@@ -451,7 +422,7 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  for {prefix, power} <- @power_units do
+  for {prefix, power} <- Prefix.power_units() do
     defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
         factor = Ratio.pow(conversion.factor, unquote(power))
@@ -488,13 +459,13 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  for {prefix, _power} <- @power_units do
+  for {prefix, _power} <- Prefix.power_units() do
     defp unit_sort_key({<<unquote(prefix) <> "_", unit::binary>>, conversion}) do
       unit_sort_key({unit, conversion})
     end
   end
 
-  for {prefix, order} <- @si_sort_order do
+  for {prefix, order} <- Prefix.si_sort_order() do
     defp unit_sort_key({<<unquote(prefix), unit::binary>>, conversion}) do
       {unit_sort_key({unit, conversion}), unquote(order)}
     end
@@ -517,5 +488,4 @@ defmodule Cldr.Unit.Parser do
   defp base_units_in_order do
     @base_units_in_order
   end
-
 end

@@ -129,12 +129,6 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz, style: :narrow
             {:ok, "1,234MHz"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :foot, style: :narrow, per: :second
-            {:ok, "1,234′/s"}
-
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :foot, per: :second
-            {:ok, "1,234 feet per second"}
-
             iex> #{inspect(__MODULE__)}.to_string 123, unit: :megabyte, locale: "en", style: :unknown
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 

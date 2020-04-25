@@ -8,7 +8,7 @@ defmodule Cldr.Unit do
   * `Cldr.Unit.to_string/3` which, given a number and a unit name or unit list will
     output a localized string
 
-  * `Cldr.Unit.units/0` identifies the available units for localization
+  * `Cldr.Unit.known_units/0` identifies the available units for localization
 
   * `Cldr.Unit.{add, sub, mult, div}/2` to support basic unit mathematics between
     units of compatible type (like length or volume)
@@ -19,16 +19,18 @@ defmodule Cldr.Unit do
   * `Cldr.Unit.convert/2` to convert one unit to another unit as long as they
     are convertable.
 
+  * `Cldr.Unit.preferred_units/3` which, for a given unit and locale,
+    will return a list of preferred units that can be applied to
+    `Cldr.Unit.decompose/2`
+
   * `Cldr.Unit.decompose/2` to take a unit and return a list of units decomposed
     by a list of smaller units.
 
   """
 
   alias Cldr.Unit
-  alias Cldr.Locale
-  alias Cldr.LanguageTag
-  alias Cldr.Substitution
-  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference}
+  alias Cldr.{Locale, LanguageTag, Substitution}
+  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, Prefix}
 
   @enforce_keys [:unit, :value, :base_conversion, :usage, :format_options]
 
@@ -77,6 +79,49 @@ defmodule Cldr.Unit do
   defdelegate round(unit), to: Math
 
   defdelegate compare(unit_1, unit_2), to: Math
+
+  @app_name Cldr.Config.app_name()
+  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
+  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
+
+  @unit_tree "en"
+             |> Cldr.Config.get_locale(@config)
+             |> Map.get(:units)
+             |> Map.get(:short)
+             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+             |> Map.new()
+
+  @doc """
+  Returns the known units.
+
+  Known units means units that can
+  be localised directly.
+
+  ## Example
+
+      => Cldr.Unit.known_units
+      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
+       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
+       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
+       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
+       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
+       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
+       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
+       :hour, :inch, ...]
+
+  """
+  @translatable_units @unit_tree
+                      |> Map.delete(:compound)
+                      |> Map.values()
+                      |> List.flatten()
+
+  @spec known_units :: [atom, ...]
+  def known_units do
+    @translatable_units
+  end
+
+  @deprecated "Use Cldr.Unit.known_units/0"
+  def units, do: known_units()
 
   @doc """
   Returns a new `Unit.t` struct.
@@ -377,13 +422,13 @@ defmodule Cldr.Unit do
     to_string(list_or_number, locale.backend, options)
   end
 
-  # It's a list of units
+  # It's a list of units so we format each of them
+  # and combine the list
   def to_string(unit_list, backend, options) when is_list(unit_list) do
     with {locale, _style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale) do
       options =
         options
-        |> Map.to_list()
         |> Keyword.put(:locale, locale)
 
       list_options =
@@ -397,14 +442,16 @@ defmodule Cldr.Unit do
     end
   end
 
-  # Now we have a unit, a backend and some options
+  # Now we have a unit, a backend and some options but ratio
+  # values need to be converted to floats
   def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
     unit = ratio_to_float(unit)
     to_string(unit, backend, options)
   end
 
-  def to_string(%Unit{unit: unit, value: value, format_options: format_options}, backend, options)
-      when is_list(options) do
+  def to_string(%Unit{} = unit, backend, options) when is_list(options) do
+    %Unit{unit: unit, value: value, format_options: format_options} = unit
+
     options =
       format_options
       |> Keyword.merge(options)
@@ -495,7 +542,8 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(value(), Cldr.backend() | Keyword.t(), Keyword.t()) :: String.t() | no_return()
+  @spec to_string!(value(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+          String.t() | no_return()
 
   def to_string!(number, backend, options \\ []) do
     case to_string(number, backend, options) do
@@ -504,88 +552,126 @@ defmodule Cldr.Unit do
     end
   end
 
-  @spec to_string(
-          value(),
-          unit(),
-          locale(),
-          style(),
-          Cldr.backend(),
-          map()
-        ) :: {:ok, String.t()} | {:error, {module(), String.t()}}
+  @spec to_string(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
+          {:ok, String.t()} | {:error, {module(), String.t()}}
 
   # Concrete implementation of to_string
-  # Atom units are tanslatable. String ones are not.
-  # This function is for those units which are known
-  # to be translatable
-  defp to_string(number, unit, locale, style, backend, %{per: nil} = options)
-       when is_atom(unit) do
-    with {:ok, number_string} <-
-           Cldr.Number.to_string(number, backend, Map.to_list(options)),
+  defp to_string(number, unit, locale, style, backend, options) when unit in @translatable_units do
+    with {:ok, number_string} <- Cldr.Number.to_string(number, backend, options),
          {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
       cardinal_module = Module.concat(backend, Number.Cardinal)
       pattern = cardinal_module.pluralize(number, locale, patterns)
 
       [number_string]
       |> Substitution.substitute(pattern)
-      |> :erlang.iolist_to_binary()
+      |> maybe_to_binary(Keyword.get(options, :per))
       |> wrap_ok
     end
   end
 
   # Its a compound unit which can't be translated directly
-  # So we split it on the `_per_` boundary and try again
-  # with a `:per` options (which is now a private option)
-  defp to_string(number, unit, locale, style, backend, %{per: nil} = options)
-       when is_binary(unit) do
-    [unit, per_unit] =
-      unit
-      |> String.split("_per_", parts: 2)
-      |> Enum.map(&String.to_existing_atom/1)
+  # And potentially may not be translatable at all. The strategy is:
+  #
+  # 1. Strip prefix `square_` or `cubic_` and try the unit again and localise
+  # 2. Strip any SI prefix and try the unit again (within step 1)
+  # 3. Split on the first "_per_" and try steps 1 and 2 on each side again
+  # 4. Give up
 
-    options = Map.put(options, :per, per_unit)
-    to_string(number, unit, locale, style, backend, options)
-  rescue
-    ArgumentError ->
-      {:error, unit_not_translatable_error(unit)}
+  for {prefix, power} <- Prefix.power_units() do
+    localize_key = String.to_atom("power#{power}")
+    match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
+
+    defp to_string(number, unquote(match), locale, style, backend, options) do
+      with {:ok, string} <- to_string(number, unit, locale, style, backend, options) do
+        units = units_for(locale, style, backend)
+        pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern1])
+        {:ok, Substitution.substitute([string], pattern)}
+      end
+    end
   end
 
-  # If its a compound option then we pass through here after
-  # the unit has been split. Since its after a split
-  # we need to check that we can in fact translate each of the parts.
-  defp to_string(number, unit, locale, style, backend, %{per: per} = options) do
-    with {:ok, unit, _} <- validate_unit(unit),
-         {:ok, per, _} <- validate_unit(per),
-         {:ok, per_pattern} <- per_pattern_for(locale, style, per, backend),
-         {:ok, unit_string} <-
-           to_string(number, unit, locale, style, backend, Map.put(options, :per, nil)) do
-      if length(per_pattern) <= 2 do
-        [unit_string]
-        |> Substitution.substitute(per_pattern)
-      else
-        [unit_string, localize_per_unit(per, locale, style)]
-        |> Substitution.substitute(per_pattern)
+  # is there an SI prefix? If so, try reformatting the unit again
+  for {prefix, power} <- Prefix.si_power_prefixes() do
+    localize_key = "10p#{power}" |> String.replace("-", "_") |> String.to_atom()
+    match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
+
+    defp to_string(number, unquote(match), locale, style, backend, options) do
+      with {:ok, string} <- to_string(number, unit, locale, style, backend, options) do
+        units = units_for(locale, style, backend)
+        pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
+        {:ok, Substitution.substitute([string], pattern)}
       end
+    end
+  end
+
+  # Last chance is to split on "_per_" and try to
+  # format both sides
+  @per "_per_"
+  defp to_string(number, unit, locale, style, backend, options) do
+    per = String.split(unit, @per)
+    to_per_string(number, per, locale, style, backend, options)
+  end
+
+  # There is no "per" so as a last gasp try
+  # and see if this is a translatable unit
+  defp to_per_string(number, [unit], locale, style, backend, options) do
+    case maybe_translatable_unit(unit) do
+      unit when is_atom(unit) -> to_string(number, unit, locale, style, backend, options)
+      unit -> {:error, unit_not_translatable_error(unit)}
+    end
+  end
+
+  # We have a "per" unit - a left and right hand side.
+  # Try to format both and then join in a localised way
+  # A "per" is always "per 1 unit".
+  defp to_per_string(number, [unit, per_unit], locale, style, backend, options) do
+    per_options = Keyword.put(options, :per, true)
+    with {:ok, string} <- to_string(number, unit, locale, style, backend, options),
+         {:ok, per_list} <- to_string(1, per_unit, locale, style, backend, per_options),
+         {:ok, per_pattern} <- per_pattern_for(locale, style, per_unit, backend) do
+
+      [string, localized_unit_from(per_list)]
+      |> Enum.take(number_of_substitutions(per_pattern))
+      |> Substitution.substitute(per_pattern)
       |> :erlang.iolist_to_binary()
+      |> String.replace(~r/(\s)+/u, "\\1")
       |> wrap_ok
     end
   end
 
-  defp localize_per_unit(unit, %LanguageTag{cldr_locale_name: locale_name}, style) do
-    locale_name
-    |> Cldr.Unit.units_for(style)
-    |> get_in([unit, :one])
-    |> Enum.reject(&is_integer/1)
-    |> hd
-    |> String.trim()
+  # In a compound per unit we want the list of
+  # substitutions, not the final string
+  defp maybe_to_binary(list, nil) do
+    :erlang.iolist_to_binary(list)
   end
 
-  def wrap_ok({:error, _} = error) do
-    error
+  defp maybe_to_binary(list, _other) do
+   list
   end
 
-  def wrap_ok(other) do
-    {:ok, other}
+  # Remove any list element that
+  # can be converted to an integer.
+  # TODO can do better
+  defp localized_unit_from([]) do
+    []
   end
+
+  defp localized_unit_from([first | rest]) when is_binary(first) do
+    case Integer.parse(first) do
+      {_i, ""} -> localized_unit_from(rest)
+      _other -> [first | localized_unit_from(rest)]
+    end
+  end
+
+  defp localized_unit_from([first | rest]) do
+    [localized_unit_from(first) | localized_unit_from(rest)]
+  end
+
+  defp number_of_substitutions(list) when length(list) <= 2, do: 1
+  defp number_of_substitutions(_list), do: 2
+
+  defp wrap_ok({:error, _} = error), do: error
+  defp wrap_ok(other), do: {:ok, other}
 
   @doc """
   Return the value of the Unit struct
@@ -609,17 +695,6 @@ defmodule Cldr.Unit do
   def value(%Unit{value: value}) do
     value
   end
-
-  @app_name Cldr.Config.app_name()
-  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
-  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
-
-  @unit_tree "en"
-             |> Cldr.Config.get_locale(@config)
-             |> Map.get(:units)
-             |> Map.get(:short)
-             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-             |> Map.new()
 
   @doc """
   Decomposes a unit into subunits.
@@ -1020,38 +1095,6 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Returns the known units.
-
-  Known units means units that can
-  be localised directly.
-
-  ## Example
-
-      => Cldr.Unit.known_units
-      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
-       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
-       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
-       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
-       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
-       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
-       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
-       :hour, :inch, ...]
-
-  """
-  @units @unit_tree
-         |> Map.delete(:compound)
-         |> Map.values()
-         |> List.flatten()
-
-  @spec known_units :: [atom, ...]
-  def known_units do
-    @units
-  end
-
-  @deprecated "Use Cldr.Unit.known_units/0"
-  def units, do: known_units()
-
-  @doc """
   Returns the known styles for a unit.
 
   ## Example
@@ -1221,18 +1264,15 @@ defmodule Cldr.Unit do
   end
 
   defp normalize_options(backend, options) do
-    with {:ok, per_unit, _} <- validate_per_unit(options[:per]) do
-      locale = Keyword.get(options, :locale, backend.get_locale())
-      style = Keyword.get(options, :style, @default_style)
+    locale = Keyword.get(options, :locale, backend.get_locale())
+    style = Keyword.get(options, :style, @default_style)
 
-      options =
-        options
-        |> Keyword.delete(:locale)
-        |> Keyword.put(:style, style)
-        |> Keyword.put(:per, per_unit)
+    options =
+      options
+      |> Keyword.delete(:locale)
+      |> Keyword.put(:style, style)
 
-      {locale, style, Map.new(options)}
-    end
+    {locale, style, options}
   end
 
   @doc """
@@ -1262,7 +1302,7 @@ defmodule Cldr.Unit do
   * `{:error, {exception, reason}}`
 
   """
-  def validate_unit(unit_name) when unit_name in @units do
+  def validate_unit(unit_name) when unit_name in @translatable_units do
     {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
 
@@ -1276,7 +1316,7 @@ defmodule Cldr.Unit do
   def validate_unit(unit_name) when is_binary(unit_name) do
     with {:ok, parsed} <- Parser.parse_unit(unit_name) do
       name = Parser.canonical_unit_name(parsed)
-      canonical_name = maybe_atomize_unit(name)
+      canonical_name = maybe_translatable_unit(name)
       {:ok, canonical_name, parsed}
     end
   end
@@ -1295,8 +1335,8 @@ defmodule Cldr.Unit do
     {:error, unit_error(unknown_unit)}
   end
 
-  def maybe_atomize_unit(name) do
-    if (atom_name = String.to_existing_atom(name)) && atom_name in @units do
+  def maybe_translatable_unit(name) do
+    if (atom_name = String.to_existing_atom(name)) && atom_name in @translatable_units do
       atom_name
     else
       name
@@ -1304,14 +1344,6 @@ defmodule Cldr.Unit do
   rescue
     ArgumentError ->
       name
-  end
-
-  defp validate_per_unit(nil) do
-    {:ok, nil, nil}
-  end
-
-  defp validate_per_unit(unit) do
-    validate_unit(unit)
   end
 
   @doc """

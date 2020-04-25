@@ -62,22 +62,6 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(list, MyApp.Cldr, []) == {:ok, "23 feet and 5 inches"}
   end
 
-  test "per pattern for a defined per_unit_pattern" do
-    unit = Cldr.Unit.new!(45, :gallon)
-
-    assert Cldr.Unit.to_string(unit, per: :square_kilometer) ==
-             {:ok, "45 gallons per square kilometer"}
-
-    assert Cldr.Unit.to_string(unit, style: :narrow, per: :square_kilometer) ==
-             {:ok, "45gal/km²"}
-  end
-
-  test "per pattern for a generic per_unit_pattern" do
-    unit = Cldr.Unit.new!(45, :gallon)
-    assert Cldr.Unit.to_string(unit, per: :degree) == {:ok, "45 gallons per degree"}
-    assert Cldr.Unit.to_string(unit, style: :narrow, per: :degree) == {:ok, "45gal/°"}
-  end
-
   test "localize a unit" do
     unit = Cldr.Unit.new!(100, :meter)
 
@@ -97,23 +81,24 @@ defmodule Cldr.UnitsTest do
   end
 
   test "localize a decimal unit" do
-    u = Cldr.Unit.new! Decimal.new(20), :meter
+    u = Cldr.Unit.new!(Decimal.new(20), :meter)
+
     assert Cldr.Unit.localize(u, territory: :US) ==
-      [Cldr.Unit.new!(:foot, Ratio.new(360287970189639680, 5490788665690109))]
+             [Cldr.Unit.new!(:foot, Ratio.new(360_287_970_189_639_680, 5_490_788_665_690_109))]
   end
 
   test "localize a ratio unit" do
-    u = Cldr.Unit.new!(:foot, Ratio.new(360287970189639680, 5490788665690109))
+    u = Cldr.Unit.new!(:foot, Ratio.new(360_287_970_189_639_680, 5_490_788_665_690_109))
     assert Cldr.Unit.localize(u, territory: :AU) == [Cldr.Unit.new!(:meter, 20)]
   end
 
   test "to_string a decimal unit" do
-    u = Cldr.Unit.new! Decimal.new(20), :meter
+    u = Cldr.Unit.new!(Decimal.new(20), :meter)
     assert Cldr.Unit.to_string(u) == {:ok, "20 metres"}
   end
 
   test "to_string a ratio unit" do
-    u = Cldr.Unit.new!(:foot, Ratio.new(360287970189639680, 5490788665690109))
+    u = Cldr.Unit.new!(:foot, Ratio.new(360_287_970_189_639_680, 5_490_788_665_690_109))
     assert Cldr.Unit.to_string(u) == {:ok, "65.617 feet"}
   end
 
@@ -143,17 +128,16 @@ defmodule Cldr.UnitsTest do
   end
 
   test "to_string a compound unit" do
-    assert {:ok, unit} = Cldr.Unit.new("meter_per_kilogram", 1)
-    assert {:ok, string} = Cldr.Unit.to_string(unit)
+    unit = Cldr.Unit.new!("meter_per_kilogram", 1)
+    assert {:ok, "1 metre per kilogram"} = Cldr.Unit.to_string(unit)
   end
 
-  test "to_string a compound unit that can't be translated" do
-    assert {:ok, unit} = Cldr.Unit.new("meter_per_square_kilogram", 1)
+  test "to_string a per compound unit" do
+    unit = Cldr.Unit.new!("meter_per_square_kilogram", 1)
+    assert Cldr.Unit.to_string(unit) == {:ok, "1 metre per square kilogram"}
 
-    assert Cldr.Unit.to_string(unit) ==
-             {:error,
-              {Cldr.Unit.UnitNotTranslatableError,
-               "The unit \"meter_per_square_kilogram\" is not translatable"}}
+    unit = Cldr.Unit.new!("meter_per_square_kilogram", 2)
+    assert Cldr.Unit.to_string(unit) == {:ok, "2 metres per square kilogram"}
   end
 
   if function_exported?(Code, :fetch_docs, 1) do

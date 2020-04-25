@@ -37,9 +37,7 @@ defmodule FunctionClause do
 
         if clauses == [] do
           IO.ANSI.red() <>
-            "There are no Cldr.Unit.unit_preferences/4 clauses for the category #{
-              inspect(category)
-            }\n" <>
+            "There are no Cldr.Unit.unit_preferences/4 clauses for the category #{inspect(category)}\n" <>
             "That's probably an upstream bug since invalid categories shouldn't get this far." <>
             IO.ANSI.reset() <>
             "\n"
