@@ -1,7 +1,5 @@
 defmodule Cldr.Unit.Test.PreferenceData do
-  # Quantity;   Usage;  Region; Input (r);  Input (d);  Input Unit; Output (r); Output (d); Output Unit
-
-  # mass;   person; GB; 0;  0.0;    kilogram;   1;  stone;  0;  0.0;    pound
+  @moduledoc false
 
   @preference_test_data "test/support/data/preference_test_data.txt"
   @external_resource @preference_test_data

@@ -1,4 +1,6 @@
 defmodule Cldr.Unit.Test.ConversionData do
+  @moduledoc false
+
   @conversion_test_data "test/support/data/conversion_test_data.txt"
   @external_resource @conversion_test_data
   @offset 1
