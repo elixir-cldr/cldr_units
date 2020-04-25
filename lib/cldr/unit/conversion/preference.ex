@@ -106,7 +106,8 @@ defmodule Cldr.Unit.Preference do
   # Rounding matches the number we used
   # to generate the function clauses
 
-  @rounding 10
+  @rounding Cldr.Unit.rounding()
+
   defp to_float(%Ratio{} = value) do
     Ratio.to_float(value)
     |> Cldr.Math.round(@rounding)

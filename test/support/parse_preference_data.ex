@@ -4,6 +4,7 @@ defmodule Cldr.Unit.Test.PreferenceData do
   # mass;   person; GB; 0;  0.0;    kilogram;   1;  stone;  0;  0.0;    pound
 
   @preference_test_data "test/support/data/preference_test_data.txt"
+  @external_resource @preference_test_data
   @offset 1
 
   def preference_test_data do

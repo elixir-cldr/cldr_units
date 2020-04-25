@@ -1200,6 +1200,11 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def rounding do
+    @rounding
+  end
+
+  @doc false
   def units_for(locale, style \\ default_style(), backend \\ Cldr.default_backend()) do
     module = Module.concat(backend, :"Elixir.Unit")
     module.units_for(locale, style)
