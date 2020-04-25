@@ -12,6 +12,7 @@ defmodule Cldr.Unit.Parser do
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Alias
   alias Cldr.Unit.Prefix
+  alias Cldr.Unit
 
   @doc """
   Parses a unit name expressed as a
@@ -51,7 +52,7 @@ defmodule Cldr.Unit.Parser do
       iex> Cldr.Unit.Parser.parse_unit "kilogram per light year"
       {:ok,
        {[
-          {"kilogram",
+          {:kilogram,
            %Cldr.Unit.Conversion{
              base_unit: [:kilogram],
              factor: Ratio.new(144115188075855875, 144115188075855872),
@@ -59,7 +60,7 @@ defmodule Cldr.Unit.Parser do
            }}
         ],
         [
-          {"light_year",
+          {:light_year,
            %Cldr.Unit.Conversion{
              base_unit: [:meter],
              factor: 9460730000000000,
@@ -98,10 +99,10 @@ defmodule Cldr.Unit.Parser do
   ## Examples
 
       iex> Cldr.Unit.Parser.canonical_unit_name "meter"
-      {:ok, "meter"}
+      {:ok, :meter}
 
       iex> Cldr.Unit.Parser.canonical_unit_name "meter meter"
-      {:ok, "square_meter"}
+      {:ok, :square_meter}
 
       iex> Cldr.Unit.Parser.canonical_unit_name "meter per kilogram"
       {:ok, "meter_per_kilogram"}
@@ -120,7 +121,9 @@ defmodule Cldr.Unit.Parser do
   end
 
   def canonical_unit_name({numerator, denominator}) do
-    canonical_subunit_name(numerator) <> @per <> canonical_subunit_name(denominator)
+    to_string(canonical_subunit_name(numerator)) <>
+    @per <>
+    to_string(canonical_subunit_name(denominator))
   end
 
   def canonical_unit_name(numerator) do
@@ -145,10 +148,10 @@ defmodule Cldr.Unit.Parser do
   ## Examples
 
       iex> Cldr.Unit.Parser.canonical_unit_name! "meter"
-      "meter"
+      :meter
 
       iex> Cldr.Unit.Parser.canonical_unit_name! "meter meter"
-      "square_meter"
+      :square_meter
 
       iex> Cldr.Unit.Parser.canonical_unit_name! "meter per kilogram"
       "meter_per_kilogram"
@@ -189,10 +192,10 @@ defmodule Cldr.Unit.Parser do
   ## Examples
 
       iex> Cldr.Unit.Parser.canonical_base_unit "meter"
-      {:ok, "meter"}
+      {:ok, :meter}
 
       iex> Cldr.Unit.Parser.canonical_base_unit "meter meter"
-      {:ok, "square_meter"}
+      {:ok, :square_meter}
 
       iex> Cldr.Unit.Parser.canonical_base_unit "meter per kilogram"
       {:ok, "meter_per_kilogram"}
@@ -220,6 +223,14 @@ defmodule Cldr.Unit.Parser do
     |> canonical_unit_name
   end
 
+  defp canonical_subunit_name([{unit_name, _}]) do
+    unit_name
+  end
+
+  defp canonical_subunit_name([{first, _}, {second, _} | rest]) do
+    canonical_subunit_name([{to_string(first) <> "_" <> to_string(second), nil} | rest])
+  end
+
   @doc """
   Returns the canonical base unit name
   for a unit.
@@ -241,10 +252,10 @@ defmodule Cldr.Unit.Parser do
   ## Examples
 
       iex> Cldr.Unit.Parser.canonical_base_unit! "meter"
-      "meter"
+      :meter
 
       iex> Cldr.Unit.Parser.canonical_base_unit! "meter meter"
-      "square_meter"
+      :square_meter
 
       iex> Cldr.Unit.Parser.canonical_base_unit! "meter per kilogram"
       "meter_per_kilogram"
@@ -260,15 +271,7 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  defp canonical_subunit_name([{unit_name, _}]) do
-    unit_name
-  end
-
-  defp canonical_subunit_name([{first, _}, {second, _} | rest]) do
-    canonical_subunit_name([{first <> "_" <> second, nil} | rest])
-  end
-
-  defp parse_subunit(unit_string) do
+  defp parse_subunit(unit_string) when is_binary(unit_string) do
     unit_string
     |> String.replace(@per, "")
     |> split_into_units
@@ -415,7 +418,7 @@ defmodule Cldr.Unit.Parser do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
         factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
-        {unit, %{conversion | factor: factor}}
+        {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
@@ -427,7 +430,7 @@ defmodule Cldr.Unit.Parser do
       with {_, conversion} <- resolve_base_unit(subunit) do
         factor = Ratio.pow(conversion.factor, unquote(power))
         base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
-        {unit, %{conversion | base_unit: base_unit, factor: factor}}
+        {Unit.maybe_translatable_unit(unit), %{conversion | base_unit: base_unit, factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
       end
@@ -436,7 +439,7 @@ defmodule Cldr.Unit.Parser do
 
   defp resolve_base_unit(unit) when is_binary(unit) do
     with {:ok, conversion} <- Conversions.conversion_for(unit) do
-      {unit, conversion}
+      {Unit.maybe_translatable_unit(unit), conversion}
     else
       {:error, {exception, reason}} -> raise(exception, reason)
     end
