@@ -67,7 +67,8 @@ defmodule Cldr.Unit.Preference do
   and `Cldr.Unit.decompose/2`. For example:
 
       iex> meter = Cldr.Unit.new!(:meter, 1)
-      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter, MyApp.Cldr, locale: "en-US", usage: :person)
+      iex> preferred_units = Cldr.Unit.Preference.preferred_units(meter,
+      ...>   MyApp.Cldr, locale: "en-US", usage: :person)
       iex> with {:ok, preferred_units, _} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
