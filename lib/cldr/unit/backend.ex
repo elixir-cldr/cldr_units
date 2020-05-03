@@ -133,10 +133,7 @@ defmodule Cldr.Unit.Backend do
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
         """
-        @spec to_string(
-                Cldr.Math.number_or_decimal() | Cldr.Unit.t() | [Cldr.Unit.t(), ...],
-                Keyword.t()
-              ) ::
+        @spec to_string(Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
@@ -191,7 +188,8 @@ defmodule Cldr.Unit.Backend do
             "1 gelling"
 
         """
-        @spec to_string!(Cldr.Math.number_or_decimal(), Keyword.t()) :: String.t() | no_return()
+        @spec to_string!(Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
+          String.t() | no_return()
 
         def to_string!(number, options \\ []) do
           Cldr.Unit.to_string!(number, unquote(backend), options)

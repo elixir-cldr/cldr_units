@@ -44,7 +44,7 @@ defmodule Cldr.Unit do
   @type usage :: atom()
   @type style :: atom()
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
-  @type conversion :: Conversion.t() | list()
+  @type conversion :: Conversion.t() | {[Conversion.t(), ...], [Conversion.t(), ...]} | list()
   @type locale :: Locale.locale_name() | LanguageTag.t()
 
   @type t :: %__MODULE__{
@@ -403,11 +403,7 @@ defmodule Cldr.Unit do
 
   """
 
-  @spec to_string(
-          list_or_number :: value | t() | list(t()),
-          backend_or_options :: Cldr.backend() | Keyword.t(),
-          options :: Keyword.t()
-        ) ::
+  @spec to_string(t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(list_or_unit, backend, options \\ [])
@@ -555,9 +551,6 @@ defmodule Cldr.Unit do
     end
   end
 
-  @spec extract_patterns(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
-          list() | {list(), list()}
-
   defp extract_patterns(number, {unit_list, per_list}, locale, style, backend, options) do
     {
       extract_patterns(number, unit_list, locale, style, backend, options),
@@ -571,20 +564,18 @@ defmodule Cldr.Unit do
     end
   end
 
-  def combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
+  defp combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
     {
       combine_patterns(patterns, number_string, locale, style, backend, options),
       combine_patterns(per_patterns, "", locale, style, backend, options)
     }
   end
 
-  # Substitute the number_string into the first position but
-  # not the rest
-  def combine_patterns([pattern], number_string, _locale, _style, _backend, _options) do
+  defp combine_patterns([pattern], number_string, _locale, _style, _backend, _options) do
     Substitution.substitute(number_string, pattern)
   end
 
-  def combine_patterns([pattern | rest], number_string, locale, style, backend, _options) do
+  defp combine_patterns([pattern | rest], number_string, locale, style, backend, _options) do
     units = units_for(locale, style, backend)
     times_pattern = get_in(units, [:times, :compound_unit_pattern])
 
@@ -598,23 +589,23 @@ defmodule Cldr.Unit do
     |> join_list(times_pattern)
   end
 
-  def join_list([head, tail], times_pattern) do
+  defp join_list([head, tail], times_pattern) do
     Substitution.substitute([head, tail], times_pattern)
   end
 
-  def join_list([head | rest], times_pattern) do
+  defp join_list([head | rest], times_pattern) do
     tail = join_list(rest, times_pattern)
     join_list([head, tail], times_pattern)
   end
 
-  def maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
+  defp maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
     units = units_for(locale, style, backend)
     per_pattern = get_in(units, [:per, :compound_unit_pattern])
 
     Substitution.substitute([unit_list, per_units], per_pattern)
   end
 
-  def maybe_combine_per_unit(unit_list, _locale, _style, _backend, _options) do
+  defp maybe_combine_per_unit(unit_list, _locale, _style, _backend, _options) do
     unit_list
   end
 
