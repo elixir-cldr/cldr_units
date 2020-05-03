@@ -83,6 +83,10 @@ defmodule Cldr.Unit.Conversion do
     value * from_factor + from_offset
   end
 
+  def convert_to_base(value, [{_, [{_, from}]}]) do
+    convert_to_base(value, from)
+  end
+
   def convert_to_base(value, {_, %__MODULE__{} = from}) do
     convert_to_base(value, from)
   end
@@ -105,6 +109,10 @@ defmodule Cldr.Unit.Conversion do
     use Ratio
     %{factor: to_factor, offset: to_offset} = to
     (value - to_offset) / to_factor
+  end
+
+  def convert_from_base(value, [{_, [{_, to}]}]) do
+    convert_from_base(value, to)
   end
 
   def convert_from_base(value, {_, %__MODULE__{} = to}) do

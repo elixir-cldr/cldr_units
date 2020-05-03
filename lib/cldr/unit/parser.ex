@@ -300,6 +300,12 @@ defmodule Cldr.Unit.Parser do
     extract_base_unit(head) <> "_" <> canonical_base_subunit(rest)
   end
 
+  defp extract_base_unit({_unit_name, [{_, %{base_unit: base_units}}]}) do
+    base_units
+    |> Enum.map(&Atom.to_string/1)
+    |> Enum.join("_")
+  end
+
   defp extract_base_unit({_unit_name, %{base_unit: base_units}}) do
     base_units
     |> Enum.map(&Atom.to_string/1)

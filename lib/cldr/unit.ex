@@ -457,6 +457,7 @@ defmodule Cldr.Unit do
          {:ok, style} <- validate_style(style) do
 
       number = value(unit)
+      options = Keyword.merge(unit.format_options, options)
       {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
 
       number
@@ -464,6 +465,7 @@ defmodule Cldr.Unit do
       |> combine_patterns(number_string, locale, style, backend, options)
       |> maybe_combine_per_unit(locale, style, backend, options)
       |> :erlang.iolist_to_binary
+      |> String.replace(~r/([\s])+/, "\\1")
       |> wrap_ok
     end
   end
@@ -561,10 +563,6 @@ defmodule Cldr.Unit do
       extract_patterns(number, unit_list, locale, style, backend, options),
       extract_patterns(1, per_list, locale, style, backend, options)
     }
-  end
-
-  defp extract_patterns(number, %{base_unit: unit}, locale, style, backend, options) do
-    [to_pattern(number, hd(unit), locale, style, backend, options)]
   end
 
   defp extract_patterns(number, conversion, locale, style, backend, options) do
@@ -1335,7 +1333,11 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.validate_unit :meter
-      {:ok, :meter, %Cldr.Unit.Conversion{base_unit: [:meter], factor: 1, offset: 0}}
+      {
+        :ok,
+        :meter,
+        [meter: %Cldr.Unit.Conversion{base_unit: [:meter], factor: 1, offset: 0}]
+      }
 
       iex> Cldr.Unit.validate_unit "meter"
       {:ok, :meter,
@@ -1365,7 +1367,7 @@ defmodule Cldr.Unit do
 
   """
   def validate_unit(unit_name) when unit_name in @translatable_units do
-    {:ok, unit_name, Conversions.conversion_for!(unit_name)}
+    {:ok, unit_name, [{unit_name, Conversions.conversion_for!(unit_name)}]}
   end
 
   @aliases Alias.aliases() |> Map.keys()
