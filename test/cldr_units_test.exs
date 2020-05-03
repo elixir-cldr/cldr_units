@@ -1,6 +1,5 @@
 defmodule Cldr.UnitsTest do
   use ExUnit.Case
-  alias Cldr.Unit
 
   test "that centimetre conversion is correct" do
     assert Cldr.Unit.convert(Cldr.Unit.new!(:millimeter, 300), :centimeter) ==
@@ -8,10 +7,10 @@ defmodule Cldr.UnitsTest do
   end
 
   test "that pluralization in non-en locales works" do
-    assert Cldr.Unit.to_string!(Unit.new!(1, :microsecond), MyApp.Cldr, locale: "de") ==
+    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :microsecond) ==
              "1 Mikrosekunde"
 
-    assert Cldr.Unit.to_string!(Unit.new!(123, :microsecond), MyApp.Cldr, locale: "de") ==
+    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :microsecond) ==
              "123 Mikrosekunden"
 
     assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :pint) == "1 Pint"
@@ -141,6 +140,11 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(unit) == {:ok, "2 metres per square kilogram"}
   end
 
+  test "a muliplied unit to_string" do
+    unit = Cldr.Unit.new!("meter ampere volt", 3)
+    assert Cldr.Unit.to_string(unit) == {:ok, "3 metres⋅amperes⋅volts"}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)
@@ -150,4 +154,5 @@ defmodule Cldr.UnitsTest do
       {:docs_v1, _, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(MyApp.Cldr)
     end
   end
+
 end

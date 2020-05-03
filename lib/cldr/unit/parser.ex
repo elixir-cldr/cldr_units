@@ -415,6 +415,9 @@ defmodule Cldr.Unit.Parser do
       {k, v} when length(v) == 1 -> k
       {k, v} when length(v) == 2 -> "square_#{k}"
       {k, v} when length(v) == 3 -> "cubic_#{k}"
+      {k, v} -> raise(Cldr.UnknownUnitError,
+        "Unable to parse more than square and cubic powers. The requested unit " <>
+        "would require a base unit of #{inspect k} to the power of #{length(v)}")
     end)
   end
 

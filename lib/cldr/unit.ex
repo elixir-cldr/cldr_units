@@ -595,7 +595,16 @@ defmodule Cldr.Unit do
         |> Enum.map(&String.trim/1)
       end)
     ]
-    |> Substitution.substitute(times_pattern)
+    |> join_list(times_pattern)
+  end
+
+  def join_list([head, tail], times_pattern) do
+    Substitution.substitute([head, tail], times_pattern)
+  end
+
+  def join_list([head | rest], times_pattern) do
+    tail = join_list(rest, times_pattern)
+    join_list([head, tail], times_pattern)
   end
 
   def maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
