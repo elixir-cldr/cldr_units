@@ -29,7 +29,7 @@ defmodule Cldr.Unit.Preference do
 
   * `:usage` is the unit usage. for example `;person` for a unit
     of type `:length`. The available usage for a given unit category can
-    be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`.
+    be seen with `Cldr.Config.preferred_units/0`. The default is `nil`.
 
   * `:scope` is either `:small` or `nil`. In some usage, the units
     used are different when the unit size is small. It is up to the
@@ -63,7 +63,7 @@ defmodule Cldr.Unit.Preference do
 
   One common pattern is to convert a given unit into the unit
   appropriate for a given local and usage. This can be
-  accomplished with a combination of `Cldr.Unit.Conversion.preferred_units/2`
+  accomplished with a combination of `Cldr.Unit.Preference.preferred_units/3`
   and `Cldr.Unit.decompose/2`. For example:
 
       iex> meter = Cldr.Unit.new!(:meter, 1)
@@ -194,7 +194,7 @@ defmodule Cldr.Unit.Preference do
 
   * `:usage` is the way in which the unit is intended
     to be used.  The available `usage` varyies according
-    to the unit category.  See `Cldr.Unit.unit_preferences/0`.
+    to the unit category.  See `Cldr.Unit.preferred_units/3`.
 
   ## Returns
 
@@ -204,7 +204,7 @@ defmodule Cldr.Unit.Preference do
 
   ## Note
 
-  This function, unline `Cldr.Unit.preferred_units/3` does not
+  This function, unlike `Cldr.Unit.preferred_units/3` does not
   return any available formatting hints.
 
   ## Examples

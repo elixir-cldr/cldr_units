@@ -28,7 +28,6 @@ defmodule Cldr.Unit.Backend do
         defdelegate decompose(unit, list), to: Cldr.Unit
         defdelegate localize(unit, usage, options), to: Cldr.Unit
 
-        defdelegate unit_preferences, to: Cldr.Unit
         defdelegate measurement_system_for(territory), to: Cldr.Unit
         defdelegate measurement_system_for(territory, category), to: Cldr.Unit
 
@@ -69,7 +68,7 @@ defmodule Cldr.Unit.Backend do
 
         ## Options
 
-        * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
+        * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
           the number to be formatted is a `Cldr.Unit.t()` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
@@ -153,7 +152,7 @@ defmodule Cldr.Unit.Backend do
 
         ## Options
 
-        * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
+        * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
           the number to be formatted is a `Cldr.Unit.t()` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
@@ -221,7 +220,7 @@ defmodule Cldr.Unit.Backend do
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
-          be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`
+          be seen with `Cldr.Config.unit_preferences/3`. The default is `nil`
 
         * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
@@ -286,7 +285,7 @@ defmodule Cldr.Unit.Backend do
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
-          be seen with `Cldr.Config.unit_preferences/0`. The default is `nil`.
+          be seen with `Cldr.Config.unit_preferences/3`. The default is `nil`.
 
         * `:scope` is either `:small` or `nil`. In some usage, the units
           used are different when the unit size is small. It is up to the

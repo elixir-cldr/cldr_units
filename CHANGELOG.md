@@ -1,6 +1,6 @@
 # Changelog for Cldr_Units v3.0.0
 
-This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.0.0 released on May 4th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Summary
 
@@ -30,7 +30,7 @@ This is the changelog for Cldr_units v3.0.0 released on ____, 2020.  For older c
 
 ### Deprecations
 
-* Deprecate 'Cldr.Unit.unit_categories/0` in favour of `Cldr.Unit.known_unit_categories/0` to be consistent across CLDR.
+* Deprecate `Cldr.Unit.unit_categories/0` in favour of `Cldr.Unit.known_unit_categories/0` to be consistent across CLDR.
 
 ### Enhancements
 

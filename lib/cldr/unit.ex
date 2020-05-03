@@ -5,7 +5,7 @@ defmodule Cldr.Unit do
 
   The primary public API defines:
 
-  * `Cldr.Unit.to_string/3` which, given a number and a unit name or unit list will
+  * `Cldr.Unit.to_string/3` which, given a unit or unit list will
     output a localized string
 
   * `Cldr.Unit.known_units/0` identifies the available units for localization
@@ -18,6 +18,9 @@ defmodule Cldr.Unit do
 
   * `Cldr.Unit.convert/2` to convert one unit to another unit as long as they
     are convertable.
+
+  * `Cldr.Unit.localize/3` will convert a unit into the units preferred for a
+    given locale and usage
 
   * `Cldr.Unit.preferred_units/3` which, for a given unit and locale,
     will return a list of preferred units that can be applied to
@@ -130,7 +133,7 @@ defmodule Cldr.Unit do
 
   * `value` is any float, integer, `Ratio` or `Decimal`
 
-  * `unit` is any unit returned by `Cldr.Unit.units/0`
+  * `unit` is any unit returned by `Cldr.Unit.known_units/0`
 
   * `options` is Keyword list of options. The default
     is `[]`
@@ -241,7 +244,7 @@ defmodule Cldr.Unit do
 
   * `value` is any float, integer or `Decimal`
 
-  * `unit` is any unit returned by `Cldr.Unit.units/0`
+  * `unit` is any unit returned by `Cldr.Unit.known_units/0`
 
   ## Returns
 
@@ -345,7 +348,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `:unit` is any unit returned by `Cldr.Unit.units/0`. Ignored if
+  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
@@ -510,7 +513,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
+  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
     the number to be formatted is a `Cldr.Unit.t()` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
@@ -827,7 +830,7 @@ defmodule Cldr.Unit do
 
   * `:usage` is the way in which the unit is intended
     to be used.  The available `usage` varyies according
-    to the unit category.  See `Cldr.Unit.unit_preferences/0`.
+    to the unit category.  See `Cldr.Unit.preferred_units/3`.
 
   ## Examples
 
@@ -980,7 +983,7 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Returns the base unit for a given `t:Cldr.Unit.t()
+  Returns the base unit for a given `Cldr.Unit.t()`
   or `atom()`.
 
   ## Argument
