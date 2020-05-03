@@ -210,6 +210,10 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  def canonical_base_unit([{_, {numerator, denominator}}]) do
+    canonical_base_unit({numerator, denominator})
+  end
+
   def canonical_base_unit({numerator, denominator}) do
     [numerator, denominator]
     |> Enum.map(&canonical_base_subunit/1)

@@ -11,7 +11,7 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string!(Unit.new!(1, :microsecond), MyApp.Cldr, locale: "de") ==
              "1 Mikrosekunde"
 
-    assert Cldr.Unit.to_string!(Unit.new!(1, :microsecond), MyApp.Cldr, locale: "de") ==
+    assert Cldr.Unit.to_string!(Unit.new!(123, :microsecond), MyApp.Cldr, locale: "de") ==
              "123 Mikrosekunden"
 
     assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :pint) == "1 Pint"

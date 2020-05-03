@@ -388,10 +388,10 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :short
       {:ok, "1K gallons"}
 
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megaherz, 1234), MyApp.Cldr
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr
       {:ok, "1,234 megahertz"}
 
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megaherz, 1234), MyApp.Cldr, style: :narrow
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
       {:ok, "1,234MHz"}
 
       iex> unit = Cldr.Unit.new!(123, :foot)
@@ -1008,9 +1008,9 @@ defmodule Cldr.Unit do
     end
   end
 
-  def base_unit(%{base_unit: [base_name]}) when is_atom(base_name) do
-    {:ok, base_name}
-  end
+  # def base_unit(%{base_unit: [base_name]}) when is_atom(base_name) do
+  #   {:ok, base_name}
+  # end
 
   def base_unit(%Unit{base_conversion: conversion}) do
     base_unit(conversion)

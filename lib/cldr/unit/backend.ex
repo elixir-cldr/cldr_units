@@ -123,10 +123,10 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1234), format: :short
             {:ok, "1K gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megaherz, 1234)
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megahertz, 1234)
             {:ok, "1,234 megahertz"}
 
-            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megaherz, 1234), style: :narrow
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megahertz, 1234), style: :narrow
             {:ok, "1,234MHz"}
 
             iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
