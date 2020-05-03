@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "2.8.1"
+  @version "3.0.0-rc.0"
 
   def project do
     [
@@ -38,14 +38,14 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, "~> 2.13"},
-      {:ex_cldr_numbers, "~> 2.12"},
-      {:cldr_utils, "~> 2.6"},
-
-      {:dialyxir, "~> 1.0.0-rc", only: [:dev], runtime: false},
-      {:ex_cldr_lists, "~> 2.2"},
+      {:ex_cldr_numbers, "~> 2.13-rc"},
+      {:ex_cldr_lists, "~> 2.5-rc"},
+      {:ratio, "~> 2.4"},
+      {:decimal, "~> 1.6 or ~> 2.0", optional: true},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
-      {:jason, "~> 1.0", optional: true}
+      {:jason, "~> 1.0", optional: true},
+      {:sweet_xml, "~> 0.6", only: [:dev, :test], optional: true}
     ]
   end
 
@@ -71,7 +71,8 @@ defmodule CldrUnits.Mixfile do
       source_ref: "v#{@version}",
       main: "readme",
       extras: ["README.md", "CHANGELOG.md", "LICENSE.md"],
-      logo: "logo.png"
+      logo: "logo.png",
+      skip_undefined_reference_warnings_on: ["changelog"]
     ]
   end
 

@@ -1,3 +1,51 @@
+# Changelog for Cldr_Units v3.0.0
+
+This is the changelog for Cldr_units v3.0.0 released on May 4th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Summary
+
+* New unit creation including rational numbers
+
+* Base unit calculation
+
+* New unit preferences
+
+* New conversion engine
+
+### Breaking changes
+
+* `Cldr.Unit.new/2` is now `Cldr.Unit/{2, 3}` and it returns a standard `{:ok, unit}` tuple on success. Use `Cldr.Unit.new!/{2,3}` if you want to retain the previous behaviour.
+
+* Removed `Cldr.Unit.unit_tree/0`
+
+* Removed `Cldr.Unit.units/1`
+
+* Removed `Cldr.Unit.compatible_units/2`
+
+* Removed `Cldr.Unit.best_match/1`
+
+* Removed `Cldr.Unit.jaro_match/1`
+
+* Removed `Cldr.Unit.unit_category_map/0` (replaced with `Cldr.Unit.base_unit_category_map/0`)
+
+### Deprecations
+
+* Deprecate `Cldr.Unit.unit_categories/0` in favour of `Cldr.Unit.known_unit_categories/0` to be consistent across CLDR.
+
+### Enhancements
+
+* Incorporate CLDR's unit conversion data into the new conversion engine
+
+* Unit values may now be rational numbers.  Conversion data and the results of conversions are executed and retained as rationals. New units can be created with integer, float, Decimal or rational numbers. Conversion to floats is done only when the unit is output via `Cldr.Unit.to_string/3` or explicitly through the new function `Cldr.Unit.ratio_to_float/1`
+
+* Add an option `:usage` to `Cldr.Unit.new/{2,3}`. This defines an expected usage for a given unit that will be applied during localization. The default is `:default`. See `Cldr.Unit.unit_category_map/0` for what usage is defined for a unit category.
+
+* Add `Cldr.Unit.known_measurement_sytems/0` to return the known measurement systems
+
+* Add `Cldr.Unit.Conversion.preferred_units/3` that returns a list of preferred units for a given unit. This makes it straight forward to take a unit and convert it to the units preferred by the user for a given unit type, locale and use case.
+
+* Add `Cldr.Unit.base_category_map/0` that maps base units to their unit categories. For example, map `mile_per_hour` to `:speed` or `kilogram_square_meter_per_cubic_second_ampere` to `:voltage`. Base units are derived from a unit name and are not normally the concern of the consumer of `ex_cldr_units`.
+
 # Changelog for Cldr_Units v2.8.1
 
 This is the changelog for Cldr_units v2.8.1 released on April 25th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

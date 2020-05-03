@@ -29,3 +29,27 @@ defmodule Cldr.Unit.UnitNotConvertibleError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.Unit.UnknownBaseUnitError do
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
+defmodule Cldr.Unit.UnknownUsageError do
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
+defmodule Cldr.Unit.UnitNotTranslatableError do
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end

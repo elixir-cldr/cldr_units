@@ -28,27 +28,17 @@ defmodule Cldr.Unit.Backend do
         defdelegate decompose(unit, list), to: Cldr.Unit
         defdelegate localize(unit, usage, options), to: Cldr.Unit
 
-        defdelegate unit_preferences, to: Cldr.Unit
-        defdelegate measurement_systems, to: Cldr.Unit
         defdelegate measurement_system_for(territory), to: Cldr.Unit
         defdelegate measurement_system_for(territory, category), to: Cldr.Unit
 
-        defdelegate units, to: Cldr.Unit
-        defdelegate units(type), to: Cldr.Unit
-        defdelegate unit_tree, to: Cldr.Unit
-        defdelegate unit_categories, to: Cldr.Unit
+        defdelegate known_units, to: Cldr.Unit
+        defdelegate known_unit_categories, to: Cldr.Unit
         defdelegate styles, to: Cldr.Unit
         defdelegate default_style, to: Cldr.Unit
         defdelegate validate_unit(unit), to: Cldr.Unit
         defdelegate validate_style(unit), to: Cldr.Unit
-        defdelegate unit_type(unit), to: Cldr.Unit
-        defdelegate jaro_match(unit), to: Cldr.Unit
-        defdelegate jaro_match(unit, distance), to: Cldr.Unit
-        defdelegate best_match(unit), to: Cldr.Unit
-        defdelegate best_match(unit, distance), to: Cldr.Unit
 
-        defdelegate compatible_units(unit), to: Cldr.Unit
-        defdelegate compatible_units(unit, options), to: Cldr.Unit
+        defdelegate unit_category(unit), to: Cldr.Unit
 
         defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
         defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
@@ -78,7 +68,7 @@ defmodule Cldr.Unit.Backend do
 
         ## Options
 
-        * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
+        * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
           the number to be formatted is a `Cldr.Unit.t()` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
@@ -91,7 +81,7 @@ defmodule Cldr.Unit.Backend do
         * `:per` allows compound units to be formatted. For example, assume
           we want to format a string which represents "kilograms per second".
           There is no such unit defined in CLDR (or perhaps anywhere!).
-          If however we define the unit `unit = Cldr.Unit.new(:kilogram, 20)`
+          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
           we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
           Each locale defines a specific way to format such a compount unit.
           Usually it will return something like `20 kilograms/second`
@@ -111,50 +101,38 @@ defmodule Cldr.Unit.Backend do
 
         ## Examples
 
-            iex> #{inspect(__MODULE__)}.to_string 123, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 123)
             {:ok, "123 gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1)
             {:ok, "1 gallon"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "af"
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1), locale: "af"
             {:ok, "1 gelling"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "af-NA"
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1), locale: "af-NA"
             {:ok, "1 gelling"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "bs"
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1), locale: "bs"
             {:ok, "1 galon"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :gallon, format: :long
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1234), format: :long
             {:ok, "1 thousand gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :gallon, format: :short
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1234), format: :short
             {:ok, "1K gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megahertz, 1234)
             {:ok, "1,234 megahertz"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz, style: :narrow
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megahertz, 1234), style: :narrow
             {:ok, "1,234MHz"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :foot, style: :narrow, per: :second
-            {:ok, "1,234′/s"}
-
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :foot, per: :second
-            {:ok, "1,234 feet per second"}
-
-            iex> #{inspect(__MODULE__)}.to_string 123, unit: :megabyte, locale: "en", style: :unknown
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
-            iex> #{inspect(__MODULE__)}.to_string 123, unit: :blabber, locale: "en"
-            {:error, {Cldr.UnknownUnitError, "The unit :blabber is not known."}}
-
         """
-        @spec to_string(
-                Cldr.Math.number_or_decimal() | Cldr.Unit.t() | [Cldr.Unit.t(), ...],
-                Keyword.t()
-              ) ::
+        @spec to_string(Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
@@ -174,7 +152,7 @@ defmodule Cldr.Unit.Backend do
 
         ## Options
 
-        * `:unit` is any unit returned by `Cldr.Unit.units/1`. Ignored if
+        * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
           the number to be formatted is a `Cldr.Unit.t()` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
@@ -209,10 +187,137 @@ defmodule Cldr.Unit.Backend do
             "1 gelling"
 
         """
-        @spec to_string!(Cldr.Math.number_or_decimal(), Keyword.t()) :: String.t() | no_return()
+        @spec to_string!(Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
+          String.t() | no_return()
 
         def to_string!(number, options \\ []) do
           Cldr.Unit.to_string!(number, unquote(backend), options)
+        end
+
+        @doc """
+        Returns a list of the preferred units for a given
+        unit, locale, use case and scope.
+
+        The units used to represent length, volume and so on
+        depend on a given territory, measurement system and usage.
+
+        For example, in the US, people height is most commonly
+        referred to in `inches`, or informally as `feet and inches`.
+        In most of the rest of the world it is `centimeters`.
+
+        ## Arguments
+
+        * `unit` is any unit returned by `Cldr.Unit.new/2`.
+
+        * `backend` is any Cldr backend module. That is, any module
+          that includes `use Cldr`. The default is `Cldr.default_backend/0`
+
+        * `options` is a keyword list of options or a
+          `Cldr.Unit.Conversion.Options` struct. The default
+          is `[]`.
+
+        ## Options
+
+        * `:usage` is the unit usage. for example `;person` for a unit
+          type of length. The available usage for a given unit category can
+          be seen with `Cldr.Config.unit_preferences/3`. The default is `nil`
+
+        * `:locale` is any locale returned by `Cldr.validate_locale/2`
+
+        ## Returns
+
+        * `{:ok, unit_list, formatting_options}` or
+
+        * `{:error, {exception, reason}}`
+
+        ## Notes
+
+        `formatting_options` is a keyword list of options
+        that can be passed to `Cldr.Unit.to_string/3`. Its
+        primary intended usage is for localizing a unit that
+        decomposes into more than one unit (for example when
+        2 meters might become 6 feet 6 inches.) In such
+        cases, the last unit in the list (in this case the
+        inches) is formatted with the `formatting_options`.
+
+        ## Examples
+
+            iex> meter = Cldr.Unit.new!(:meter, 1)
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :person_height
+            {:ok, [:foot, :inch], []}
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :person
+            {:ok, [:inch], []}
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :person
+            {:ok, [:centimeter], []}
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :road
+            {:ok, [:foot], [round_nearest: 10]}
+            iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :road
+            {:ok, [:meter], [round_nearest: 10]}
+
+        """
+        def preferred_units(unit, options \\ []) do
+          Cldr.Unit.Preference.preferred_units(unit, unquote(backend), options)
+        end
+
+        @doc """
+        Returns a list of the preferred units for a given
+        unit, locale, use case and scope.
+
+        The units used to represent length, volume and so on
+        depend on a given territory, measurement system and usage.
+
+        For example, in the US, people height is most commonly
+        referred to in `inches`, or informally as `feet and inches`.
+        In most of the rest of the world it is `centimeters`.
+
+        ## Arguments
+
+        * `unit` is any unit returned by `Cldr.Unit.new/2`.
+
+        * `backend` is any Cldr backend module. That is, any module
+          that includes `use Cldr`. The default is `Cldr.default_backend/0`
+
+        * `options` is a keyword list of options or a
+          `Cldr.Unit.Conversion.Options` struct. The default
+          is `[]`.
+
+        ## Options
+
+        * `:usage` is the unit usage. for example `;person` for a unit
+          type of length. The available usage for a given unit category can
+          be seen with `Cldr.Config.unit_preferences/3`. The default is `nil`.
+
+        * `:scope` is either `:small` or `nil`. In some usage, the units
+          used are different when the unit size is small. It is up to the
+          developer to determine when `scope: :small` is appropriate.
+
+        * `:alt` is either `:informal` or `nil`. Like `:scope`, the units
+          in use depend on whether they are being used in a formal or informal
+          context.
+
+        * `:locale` is any locale returned by `Cldr.validate_locale/2`
+
+        ## Returns
+
+        * `unit_list` or
+
+        * raises an exception
+
+        ## Examples
+
+            iex> meter = Cldr.Unit.new!(:meter, 2)
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-US", usage: :person_height
+            [:foot, :inch]
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-AU", usage: :person
+            [:centimeter]
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-US", usage: :road
+            [:foot]
+            iex> #{inspect(__MODULE__)}.preferred_units! meter, locale: "en-AU", usage: :road
+            [:meter]
+
+        """
+        def preferred_units!(unit, options \\ []) do
+          Cldr.Unit.Preference.preferred_units!(unit, unquote(backend), options)
         end
 
         # Generate the functions that encapsulate the unit data from CDLR
