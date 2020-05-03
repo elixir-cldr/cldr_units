@@ -449,25 +449,14 @@ defmodule Cldr.Unit do
     to_string(unit, backend, options)
   end
 
-  def to_string(%Unit{} = unit, backend, options) when is_list(options) do
-    %Unit{unit: unit, value: value, format_options: format_options} = unit
-
-    options =
-      format_options
-      |> Keyword.merge(options)
-      |> Keyword.put(:unit, unit)
-
-    to_string(value, backend, options)
-  end
-
-  # Finally we have the right shape to execute
-  def to_string(number, backend, options) when is_list(options) do
+  def to_string(unit, backend, options) when is_list(options) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
-         {:ok, style} <- validate_style(style),
-         {:ok, unit, _conversion} <- validate_unit(options[:unit]),
-         {:ok, string} <- to_string(number, unit, locale, style, backend, options) do
-      {:ok, string}
+         {:ok, style} <- validate_style(style) do
+
+      number = value(unit)
+      {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
+      # extract patterns
     end
   end
 
@@ -542,51 +531,35 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(value(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_string!(t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
           String.t() | no_return()
 
-  def to_string!(number, backend, options \\ []) do
-    case to_string(number, backend, options) do
+  def to_string!(unit, backend, options \\ []) do
+    case to_string(unit, backend, options) do
       {:ok, string} -> string
       {:error, {exception, message}} -> raise exception, message
     end
   end
 
-  @spec to_string(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
-          {:ok, String.t() | list()} | {:error, {module(), String.t()}}
+  @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
+          list()
 
-  # Concrete implementation of to_string
-  defp to_string(number, unit, locale, style, backend, options) when unit in @translatable_units do
-    with {:ok, number_string} <- Cldr.Number.to_string(number, backend, options),
-         {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
-      cardinal_module = Module.concat(backend, Number.Cardinal)
-      pattern = cardinal_module.pluralize(number, locale, patterns)
-
-      [number_string]
-      |> Substitution.substitute(pattern)
-      |> maybe_to_binary(Keyword.get(options, :per))
-      |> wrap_ok
-    end
+  defp to_pattern(number, unit, locale, style, backend, options) when unit in @translatable_units do
+    {:ok, patterns} = pattern_for(locale, style, unit, backend)
+    cardinal_module = Module.concat(backend, Number.Cardinal)
+    [cardinal_module.pluralize(number, locale, patterns)]
   end
-
-  # Its a compound unit which can't be translated directly
-  # And potentially may not be translatable at all. The strategy is:
-  #
-  # 1. Strip prefix `square_` or `cubic_` and try the unit again and localise
-  # 2. Strip any SI prefix and try the unit again (within step 1)
-  # 3. Split on the first "_per_" and try steps 1 and 2 on each side again
-  # 4. Give up
 
   for {prefix, power} <- Prefix.power_units() do
     localize_key = String.to_atom("power#{power}")
     match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
 
-    defp to_string(number, unquote(match), locale, style, backend, options) do
-      with {:ok, string} <- to_string(number, unit, locale, style, backend, options) do
-        units = units_for(locale, style, backend)
-        pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern1])
-        {:ok, Substitution.substitute([string], pattern)}
-      end
+    defp to_pattern(number, unquote(match), locale, style, backend, options) do
+      units = units_for(locale, style, backend)
+      pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern1])
+
+      unit = maybe_translatable_unit(unit)
+      [pattern | to_pattern(number, unit, locale, style, backend, options)]
     end
   end
 
@@ -595,111 +568,14 @@ defmodule Cldr.Unit do
     localize_key = "10p#{power}" |> String.replace("-", "_") |> String.to_atom()
     match = quote do: <<unquote(prefix), var!(unit)::binary>>
 
-    defp to_string(number, unquote(match), locale, style, backend, options) do
-      per_options = Keyword.put(options, :per, true)
-      with {:ok, format_list} <- to_string(number, unit, locale, style, backend, per_options) do
-        units = units_for(locale, style, backend)
-        prefix_pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
-        io_list = merge_prefix(prefix_pattern, format_list)
+    defp to_pattern(number, unquote(match), locale, style, backend, options) do
+      units = units_for(locale, style, backend)
+      pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
 
-        io_list
-        |> maybe_to_binary(Keyword.get(options, :per))
-        |> wrap_ok
-      end
+      unit = maybe_translatable_unit(unit)
+      [pattern | to_pattern(number, unit, locale, style, backend, options)]
     end
   end
-
-  # Last chance is to split on "_per_" and try to
-  # format both sides
-  @per "_per_"
-  defp to_string(number, unit, locale, style, backend, options) do
-    per = String.split(unit, @per)
-    to_per_string(number, per, locale, style, backend, options)
-  end
-
-  # There is no "per" so as a last gasp try
-  # and see if this is a translatable unit
-  defp to_per_string(number, [unit], locale, style, backend, options) do
-    case maybe_translatable_unit(unit) do
-      unit when is_atom(unit) -> to_string(number, unit, locale, style, backend, options)
-      unit -> {:error, unit_not_translatable_error(unit)}
-    end
-  end
-
-  # We have a "per" unit - a left and right hand side.
-  # Try to format both and then join in a localised way
-  # A "per" is always "per 1 unit".
-  defp to_per_string(number, [unit, per_unit], locale, style, backend, options) do
-    per_options = Keyword.put(options, :per, true)
-    with {:ok, string} <- to_string(number, unit, locale, style, backend, options),
-         {:ok, per_list} <- to_string(1, per_unit, locale, style, backend, per_options),
-         {:ok, per_pattern} <- per_pattern_for(locale, style, per_unit, backend) do
-
-      [string, localized_unit_from(per_list)]
-      |> Enum.take(number_of_substitutions(per_pattern))
-      |> Substitution.substitute(per_pattern)
-      |> :erlang.iolist_to_binary
-      |> String.replace(~r/(\s)+/u, "\\1")
-      |> wrap_ok
-    end
-  end
-
-  # In a compound per unit we want the list of
-  # substitutions, not the final string
-  defp maybe_to_binary(list, nil) do
-    :erlang.iolist_to_binary(list)
-  end
-
-  defp maybe_to_binary(list, _other) do
-   list
-  end
-
-  # Remove any list element that
-  # can be converted to an integer.
-  # TODO can do better
-  @spec localized_unit_from(list()) :: list()
-  defp localized_unit_from([]) do
-    []
-  end
-
-  defp localized_unit_from([first | rest]) when is_binary(first) do
-    case first do
-      << c :: utf8, _rest :: binary >> when c in ?0..?9 -> localized_unit_from(rest)
-      _other -> [first | localized_unit_from(rest)]
-    end
-  end
-
-  defp localized_unit_from([first | rest]) do
-    [localized_unit_from(first) | localized_unit_from(rest)]
-  end
-
-  # We ahve two patterns. The prefix pattern
-  # has the prefix string somewhere in iy.
-  # This needs to be extracts and prepended
-  # onto the right part of the format list.
-  defp merge_prefix(prefix_pattern, format_list) when is_list(prefix_pattern) do
-    prefix = extract_prefix(prefix_pattern)
-    merge_prefix(prefix, format_list)
-  end
-
-  defp merge_prefix(prefix, [head | rest]) do
-    case head do
-       << c :: utf8, _rest :: binary >> when c in ?0..?9 ->
-         [head | merge_prefix(prefix, rest)]
-
-       other ->
-         [String.replace(other, ~r/([^\s]+)/u, "#{prefix}\\1") | rest]
-    end
-  end
-
-  def extract_prefix([0, prefix]), do: prefix
-  def extract_prefix([prefix, 0]), do: prefix
-
-  defp number_of_substitutions(list) when length(list) <= 2, do: 1
-  defp number_of_substitutions(_list), do: 2
-
-  @spec wrap_ok(any()) :: {:ok, any()}
-  defp wrap_ok(other), do: {:ok, other}
 
   @doc """
   Return the value of the Unit struct
