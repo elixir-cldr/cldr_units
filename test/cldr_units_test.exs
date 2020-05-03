@@ -1,5 +1,6 @@
 defmodule Cldr.UnitsTest do
   use ExUnit.Case
+  alias Cldr.Unit
 
   test "that centimetre conversion is correct" do
     assert Cldr.Unit.convert(Cldr.Unit.new!(:millimeter, 300), :centimeter) ==
@@ -7,10 +8,10 @@ defmodule Cldr.UnitsTest do
   end
 
   test "that pluralization in non-en locales works" do
-    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :microsecond) ==
+    assert Cldr.Unit.to_string!(Unit.new!(1, :microsecond), MyApp.Cldr, locale: "de") ==
              "1 Mikrosekunde"
 
-    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :microsecond) ==
+    assert Cldr.Unit.to_string!(Unit.new!(1, :microsecond), MyApp.Cldr, locale: "de") ==
              "123 Mikrosekunden"
 
     assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :pint) == "1 Pint"

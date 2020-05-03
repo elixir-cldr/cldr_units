@@ -102,38 +102,35 @@ defmodule Cldr.Unit.Backend do
 
         ## Examples
 
-            iex> #{inspect(__MODULE__)}.to_string 123, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 123)
             {:ok, "123 gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1)
             {:ok, "1 gallon"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "af"
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1), locale: "af"
             {:ok, "1 gelling"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "af-NA"
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1), locale: "af-NA"
             {:ok, "1 gelling"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1, unit: :gallon, locale: "bs"
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1), locale: "bs"
             {:ok, "1 galon"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :gallon, format: :long
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1234), format: :long
             {:ok, "1 thousand gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :gallon, format: :short
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:gallon, 1234), format: :short
             {:ok, "1K gallons"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megaherz, 1234)
             {:ok, "1,234 megahertz"}
 
-            iex> #{inspect(__MODULE__)}.to_string 1234, unit: :megahertz, style: :narrow
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megaherz, 1234), style: :narrow
             {:ok, "1,234MHz"}
 
-            iex> #{inspect(__MODULE__)}.to_string 123, unit: :megabyte, locale: "en", style: :unknown
+            iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
-            iex> #{inspect(__MODULE__)}.to_string 123, unit: :blabber, locale: "en"
-            {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"blabber\\""}}
 
         """
         @spec to_string(

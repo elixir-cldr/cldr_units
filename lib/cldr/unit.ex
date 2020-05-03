@@ -370,28 +370,28 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
       {:ok, "123 gallons"}
 
-      iex> Cldr.Unit.to_string 1, MyApp.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr
       {:ok, "1 gallon"}
 
-      iex> Cldr.Unit.to_string 1, MyApp.Cldr, unit: :gallon, locale: "af"
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
       {:ok, "1 gelling"}
 
-      iex> Cldr.Unit.to_string 1, MyApp.Cldr, unit: :gallon, locale: "bs"
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "bs"
       {:ok, "1 galon"}
 
-      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :gallon, format: :long
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :long
       {:ok, "1 thousand gallons"}
 
-      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :gallon, format: :short
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :short
       {:ok, "1K gallons"}
 
-      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :megahertz
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megaherz, 1234), MyApp.Cldr
       {:ok, "1,234 megahertz"}
 
-      iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: :megahertz, style: :narrow
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megaherz, 1234), MyApp.Cldr, style: :narrow
       {:ok, "1,234MHz"}
 
       iex> unit = Cldr.Unit.new!(123, :foot)
@@ -400,10 +400,6 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
-      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :blabber, locale: "en"
-      {:error, {Cldr.UnknownUnitError,
-        "Unknown unit was detected at \\"blabber\\""}}
 
   """
 
@@ -414,12 +410,12 @@ defmodule Cldr.Unit do
         ) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
-  def to_string(list_or_number, backend, options \\ [])
+  def to_string(list_or_unit, backend, options \\ [])
 
   # Options but no backend
-  def to_string(list_or_number, options, []) when is_list(options) do
+  def to_string(list_or_unit, options, []) when is_list(options) do
     locale = Cldr.get_locale()
-    to_string(list_or_number, locale.backend, options)
+    to_string(list_or_unit, locale.backend, options)
   end
 
   # It's a list of units so we format each of them
@@ -442,6 +438,12 @@ defmodule Cldr.Unit do
     end
   end
 
+  def to_string(number, backend, options) when is_number(number) do
+    with {:ok, unit} <- new(options[:unit], number) do
+      to_string(unit, backend, options)
+    end
+  end
+
   # Now we have a unit, a backend and some options but ratio
   # values need to be converted to floats
   def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
@@ -449,15 +451,25 @@ defmodule Cldr.Unit do
     to_string(unit, backend, options)
   end
 
-  def to_string(unit, backend, options) when is_list(options) do
+  def to_string(%Unit{} = unit, backend, options) when is_list(options) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style) do
 
       number = value(unit)
       {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
-      # extract patterns
+
+      number
+      |> extract_patterns(unit.base_conversion, locale, style, backend, options)
+      |> combine_patterns(number_string, locale, style, backend, options)
+      |> maybe_combine_per_unit(locale, style, backend, options)
+      |> :erlang.iolist_to_binary
+      |> wrap_ok
     end
+  end
+
+  defp wrap_ok(term) do
+    {:ok, term}
   end
 
   @doc """
@@ -521,13 +533,13 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.to_string! 123, MyApp.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
       "123 gallons"
 
-      iex> Cldr.Unit.to_string! 1, MyApp.Cldr, unit: :gallon
+      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr
       "1 gallon"
 
-      iex> Cldr.Unit.to_string! 1, MyApp.Cldr, unit: :gallon, locale: "af"
+      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
       "1 gelling"
 
   """
@@ -541,13 +553,72 @@ defmodule Cldr.Unit do
     end
   end
 
+  @spec extract_patterns(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
+          list() | {list(), list()}
+
+  defp extract_patterns(number, {unit_list, per_list}, locale, style, backend, options) do
+    {
+      extract_patterns(number, unit_list, locale, style, backend, options),
+      extract_patterns(1, per_list, locale, style, backend, options)
+    }
+  end
+
+  defp extract_patterns(number, %{base_unit: unit}, locale, style, backend, options) do
+    [to_pattern(number, hd(unit), locale, style, backend, options)]
+  end
+
+  defp extract_patterns(number, conversion, locale, style, backend, options) do
+    Enum.map conversion, fn
+      {unit, _} -> to_pattern(number, unit, locale, style, backend, options)
+    end
+  end
+
+  def combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
+    {
+      combine_patterns(patterns, number_string, locale, style, backend, options),
+      combine_patterns(per_patterns, "", locale, style, backend, options)
+    }
+  end
+
+  # Substitute the number_string into the first position but
+  # not the rest
+  def combine_patterns([pattern], number_string, _locale, _style, _backend, _options) do
+    Substitution.substitute(number_string, pattern)
+  end
+
+  def combine_patterns([pattern | rest], number_string, locale, style, backend, _options) do
+    units = units_for(locale, style, backend)
+    times_pattern = get_in(units, [:times, :compound_unit_pattern])
+
+    [
+      Substitution.substitute(number_string, pattern) |
+      Enum.map(rest, fn p ->
+        Substitution.substitute("", p)
+        |> Enum.map(&String.trim/1)
+      end)
+    ]
+    |> Substitution.substitute(times_pattern)
+  end
+
+  def maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
+    units = units_for(locale, style, backend)
+    per_pattern = get_in(units, [:per, :compound_unit_pattern])
+
+    Substitution.substitute([unit_list, per_units], per_pattern)
+  end
+
+  def maybe_combine_per_unit(unit_list, _locale, _style, _backend, _options) do
+    unit_list
+  end
+
   @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
           list()
 
-  defp to_pattern(number, unit, locale, style, backend, options) when unit in @translatable_units do
+  defp to_pattern(number, unit, locale, style, backend, _options)
+      when unit in @translatable_units do
     {:ok, patterns} = pattern_for(locale, style, unit, backend)
     cardinal_module = Module.concat(backend, Number.Cardinal)
-    [cardinal_module.pluralize(number, locale, patterns)]
+    cardinal_module.pluralize(number, locale, patterns)
   end
 
   for {prefix, power} <- Prefix.power_units() do
@@ -557,9 +628,10 @@ defmodule Cldr.Unit do
     defp to_pattern(number, unquote(match), locale, style, backend, options) do
       units = units_for(locale, style, backend)
       pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern1])
-
       unit = maybe_translatable_unit(unit)
-      [pattern | to_pattern(number, unit, locale, style, backend, options)]
+
+      pattern
+      |> merge_power_prefix(to_pattern(number, unit, locale, style, backend, options))
     end
   end
 
@@ -571,10 +643,48 @@ defmodule Cldr.Unit do
     defp to_pattern(number, unquote(match), locale, style, backend, options) do
       units = units_for(locale, style, backend)
       pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
-
       unit = maybe_translatable_unit(unit)
-      [pattern | to_pattern(number, unit, locale, style, backend, options)]
+
+      pattern
+      |> merge_SI_prefix(to_pattern(number, unit, locale, style, backend, options))
     end
+  end
+
+  # Merging power and SI prefixes into a pattern is a heuristic since the
+  # underlying data does not convey those rules.
+
+  @merge_SI_prefix  ~r/([^\s]+)$/u
+  defp merge_SI_prefix([prefix, place], [place, string]) when is_integer(place) do
+    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
+  end
+
+  defp merge_SI_prefix([prefix, place], [string, place]) when is_integer(place) do
+    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
+  end
+
+  defp merge_SI_prefix([place, prefix], [place, string]) when is_integer(place) do
+    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
+  end
+
+  defp merge_SI_prefix([place, prefix], [string, place]) when is_integer(place) do
+    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
+  end
+
+  @merge_power_prefix ~r/^(\s)+/u
+  defp merge_power_prefix([prefix, place], [place, string]) when is_integer(place) do
+    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
+  end
+
+  defp merge_power_prefix([prefix, place], [string, place]) when is_integer(place) do
+    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
+  end
+
+  defp merge_power_prefix([place, prefix], [place, string]) when is_integer(place) do
+    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
+  end
+
+  defp merge_power_prefix([place, prefix], [string, place]) when is_integer(place) do
+    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
   end
 
   @doc """
