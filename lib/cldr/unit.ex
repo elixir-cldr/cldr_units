@@ -1381,10 +1381,16 @@ defmodule Cldr.Unit do
   end
 
   def validate_unit(unit_name) when is_binary(unit_name) do
-    with {:ok, parsed} <- Parser.parse_unit(unit_name) do
-      name = Parser.canonical_unit_name(parsed)
-      canonical_name = maybe_translatable_unit(name)
-      {:ok, canonical_name, parsed}
+    unit_name = maybe_translatable_unit(unit_name)
+
+    if is_atom(unit_name) do
+      validate_unit(unit_name)
+    else
+      with {:ok, parsed} <- Parser.parse_unit(unit_name) do
+        name = Parser.canonical_unit_name(parsed)
+        canonical_name = maybe_translatable_unit(name)
+        {:ok, canonical_name, parsed}
+      end
     end
   end
 

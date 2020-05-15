@@ -154,6 +154,11 @@ defmodule Cldr.UnitsTest do
 
   end
 
+  test "that a translatable unit name in binary form gets identified as translatable" do
+    assert {:ok, "1 kilowatt hour"} ==
+      Cldr.Unit.new!(1, "kilowatt_hour") |> MyApp.Cldr.Unit.to_string
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)
