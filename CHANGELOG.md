@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.0.1
+
+This is the changelog for Cldr_units v3.0.1 released on May 15th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Corrects unit creation when the unit itself is directly translatable (like `:kilowatt_hour`) but there is no explicit conversion, just an implicit calculated conversion. Thanks to @syfgkjasdkn.
+
 # Changelog for Cldr_Units v3.0.0
 
 This is the changelog for Cldr_units v3.0.0 released on May 4th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

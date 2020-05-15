@@ -145,6 +145,15 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(unit) == {:ok, "3 metres⋅amperes⋅volts"}
   end
 
+  test "create a unit that is directly translatable but has no explicit conversion" do
+    assert {:ok, "1 kilowatt hour"} ==
+      Cldr.Unit.new!(1, :kilowatt_hour) |> MyApp.Cldr.Unit.to_string
+
+    assert {:ok, "1 Kilowattstunde"} ==
+      Cldr.Unit.new!(1, :kilowatt_hour) |> MyApp.Cldr.Unit.to_string(locale: "de")
+
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

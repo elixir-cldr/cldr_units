@@ -316,6 +316,10 @@ defmodule Cldr.Unit.Parser do
     |> Enum.join("_")
   end
 
+  defp extract_base_unit({_unit_name, subunits}) when is_list(subunits) do
+    canonical_base_subunit(subunits)
+  end
+
   @unit_strings Conversions.conversions()
                 |> Map.keys()
                 |> Cldr.Map.stringify_values()
