@@ -195,6 +195,115 @@ defmodule Cldr.Unit.Backend do
         end
 
         @doc """
+        Formats a number into an iolist according to a unit definition
+        for a locale.
+
+        ## Arguments
+
+        * `list_or_number` is any number (integer, float or Decimal) or a
+          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+
+        * `options` is a keyword list
+
+        ## Options
+
+        * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
+          the number to be formatted is a `Cldr.Unit.t()` struct
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+          The current styles are `:long`, `:short` and `:narrow`.
+          The default is `style: :long`
+
+        * `:per` allows compound units to be formatted. For example, assume
+          we want to format a string which represents "kilograms per second".
+          There is no such unit defined in CLDR (or perhaps anywhere!).
+          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
+          we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
+          Each locale defines a specific way to format such a compount unit.
+          Usually it will return something like `20 kilograms/second`
+
+        * `:list_options` is a keyword list of options for formatting a list
+          which is passed through to `Cldr.List.to_string/3`. This is only
+          applicable when formatting a list of units.
+
+        * Any other options are passed to `Cldr.Number.to_string/2`
+          which is used to format the `number`
+
+        ## Returns
+
+        * `{:ok, io_list}` or
+
+        * `{:error, {exception, message}}`
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.to_iolist Cldr.Unit.new!(:gallon, 123)
+            {:ok, ["123", " gallons"]}
+
+            iex> #{inspect(__MODULE__)}.to_iolist Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
+            {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
+
+        """
+        @spec to_iolist(Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+                {:ok, list()} | {:error, {atom, binary}}
+
+        def to_iolist(number, options \\ []) do
+          Cldr.Unit.to_iolist(number, unquote(backend), options)
+        end
+
+        @doc """
+        Formats a unit using `to_iolist/3` but raises if there is
+        an error.
+
+        ## Arguments
+
+        * `list_or_number` is any number (integer, float or Decimal) or a
+          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+
+        * `options` is a keyword list
+
+        ## Options
+
+        * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
+          the number to be formatted is a `Cldr.Unit.t()` struct
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+          The current styles are `:long`, `:short` and `:narrow`.
+          The default is `style: :long`
+
+        * `:list_options` is a keyword list of options for formatting a list
+          which is passed through to `Cldr.List.to_string/3`. This is only
+          applicable when formatting a list of units.
+
+        * Any other options are passed to `Cldr.Number.to_string/2`
+          which is used to format the `number`
+
+        ## Returns
+
+        * `io_list` or
+
+        * raises and exception
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.to_iolist! 123, unit: :gallon
+            ["123", " gallons"]
+
+        """
+        @spec to_iolist!(Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
+          list() | no_return()
+
+        def to_iolist!(number, options \\ []) do
+          Cldr.Unit.to_iolist!(number, unquote(backend), options)
+        end
+
+        @doc """
         Returns a list of the preferred units for a given
         unit, locale, use case and scope.
 

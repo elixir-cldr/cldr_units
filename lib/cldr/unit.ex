@@ -451,6 +451,96 @@ defmodule Cldr.Unit do
   end
 
   def to_string(%Unit{} = unit, backend, options) when is_list(options) do
+    with {:ok, list} <- to_iolist(unit, backend, options) do
+      list
+      |> :erlang.iolist_to_binary
+      |> String.replace(~r/([\s])+/, "\\1")
+      |> wrap(:ok)
+    end
+  end
+
+  @doc """
+  Formats a number into a iolist according to a unit definition
+  for the current process's locale and backend.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.to_iolist/3` for full details.
+
+  """
+  @spec to_iolist(list_or_number :: value | t() | [t()]) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
+
+  def to_iolist(unit) do
+    locale = Cldr.get_locale()
+    backend = locale.backend
+    to_iolist(unit, backend, locale: locale)
+  end
+
+  @doc """
+  Formats a number into an `iolist` according to a unit definition
+  for a locale.
+
+  During processing any `:format_options` of a `Unit.t()` are merged with
+  `options` with `options` taking precedence.
+
+  ## Arguments
+
+  * `list_or_number` is any number (integer, float or Decimal) or a
+    `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend/0`.
+
+  * `options` is a keyword list of options.
+
+  ## Options
+
+  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
+    the number to be formatted is a `Cldr.Unit.t()` struct
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `:style` is one of those returned by `Cldr.Unit.styles`.
+    The current styles are `:long`, `:short` and `:narrow`.
+    The default is `style: :long`
+
+  * `:list_options` is a keyword list of options for formatting a list
+    which is passed through to `Cldr.List.to_string/3`. This is only
+    applicable when formatting a list of units.
+
+  * Any other options are passed to `Cldr.Number.to_string/2`
+    which is used to format the `number`
+
+  ## Returns
+
+  * `{:ok, io_list}` or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.to_iolist Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
+      {:ok, ["123", " gallons"]}
+
+      iex> Cldr.Unit.to_iolist 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
+      {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
+
+  """
+  @spec to_iolist(t() | number(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+          {:ok, list()} | {:error, {module, binary}}
+
+  def to_iolist(unit, backend, options \\ [])
+
+  # Options but no backend
+  def to_iolist(unit, options, []) when is_list(options) do
+    locale = Cldr.get_locale()
+    to_iolist(unit, locale.backend, options)
+  end
+
+  def to_iolist(%Unit{} = unit, backend, options) when is_list(options) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style) do
@@ -463,14 +553,18 @@ defmodule Cldr.Unit do
       |> extract_patterns(unit.base_conversion, locale, style, backend, options)
       |> combine_patterns(number_string, locale, style, backend, options)
       |> maybe_combine_per_unit(locale, style, backend, options)
-      |> :erlang.iolist_to_binary
-      |> String.replace(~r/([\s])+/, "\\1")
-      |> wrap_ok
+      |> wrap(:ok)
     end
   end
 
-  defp wrap_ok(term) do
-    {:ok, term}
+  def to_iolist(number, backend, options) when is_number(number) do
+    with {:ok, unit} <- new(options[:unit], number) do
+      to_iolist(unit, backend, options)
+    end
+  end
+
+  defp wrap(term, tag) do
+    {tag, term}
   end
 
   @doc """
@@ -549,6 +643,81 @@ defmodule Cldr.Unit do
 
   def to_string!(unit, backend, options \\ []) do
     case to_string(unit, backend, options) do
+      {:ok, string} -> string
+      {:error, {exception, message}} -> raise exception, message
+    end
+  end
+
+  @doc """
+  Formats a number into an iolist according to a unit definition
+  for the current process's locale and backend or raises
+  on error.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.to_iolist!/3` for full details.
+
+  """
+  @spec to_iolist!(list_or_number :: value | t() | [t()]) ::
+          list() | no_return()
+
+  def to_iolist!(unit) do
+    locale = Cldr.get_locale()
+    backend = locale.backend
+    to_iolist!(unit, backend, locale: locale)
+  end
+
+  @doc """
+  Formats a number into an iolist according to a unit definition
+  for the current process's locale and backend or raises
+  on error.
+
+  During processing any `:format_options` of a `Unit.t()` are merged with
+  `options` with `options` taking precedence.
+
+  ## Arguments
+
+  * `number` is any number (integer, float or Decimal) or a
+    `Cldr.Unit.t()` struct
+
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend/0`.
+
+  * `options` is a keyword list
+
+  ## Options
+
+  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
+    the number to be formatted is a `Cldr.Unit.t()` struct
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+    The current styles are `:long`, `:short` and `:narrow`.
+    The default is `style: :long`
+
+  * Any other options are passed to `Cldr.Number.to_string/2`
+    which is used to format the `number`
+
+  ## Returns
+
+  * `io_list` or
+
+  * raises an exception
+
+  ## Examples
+
+      iex> Cldr.Unit.to_iolist! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
+      ["123", " gallons"]
+
+  """
+  @spec to_iolist!(t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+          list() | no_return()
+
+  def to_iolist!(unit, backend, options \\ []) do
+    case to_iolist(unit, backend, options) do
       {:ok, string} -> string
       {:error, {exception, message}} -> raise exception, message
     end

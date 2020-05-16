@@ -1,6 +1,10 @@
-# Changelog for Cldr_Units v3.0.2
+# Changelog for Cldr_Units v3.1.0
 
-This is the changelog for Cldr_units v3.0.2 released on May 16th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.1.0 released on May 16th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Add `Cldr.Unit.to_iolist/3` and `Cldr.Unit.to_iolist!/3` to return the formatted unit as an iolist rather than a string. This allows for formatting the number and the unit name differently. It also allows some efficiency in inserting formatted content into a Phoenix workflow since it handles iolists efficiently.
 
 ### Bug Fixes
 
