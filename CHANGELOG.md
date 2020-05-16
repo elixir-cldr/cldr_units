@@ -1,3 +1,13 @@
+# Changelog for Cldr_Units v3.0.2
+
+This is the changelog for Cldr_units v3.0.2 released on May 16th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix resolving translatable unit names from strings
+
+* Fix converting translatable units that have a "per" conversion
+
 # Changelog for Cldr_Units v3.0.1
 
 This is the changelog for Cldr_units v3.0.1 released on May 15th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

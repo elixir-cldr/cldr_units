@@ -1380,8 +1380,12 @@ defmodule Cldr.Unit do
     |> validate_unit
   end
 
+  # FIXME refactor this hacky conditional
   def validate_unit(unit_name) when is_binary(unit_name) do
-    unit_name = maybe_translatable_unit(unit_name)
+    unit_name =
+      unit_name
+      |> normalize_unit_name
+      |> maybe_translatable_unit
 
     if is_atom(unit_name) do
       validate_unit(unit_name)
@@ -1408,9 +1412,14 @@ defmodule Cldr.Unit do
     {:error, unit_error(unknown_unit)}
   end
 
+  @doc false
+  def normalize_unit_name(name) when is_binary(name) do
+    String.replace(name, [" ", "-"], "_")
+  end
+
   def maybe_translatable_unit(name) do
     atom_name = String.to_existing_atom(name)
-    if Enum.find(@translatable_units, &(atom_name == &1)) do
+    if atom_name in known_units() do
       atom_name
     else
       name

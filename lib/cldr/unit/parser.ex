@@ -72,10 +72,10 @@ defmodule Cldr.Unit.Parser do
   @per "_per_"
   def parse_unit(unit_string) when is_binary(unit_string) do
     unit_string
-    |> String.replace([" ", "-"], "_")
+    |> Cldr.Unit.normalize_unit_name
     |> String.split(@per, parts: 2)
     |> Enum.map(&parse_subunit/1)
-    |> wrap_ok
+    |> wrap(:ok)
   rescue
     e in [Cldr.UnknownUnitError, Cldr.Unit.UnknownBaseUnitError] ->
       {:error, {e.__struct__, e.message}}
@@ -288,12 +288,12 @@ defmodule Cldr.Unit.Parser do
   # We wrap in a tuple since a nested list can
   # create ambiguous processing in other places
 
-  defp wrap_ok([numerator, denominator]) do
-    {:ok, {numerator, denominator}}
+  defp wrap([numerator, denominator], tag) do
+    {tag, {numerator, denominator}}
   end
 
-  defp wrap_ok([numerator]) do
-    {:ok, numerator}
+  defp wrap([numerator], tag) do
+    {tag, numerator}
   end
 
   defp canonical_base_subunit([conversion]) do

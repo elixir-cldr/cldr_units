@@ -87,6 +87,11 @@ defmodule Cldr.Unit.Conversion do
     convert_to_base(value, from)
   end
 
+  # A known translation with a "per" conversion
+  def convert_to_base(value, [{_, {_, _} = from}]) do
+    convert_to_base(value, from)
+  end
+
   def convert_to_base(value, {_, %__MODULE__{} = from}) do
     convert_to_base(value, from)
   end
@@ -105,6 +110,10 @@ defmodule Cldr.Unit.Conversion do
     convert_to_base(value, numerator) |> convert_to_base(rest)
   end
 
+  def convert_to_base(_value, conversion) do
+    raise ArgumentError, "Conversion not recognised: #{inspect conversion}"
+  end
+
   def convert_from_base(value, %__MODULE__{} = to) do
     use Ratio
     %{factor: to_factor, offset: to_offset} = to
@@ -112,6 +121,11 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def convert_from_base(value, [{_, [{_, to}]}]) do
+    convert_from_base(value, to)
+  end
+
+  # A known translation with a "per" conversion
+  def convert_from_base(value, [{_, {_, _} = to}]) do
     convert_from_base(value, to)
   end
 
