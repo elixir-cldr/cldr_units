@@ -730,12 +730,22 @@ defmodule Cldr.Unit do
     }
   end
 
-  defp extract_patterns(number, conversion, locale, style, backend, options) do
-    Enum.map conversion, fn
-      {unit, _} -> to_pattern(number, unit, locale, style, backend, options)
-    end
+  # When extracting a list of patterns the objective is to use the singluar
+  # form of the pattern for all except the last element which uses the
+  # plural form indicated by the number
+  defp extract_patterns(number, [{unit, _conversion}], locale, style, backend, options) do
+    [to_pattern(number, unit, locale, style, backend, options)]
   end
 
+  defp extract_patterns(number, [{unit, _conversion} | rest], locale, style, backend, options) do
+    [to_pattern(1, unit, locale, style, backend, options) |
+      extract_patterns(number, rest, locale, style, backend, options)]
+  end
+
+  # Combine the patterns merging prefix and units, applying "times" for
+  # compound units and the "per" pattern if required.  This are some heuristics
+  # here than may not result in a grammatically correct result for some
+  # languages
   defp combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
     {
       combine_patterns(patterns, number_string, locale, style, backend, options),

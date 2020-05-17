@@ -142,7 +142,7 @@ defmodule Cldr.UnitsTest do
 
   test "a muliplied unit to_string" do
     unit = Cldr.Unit.new!("meter ampere volt", 3)
-    assert Cldr.Unit.to_string(unit) == {:ok, "3 metres⋅amperes⋅volts"}
+    assert Cldr.Unit.to_string(unit) == {:ok, "3 metre⋅ampere⋅volts"}
   end
 
   test "create a unit that is directly translatable but has no explicit conversion" do
