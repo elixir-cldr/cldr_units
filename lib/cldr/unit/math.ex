@@ -22,7 +22,7 @@ defmodule Cldr.Unit.Math do
     that is the sum of `unit_1` and the potentially converted
     `unit_2` or
 
-  * {:error, {IncompatibleUnitError, message}}
+  * `{:error, {IncompatibleUnitError, message}}`
 
   ## Examples
 

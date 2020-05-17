@@ -173,7 +173,7 @@ defmodule Cldr.Unit.Backend do
 
         * `formatted_string` or
 
-        * raises and exception
+        * raises an exception
 
         ## Examples
 
@@ -288,7 +288,7 @@ defmodule Cldr.Unit.Backend do
 
         * `io_list` or
 
-        * raises and exception
+        * raises an exception
 
         ## Examples
 
