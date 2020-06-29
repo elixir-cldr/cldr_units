@@ -453,7 +453,7 @@ defmodule Cldr.Unit do
   def to_string(%Unit{} = unit, backend, options) when is_list(options) do
     with {:ok, list} <- to_iolist(unit, backend, options) do
       list
-      |> :erlang.iolist_to_binary
+      |> :erlang.iolist_to_binary()
       |> String.replace(~r/([\s])+/, "\\1")
       |> wrap(:ok)
     end
@@ -544,9 +544,8 @@ defmodule Cldr.Unit do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style) do
-
       number = value(unit)
-      options = Keyword.merge(unit.format_options, options)
+      options = Keyword.merge(unit.format_options, options) |> Keyword.put(:locale, locale)
       {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
 
       number
@@ -738,8 +737,10 @@ defmodule Cldr.Unit do
   end
 
   defp extract_patterns(number, [{unit, _conversion} | rest], locale, style, backend, options) do
-    [to_pattern(1, unit, locale, style, backend, options) |
-      extract_patterns(number, rest, locale, style, backend, options)]
+    [
+      to_pattern(1, unit, locale, style, backend, options)
+      | extract_patterns(number, rest, locale, style, backend, options)
+    ]
   end
 
   # Combine the patterns merging prefix and units, applying "times" for
@@ -762,11 +763,11 @@ defmodule Cldr.Unit do
     times_pattern = get_in(units, [:times, :compound_unit_pattern])
 
     [
-      Substitution.substitute(number_string, pattern) |
-      Enum.map(rest, fn p ->
-        Substitution.substitute("", p)
-        |> Enum.map(&String.trim/1)
-      end)
+      Substitution.substitute(number_string, pattern)
+      | Enum.map(rest, fn p ->
+          Substitution.substitute("", p)
+          |> Enum.map(&String.trim/1)
+        end)
     ]
     |> join_list(times_pattern)
   end
@@ -795,7 +796,7 @@ defmodule Cldr.Unit do
           list()
 
   defp to_pattern(number, unit, locale, style, backend, _options)
-      when unit in @translatable_units do
+       when unit in @translatable_units do
     {:ok, patterns} = pattern_for(locale, style, unit, backend)
     cardinal_module = Module.concat(backend, Number.Cardinal)
     cardinal_module.pluralize(number, locale, patterns)
@@ -833,7 +834,7 @@ defmodule Cldr.Unit do
   # Merging power and SI prefixes into a pattern is a heuristic since the
   # underlying data does not convey those rules.
 
-  @merge_SI_prefix  ~r/([^\s]+)$/u
+  @merge_SI_prefix ~r/([^\s]+)$/u
   defp merge_SI_prefix([prefix, place], [place, string]) when is_integer(place) do
     [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
   end
@@ -1598,6 +1599,7 @@ defmodule Cldr.Unit do
 
   def maybe_translatable_unit(name) do
     atom_name = String.to_existing_atom(name)
+
     if atom_name in known_units() do
       atom_name
     else
