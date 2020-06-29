@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.1.1
+
+This is the changelog for Cldr_units v3.1.1 released on June 29th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Ensure that `:locale` is passed through to `Cldr.Numnber.to_string/3`. Thanks for the PR to @zurga. Closes #14.
+
 # Changelog for Cldr_Units v3.1.0
 
 This is the changelog for Cldr_units v3.1.0 released on May 18th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
