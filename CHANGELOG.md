@@ -4,7 +4,7 @@ This is the changelog for Cldr_units v3.1.1 released on June 29th, 2020.  For ol
 
 ### Bug Fixes
 
-* Ensure that `:locale` is passed through to `Cldr.Numnber.to_string/3`. Thanks for the PR to @Zurga. Closes #14.
+* Ensure that `:locale` is passed through to `Cldr.Number.to_string/3`. Thanks for the PR to @Zurga. Closes #14.
 
 # Changelog for Cldr_Units v3.1.0
 
