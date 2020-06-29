@@ -909,7 +909,7 @@ defmodule Cldr.Unit do
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
   * `unit_list` is a list of valid units (one or
-    more from the list returned by `Cldr.units/0`. All
+    more from the list returned by `Cldr.Unit.known_units/0`. All
     units must be from the same unit category.
 
   * `format_options` is a Keyword list of options
