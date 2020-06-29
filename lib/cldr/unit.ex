@@ -545,7 +545,12 @@ defmodule Cldr.Unit do
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style) do
       number = value(unit)
-      options = Keyword.merge(unit.format_options, options) |> Keyword.put(:locale, locale)
+
+      options =
+        unit.format_options
+        |> Keyword.merge(options)
+        |> Keyword.put(:locale, locale)
+
       {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
 
       number
