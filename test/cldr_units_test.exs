@@ -22,6 +22,11 @@ defmodule Cldr.UnitsTest do
              "123 Jahrhunderte"
   end
 
+  test "locale option is passed to Cldr.Number.to_string" do
+    assert Cldr.Unit.to_string!(1, MyApp.Cldr, format: :spellout, locale: "de", unit: :pint) ==
+             "eins Pint"
+  end
+
   test "decimal" do
     unit = Cldr.Unit.new!(Decimal.new("300"), :minute)
 
@@ -147,16 +152,15 @@ defmodule Cldr.UnitsTest do
 
   test "create a unit that is directly translatable but has no explicit conversion" do
     assert {:ok, "1 kilowatt hour"} ==
-      Cldr.Unit.new!(1, :kilowatt_hour) |> MyApp.Cldr.Unit.to_string
+             Cldr.Unit.new!(1, :kilowatt_hour) |> MyApp.Cldr.Unit.to_string()
 
     assert {:ok, "1 Kilowattstunde"} ==
-      Cldr.Unit.new!(1, :kilowatt_hour) |> MyApp.Cldr.Unit.to_string(locale: "de")
-
+             Cldr.Unit.new!(1, :kilowatt_hour) |> MyApp.Cldr.Unit.to_string(locale: "de")
   end
 
   test "that a translatable unit name in binary form gets identified as translatable" do
     assert {:ok, "1 kilowatt hour"} ==
-      Cldr.Unit.new!(1, "kilowatt_hour") |> MyApp.Cldr.Unit.to_string
+             Cldr.Unit.new!(1, "kilowatt_hour") |> MyApp.Cldr.Unit.to_string()
   end
 
   if function_exported?(Code, :fetch_docs, 1) do
@@ -168,5 +172,4 @@ defmodule Cldr.UnitsTest do
       {:docs_v1, _, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(MyApp.Cldr)
     end
   end
-
 end
