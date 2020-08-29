@@ -132,7 +132,7 @@ defmodule Cldr.Unit.Backend do
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
         """
-        @spec to_string(Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+        @spec to_string(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
@@ -187,7 +187,7 @@ defmodule Cldr.Unit.Backend do
             "1 gelling"
 
         """
-        @spec to_string!(Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
+        @spec to_string!(Cldr.Unit.value() | Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
           String.t() | no_return()
 
         def to_string!(number, options \\ []) do
@@ -247,7 +247,7 @@ defmodule Cldr.Unit.Backend do
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
         """
-        @spec to_iolist(Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+        @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, list()} | {:error, {atom, binary}}
 
         def to_iolist(number, options \\ []) do
@@ -296,7 +296,7 @@ defmodule Cldr.Unit.Backend do
             ["123", " gallons"]
 
         """
-        @spec to_iolist!(Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
+        @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
           list() | no_return()
 
         def to_iolist!(number, options \\ []) do

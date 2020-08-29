@@ -11,4 +11,8 @@ defmodule NoDocs.Cldr do
   use Cldr,
     providers: [Cldr.Number, Cldr.Unit, Cldr.List],
     generate_docs: false
+
+  def for_dialyzer do
+    Cldr.Unit.to_string!(1.234, unit: :kilogram)
+  end
 end

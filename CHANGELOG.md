@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.1.2
+
+This is the changelog for Cldr_units v3.1.2 released on August 29th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes dialyzer warning on `Cldr.Unit.to_string/3` and `Cldr.Unit.to_string!/3`. Thanks to @maennchen for the report. Closes #15.
+
 # Changelog for Cldr_Units v3.1.1
 
 This is the changelog for Cldr_units v3.1.1 released on June 29th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

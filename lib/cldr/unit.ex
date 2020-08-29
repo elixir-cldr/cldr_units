@@ -401,12 +401,15 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string unit, MyApp.Cldr
       {:ok, "123 feet"}
 
+      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :foot
+      {:ok, "123 feet"}
+
       iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
   """
 
-  @spec to_string(t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_string(value | t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(list_or_unit, backend, options \\ [])
@@ -437,6 +440,7 @@ defmodule Cldr.Unit do
     end
   end
 
+  # It's a number, not a unit struct
   def to_string(number, backend, options) when is_number(number) do
     with {:ok, unit} <- new(options[:unit], number) do
       to_string(unit, backend, options)
@@ -529,7 +533,7 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
   """
-  @spec to_iolist(t() | number(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_iolist(value() | t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
           {:ok, list()} | {:error, {module, binary}}
 
   def to_iolist(unit, backend, options \\ [])
@@ -582,7 +586,7 @@ defmodule Cldr.Unit do
   See `Cldr.Unit.to_string!/3` for full details.
 
   """
-  @spec to_string!(list_or_number :: value | t() | [t()]) ::
+  @spec to_string!(list_or_number :: value() | t() | [t()]) ::
           String.t() | no_return()
 
   def to_string!(unit) do
@@ -642,7 +646,7 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_string!(value() | t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
           String.t() | no_return()
 
   def to_string!(unit, backend, options \\ []) do
@@ -717,7 +721,7 @@ defmodule Cldr.Unit do
       ["123", " gallons"]
 
   """
-  @spec to_iolist!(t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_iolist!(value() | t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
           list() | no_return()
 
   def to_iolist!(unit, backend, options \\ []) do
@@ -727,6 +731,7 @@ defmodule Cldr.Unit do
     end
   end
 
+  @dialyzer {:nowarn_function, {:extract_patterns, 6}}
   defp extract_patterns(number, {unit_list, per_list}, locale, style, backend, options) do
     {
       extract_patterns(number, unit_list, locale, style, backend, options),
@@ -752,6 +757,7 @@ defmodule Cldr.Unit do
   # compound units and the "per" pattern if required.  This are some heuristics
   # here than may not result in a grammatically correct result for some
   # languages
+  @dialyzer {:nowarn_function, {:combine_patterns, 6}}
   defp combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
     {
       combine_patterns(patterns, number_string, locale, style, backend, options),
@@ -786,6 +792,7 @@ defmodule Cldr.Unit do
     join_list([head, tail], times_pattern)
   end
 
+  @dialyzer {:nowarn_function, {:maybe_combine_per_unit, 5}}
   defp maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
     units = units_for(locale, style, backend)
     per_pattern = get_in(units, [:per, :compound_unit_pattern])
