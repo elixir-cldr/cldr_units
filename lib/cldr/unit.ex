@@ -404,6 +404,9 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :foot
       {:ok, "123 feet"}
 
+      iex> Cldr.Unit.to_string Decimal.new(123), MyApp.Cldr, unit: :foot
+      {:ok, "123 feet"}
+
       iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
@@ -442,6 +445,12 @@ defmodule Cldr.Unit do
 
   # It's a number, not a unit struct
   def to_string(number, backend, options) when is_number(number) do
+    with {:ok, unit} <- new(options[:unit], number) do
+      to_string(unit, backend, options)
+    end
+  end
+
+  def to_string(%Decimal{} = number, backend, options) do
     with {:ok, unit} <- new(options[:unit], number) do
       to_string(unit, backend, options)
     end
