@@ -299,7 +299,7 @@ defmodule Cldr.Unit do
       false
 
   """
-  @spec compatible?(unit(), unit()) :: boolean
+  @spec compatible?(t() | unit(), t() | unit()) :: boolean
   def compatible?(unit_1, unit_2) do
     with {:ok, _unit_1, conversion_1} <- validate_unit(unit_1),
          {:ok, _unit_2, conversion_2} <- validate_unit(unit_2),
@@ -1511,7 +1511,8 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit_name` is an `atom()` or `String.t()`
+  * `unit_name` is an `atom()` or `String.t()`, supplied
+    as is or as part of an `Cldr.Unit.t()` struct.
 
   ## Returns
 
