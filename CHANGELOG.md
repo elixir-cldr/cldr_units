@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.1.3
+
+This is the changelog for Cldr_units v3.1.3 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix spec for `Cldr.Units.compatible?/2`. Thanks to @lostkobrakai.
+
 # Changelog for Cldr_Units v3.1.2
 
 This is the changelog for Cldr_units v3.1.2 released on August 29th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
