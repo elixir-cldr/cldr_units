@@ -1,8 +1,14 @@
-# Changelog for Cldr_Units v3.1.3
+# Changelog for Cldr_Units v3.2.0
 
-This is the changelog for Cldr_units v3.1.3 released on ____, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.2.0 released on September 5th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Support string form of unit usage when passed as option `:usage` to `Cldr.Unit.new/3`. This is required to support improved serialization in [ex_cldr_units_sql](https://hex.pm/packages/ex_cldr_units_sql)
 
 ### Bug Fixes
+
+* Correct the documentation to reflect the option `:usage` to `Cldr.Unit.new/3` rather than the incorrect `:use`.
 
 * Fix spec for `Cldr.Units.compatible?/2`. Thanks to @lostkobrakai.
 

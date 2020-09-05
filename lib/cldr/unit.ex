@@ -140,7 +140,7 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `:use` is the intended use of the unit. This
+  * `:usage` is the intended use of the unit. This
     is used during localization to convert the unit
     to that appropriate for the unit category,
     usage, target territory and unit value. The `:use`
@@ -164,6 +164,10 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.new(14, :gadzoots)
       {:error, {Cldr.UnknownUnitError,
         "Unknown unit was detected at \\"gadzoots\\""}}
+
+      iex> Cldr.Unit.new(:gallon, 23, usage: :fluid)
+
+      iex> Cldr.Unit.new(:gallon, 23, usage: "fluid")
 
   """
   @spec new(unit() | value(), value() | unit(), Keyword.t()) ::
@@ -227,7 +231,7 @@ defmodule Cldr.Unit do
   end
 
   @default_category_usage [@default_use]
-  defp validate_category_usage(category, usage) do
+  defp validate_category_usage(category, usage) when is_atom(usage) do
     usage_list = Map.get(unit_category_usage(), category, @default_category_usage)
 
     if usage in usage_list do
@@ -235,6 +239,17 @@ defmodule Cldr.Unit do
     else
       {:error, unknown_usage_error(category, usage)}
     end
+  end
+
+  defp validate_category_usage(category, "") do
+    validate_category_usage(category, @default_use)
+  end
+
+  defp validate_category_usage(category, usage) when is_binary(usage) do
+    atom_usage = String.to_existing_atom(usage)
+    validate_category_usage(category, atom_usage)
+  rescue ArgumentError ->
+    {:error, unknown_usage_error(category, usage)}
   end
 
   @doc """
