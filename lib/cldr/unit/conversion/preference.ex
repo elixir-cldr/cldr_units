@@ -236,7 +236,7 @@ defmodule Cldr.Unit.Preference do
   end
 
   defp validate_preference_options(options) when is_list(options) do
-    backend = Keyword.get_lazy(options, :backend, &Cldr.default_backend/0)
+    backend = Keyword.get_lazy(options, :backend, &Cldr.Unit.default_backend/0)
     locale = Keyword.get_lazy(options, :locale, &backend.get_locale/0)
     usage = Keyword.get(options, :usage, :default)
 
