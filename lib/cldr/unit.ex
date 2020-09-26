@@ -1408,7 +1408,7 @@ defmodule Cldr.Unit do
   end
 
   @doc false
-  def units_for(locale, style \\ default_style(), backend \\ Cldr.default_backend()) do
+  def units_for(locale, style \\ default_style(), backend \\ default_backend()) do
     module = Module.concat(backend, :"Elixir.Unit")
     module.units_for(locale, style)
   end
@@ -1732,5 +1732,17 @@ defmodule Cldr.Unit do
     integer = Unit.round(unit, 0, :down) |> Math.trunc()
     remainder = Math.sub(unit, integer)
     {integer, remainder}
+  end
+
+  @doc false
+  # TODO remove for Cldr 3.0
+  if Code.ensure_loaded?(Cldr) && function_exported?(Cldr, :default_backend!, 0) do
+    def default_backend do
+      Cldr.default_backend!()
+    end
+  else
+    def default_backend do
+      Cldr.default_backend()
+    end
   end
 end

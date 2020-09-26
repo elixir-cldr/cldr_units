@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.2.1
+
+This is the changelog for Cldr_units v3.2.1 released on September 26th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Use `Cldr.default_backend!/0` when available (as in later ex_cldr releases) since `Cldr.default_backend/0` is deprecated.
+
 # Changelog for Cldr_Units v3.2.0
 
 This is the changelog for Cldr_units v3.2.0 released on September 5th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
