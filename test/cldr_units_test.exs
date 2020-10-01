@@ -99,7 +99,7 @@ defmodule Cldr.UnitsTest do
 
   test "to_string a decimal unit" do
     u = Cldr.Unit.new!(Decimal.new(20), :meter)
-    assert Cldr.Unit.to_string(u) == {:ok, "20 metres"}
+    assert Cldr.Unit.to_string(u) == {:ok, "20 meters"}
   end
 
   test "to_string a ratio unit" do
@@ -124,7 +124,7 @@ defmodule Cldr.UnitsTest do
     assert localized ==
              [Cldr.Unit.new!(:meter, 311, usage: :road, format_options: [round_nearest: 50])]
 
-    assert Cldr.Unit.to_string!(localized) == "300 metres"
+    assert Cldr.Unit.to_string!(localized) == "300 meters"
   end
 
   test "creating a compound unit" do
@@ -134,20 +134,20 @@ defmodule Cldr.UnitsTest do
 
   test "to_string a compound unit" do
     unit = Cldr.Unit.new!("meter_per_kilogram", 1)
-    assert {:ok, "1 metre per kilogram"} = Cldr.Unit.to_string(unit)
+    assert {:ok, "1 meter per kilogram"} = Cldr.Unit.to_string(unit)
   end
 
   test "to_string a per compound unit" do
     unit = Cldr.Unit.new!("meter_per_square_kilogram", 1)
-    assert Cldr.Unit.to_string(unit) == {:ok, "1 metre per square kilogram"}
+    assert Cldr.Unit.to_string(unit) == {:ok, "1 meter per square kilogram"}
 
     unit = Cldr.Unit.new!("meter_per_square_kilogram", 2)
-    assert Cldr.Unit.to_string(unit) == {:ok, "2 metres per square kilogram"}
+    assert Cldr.Unit.to_string(unit) == {:ok, "2 meters per square kilogram"}
   end
 
   test "a muliplied unit to_string" do
     unit = Cldr.Unit.new!("meter ampere volt", 3)
-    assert Cldr.Unit.to_string(unit) == {:ok, "3 metre⋅ampere⋅volts"}
+    assert Cldr.Unit.to_string(unit) == {:ok, "3 meter-ampere-volts"}
   end
 
   test "create a unit that is directly translatable but has no explicit conversion" do

@@ -38,14 +38,14 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr_numbers, "~> 2.13"},
+      {:ex_cldr_numbers, path: "../cldr_numbers", override: true},
+      # {:ex_cldr_numbers, "~> 2.14"},
       {:ex_cldr_lists, "~> 2.5"},
       {:ratio, "~> 2.4"},
       {:decimal, "~> 1.6 or ~> 2.0", optional: true},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
-      {:jason, "~> 1.0", optional: true},
-      {:sweet_xml, "~> 0.6", only: [:dev, :test], optional: true}
+      {:jason, "~> 1.0", optional: true}
     ]
   end
 
