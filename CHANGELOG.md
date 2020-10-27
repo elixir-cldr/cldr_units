@@ -1,10 +1,10 @@
-# Changelog for Cldr_Units v3.3.0
+# Changelog for Cldr_Units v3.3.0-rc.0
 
-This is the changelog for Cldr_units v3.3.0 released on ______, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.3.0-rc.0 released on October 27th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 
-* Update to CLDR38
+* Update to [CLDR38](http://cldr.unicode.org/index/downloads/cldr-38)
 
 # Changelog for Cldr_Units v3.2.1
 

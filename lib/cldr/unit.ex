@@ -1125,7 +1125,7 @@ defmodule Cldr.Unit do
 
   @decimal_0 Decimal.new(0)
   def zero?(%Unit{value: %Decimal{} = value}) do
-    Cldr.Math.decimal_compare(value, @decimal_0) == :eq
+    Cldr.Decimal.compare(value, @decimal_0) == :eq
   end
 
   # Ratios that are zero are just integers

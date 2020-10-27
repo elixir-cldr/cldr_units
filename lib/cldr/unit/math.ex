@@ -512,7 +512,7 @@ defmodule Cldr.Unit.Math do
         %Unit{unit: unit, value: %Decimal{}} = unit_1,
         %Unit{unit: unit, value: %Decimal{}} = unit_2
       ) do
-    Cldr.Math.decimal_compare(unit_1.value, unit_2.value)
+    Cldr.Decimal.compare(unit_1.value, unit_2.value)
   end
 
   def compare(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
