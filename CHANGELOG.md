@@ -1,6 +1,14 @@
-# Changelog for Cldr_Units v3.3.0-rc.0
+# Changelog for Cldr_Units v3.3.1
 
-This is the changelog for Cldr_units v3.3.0-rc.0 released on October 27th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.3.1 released on November 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix `Cldr.Unit.localize/2` when no options are provided
+
+# Changelog for Cldr_Units v3.3.0
+
+This is the changelog for Cldr_units v3.3.0 released on November 1st, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 

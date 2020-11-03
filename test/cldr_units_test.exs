@@ -145,6 +145,11 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(unit) == {:ok, "2 meters per square kilogram"}
   end
 
+  test "localization with current process locales" do
+    assert Cldr.Unit.localize Cldr.Unit.new!(2, :meter, usage: :person_height)
+    assert Cldr.Unit.localize Cldr.Unit.new!(2, :meter, usage: :person_height), locale: "fr"
+  end
+
   test "a muliplied unit to_string" do
     unit = Cldr.Unit.new!("meter ampere volt", 3)
     assert Cldr.Unit.to_string(unit) == {:ok, "3 meter-ampere-volts"}

@@ -1010,7 +1010,7 @@ defmodule Cldr.Unit do
   def localize(unit) do
     locale = Cldr.get_locale()
     backend = locale.backend
-    localize(unit, backend, locale)
+    localize(unit, backend, locale: locale)
   end
 
   @doc """
