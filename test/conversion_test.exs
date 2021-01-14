@@ -29,4 +29,8 @@ defmodule Cldr.Unit.Conversion.Test do
       end
     end
   end
+
+  test "convert!/2" do
+    assert MyApp.Cldr.Unit.convert! MyApp.Cldr.Unit.new!(:foot, 3), :meter
+  end
 end

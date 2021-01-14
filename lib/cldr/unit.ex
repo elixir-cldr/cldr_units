@@ -1708,7 +1708,7 @@ defmodule Cldr.Unit do
   def incompatible_units_error(unit_1, unit_2) do
     {
       Unit.IncompatibleUnitsError,
-      "Operations can only be performed between units of the same category. " <>
+      "Operations can only be performed between units with the same category and base unit. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }
   end

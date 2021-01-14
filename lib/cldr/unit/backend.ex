@@ -55,6 +55,7 @@ defmodule Cldr.Unit.Backend do
         defdelegate round(unit), to: Cldr.Unit.Math
 
         defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
+        defdelegate convert!(unit_1, to_unit), to: Cldr.Unit.Conversion
 
         @doc """
         Formats a number into a string according to a unit definition for a locale.

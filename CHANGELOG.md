@@ -6,6 +6,8 @@ This is the changelog for Cldr_units v3.3.2 released on January 14th.  For older
 
 * Fix readme example for `MyApp.Cldr.Unit.convert/2`.  Thanks to @DamienFF. Closes #16.
 
+* Add missing `<backend>.convert!/2`
+
 # Changelog for Cldr_Units v3.3.1
 
 This is the changelog for Cldr_units v3.3.1 released on November 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
