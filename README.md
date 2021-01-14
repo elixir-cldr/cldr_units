@@ -216,8 +216,8 @@ iex> MyApp.Cldr.Unit.compatible? :foot, :liter
 false
 
 # Convert a unit
-iex> MyApp.Cldr.Unit.convert MyApp.Cldr.Unit.new(:foot, 3), :meter
-#Cldr.Unit<:meter, 0.9144111192392099>
+iex> MyApp.Cldr.Unit.convert MyApp.Cldr.Unit.new!(:foot, 3), :meter
+{:ok, #Cldr.Unit<:meter, 16472365997070327 <|> 18014398509481984>}
 
 ```
 
