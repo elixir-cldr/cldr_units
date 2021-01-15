@@ -115,6 +115,7 @@ defmodule Cldr.Unit do
   """
   @translatable_units @unit_tree
                       |> Map.delete(:compound)
+                      |> Map.delete(:coordinate)
                       |> Map.values()
                       |> List.flatten()
 
