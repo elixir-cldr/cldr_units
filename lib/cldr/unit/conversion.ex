@@ -10,10 +10,13 @@ defmodule Cldr.Unit.Conversion do
             offset: 0,
             base_unit: nil
 
+  @type factor :: integer | float | Ratio.t()
+  @type offset :: integer | float
+
   @type t :: %{
-          factor: integer | float | Ratio.t(),
+          factor: factor(),
           base_unit: [atom(), ...],
-          offset: integer | float
+          offset: offset()
         }
 
   alias Cldr.Unit

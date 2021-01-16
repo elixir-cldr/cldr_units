@@ -45,7 +45,7 @@ defmodule Cldr.Unit do
 
   @type unit :: atom() | String.t()
   @type usage :: atom()
-  @type style :: atom()
+  @type style :: :narrow | :short | :long
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
   @type conversion :: Conversion.t() | {[Conversion.t(), ...], [Conversion.t(), ...]} | list()
   @type locale :: Locale.locale_name() | LanguageTag.t()
