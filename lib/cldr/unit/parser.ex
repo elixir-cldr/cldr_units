@@ -72,7 +72,7 @@ defmodule Cldr.Unit.Parser do
   @per "_per_"
   def parse_unit(unit_string) when is_binary(unit_string) do
     unit_string
-    |> Cldr.Unit.normalize_unit_name
+    |> Cldr.Unit.normalize_unit_name()
     |> String.split(@per, parts: 2)
     |> Enum.map(&parse_subunit/1)
     |> wrap(:ok)
@@ -122,8 +122,8 @@ defmodule Cldr.Unit.Parser do
 
   def canonical_unit_name({numerator, denominator}) do
     to_string(canonical_subunit_name(numerator)) <>
-    @per <>
-    to_string(canonical_subunit_name(denominator))
+      @per <>
+      to_string(canonical_subunit_name(denominator))
   end
 
   def canonical_unit_name(numerator) do
@@ -416,12 +416,21 @@ defmodule Cldr.Unit.Parser do
     units
     |> Enum.group_by(& &1)
     |> Enum.map(fn
-      {k, v} when length(v) == 1 -> k
-      {k, v} when length(v) == 2 -> "square_#{k}"
-      {k, v} when length(v) == 3 -> "cubic_#{k}"
-      {k, v} -> raise(Cldr.UnknownUnitError,
-        "Unable to parse more than square and cubic powers. The requested unit " <>
-        "would require a base unit of #{inspect k} to the power of #{length(v)}")
+      {k, v} when length(v) == 1 ->
+        k
+
+      {k, v} when length(v) == 2 ->
+        "square_#{k}"
+
+      {k, v} when length(v) == 3 ->
+        "cubic_#{k}"
+
+      {k, v} ->
+        raise(
+          Cldr.UnknownUnitError,
+          "Unable to parse more than square and cubic powers. The requested unit " <>
+            "would require a base unit of #{inspect(k)} to the power of #{length(v)}"
+        )
     end)
   end
 

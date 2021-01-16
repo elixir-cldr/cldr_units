@@ -146,8 +146,8 @@ defmodule Cldr.UnitsTest do
   end
 
   test "localization with current process locales" do
-    assert Cldr.Unit.localize Cldr.Unit.new!(2, :meter, usage: :person_height)
-    assert Cldr.Unit.localize Cldr.Unit.new!(2, :meter, usage: :person_height), locale: "fr"
+    assert Cldr.Unit.localize(Cldr.Unit.new!(2, :meter, usage: :person_height))
+    assert Cldr.Unit.localize(Cldr.Unit.new!(2, :meter, usage: :person_height), locale: "fr")
   end
 
   test "a muliplied unit to_string" do

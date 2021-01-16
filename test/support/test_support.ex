@@ -139,7 +139,7 @@ defmodule Cldr.Unit.TestSupport do
     format_assertion_error(%{}, struct, [], :infinity, fn _, msg -> msg end, "")
   end
 
-  #==========================================================================================
+  # ==========================================================================================
   # This is the added clause to format function clause error exceptions
 
   preference_match =
@@ -204,7 +204,7 @@ defmodule Cldr.Unit.TestSupport do
     |> IO.iodata_to_binary()
   end
 
-  #===========================================================================================
+  # ===========================================================================================
 
   defp format_assertion_error(test, struct, stack, width, formatter, counter_padding) do
     label_padding_size = if has_value?(struct.right), do: 7, else: 6

@@ -114,7 +114,7 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def convert_to_base(_value, conversion) do
-    raise ArgumentError, "Conversion not recognised: #{inspect conversion}"
+    raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
   end
 
   def convert_from_base(value, %__MODULE__{} = to) do

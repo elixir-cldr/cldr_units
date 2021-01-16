@@ -4,7 +4,26 @@ defmodule Cldr.Unit.Backend do
     backend = config.backend
     config = Macro.escape(config)
 
-    quote location: :keep, bind_quoted: [module: module, backend: backend, config: config] do
+    {expanded_config, _} = Code.eval_quoted(config)
+    additional_conversions = Cldr.Unit.Definition.additional_units(expanded_config)
+
+    additional_units =
+      Enum.map(
+        additional_conversions,
+        fn {name, %{base_unit: base_unit}} -> {name, base_unit} end
+      )
+
+    additional_unit_localizations = Cldr.Unit.Definition.additional_localizations(expanded_config)
+
+    quote location: :keep,
+          bind_quoted: [
+            module: module,
+            backend: backend,
+            config: config,
+            additional_conversions: Macro.escape(additional_conversions),
+            additioanl_units: Macro.escape(additional_units),
+            additional_unit_localizations: Macro.escape(additional_unit_localizations)
+          ] do
       defmodule Unit do
         @moduledoc false
         if Cldr.Config.include_module_docs?(config.generate_docs) do
@@ -188,8 +207,8 @@ defmodule Cldr.Unit.Backend do
             "1 gelling"
 
         """
-        @spec to_string!(Cldr.Unit.value() | Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
-          String.t() | no_return()
+        @spec to_string!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+                String.t() | no_return()
 
         def to_string!(number, options \\ []) do
           Cldr.Unit.to_string!(number, unquote(backend), options)
@@ -297,8 +316,8 @@ defmodule Cldr.Unit.Backend do
             ["123", " gallons"]
 
         """
-        @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t()| [Cldr.Unit.t(), ...], Keyword.t()) ::
-          list() | no_return()
+        @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+                list() | no_return()
 
         def to_iolist!(number, options \\ []) do
           Cldr.Unit.to_iolist!(number, unquote(backend), options)

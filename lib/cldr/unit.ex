@@ -249,8 +249,9 @@ defmodule Cldr.Unit do
   defp validate_category_usage(category, usage) when is_binary(usage) do
     atom_usage = String.to_existing_atom(usage)
     validate_category_usage(category, atom_usage)
-  rescue ArgumentError ->
-    {:error, unknown_usage_error(category, usage)}
+  rescue
+    ArgumentError ->
+      {:error, unknown_usage_error(category, usage)}
   end
 
   @doc """
