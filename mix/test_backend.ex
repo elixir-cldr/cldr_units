@@ -4,8 +4,7 @@ defmodule MyApp.Cldr do
   use Cldr,
     locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE"],
     default_locale: "en",
-    providers: [Cldr.Number, Cldr.Unit, Cldr.List],
-    unit_providers: Cldr.Unit.Transport
+    providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 end
 
 defmodule NoDocs.Cldr do

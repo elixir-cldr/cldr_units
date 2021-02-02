@@ -4,26 +4,7 @@ defmodule Cldr.Unit.Backend do
     backend = config.backend
     config = Macro.escape(config)
 
-    {expanded_config, _} = Code.eval_quoted(config)
-    additional_conversions = Cldr.Unit.Definition.additional_units(expanded_config)
-
-    additional_units =
-      Enum.map(
-        additional_conversions,
-        fn {name, %{base_unit: base_unit}} -> {name, base_unit} end
-      )
-
-    additional_unit_localizations = Cldr.Unit.Definition.additional_localizations(expanded_config)
-
-    quote location: :keep,
-          bind_quoted: [
-            module: module,
-            backend: backend,
-            config: config,
-            additional_conversions: Macro.escape(additional_conversions),
-            additioanl_units: Macro.escape(additional_units),
-            additional_unit_localizations: Macro.escape(additional_unit_localizations)
-          ] do
+    quote location: :keep, bind_quoted: [module: module, backend: backend, config: config] do
       defmodule Unit do
         @moduledoc false
         if Cldr.Config.include_module_docs?(config.generate_docs) do
