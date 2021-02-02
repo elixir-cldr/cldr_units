@@ -55,9 +55,9 @@ defmodule Cldr.Unit.Preference do
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
       {:ok, [:centimeter], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
-      {:ok, [:foot], [round_nearest: 10]}
+      {:ok, [:foot], [round_nearest: 1]}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
-      {:ok, [:meter], [round_nearest: 10]}
+      {:ok, [:meter], [round_nearest: 1]}
 
   ## Notes
 

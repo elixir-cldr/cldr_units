@@ -4,26 +4,7 @@ defmodule Cldr.Unit.Backend do
     backend = config.backend
     config = Macro.escape(config)
 
-    {expanded_config, _} = Code.eval_quoted(config)
-    additional_conversions = Cldr.Unit.Definition.additional_units(expanded_config)
-
-    additional_units =
-      Enum.map(
-        additional_conversions,
-        fn {name, %{base_unit: base_unit}} -> {name, base_unit} end
-      )
-
-    additional_unit_localizations = Cldr.Unit.Definition.additional_localizations(expanded_config)
-
-    quote location: :keep,
-          bind_quoted: [
-            module: module,
-            backend: backend,
-            config: config,
-            additional_conversions: Macro.escape(additional_conversions),
-            additioanl_units: Macro.escape(additional_units),
-            additional_unit_localizations: Macro.escape(additional_unit_localizations)
-          ] do
+    quote location: :keep, bind_quoted: [module: module, backend: backend, config: config] do
       defmodule Unit do
         @moduledoc false
         if Cldr.Config.include_module_docs?(config.generate_docs) do
@@ -379,9 +360,9 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :person
             {:ok, [:centimeter], []}
             iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :road
-            {:ok, [:foot], [round_nearest: 10]}
+            {:ok, [:foot], [round_nearest: 1]}
             iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :road
-            {:ok, [:meter], [round_nearest: 10]}
+            {:ok, [:meter], [round_nearest: 1]}
 
         """
         def preferred_units(unit, options \\ []) do
