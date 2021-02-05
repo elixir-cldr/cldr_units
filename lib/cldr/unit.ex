@@ -44,6 +44,7 @@ defmodule Cldr.Unit do
             format_options: []
 
   @type unit :: atom() | String.t()
+  @type category :: atom()
   @type usage :: atom()
   @type style :: :narrow | :short | :long
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
@@ -94,6 +95,16 @@ defmodule Cldr.Unit do
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
              |> Map.new()
 
+  @units_by_category  @unit_tree
+                      |> Map.delete(:compound)
+                      |> Map.delete(:coordinate)
+
+  @unit_categories Map.keys(@units_by_category) -- [:"10p", :compound, :coordinate]
+
+  @translatable_units @units_by_category
+                       |> Map.values()
+                       |> List.flatten()
+
   @doc """
   Returns the known units.
 
@@ -113,19 +124,98 @@ defmodule Cldr.Unit do
        :hour, :inch, ...]
 
   """
-  @translatable_units @unit_tree
-                      |> Map.delete(:compound)
-                      |> Map.delete(:coordinate)
-                      |> Map.values()
-                      |> List.flatten()
 
-  @spec known_units :: [atom, ...]
+  @spec known_units :: [atom(), ...]
   def known_units do
     @translatable_units
   end
 
   @deprecated "Use Cldr.Unit.known_units/0"
   def units, do: known_units()
+
+  @doc """
+  Returns a list of the known unit categories.
+
+  ## Example
+
+      iex> Cldr.Unit.known_unit_categories
+      [:acceleration, :angle, :area, :concentr, :consumption, :digital,
+       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
+       :power, :pressure, :speed, :temperature, :torque, :volume]
+
+  """
+  @spec known_unit_categories :: list(category())
+  def known_unit_categories do
+    @unit_categories
+  end
+
+  @doc """
+  Returns the units that are defined for
+  a given category (such as :volume, :length)
+
+  See also `Cldr.Unit.known_unit_categories/0`.
+
+  ## Example
+
+      => Cldr.Unit.known_units_by_category
+      %{
+        acceleration: [:g_force, :meter_per_square_second],
+        angle: [:arc_minute, :arc_second, :degree, :radian, :revolution],
+        area: [:acre, :dunam, :hectare, :square_centimeter, :square_foot,
+         :square_inch, :square_kilometer, :square_meter, :square_mile, :square_yard],
+        concentr: [:karat, :milligram_per_deciliter, :millimole_per_liter, :mole,
+         :percent, :permille, :permillion, :permyriad], ...
+
+  """
+  @doc since: "3.4.0"
+  @spec known_units_by_category :: %{category() => [atom(), ...]}
+
+  def known_units_by_category do
+    @units_by_category
+  end
+
+  @doc """
+  Returns the list of units defined for a given
+  category.
+
+  ## Arguments
+
+  * `category` is any unit category returned by
+    `Cldr.Unit.known_unit_categories/0`.
+
+  * `options` is a keyword list of options. The
+    default is `[]`.
+
+  See also `Cldr.Unit.known_units_by_category/1`.
+
+  ## Example
+
+      => Cldr.Unit.known_units_for_category :volume
+      {
+        :ok,
+        [
+          :cubic_centimeter,
+          :centiliter,
+          :hectoliter,
+          :cubic_kilometer,
+          :acre_foot,
+          ...
+      }
+
+  """
+  @doc since: "3.4.0"
+  @spec known_units_for_category(category()) ::
+    {:ok, [atom(), ...]} | {:error, {module(), String.t()}}
+
+  def known_units_for_category(category) when category in @unit_categories do
+    with {:ok, units} <- Map.fetch(known_units_by_category(), category) do
+      {:ok, units}
+    end
+  end
+
+  def known_units_for_category(category) do
+    {:error, unit_category_error(category)}
+  end
 
   @doc """
   Returns a new `Unit.t` struct.
@@ -1009,7 +1099,7 @@ defmodule Cldr.Unit do
   details.
 
   """
-  def localize(unit) do
+  def localize(%Unit{} = unit) do
     locale = Cldr.get_locale()
     backend = locale.backend
     localize(unit, backend, locale: locale)
@@ -1156,11 +1246,68 @@ defmodule Cldr.Unit do
 
   """
   @measurement_systems Cldr.Config.measurement_systems()
+  @measurement_system_names Map.keys(@measurement_systems)
+
   def known_measurement_systems do
     @measurement_systems
   end
 
-  @category_usage Cldr.Config.units()
+  @doc since: "3.4.0"
+  def measurement_system_from_locale(locale, category \\ :default)
+
+  def measurement_system_from_locale(locale, category) when is_binary(locale) do
+    with {:ok, locale} <- Cldr.validate_locale(locale) do
+      measurement_system_from_locale(locale, category)
+    end
+  end
+
+  def measurement_system_from_locale(%Cldr.LanguageTag{locale: %{measurement_system: system}}, _category)
+      when not is_nil(system) do
+    system
+  end
+
+  def measurement_system_from_locale(%Cldr.LanguageTag{} = locale, category) do
+    with {:ok, territory} <- Cldr.Locale.territory_from_locale(locale) do
+      measurement_system_for(territory, category)
+    end
+  end
+
+  def measuremen_system_from_locale(locale, backend, category \\ :default) when is_binary(locale) do
+    with {:ok, locale} <- Cldr.validate_locale(locale, backend) do
+      measurement_system_from_locale(locale, category)
+    end
+  end
+
+  @units Cldr.Config.units()
+
+  @measurement_system_units @units
+  |> Map.get(:conversions)
+  |> Enum.flat_map(fn {unit, conversion} ->
+    Enum.map(conversion.systems, fn system -> {system, unit} end)
+  end)
+  |> Enum.group_by(fn {system, _unit} -> system end, fn {_system, unit} -> unit end)
+
+  @doc """
+  Returns the list of units defined in a given
+  measurement system.
+
+  ## Example
+
+      => Cldr.Unit.measurement_system_units :uksystem
+      [
+        :ton,
+        :inch,
+        :yard,
+        ...
+      ]
+
+  """
+  @doc since: "3.4.0"
+  def measurement_system_units(system) when system in @measurement_system_names do
+    Map.fetch!(@measurement_system_units, system)
+  end
+
+  @category_usage @units
                   |> Map.get(:preferences)
                   |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
                   |> Map.new()
@@ -1169,25 +1316,31 @@ defmodule Cldr.Unit do
   Returns a mapping between Unit categories
   and the uses they define.
 
+  ## Example
+
+      iex> Cldr.Unit.unit_category_usage
+      %{
+        area: [:default, :geograph, :land],
+        concentration: [:blood_glucose, :default],
+        consumption: [:default, :vehicle_fuel],
+        consumption_inverse: [:default, :vehicle_fuel],
+        duration: [:default, :media],
+        energy: [:default, :food],
+        length: [:default, :focal_length, :person, :person_height, :rainfall, :road,
+         :snowfall, :vehicle, :visiblty],
+        mass: [:default, :person],
+        mass_density: [:blood_glucose, :default],
+        power: [:default, :engine],
+        pressure: [:baromtrc, :default],
+        speed: [:default, :wind],
+        temperature: [:default, :weather],
+        volume: [:default, :fluid, :oil, :vehicle],
+        year_duration: [:default, :person_age]
+      }
+
   """
   def unit_category_usage do
     @category_usage
-  end
-
-  @doc """
-  Returns a list of the known unit categories.
-
-  ## Example
-
-      iex> Cldr.Unit.known_unit_categories
-      [:acceleration, :angle, :area, :compound, :concentr, :consumption, :coordinate, :digital,
-       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
-       :power, :pressure, :speed, :temperature, :torque, :volume]
-
-  """
-  @unit_categories Map.keys(@unit_tree) -- [:"10p"]
-  def known_unit_categories do
-    @unit_categories
   end
 
   @doc """
@@ -1195,7 +1348,7 @@ defmodule Cldr.Unit do
   base unit.
 
   """
-  @base_units Cldr.Config.units() |> Map.get(:base_units) |> Map.new()
+  @base_units @units |> Map.get(:base_units) |> Map.new()
   def base_units do
     @base_units
   end

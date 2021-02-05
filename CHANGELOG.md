@@ -1,6 +1,6 @@
 # Changelog for Cldr_Units v3.4.0
 
-This is the changelog for Cldr_units v3.3.2 released on January 14th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.4.0 released on February 6th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -9,6 +9,14 @@ This is the changelog for Cldr_units v3.3.2 released on January 14th, 2021.  For
 * Add missing `<backend>.convert!/2`
 
 ### Enhancements
+
+* Add `Cldr.Unit.known_units_by_category/0`
+
+* Add `Cldr.Unit.known_units_for_category/1`
+
+* Add `Cldr.Unit.measurement_system_units/0`
+
+* Add `Cldr.Unit.measuremen_system_from_locale/{2, 3}`
 
 * Improve `Cldr.Unit.IncompatibleUnit` exception error message
 

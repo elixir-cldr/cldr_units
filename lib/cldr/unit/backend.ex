@@ -445,7 +445,7 @@ defmodule Cldr.Unit.Backend do
               Map.get(locale_data, style)
               |> Enum.map(&elem(&1, 1))
               |> Cldr.Map.merge_map_list()
-              |> Enum.into(%{})
+              |> Map.new
 
             def units_for(unquote(locale_name), unquote(style)) do
               unquote(Macro.escape(units))

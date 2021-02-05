@@ -38,6 +38,7 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
+      {:ex_cldr, "~> 2.19"},
       {:ex_cldr_numbers, "~> 2.16"},
       {:ex_cldr_lists, "~> 2.7"},
       {:ratio, "~> 2.4"},
