@@ -168,6 +168,37 @@ defmodule Cldr.UnitsTest do
              Cldr.Unit.new!(1, "kilowatt_hour") |> MyApp.Cldr.Unit.to_string()
   end
 
+  test "unit categories" do
+    assert Cldr.Unit.known_unit_categories ==
+      [:acceleration, :angle, :area, :concentr, :consumption, :digital, :duration,
+       :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
+       :power, :pressure, :speed, :temperature, :torque, :volume]
+  end
+
+  test "unit categories for" do
+    assert {:ok, _list} = Cldr.Unit.known_units_for_category(:volume)
+
+    assert Cldr.Unit.known_units_for_category(:invalid) ==
+      {:error,
+       {Cldr.Unit.UnknownUnitCategoryError,
+        "The unit category :invalid is not known."}}
+  end
+
+  test "display names" do
+    assert Cldr.Unit.display_name(:liter) == "liters"
+    assert Cldr.Unit.display_name(:liter, locale: "fr") == "litres"
+    assert Cldr.Unit.display_name(:liter, locale: "fr", style: :short) == "l"
+
+    assert Cldr.Unit.display_name(:liter, locale: "fr", style: :invalid) ==
+      {:error, {Cldr.UnknownFormatError, "The unit style :invalid is not known."}}
+
+    assert Cldr.Unit.display_name(:liter, locale: "xx", style: :short) ==
+      {:error, {Cldr.UnknownLocaleError, "The locale \"xx\" is not known."}}
+
+    assert Cldr.Unit.display_name(:invalid, locale: "fr", style: :short) ==
+      {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

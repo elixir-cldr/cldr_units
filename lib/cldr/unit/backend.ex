@@ -28,8 +28,22 @@ defmodule Cldr.Unit.Backend do
         defdelegate decompose(unit, list), to: Cldr.Unit
         defdelegate localize(unit, usage, options), to: Cldr.Unit
 
-        defdelegate measurement_system_for(territory), to: Cldr.Unit
-        defdelegate measurement_system_for(territory, category), to: Cldr.Unit
+        defdelegate measurement_system_from_locale(locale), to: Cldr.Unit
+        defdelegate measurement_system_from_locale(locale, category), to: Cldr.Unit
+        defdelegate measurement_system_from_locale(locale, backend, category), to: Cldr.Unit
+
+        defdelegate measurement_systems_for_unit(unit), to: Cldr.Unit
+
+        defdelegate measurement_system_for_territory(territory), to: Cldr.Unit
+        defdelegate measurement_system_for_territory(territory, key), to: Cldr.Unit
+
+        defdelegate measurement_system?(unit, systems), to: Cldr.Unit
+
+        @deprecated "Use #{inspect(__MODULE__)}.measurement_system_for_territory/1"
+        defdelegate measurement_system_for(territory), to: Cldr.Unit, as: :measurement_system_for_territory
+
+        @deprecated "Use #{inspect(__MODULE__)}.measurement_system_for_territory/2"
+        defdelegate measurement_system_for(territory, key), to: Cldr.Unit, as: :measurement_system_for_territory
 
         defdelegate known_units, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
@@ -445,7 +459,7 @@ defmodule Cldr.Unit.Backend do
               Map.get(locale_data, style)
               |> Enum.map(&elem(&1, 1))
               |> Cldr.Map.merge_map_list()
-              |> Map.new
+              |> Map.new()
 
             def units_for(unquote(locale_name), unquote(style)) do
               unquote(Macro.escape(units))

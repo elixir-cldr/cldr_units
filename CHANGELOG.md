@@ -10,15 +10,21 @@ This is the changelog for Cldr_units v3.4.0 released on February 6th, 2021.  For
 
 ### Enhancements
 
+* Add `Cldr.Unit/display_name/2`
+
 * Add `Cldr.Unit.known_units_by_category/0`
 
 * Add `Cldr.Unit.known_units_for_category/1`
 
 * Add `Cldr.Unit.measurement_system_units/0`
 
-* Add `Cldr.Unit.measuremen_system_from_locale/{2, 3}`
+* Add `Cldr.Unit.measurement_system_from_locale/{2, 3}`
 
 * Improve `Cldr.Unit.IncompatibleUnit` exception error message
+
+* Deprecate `Cldr.Unit.measurement_systems/0` in favour of `Cldr.Unit.measurement_systems_by_territory/0`
+
+* Requires `ex_cldr` version ~> 2.19 which includes the localised display name of units
 
 # Changelog for Cldr_Units v3.3.1
 
