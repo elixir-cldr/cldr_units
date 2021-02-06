@@ -107,6 +107,7 @@ defmodule Cldr.Unit do
   @translatable_units @units_by_category
                       |> Map.values()
                       |> List.flatten()
+                      |> List.delete(:generic)
 
   @measurement_systems Cldr.Config.measurement_systems()
   @system_names Map.keys(@measurement_systems)
@@ -1370,23 +1371,35 @@ defmodule Cldr.Unit do
     end
   end
 
-  def measurement_systems_for_unit("square_" <> unit) do
-    with {:ok, unit, _conversion} <- Cldr.Unit.validate_unit(unit) do
-      measurement_systems_for_unit(unit)
+  # Strip SI and power factors amd try the root
+  # unit
+  for prefix <- Cldr.Unit.Prefix.prefixes do
+    def measurement_systems_for_unit(unquote(prefix) <> unit) do
+      with {:ok, unit, _conversion} <- Cldr.Unit.validate_unit(unit) do
+        measurement_systems_for_unit(unit)
+      end
     end
   end
 
-  def measurement_systems_for_unit("cubic_" <> unit) do
-    with {:ok, unit, _conversion} <- Cldr.Unit.validate_unit(unit) do
-      measurement_systems_for_unit(unit)
+  def measurement_systems_for_unit("per_" <> unit) do
+    measurement_systems_for_unit(unit)
+  end
+
+  # Decompose the unit recursively until there is a match on
+  # a base unit, otherwise return an error
+  def measurement_systems_for_unit(unit) when is_binary(unit) do
+    [first | rest] = String.split(unit, "_", parts: 2)
+
+    with {:ok, part_unit, _conversion} <- Cldr.Unit.validate_unit(first) do
+      measurement_systems_for_unit(part_unit)
+    else
+      _other ->
+        if rest == [], do: {:error, unit_error(unit)}, else: measurement_systems_for_unit(rest)
     end
   end
 
-  # On error return an empty list. This can happen when a unit
-  # is translatable but there is no known way to derive what
-  # system it belongs to
-  def measurement_systems_for_unit(_unit) do
-    []
+  def measurement_systems_for_unit(unit) do
+    {:error, unit_error(unit)}
   end
 
   @doc """
