@@ -1364,11 +1364,29 @@ defmodule Cldr.Unit do
   end
 
   def measurement_systems_for_unit(unit) when unit in @translatable_units do
-    Map.fetch!(@systems_for_unit, unit)
+    case Map.fetch(@systems_for_unit, unit) do
+      {:ok, systems} -> systems
+      :error -> measurement_systems_for_unit(Kernel.to_string(unit))
+    end
   end
 
-  def measurement_systems_for_unit(unit) do
-    {:error, unit_error(unit)}
+  def measurement_systems_for_unit("square_" <> unit) do
+    with {:ok, unit, _conversion} <- Cldr.Unit.validate_unit(unit) do
+      measurement_systems_for_unit(unit)
+    end
+  end
+
+  def measurement_systems_for_unit("cubic_" <> unit) do
+    with {:ok, unit, _conversion} <- Cldr.Unit.validate_unit(unit) do
+      measurement_systems_for_unit(unit)
+    end
+  end
+
+  # On error return an empty list. This can happen when a unit
+  # is translatable but there is no known way to derive what
+  # system it belongs to
+  def measurement_systems_for_unit(_unit) do
+    []
   end
 
   @doc """
