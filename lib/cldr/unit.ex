@@ -1426,7 +1426,7 @@ defmodule Cldr.Unit do
   ## Returns
 
   * A list of measurement systems to which
-    the `unit` belongs
+    the `unit` belongs.
 
   * `{:error, {exception, message}}`
 
@@ -1443,7 +1443,7 @@ defmodule Cldr.Unit do
 
   """
   @doc since: "3.4.0"
-  @spec measurement_systems_for_unit(t() | String.t()) ::
+  @spec measurement_systems_for_unit(t() | unit()) ::
           [measurement_system(), ...] | {:error, {module(), String.t()}}
 
   def measurement_systems_for_unit(%Unit{unit: unit}) do
@@ -1480,7 +1480,7 @@ defmodule Cldr.Unit do
       measurement_systems_for_unit(part_unit)
     else
       _other ->
-        if rest == [], do: {:error, unit_error(unit)}, else: measurement_systems_for_unit(rest)
+        if rest == [], do: {:error, unit_error(unit)}, else: measurement_systems_for_unit(hd(rest))
     end
   end
 
