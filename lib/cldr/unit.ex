@@ -193,10 +193,7 @@ defmodule Cldr.Unit do
   * `category` is any unit category returned by
     `Cldr.Unit.known_unit_categories/0`.
 
-  * `options` is a keyword list of options. The
-    default is `[]`.
-
-  See also `Cldr.Unit.known_units_by_category/1`.
+  See also `Cldr.Unit.known_units_by_category/0`.
 
   ## Example
 
@@ -613,13 +610,13 @@ defmodule Cldr.Unit do
   Formats a number into an `iolist` according to a unit definition
   for a locale.
 
-  During processing any `:format_options` of a `Unit.t()` are merged with
+  During processing any `:format_options` of a `t:Unit()` are merged with
   `options` with `options` taking precedence.
 
   ## Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
-    `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+    `t:Cldr.Unit()` struct or a list of `t.Cldr.Unit()` structs
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -727,13 +724,13 @@ defmodule Cldr.Unit do
   for the current process's locale and backend or raises
   on error.
 
-  During processing any `:format_options` of a `Unit.t()` are merged with
+  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
   `options` with `options` taking precedence.
 
   ## Arguments
 
   * `number` is any number (integer, float or Decimal) or a
-    `Cldr.Unit.t()` struct
+    `t:Cldr.Unit` struct
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -743,7 +740,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
+    the number to be formatted is a `t:Cldr.Unit` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -808,13 +805,13 @@ defmodule Cldr.Unit do
   for the current process's locale and backend or raises
   on error.
 
-  During processing any `:format_options` of a `Unit.t()` are merged with
+  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
   `options` with `options` taking precedence.
 
   ## Arguments
 
   * `number` is any number (integer, float or Decimal) or a
-    `Cldr.Unit.t()` struct
+    `t:Cldr.Unit` struct
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -1119,14 +1116,14 @@ defmodule Cldr.Unit do
   @doc """
   Localizes a unit according to a territory
 
-  A territory can be derived from a `locale_name`
-  or `Cldr.LangaugeTag.t()`.
+  A territory can be derived from a `t:Cldr.Locale.locale_name`
+  or `t:Cldr.LangaugeTag`.
 
   Use this function if you have a unit which
   should be presented in a user interface using
   units relevant to the audience. For example, a
   unit `#Cldr.Unit100, :meter>` might be better
-  presented to a US audiance as `#Cldr.Unit328, :foot>`.
+  presented to a US audience as `#Cldr.Unit328, :foot>`.
 
   ## Arguments
 
@@ -1183,7 +1180,7 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit` is any `t:Cldr.Unit.t` or any
+  * `unit` is any `t:Cldr.Unit` or any
     unit name returned by `Cldr.Unit.known_units/0`.
 
   * `options` is a keyword list of options.
@@ -1419,7 +1416,7 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit` is any `t:Cldr.Unit.t` or any unit
+  * `unit` is any `t:Cldr.Unit` or any unit
     returned by `Cldr.Unit.known_units/0` or a
     string unit name.
 
@@ -1518,7 +1515,7 @@ defmodule Cldr.Unit do
   Determines the preferred measurement system
   from a locale.
 
-  See also `Cldr.known_measurement_systems/0`.
+  See also `Cldr.Unit.known_measurement_systems/0`.
 
   ## Arguments
 
@@ -1995,15 +1992,15 @@ defmodule Cldr.Unit do
   * an `atom()` in which case the unit must be
     localizable in CLDR directly
 
-  * or a `String.t()` in which case it is parsed
+  * or a `t:String` in which case it is parsed
     into a list of composable subunits that
     can be converted but are not guaranteed to
     be output as a localized string.
 
   ## Arguments
 
-  * `unit_name` is an `atom()` or `String.t()`, supplied
-    as is or as part of an `Cldr.Unit.t()` struct.
+  * `unit_name` is an `atom()` or `t:String`, supplied
+    as is or as part of an `t:Cldr.Unit` struct.
 
   ## Returns
 
@@ -2019,7 +2016,7 @@ defmodule Cldr.Unit do
   A returned `unit_name` that is an atom is directly
   localisable (CLDR has translation data for the unit).
 
-  A `unit_name` that is a `String.t()` is composed of
+  A `unit_name` that is a `t:String` is composed of
   one or more unit names that need to be resolved in
   order for the `unit_name` to be localised.
 
