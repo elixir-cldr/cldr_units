@@ -1,8 +1,8 @@
 defmodule Cldr.Unit.Additional do
-  @moduledoc """
-  Supports the configuration of additional units
-  not defined by CLDR
-  """
+  @moduledoc false
+
+  # Supports the configuration of additional units
+  # not defined by CLDR. These functions are only used a compile time.
 
   def conversions do
     Application.get_env(:ex_cldr_units, :additional_units, [])
@@ -42,10 +42,10 @@ defmodule Cldr.Unit.Additional do
     acc ++ tail_base_units
   end
 
-  def merge_base_units([{k1, v1} = head | other], additional, acc) do
+  def merge_base_units([{k1, _v1} = head | other] = core_base_units, additional, acc) do
     case Keyword.pop(additional, k1) do
       {nil, _rest} -> merge_base_units(other, additional, acc ++ [head])
-      {{v2, _}, rest} -> merge_base_units(other, rest, acc ++ [{v2, v2}, {k1, v1}])
+      {{v2, _}, rest} -> merge_base_units(core_base_units, rest, acc ++ [{v2, v2}])
     end
   end
 
