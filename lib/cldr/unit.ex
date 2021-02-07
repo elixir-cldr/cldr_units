@@ -213,12 +213,11 @@ defmodule Cldr.Unit do
   """
   @doc since: "3.4.0"
   @spec known_units_for_category(category()) ::
-          {:ok, [atom(), ...]} | {:error, {module(), String.t()}}
+          {:ok, [translatable_unit(), ...]} | {:error, {module(), String.t()}}
 
   def known_units_for_category(category) when category in @unit_categories do
-    with {:ok, units} <- Map.fetch(known_units_by_category(), category) do
-      {:ok, units}
-    end
+    units = Map.fetch!(known_units_by_category(), category)
+    {:ok, units}
   end
 
   def known_units_for_category(category) do
@@ -967,6 +966,11 @@ defmodule Cldr.Unit do
     end
   end
 
+  defp to_pattern(_number, unit, locale, style, _backend, _options) do
+    {exception, message} = no_pattern_error(unit, locale, style)
+    raise exception, message
+  end
+
   # Merging power and SI prefixes into a pattern is a heuristic since the
   # underlying data does not convey those rules.
 
@@ -1628,7 +1632,12 @@ defmodule Cldr.Unit do
   base unit.
 
   """
-  @base_units @units |> Map.get(:base_units) |> Map.new()
+  @base_units @units
+  |> Map.get(:base_units)
+  |> Kernel.++(Cldr.Unit.Additional.base_units())
+  |> Enum.uniq
+  |> Map.new()
+
   def base_units do
     @base_units
   end
@@ -2216,6 +2225,16 @@ defmodule Cldr.Unit do
       Cldr.Unit.InvalidSystemKeyError,
       "The key #{inspect(key)} is not known. " <>
         "Valid keys are :default, :paper_size and :temperature"
+    }
+  end
+
+  @doc false
+  def no_pattern_error(unit, locale, style) do
+    {
+      Cldr.Unit.NoPatternError,
+      "No localisation pattern was found for unit #{inspect unit} in " <>
+      "locale #{inspect locale.requested_locale_name} for " <>
+      "style #{inspect style}"
     }
   end
 

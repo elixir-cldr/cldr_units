@@ -10,6 +10,8 @@ This is the changelog for Cldr_units v3.4.0 released on February 7th, 2021.  For
 
 ### Enhancements
 
+* Supports the definition of custom units in `config.exs`. Units can be defined and operated on however they cannot yet be localised (that functionality will be in place before release). See the examples in `dev.exs`.
+
 * Add `Cldr.Unit.display_name/2`
 
 * Add `Cldr.Unit.known_units_by_category/0`

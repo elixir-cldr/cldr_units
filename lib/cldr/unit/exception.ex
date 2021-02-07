@@ -78,3 +78,13 @@ defmodule Cldr.Unit.UnknownMeasurementSystemError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.Unit.NoPatternError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
