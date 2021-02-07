@@ -47,6 +47,7 @@ defmodule Cldr.Unit do
   @type unit :: translatable_unit | String.t()
   @type category :: atom()
   @type usage :: atom()
+  @type measurement_system :: :metric | :ussystem | :uksystem
   @type style :: :narrow | :short | :long
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
   @type conversion :: Conversion.t() | {[Conversion.t(), ...], [Conversion.t(), ...]} | list()
@@ -1310,6 +1311,17 @@ defmodule Cldr.Unit do
   Returns the list of units defined in a given
   measurement system.
 
+  ## Arguments
+
+  * `system` is any measurement system returned by
+    `Cldr.Unit.known_measurement_systems/0`
+
+  ## Returns
+
+  * A list of translatable units as atoms or
+
+  * `{:error, {exception, message}}`
+
   ## Example
 
       => Cldr.Unit.measurement_system_units :uksystem
@@ -1322,8 +1334,15 @@ defmodule Cldr.Unit do
 
   """
   @doc since: "3.4.0"
+  @spec measurement_system_units(measurement_system()) ::
+    [translatable_unit(), ...] | {:error, {module(), String.t()}}
+
   def measurement_system_units(system) when system in @system_names do
-    Map.fetch!(@system_units, system)
+    Map.get(@system_units, system)
+  end
+
+  def measurement_system_units(system) do
+    {:error, unknown_measurement_system_error(system)}
   end
 
   @doc """
@@ -1331,18 +1350,57 @@ defmodule Cldr.Unit do
   unit belongs to one or more measurement
   systems.
 
+  When a list or more than one measurement
+  system is provided, the test is one of
+  inclusion. That is, if the unit belongs to
+  any of the provided measurement systems
+  the return is `true`.
+
+  ## Arguments
+
+  * `system` is any measurement system or list
+    of measurement systems returned by
+    `Cldr.Unit.known_measurement_systems/0`
+
+  ## Returns
+
+  * `true` or `false` or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.measurement_system? :foot, :uksystem
+      true
+
+      iex> Cldr.Unit.measurement_system? :foot, [:uksystem, :ussystem]
+      true
+
+      iex> Cldr.Unit.measurement_system? :foot, [:metric]
+      false
+
+      iex> Cldr.Unit.measurement_system? :invalid, [:metric]
+      {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
+
   """
   @doc since: "3.4.0"
+  @spec measurement_system?(t() | unit, measurement_system | list(measurement_system)) ::
+    boolean() | {:error, {module(), String.t()}}
+
   def measurement_system?(unit, system) when is_atom(system) do
     measurement_system?(unit, [system])
   end
 
-  def measurement_system?(%Unit{unit: unit}, systems) do
+  def measurement_system?(%Unit{unit: unit}, systems) when is_list(systems) do
     measurement_system?(unit, systems)
   end
 
-  def measurement_system?(unit, systems) when unit in @translatable_units do
+  def measurement_system?(unit, systems) when unit in @translatable_units and is_list(systems) do
     Enum.any?(measurement_systems_for_unit(unit), &(&1 in systems))
+  end
+
+  def measurement_system?(_unit, systems) when not is_list(systems) do
+    {:error, unknown_measurement_system_error(systems)}
   end
 
   def measurement_system?(unit, _systems) do
@@ -1358,8 +1416,34 @@ defmodule Cldr.Unit do
   Returns the measurement systems for a given
   unit.
 
+  ## Arguments
+
+  * `unit` is any `Cldr.Unit.t` or a unit
+    name as an atom or string
+
+  ## Returns
+
+  * A list of measurement systems to which
+    the `unit` belongs
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.measurement_systems_for_unit :foot
+      [:ussystem, :uksystem]
+
+      iex> Cldr.Unit.measurement_systems_for_unit :meter
+      [:metric]
+
+      iex> Cldr.Unit.measurement_systems_for_unit :invalid
+      {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
+
   """
   @doc since: "3.4.0"
+  @spec measurement_systems_for_unit(t() | String.t()) ::
+    [measurement_system(), ...] | {:error, {module(), String.t()}}
+
   def measurement_systems_for_unit(%Unit{unit: unit}) do
     measurement_systems_for_unit(unit)
   end
@@ -1432,7 +1516,9 @@ defmodule Cldr.Unit do
 
   See also `Cldr.known_measurement_systems/0`.
 
+  ## Arguments
 
+  *
   """
   @doc since: "3.4.0"
   def measurement_system_from_locale(locale, category \\ :default)
@@ -1509,12 +1595,11 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Returns the base unit for a given `Cldr.Unit.t()`
-  or `atom()`.
+  Returns the base unit for a given unit.
 
   ## Argument
 
-  * `unit` is either a `t:Cldr.Unit.t()` or an `atom`
+  * `unit` is either a `t:Cldr.Unit` or an `atom`
 
   ## Returns
 
@@ -1580,7 +1665,7 @@ defmodule Cldr.Unit do
 
   """
   @spec unit_category(Unit.t() | String.t() | atom()) ::
-          {:ok, atom()} | {:error, {module(), String.t()}}
+          {:ok, category()} | {:error, {module(), String.t()}}
 
   def unit_category(unit) do
     with {:ok, _unit, conversion} <- validate_unit(unit),
@@ -1644,6 +1729,7 @@ defmodule Cldr.Unit do
       [:long, :short, :narrow]
 
   """
+  @spec styles :: [style(), ...]
   def styles do
     @styles
   end
@@ -1657,6 +1743,7 @@ defmodule Cldr.Unit do
       :long
 
   """
+  @spec default_style :: style()
   def default_style do
     @default_style
   end
@@ -1743,7 +1830,7 @@ defmodule Cldr.Unit do
       }
 
   """
-  @spec measurement_systems_by_territory() :: map()
+  @spec measurement_systems_by_territory() :: %{Cldr.territory() => map()}
   def measurement_systems_by_territory do
     @systems_by_territory
   end
@@ -2077,6 +2164,15 @@ defmodule Cldr.Unit do
     }
   end
 
+  @doc false
+  def unknown_measurement_system_error(system) do
+    {
+      Cldr.Unit.UnknownMeasurementSystemError,
+      "The measurement system #{inspect(system)} is not known"
+    }
+  end
+
+  @doc false
   def invalid_system_key_error(key) do
     {
       Cldr.Unit.InvalidSystemKeyError,
