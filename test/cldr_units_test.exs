@@ -169,19 +169,38 @@ defmodule Cldr.UnitsTest do
   end
 
   test "unit categories" do
-    assert Cldr.Unit.known_unit_categories ==
-      [:acceleration, :angle, :area, :concentr, :consumption, :digital, :duration,
-       :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
-       :power, :pressure, :speed, :temperature, :torque, :volume]
+    assert Cldr.Unit.known_unit_categories() ==
+             [
+               :acceleration,
+               :angle,
+               :area,
+               :concentr,
+               :consumption,
+               :digital,
+               :duration,
+               :electric,
+               :energy,
+               :force,
+               :frequency,
+               :graphics,
+               :length,
+               :light,
+               :mass,
+               :power,
+               :pressure,
+               :speed,
+               :temperature,
+               :torque,
+               :volume
+             ]
   end
 
   test "unit categories for" do
     assert {:ok, _list} = Cldr.Unit.known_units_for_category(:volume)
 
     assert Cldr.Unit.known_units_for_category(:invalid) ==
-      {:error,
-       {Cldr.Unit.UnknownUnitCategoryError,
-        "The unit category :invalid is not known."}}
+             {:error,
+              {Cldr.Unit.UnknownUnitCategoryError, "The unit category :invalid is not known."}}
   end
 
   test "display names" do
@@ -190,13 +209,13 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.display_name(:liter, locale: "fr", style: :short) == "l"
 
     assert Cldr.Unit.display_name(:liter, locale: "fr", style: :invalid) ==
-      {:error, {Cldr.UnknownFormatError, "The unit style :invalid is not known."}}
+             {:error, {Cldr.UnknownFormatError, "The unit style :invalid is not known."}}
 
     assert Cldr.Unit.display_name(:liter, locale: "xx", style: :short) ==
-      {:error, {Cldr.UnknownLocaleError, "The locale \"xx\" is not known."}}
+             {:error, {Cldr.UnknownLocaleError, "The locale \"xx\" is not known."}}
 
     assert Cldr.Unit.display_name(:invalid, locale: "fr", style: :short) ==
-      {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
+             {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
   end
 
   if function_exported?(Code, :fetch_docs, 1) do

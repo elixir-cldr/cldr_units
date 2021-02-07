@@ -48,6 +48,7 @@ defmodule Cldr.Unit do
   @type category :: atom()
   @type usage :: atom()
   @type measurement_system :: :metric | :ussystem | :uksystem
+  @type measurement_system_key :: :default | :temperature | :paper_size
   @type style :: :narrow | :short | :long
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
   @type conversion :: Conversion.t() | {[Conversion.t(), ...], [Conversion.t(), ...]} | list()
@@ -1182,7 +1183,7 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit` is any `Cldr.Unit.t` or any
+  * `unit` is any `t:Cldr.Unit.t` or any
     unit name returned by `Cldr.Unit.known_units/0`.
 
   * `options` is a keyword list of options.
@@ -1223,10 +1224,10 @@ defmodule Cldr.Unit do
 
     with {:ok, locale} <- Cldr.validate_locale(locale, backend),
          {:ok, style} <- validate_style(style) do
-       locale
-       |> units_for(style, backend)
-       |> Map.fetch!(unit)
-       |> Map.fetch!(:display_name)
+      locale
+      |> units_for(style, backend)
+      |> Map.fetch!(unit)
+      |> Map.fetch!(:display_name)
     end
   end
 
@@ -1335,7 +1336,7 @@ defmodule Cldr.Unit do
   """
   @doc since: "3.4.0"
   @spec measurement_system_units(measurement_system()) ::
-    [translatable_unit(), ...] | {:error, {module(), String.t()}}
+          [translatable_unit(), ...] | {:error, {module(), String.t()}}
 
   def measurement_system_units(system) when system in @system_names do
     Map.get(@system_units, system)
@@ -1385,7 +1386,7 @@ defmodule Cldr.Unit do
   """
   @doc since: "3.4.0"
   @spec measurement_system?(t() | unit, measurement_system | list(measurement_system)) ::
-    boolean() | {:error, {module(), String.t()}}
+          boolean() | {:error, {module(), String.t()}}
 
   def measurement_system?(unit, system) when is_atom(system) do
     measurement_system?(unit, [system])
@@ -1408,9 +1409,9 @@ defmodule Cldr.Unit do
   end
 
   @systems_for_unit @units
-                |> Map.get(:conversions)
-                |> Enum.map(fn {unit, conversion} ->{unit, conversion.systems} end)
-                |> Map.new
+                    |> Map.get(:conversions)
+                    |> Enum.map(fn {unit, conversion} -> {unit, conversion.systems} end)
+                    |> Map.new()
 
   @doc """
   Returns the measurement systems for a given
@@ -1418,8 +1419,9 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit` is any `Cldr.Unit.t` or a unit
-    name as an atom or string
+  * `unit` is any `t:Cldr.Unit.t` or any unit
+    returned by `Cldr.Unit.known_units/0` or a
+    string unit name.
 
   ## Returns
 
@@ -1442,7 +1444,7 @@ defmodule Cldr.Unit do
   """
   @doc since: "3.4.0"
   @spec measurement_systems_for_unit(t() | String.t()) ::
-    [measurement_system(), ...] | {:error, {module(), String.t()}}
+          [measurement_system(), ...] | {:error, {module(), String.t()}}
 
   def measurement_systems_for_unit(%Unit{unit: unit}) do
     measurement_systems_for_unit(unit)
@@ -1457,7 +1459,7 @@ defmodule Cldr.Unit do
 
   # Strip SI and power factors amd try the root
   # unit
-  for prefix <- Cldr.Unit.Prefix.prefixes do
+  for prefix <- Cldr.Unit.Prefix.prefixes() do
     def measurement_systems_for_unit(unquote(prefix) <> unit) do
       with {:ok, unit, _conversion} <- Cldr.Unit.validate_unit(unit) do
         measurement_systems_for_unit(unit)
@@ -1505,6 +1507,8 @@ defmodule Cldr.Unit do
       }
 
   """
+  @spec known_measurement_systems ::
+    %{measurement_system() => %{alias: atom(), description: String.t()}}
 
   def known_measurement_systems do
     @measurement_systems
@@ -1518,33 +1522,71 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  *
+  * `locale` is any valid locale name returned by
+    `Cldr.known_locale_names/0` or a `t:Cldr.LanguageTag`
+    struct.  The default is `Cldr.get_locale/0`.
+
+  * `key` is any measurement system key.
+    The known keys are `:default`, `:temperature`
+    and `:paper_size`. The default key is `:default`.
+
+  ## Examples
+
+      iex> Cldr.Unit.measurement_system_from_locale "en"
+      :ussystem
+
+      iex> Cldr.Unit.measurement_system_from_locale "en-GB"
+      :uksystem
+
+      iex> Cldr.Unit.measurement_system_from_locale "en-AU"
+      :metric
+
+      iex> Cldr.Unit.measurement_system_from_locale "en-AU-u-ms-ussystem"
+      :ussystem
+
+      iex> Cldr.Unit.measurement_system_from_locale "en-GB", :temperature
+      :uksystem
+
+      iex> Cldr.Unit.measurement_system_from_locale "en-AU", :paper_size
+      :a4
+
+      iex> Cldr.Unit.measurement_system_from_locale "en-GB", :invalid
+      {:error,
+       {Cldr.Unit.InvalidSystemKeyError,
+        "The key :invalid is not known. Valid keys are :default, :paper_size and :temperature"}}
+
   """
   @doc since: "3.4.0"
-  def measurement_system_from_locale(locale, category \\ :default)
+  @spec measurement_system_from_locale(
+          Cldr.LanguageTag.t() | Cldr.Locale.locale_name(),
+          measurement_system_key()
+        ) ::
+          measurement_system() | {:error, {module(), String.t()}}
 
-  def measurement_system_from_locale(locale, category) when is_binary(locale) do
+  def measurement_system_from_locale(locale \\ Cldr.get_locale(), key \\ :default)
+
+  def measurement_system_from_locale(locale, key) when is_binary(locale) do
     with {:ok, locale} <- Cldr.validate_locale(locale) do
-      measurement_system_from_locale(locale, category)
+      measurement_system_from_locale(locale, key)
     end
   end
 
   def measurement_system_from_locale(
         %Cldr.LanguageTag{locale: %{measurement_system: system}},
-        _category
+        _key
       )
       when not is_nil(system) do
     system
   end
 
-  def measurement_system_from_locale(%Cldr.LanguageTag{} = locale, category) do
+  def measurement_system_from_locale(%Cldr.LanguageTag{} = locale, key) do
     territory = Cldr.Locale.territory_from_locale(locale)
-    measurement_system_for_territory(territory, category)
+    measurement_system_for_territory(territory, key)
   end
 
-  def measurement_system_from_locale(locale, backend, category) when is_binary(locale) do
+  def measurement_system_from_locale(locale, backend, key) when is_binary(locale) do
     with {:ok, locale} <- Cldr.validate_locale(locale, backend) do
-      measurement_system_from_locale(locale, category)
+      measurement_system_from_locale(locale, key)
     end
   end
 
@@ -1875,8 +1917,7 @@ defmodule Cldr.Unit do
 
   """
   @spec measurement_system_for_territory(atom(), atom()) ::
-          :metric | :ussystem | :uksystem | :a4 | :us_letter |
-          {:error, {module(), String.t()}}
+          :metric | :ussystem | :uksystem | :a4 | :us_letter | {:error, {module(), String.t()}}
 
   def measurement_system_for_territory(territory, category \\ :default)
 
@@ -1898,7 +1939,7 @@ defmodule Cldr.Unit do
 
   defp do_measurement_system_for_territory(territory, key, default) do
     with {:ok, territory} <- Cldr.validate_territory(territory) do
-      get_in(measurement_systems_by_territory(),[territory, key]) || default
+      get_in(measurement_systems_by_territory(), [territory, key]) || default
     end
   end
 
@@ -2177,7 +2218,7 @@ defmodule Cldr.Unit do
     {
       Cldr.Unit.InvalidSystemKeyError,
       "The key #{inspect(key)} is not known. " <>
-      "Valid keys are :default, :paper_size and :temperature"
+        "Valid keys are :default, :paper_size and :temperature"
     }
   end
 

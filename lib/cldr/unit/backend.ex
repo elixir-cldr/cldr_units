@@ -40,10 +40,14 @@ defmodule Cldr.Unit.Backend do
         defdelegate measurement_system?(unit, systems), to: Cldr.Unit
 
         @deprecated "Use #{inspect(__MODULE__)}.measurement_system_for_territory/1"
-        defdelegate measurement_system_for(territory), to: Cldr.Unit, as: :measurement_system_for_territory
+        defdelegate measurement_system_for(territory),
+          to: Cldr.Unit,
+          as: :measurement_system_for_territory
 
         @deprecated "Use #{inspect(__MODULE__)}.measurement_system_for_territory/2"
-        defdelegate measurement_system_for(territory, key), to: Cldr.Unit, as: :measurement_system_for_territory
+        defdelegate measurement_system_for(territory, key),
+          to: Cldr.Unit,
+          as: :measurement_system_for_territory
 
         defdelegate known_units, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
