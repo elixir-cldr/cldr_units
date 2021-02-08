@@ -110,6 +110,7 @@ defmodule Cldr.Unit do
                       |> Map.values()
                       |> List.flatten()
                       |> List.delete(:generic)
+                      |> Kernel.++(Cldr.Unit.Additional.additional_units())
 
   @measurement_systems Cldr.Config.measurement_systems()
   @system_names Map.keys(@measurement_systems)
@@ -930,6 +931,14 @@ defmodule Cldr.Unit do
   @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
           list()
 
+  defp to_pattern(number, unit, locale, style, backend, _options)
+       when unit in @translatable_units do
+    with {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
+      cardinal_module = Module.concat(backend, Number.Cardinal)
+      cardinal_module.pluralize(number, locale, patterns)
+    end
+  end
+
   for {prefix, power} <- Prefix.power_units() do
     localize_key = String.to_atom("power#{power}")
     match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
@@ -959,17 +968,9 @@ defmodule Cldr.Unit do
     end
   end
 
-  # The path for translatable (atom) and binary units (which might
-  # be additonal/custom units)
-  defp to_pattern(number, unit, locale, style, backend, _options) do
-    with {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
-      cardinal_module = Module.concat(backend, Number.Cardinal)
-      cardinal_module.pluralize(number, locale, patterns)
-    else
-      _other ->
-        {exception, message} = no_pattern_error(unit, locale, style)
-        raise exception, message
-    end
+  defp to_pattern(_number, unit, locale, style, _backend, _options) do
+    {exception, message} = no_pattern_error(unit, locale, style)
+    raise exception, message
   end
 
   # Merging power and SI prefixes into a pattern is a heuristic since the
@@ -1413,6 +1414,7 @@ defmodule Cldr.Unit do
   @systems_for_unit @units
                     |> Map.get(:conversions)
                     |> Enum.map(fn {unit, conversion} -> {unit, conversion.systems} end)
+                    |> Kernel.++(Cldr.Unit.Additional.systems_for_units())
                     |> Map.new()
 
   @doc """
@@ -1951,11 +1953,12 @@ defmodule Cldr.Unit do
   end
 
   @doc false
-  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
+  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend)
+      when unit in @translatable_units do
     with {:ok, style} <- validate_style(style),
          {:ok, unit, _conversion} <- validate_unit(unit) do
       units = units_for(locale_name, style, backend)
-      pattern = Map.get(units, unit) || Map.fetch!(units, String.to_existing_atom(unit))
+      pattern = Map.fetch!(units, unit)
       {:ok, pattern}
     end
   end

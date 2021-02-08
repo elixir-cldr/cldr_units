@@ -54,13 +54,25 @@ defmodule Cldr.Unit.Additional do
     after all other base units. The default is `:none`. If in
     doubt, leave this key to its default.
 
+  * `:systems` is list of measurement systems to which this
+    unit belongs. The known measurement systems are `:metric`,
+    `:uksystem` and `:ussystem`. The default is
+    `[:metric, :ussystem, :uksystem]`.
+
   ## Defining localizations
 
-  Localisations are defined with the `Cldr.Unit.Additional.unit_localization/4`
-  macro in an `ex_cldr` backend module.
+  Localizations are defined in a backend module through adding
+  `use Cldr.Unit.Additional` to the top of the backend module
+  and invoking `Cldr.Unit.Additional.unit_localization/4` for
+  each localization.
 
-  One invocation of the macro is required for each combination
-  of locale, style and unit.
+  See `Cldr.Unit.Additional.unit_localization/4` for further
+  information.
+
+  Note that one invocation of the macro is required for
+  each combination of locale, style and unit. An exception
+  will be raised at runtime is a localization is expected
+  but is not found.
 
   """
 
@@ -267,9 +279,74 @@ defmodule Cldr.Unit.Additional do
   end
 
   @doc false
+  @default_systems [:metric, :uksystem, :ussystem]
+  @default_sort_before :none
+  @default_offset 0
+
   def conversions do
     Application.get_env(:ex_cldr_units, :additional_units, [])
-    |> Enum.map(fn {k, v} -> {k, Keyword.put_new(v, :sort_before, :none)} end)
+    |> Enum.map(fn {unit, config} ->
+      new_config =
+        config
+        |> Keyword.put_new(:offset, @default_offset)
+        |> Keyword.put_new(:sort_before, @default_sort_before)
+        |> Keyword.put_new(:systems, @default_systems)
+        |> validate_unit!
+
+      {unit, new_config}
+    end)
+  end
+
+  defp validate_unit!(unit) do
+    unless Keyword.keyword?(unit) do
+      raise ArgumentError,
+            "Additional unit configuration must be a keyword list. Found #{inspect(unit)}"
+    end
+
+    unless Keyword.has_key?(unit, :base_unit) do
+      raise ArgumentError, "Additional unit configuration must have a :factor configured"
+    end
+
+    unless (list = Keyword.fetch!(unit, :systems)) |> is_list() do
+      raise ArgumentError, "Additional unit systems must be a list. Found #{inspect(list)}"
+    end
+
+    unless Enum.all?(Keyword.fetch!(unit, :systems), &(&1 in @default_systems)) do
+      raise ArgumentError,
+            "Additional unit valid measurement systems are " <>
+              "#{inspect(@default_systems)}. Found #{inspect(Keyword.fetch!(unit, :systems))}"
+    end
+
+    unless (base = Keyword.fetch!(unit, :base_unit)) |> is_atom() do
+      raise ArgumentError, "Additional unit :base_unit must be an atom. Found #{inspect(base)}"
+    end
+
+    case Keyword.fetch!(unit, :factor) do
+      x when is_number(x) ->
+        :ok
+
+      %{numerator: numerator, denominator: denominator}
+      when is_number(numerator) and is_number(denominator) ->
+        :ok
+
+      other ->
+        raise ArgumentError,
+              "Additional unit factor must be a number of a rational " <>
+                "of the form %{numerator: number, denominator: number}. Found #{inspect(other)}"
+    end
+
+    unit
+  end
+
+  @doc false
+  def additional_units do
+    Keyword.keys(conversions())
+  end
+
+  @doc false
+  def systems_for_units do
+    conversions()
+    |> Enum.map(fn {k, v} -> {k, v[:systems]} end)
   end
 
   @doc false

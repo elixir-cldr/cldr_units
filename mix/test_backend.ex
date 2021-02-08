@@ -25,7 +25,6 @@ defmodule MyApp.Cldr do
     other: "{0} p",
     display_name: "p"
   )
-
 end
 
 defmodule NoDocs.Cldr do

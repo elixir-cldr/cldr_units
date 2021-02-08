@@ -477,8 +477,7 @@ defmodule Cldr.Unit.Backend do
             |> Map.get(:units)
 
           for style <- @styles do
-            additional_units =
-              additional_units.units_for(locale_name, style)
+            additional_units = additional_units.units_for(locale_name, style)
 
             units =
               Map.get(locale_data, style)
