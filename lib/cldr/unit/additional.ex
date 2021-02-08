@@ -170,6 +170,9 @@ defmodule Cldr.Unit.Additional do
   providing keys for `:one` and `:other` is enough. Other
   languages have different grammatical requirements.
 
+  See `Cldr.Number.PluralRule.plural_type/2` to determine
+  what plural type is for a given number and locale.
+
   The key `:display_name` is used by the function
   `Cldr.Unit.display_name/1` which is primarly used
   to support UI applications.
