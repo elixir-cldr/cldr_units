@@ -930,13 +930,6 @@ defmodule Cldr.Unit do
   @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
           list()
 
-  defp to_pattern(number, unit, locale, style, backend, _options)
-       when unit in @translatable_units do
-    {:ok, patterns} = pattern_for(locale, style, unit, backend)
-    cardinal_module = Module.concat(backend, Number.Cardinal)
-    cardinal_module.pluralize(number, locale, patterns)
-  end
-
   for {prefix, power} <- Prefix.power_units() do
     localize_key = String.to_atom("power#{power}")
     match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
@@ -966,9 +959,17 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp to_pattern(_number, unit, locale, style, _backend, _options) do
-    {exception, message} = no_pattern_error(unit, locale, style)
-    raise exception, message
+  # The path for translatable (atom) and binary units (which might
+  # be additonal/custom units)
+  defp to_pattern(number, unit, locale, style, backend, _options) do
+    with {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
+      cardinal_module = Module.concat(backend, Number.Cardinal)
+      cardinal_module.pluralize(number, locale, patterns)
+    else
+      _other ->
+        {exception, message} = no_pattern_error(unit, locale, style)
+        raise exception, message
+    end
   end
 
   # Merging power and SI prefixes into a pattern is a heuristic since the
@@ -1509,7 +1510,7 @@ defmodule Cldr.Unit do
 
   """
   @spec known_measurement_systems ::
-    %{measurement_system() => %{alias: atom(), description: String.t()}}
+          %{measurement_system() => %{alias: atom(), description: String.t()}}
 
   def known_measurement_systems do
     @measurement_systems
@@ -1633,10 +1634,10 @@ defmodule Cldr.Unit do
 
   """
   @base_units @units
-  |> Map.get(:base_units)
-  |> Kernel.++(Cldr.Unit.Additional.base_units())
-  |> Enum.uniq
-  |> Map.new()
+              |> Map.get(:base_units)
+              |> Kernel.++(Cldr.Unit.Additional.base_units())
+              |> Enum.uniq()
+              |> Map.new()
 
   def base_units do
     @base_units
@@ -1954,7 +1955,7 @@ defmodule Cldr.Unit do
     with {:ok, style} <- validate_style(style),
          {:ok, unit, _conversion} <- validate_unit(unit) do
       units = units_for(locale_name, style, backend)
-      pattern = Map.get(units, unit)
+      pattern = Map.get(units, unit) || Map.fetch!(units, String.to_existing_atom(unit))
       {:ok, pattern}
     end
   end
@@ -2232,9 +2233,9 @@ defmodule Cldr.Unit do
   def no_pattern_error(unit, locale, style) do
     {
       Cldr.Unit.NoPatternError,
-      "No localisation pattern was found for unit #{inspect unit} in " <>
-      "locale #{inspect locale.requested_locale_name} for " <>
-      "style #{inspect style}"
+      "No localisation pattern was found for unit #{inspect(unit)} in " <>
+        "locale #{inspect(locale.requested_locale_name)} for " <>
+        "style #{inspect(style)}"
     }
   end
 

@@ -2,9 +2,27 @@ defmodule Cldr.Unit.Backend do
   def define_unit_module(config) do
     module = inspect(__MODULE__)
     backend = config.backend
+    additional_units = Module.concat(backend, Unit.Additional)
     config = Macro.escape(config)
 
-    quote location: :keep, bind_quoted: [module: module, backend: backend, config: config] do
+    quote location: :keep,
+          bind_quoted: [
+            module: module,
+            backend: backend,
+            config: config,
+            additional_units: additional_units
+          ] do
+      # Create an empty additional units module if it wasn't previously
+      # defined
+      unless Code.ensure_loaded?(additional_units) do
+        defmodule additional_units do
+          @moduledoc false
+          def units_for(_locale, _style) do
+            %{}
+          end
+        end
+      end
+
       defmodule Unit do
         @moduledoc false
         if Cldr.Config.include_module_docs?(config.generate_docs) do
@@ -459,10 +477,14 @@ defmodule Cldr.Unit.Backend do
             |> Map.get(:units)
 
           for style <- @styles do
+            additional_units =
+              additional_units.units_for(locale_name, style)
+
             units =
               Map.get(locale_data, style)
               |> Enum.map(&elem(&1, 1))
               |> Cldr.Map.merge_map_list()
+              |> Map.merge(additional_units)
               |> Map.new()
 
             def units_for(unquote(locale_name), unquote(style)) do

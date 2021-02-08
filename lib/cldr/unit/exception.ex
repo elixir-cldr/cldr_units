@@ -87,4 +87,3 @@ defmodule Cldr.Unit.NoPatternError do
     %__MODULE__{message: message}
   end
 end
-
