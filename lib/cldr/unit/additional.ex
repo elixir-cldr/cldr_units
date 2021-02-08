@@ -1,8 +1,68 @@
 defmodule Cldr.Unit.Additional do
-  @moduledoc false
+  @moduledoc """
+  Additional domain-specific units can be defined
+  to suit application requirements. In the context
+  of `ex_cldr` there are two parts of configuring
+  additional units.
 
-  # Supports the configuration of additional units
-  # not defined by CLDR. These functions are only used a compile time.
+  1. Configure the unit, base unit and conversion in
+  `config.exs`. This is a requirement since units are
+  compiled into code.
+
+  2. Configure the localizations for the additional
+  unit in a CLDR backend module.
+
+  Once configured, additional units act and behave
+  like any of the predefined units of measure defined
+  by CLDR.
+
+  ## Configuring a unit in config.exs
+
+  Under the application `:ex_cldr_units` define
+  a key `:additional_units` with the required
+  unit definitions.  For example:
+  ```elixir
+  config :ex_cldr_units, :additional_units,
+    vehicle: [base_unit: :unit, factor: 1, offset: 0, sort_before: :all],
+    person: [base_unit: :unit, factor: 1, offset: 0, sort_before: :all]
+  ```
+  This example defines two additional units: `:vehicle` and
+  `:person`.  The keys `:base_unit`, and `:factor` are required.
+  The key `:offset` is optional and defaults to `0`. The
+  key `:sort_before` is optional and defaults to `:none`.
+
+  ### Configuration keys
+
+  * `:base_unit` is the common denominator that is used
+    to support conversion between like units. It can be
+    any atom value. For example `:liter` is the base unit
+    for volume units, `:meter` is the base unit for length
+    units.
+
+  * `:factor` is used to convert a unit to its base unit in
+    order to support conversion. When converting a unit to
+    another compatible unit, the unit is first multiplied by
+    this units factor then divided by the target units factor.
+
+  * `:offset` is added to a unit after applying its base factor
+    in order to convert to another unit.
+
+  * `:sort_before` determines where in this *base unit* sorts
+    relative to other base units.  Typically this is set to
+    `:all` in which case this base unit sorts before all other
+    base units or`:none` in which case this base unit sorted
+    after all other base units. The default is `:none`. If in
+    doubt, leave this key to its default.
+
+  ## Defining localizations
+
+  Localisations are defined with the `Cldr.Unit.Additional.unit_localization/4`
+  macro in an `ex_cldr` backend module.
+
+  One invocation of the macro is required for each combination
+  of locale, style and unit.
+
+  """
 
   defmacro __using__(_opts) do
     module = __CALLER__.module
@@ -14,6 +74,7 @@ defmodule Cldr.Unit.Additional do
     end
   end
 
+  @doc false
   defmacro __before_compile__(_ast) do
     caller = __CALLER__.module
     target_module = Module.concat(caller, Unit.Additional)
@@ -24,6 +85,96 @@ defmodule Cldr.Unit.Additional do
     |> Cldr.Unit.Additional.define_localization_module(target_module)
   end
 
+  @doc """
+  Although defining a unit in `config.exs` is enough to create,
+  operate on and serialize an additional unit, it cannot be
+  localised without defining localizations in an `ex_cldr`
+  backend module.  For example:
+  ```elixir
+  defmodule MyApp.Cldr do
+    use Cldr.Unit.Additional
+
+    use Cldr,
+      locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE"],
+      default_locale: "en",
+      providers: [Cldr.Number, Cldr.Unit, Cldr.List]
+
+    unit_localization(:person, "en", :long,
+      one: "{0} person",
+      other: "{0} people",
+      display_name: "people"
+    )
+
+    unit_localization(:person, "en", :short,
+      one: "{0} per",
+      other: "{0} pers",
+      display_name: "people"
+    )
+
+    unit_localization(:person, "en", :narrow,
+      one: "{0} p",
+      other: "{0} p",
+      display_name: "p"
+    )
+  end
+  ```
+
+  Note the additions to a typical `ex_cldr`
+  backend module:
+
+  * `use Cldr.Unit.Additional` is required to
+    define additional units
+
+  * use of the `unit_localization/4` macro in
+    order to define a localization.
+
+  One invocation of `unit_localization` should
+  made for each combination of unit, locale and
+  style.
+
+  ### Parameters to unit_localization/4
+
+  * `unit` is the name of the additional
+  unit as an `atom`.
+
+  * `locale` is the locale name for this
+    localization. It should be one of the locale
+    configured in this backend although this
+    cannot currently be confirmed at compile tiem.
+
+  * `style` is one of `:long`, :short`, or
+    `:narrow`.
+
+  * `localizations` is a keyword like of localization
+    strings. Two keys - `:display_name` and `:other`
+    are mandatory. They represent the localizations for
+    a non-count display name and `:other` is the
+    localization for a unit when no other pluralization
+    is defined.
+
+  ### Localisations
+
+  Localization keyword list defines localizations that
+  match the plural rules for a given locale. Plural rules
+  for a given number in a given locale resolve to one of
+  six keys:
+
+  * `:zero`
+  * `:one` (singular)
+  * `:two` (dual)
+  * `:few` (paucal)
+  * `:many` (also used for fractions if they have a separate class)
+  * `:other` (required—general plural form—also used if the language only has a single form)
+
+  Only the `:other` key is required. For english,
+  providing keys for `:one` and `:other` is enough. Other
+  languages have different grammatical requirements.
+
+  The key `:display_name` is used by the function
+  `Cldr.Unit.display_name/1` which is primarly used
+  to support UI applications.
+
+  """
   defmacro unit_localization(unit, locale, style, localizations) do
     module = __CALLER__.module
     {localizations, _} = Code.eval_quoted(localizations)
@@ -115,12 +266,13 @@ defmodule Cldr.Unit.Additional do
     %{unit: unit, locale: locale, style: style, localizations: localizations}
   end
 
+  @doc false
   def conversions do
     Application.get_env(:ex_cldr_units, :additional_units, [])
     |> Enum.map(fn {k, v} -> {k, Keyword.put_new(v, :sort_before, :none)} end)
   end
 
-  # Merge base units
+  @doc false
   def merge_base_units(core_base_units) do
     additional_base_units =
       orderable_base_units()
@@ -160,6 +312,7 @@ defmodule Cldr.Unit.Additional do
     end
   end
 
+  @doc false
   def base_units do
     conversions()
     |> Enum.map(fn {_k, v} -> {v[:base_unit], v[:base_unit]} end)
@@ -167,6 +320,7 @@ defmodule Cldr.Unit.Additional do
     |> Keyword.new()
   end
 
+  @doc false
   def orderable_base_units do
     conversions()
     |> Enum.sort(fn {_k1, v1}, {_k2, v2} ->
