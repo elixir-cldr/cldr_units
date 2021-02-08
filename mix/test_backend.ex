@@ -25,6 +25,24 @@ defmodule MyApp.Cldr do
     other: "{0} p",
     display_name: "p"
   )
+
+  unit_localization(:vehicle, "en", :long,
+    one: "{0} vehicle",
+    other: "{0} vehicles",
+    display_name: "vehicles"
+  )
+
+  unit_localization(:vehicle, "en", :short,
+    one: "{0} veh",
+    other: "{0} veh",
+    display_name: "vehicles"
+  )
+
+  unit_localization(:vehicle, "en", :narrow,
+    one: "{0} v",
+    other: "{0} v",
+    display_name: "v"
+  )
 end
 
 defmodule NoDocs.Cldr do

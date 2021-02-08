@@ -154,7 +154,7 @@ defmodule Cldr.Unit.Additional do
     configured in this backend although this
     cannot currently be confirmed at compile tiem.
 
-  * `style` is one of `:long`, :short`, or
+  * `style` is one of `:long`, `:short`, or
     `:narrow`.
 
   * `localizations` is a keyword like of localization
@@ -181,9 +181,6 @@ defmodule Cldr.Unit.Additional do
   Only the `:other` key is required. For english,
   providing keys for `:one` and `:other` is enough. Other
   languages have different grammatical requirements.
-
-  See `Cldr.Number.PluralRule.plural_type/2` to determine
-  what plural type is for a given number and locale.
 
   The key `:display_name` is used by the function
   `Cldr.Unit.display_name/1` which is primarly used
