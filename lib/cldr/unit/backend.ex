@@ -2,9 +2,27 @@ defmodule Cldr.Unit.Backend do
   def define_unit_module(config) do
     module = inspect(__MODULE__)
     backend = config.backend
+    additional_units = Module.concat(backend, Unit.Additional)
     config = Macro.escape(config)
 
-    quote location: :keep, bind_quoted: [module: module, backend: backend, config: config] do
+    quote location: :keep,
+          bind_quoted: [
+            module: module,
+            backend: backend,
+            config: config,
+            additional_units: additional_units
+          ] do
+      # Create an empty additional units module if it wasn't previously
+      # defined
+      unless Code.ensure_loaded?(additional_units) do
+        defmodule additional_units do
+          @moduledoc false
+          def units_for(_locale, _style) do
+            %{}
+          end
+        end
+      end
+
       defmodule Unit do
         @moduledoc false
         if Cldr.Config.include_module_docs?(config.generate_docs) do
@@ -28,8 +46,26 @@ defmodule Cldr.Unit.Backend do
         defdelegate decompose(unit, list), to: Cldr.Unit
         defdelegate localize(unit, usage, options), to: Cldr.Unit
 
-        defdelegate measurement_system_for(territory), to: Cldr.Unit
-        defdelegate measurement_system_for(territory, category), to: Cldr.Unit
+        defdelegate measurement_system_from_locale(locale), to: Cldr.Unit
+        defdelegate measurement_system_from_locale(locale, category), to: Cldr.Unit
+        defdelegate measurement_system_from_locale(locale, backend, category), to: Cldr.Unit
+
+        defdelegate measurement_systems_for_unit(unit), to: Cldr.Unit
+
+        defdelegate measurement_system_for_territory(territory), to: Cldr.Unit
+        defdelegate measurement_system_for_territory(territory, key), to: Cldr.Unit
+
+        defdelegate measurement_system?(unit, systems), to: Cldr.Unit
+
+        @deprecated "Use #{inspect(__MODULE__)}.measurement_system_for_territory/1"
+        defdelegate measurement_system_for(territory),
+          to: Cldr.Unit,
+          as: :measurement_system_for_territory
+
+        @deprecated "Use #{inspect(__MODULE__)}.measurement_system_for_territory/2"
+        defdelegate measurement_system_for(territory, key),
+          to: Cldr.Unit,
+          as: :measurement_system_for_territory
 
         defdelegate known_units, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
@@ -441,11 +477,14 @@ defmodule Cldr.Unit.Backend do
             |> Map.get(:units)
 
           for style <- @styles do
+            additional_units = additional_units.units_for(locale_name, style)
+
             units =
               Map.get(locale_data, style)
               |> Enum.map(&elem(&1, 1))
               |> Cldr.Map.merge_map_list()
-              |> Enum.into(%{})
+              |> Map.merge(additional_units)
+              |> Map.new()
 
             def units_for(unquote(locale_name), unquote(style)) do
               unquote(Macro.escape(units))

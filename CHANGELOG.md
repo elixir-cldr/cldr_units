@@ -1,6 +1,6 @@
-# Changelog for Cldr_Units v3.3.2
+# Changelog for Cldr_Units v3.4.0-rc.0
 
-This is the changelog for Cldr_units v3.3.2 released on January 14th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.4.0-rc.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -10,7 +10,27 @@ This is the changelog for Cldr_units v3.3.2 released on January 14th, 2021.  For
 
 ### Enhancements
 
+* Supports the definition of custom units in `config.exs`. Units can be defined and operated on however they cannot yet be localised (that functionality will be in place before release). See the examples in `dev.exs`.
+
+* Add `Cldr.Unit.display_name/2`
+
+* Add `Cldr.Unit.known_units_by_category/0`
+
+* Add `Cldr.Unit.known_units_for_category/1`
+
+* Add `Cldr.Unit.measurement_system_units/0`
+
+* Add `Cldr.Unit.measurement_system_from_locale/{2, 3}`
+
+* Add `Cldr.Unit.measurement_system_for_territory/1`
+
+* Add `Cldr.Unit.measurement_systems_for_unit/1`
+
 * Improve `Cldr.Unit.IncompatibleUnit` exception error message
+
+* Deprecate `Cldr.Unit.measurement_systems/0` in favour of `Cldr.Unit.measurement_systems_by_territory/0`
+
+* Requires `ex_cldr` version `~> 2.19` which includes the localised display name of units
 
 # Changelog for Cldr_Units v3.3.1
 

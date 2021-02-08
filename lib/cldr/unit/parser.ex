@@ -510,6 +510,7 @@ defmodule Cldr.Unit.Parser do
 
   @base_units_in_order Cldr.Config.units()
                        |> Map.get(:base_units)
+                       |> Cldr.Unit.Additional.merge_base_units()
                        |> Enum.map(&elem(&1, 1))
                        |> Enum.with_index()
                        |> Map.new()

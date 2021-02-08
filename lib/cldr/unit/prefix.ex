@@ -57,4 +57,9 @@ defmodule Cldr.Unit.Prefix do
   def si_sort_order do
     @si_sort_order
   end
+
+  @prefixes Map.keys(@si_factors) ++ Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
+  def prefixes do
+    @prefixes
+  end
 end

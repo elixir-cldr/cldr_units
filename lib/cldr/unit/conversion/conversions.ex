@@ -5,6 +5,7 @@ defmodule Cldr.Unit.Conversions do
   alias Cldr.Unit.Parser
 
   @conversions Map.get(Cldr.Config.units(), :conversions)
+               |> Kernel.++(Cldr.Unit.Additional.conversions())
                |> Enum.map(fn
                  {k, v} -> {k, struct(Conversion, v)}
                end)

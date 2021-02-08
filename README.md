@@ -206,17 +206,17 @@ iex> Cldr.Unit.to_string c, MyApp.Cldr, locale: "fr"
 
 ### Converting Units
 
-`Unit.t` structs can be converted to other compatible units.  For example, `feet` can be converted to `meters` since they are both the `length` unit type.
+`t:Unit` structs can be converted to other compatible units.  For example, `feet` can be converted to `meters` since they are both of the `length` unit type.
 
 ```elixir
 # Test for unit compatibility
-iex> MyApp.Cldr.Unit.compatible? :foot, :meter
+iex> Cldr.Unit.compatible? :foot, :meter
 true
-iex> MyApp.Cldr.Unit.compatible? :foot, :liter
+iex> Cldr.Unit.compatible? :foot, :liter
 false
 
 # Convert a unit
-iex> MyApp.Cldr.Unit.convert MyApp.Cldr.Unit.new!(:foot, 3), :meter
+iex> Cldr.Unit.convert Cldr.Unit.new!(:foot, 3), :meter
 {:ok, #Cldr.Unit<:meter, 16472365997070327 <|> 18014398509481984>}
 
 ```
@@ -258,30 +258,30 @@ See `Cldr.Unit.preferred_units/3` to see what mappings are available, in particu
 Basic arithmetic is provided by `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.mult/2`, `Cldr.Unit.div/2` as well as `Cldr.Unit.round/3`
 
 ```elixir
-iex> MyApp.Cldr.Unit.Math.add MyApp.Cldr.Unit.new!(:foot, 1), MyApp.Cldr.Unit.new!(:foot, 1)
+iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1)
 #Cldr.Unit<:foot, 2>
 
-iex> MyApp.Cldr.Unit.Math.add MyApp.Cldr.Unit.new!(:foot, 1), MyApp.Cldr.Unit.new!(:mile, 1)
+iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
 #Cldr.Unit<:foot, 5280.945925937846>
 
-iex> MyApp.Cldr.Unit.Math.add MyApp.Cldr.Unit.new!(:foot, 1), MyApp.Cldr.Unit.new!(:gallon, 1)
+iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
 {:error, {Cldr.Unit.IncompatibleUnitError,
  "Operations can only be performed between units of the same type. Received #Cldr.Unit<:foot, 1> and #Cldr.Unit<:gallon, 1>"}}
 
-iex> MyApp.Cldr.Unit.round MyApp.Cldr.Unit.new(:yard, 1031.61), 1
+iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1
 #Cldr.Unit<:yard, 1031.6>
 
-iex> MyApp.Cldr.Unit.round MyApp.Cldr.Unit.new(:yard, 1031.61), 1, :up
+iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1, :up
 #Cldr.Unit<:yard, 1031.7>
 
 ```
 
 ### Available units
 
-Available units are returned by `MyApp.Cldr.Unit.known_units/0`.
+Available units are returned by `Cldr.Unit.known_units/0`.
 
 ```elixir
-iex> MyApp.Cldr.Unit.known_units
+iex> Cldr.Unit.known_units
 [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
  :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
  :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
@@ -292,24 +292,182 @@ iex> MyApp.Cldr.Unit.known_units
  :hour, :inch, ...]
 ```
 
-### Unit types
+### Unit categories
 
-Units are grouped by unit type which defines the convertibility of different types.  In general, units of the same time are convertible to each other. The function `MyApp.Cldr.Unit.known_unit_categories/0` returns the unit types.
+Units are grouped by unit category which defines the convertibility of different types.  In general, units of the same category are convertible to each other. The function `Cldr.Unit.known_unit_categories/0` returns the unit categories.
 
 ```elixir
-iex> MyApp.Cldr.Unit.known_unit_categories
+iex> Cldr.Unit.known_unit_categories
 [:acceleration, :angle, :area, :concentr, :consumption, :coordinate, :digital,
  :duration, :electric, :energy, :frequency, :length, :light, :mass, :power,
  :pressure, :speed, :temperature, :volume]
 ```
 
+See also `Cldr.Unit.known_units_by_category/0` and `Cldr.Unit.known_units_for_category/1`.
+
+### Measurement systems
+
+Units generally fall into one of three measurement systems in use around the world. In CLDR these are known as `:metric`, `:ussystem` and `:uksystem`. The following functions allow identifying measurement systems for units, territories and locales.
+
+* The measurement systems are returned with `Cldr.Unit.known_measurement_systems/0`.
+
+* The measurement systems for a given unit are returned by `Cldr.Unit.measurement_systems_for_unit/1`.
+
+* A boolean indicating membership in a given measurement system is returned by `Cldr.Unit.measurement_system?/2`.
+
+* All units belonging to a measurement system are returned by `Cldr.Unit.measurement_system_units/1`.
+
+* The measurement system in use for a given territory is returned by `Cldr.Unit.measurement_system_for_territory/1`.
+
+* The measurement system in use for a given locale is returned by `Cldr.Unit.measurement_system_from_locale/1`.
+
+#### Localisation with measurement systems
+
+Knowledge of the measurement system in place for a given user helps create a better user experience. For example, a user who prefers units of measure in the US system can be shown different but compatible units from a user who prefers metric units.
+
+In this example, the list of units in the volume category are filtered based upon the users preference as expressed by their locale.
+```elixir
+# For a user preferring US english
+iex> system = Cldr.Unit.measurement_system_from_locale "en"
+:ussystem
+
+iex> {:ok, units} = Cldr.Unit.known_units_for_category(:volume)
+iex> Enum.filter(units, &Cldr.Unit.measurement_system?(&1, system))
+[:dessert_spoon, :cup, :drop, :dram, :cubic_foot, :teaspoon, :tablespoon,
+ :cubic_inch, :bushel, :quart, :pint, :cubic_yard, :cubic_mile, :fluid_ounce,
+ :pinch, :barrel, :jigger, :gallon, :acre_foot]
+
+# For a user preferring australian english
+iex> system = Cldr.Unit.measurement_system_from_locale "en-AU"
+:metric
+
+iex> Enum.filter(units, &Cldr.Unit.measurement_system?(&1, system))
+[:cubic_centimeter, :centiliter, :cubic_meter, :pint_metric, :megaliter,
+ :cubic_kilometer, :hectoliter, :milliliter, :deciliter, :liter, :cup_metric]
+
+# For a user expressing an explicit measurement system
+iex> system = Cldr.Unit.measurement_system_from_locale "en-AU-u-ms-uksystem"
+:uksystem
+
+iex> Enum.filter(units, &Cldr.Unit.measurement_system?(&1, system))
+[:quart_imperial, :cubic_foot, :cubic_inch, :dessert_spoon_imperial,
+ :cubic_yard, :cubic_mile, :fluid_ounce_imperial, :acre_foot, :gallon_imperial]
+
+## Additional units (custom units)
+
+Additional domain-specific  units can be defined to suit application requirements. In the context
+of `ex_cldr` there are two parts to configuring additional units.
+
+1. Configure the unit, base unit and conversion in `config.exs`. This is a requirement since units are compiled into code.
+
+2. Configure the localizations for the additional unit in a CLDR backend module. Once configured, additional units act and behave like any of the predefined units of measure defined by CLDR.
+
+### Configuring a unit in config.exs
+
+Under the application  `:ex_cldr_units`, define a key `:additional_units` with the required unit
+definitions.
+
+For  example:
+```elixir
+config :ex_cldr_units,  :additional_units,
+  vehicle: [base_unit: :unit, factor: 1,  offset: 0, sort_before: :all],
+  person: [base_unit: :unit, factor:  1, offset: 0, sort_before: :all]
+```
+This example defines  two additional units: `:vehicle` and  `:person`.
+
+* The keys `:base_unit`, and  `:factor` are required. The  key `:offset` is optional and  defaults to `0`.
+
+* The key `:sort_before` is optional and defaults to `:none`.
+
+### Configuration keys
+
+* `:base_unit` is the common denominator that is used to support conversion between like units. It can be any atom value. For example `:liter` is the base unit for volume units, `:meter` is the base unit for length units.
+
+*  `:factor` is used to convert a unit to its base unit in order to support conversion. When converting a unit to another compatible unit, the unit is first  multiplied by this units factor then divided by the target units factor.
+
+* `:offset` is added to a unit after applying its base factor in order to convert to another unit.
+
+* `:sort_before` determines where in this *base unit* sorts relative to other base units. Typically this is set to `:all` in which  case this base unit sorts before all other base units or`:none` in which case this base unit sorted after all other base units. The default is `:none`. If in doubt, leave this key to its default.
+
+*  `:systems` is list of measurement systems to which this unit belongs. The known measurement systems are `:metric`, `:uksystem` and `:ussystem`.  The  default is `[:metric,  :ussystem, :uksystem]`.
+
+### Defining localizations
+
+Although defining a unit in `config.exs` is enough to create, operate on and serialize an additional unit, it cannot be localised without defining localizations in an `ex_cldr` backend module.  For example:
+
+```elixir
+defmodule MyApp.Cldr do
+  use Cldr.Unit.Additional
+
+  use Cldr,
+    locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE"],
+    default_locale: "en",
+    providers: [Cldr.Number, Cldr.Unit, Cldr.List]
+
+  unit_localization(:person, "en", :long,
+    one: "{0} person",
+    other: "{0} people",
+    display_name: "people"
+  )
+
+  unit_localization(:person, "en", :short,
+    one: "{0} per",
+    other: "{0} pers",
+    display_name: "people"
+  )
+
+  unit_localization(:person, "en", :narrow,
+    one: "{0} p",
+    other: "{0} p",
+    display_name: "p"
+  )
+end
+```
+
+Note the additions to a typical `ex_cldr` backend module:
+
+* `use Cldr.Unit.Additional` is required to define additional units
+
+* use of the `Cldr.Unit.Additional.unit_localization/4` macro in order to define a localization.
+
+* The use templates for the localization. Templates are a string with both a placeholder (for units it is always `{0}`) and some fixed text that reflects the grammatical requirements of the particular locale.
+
+One invocation of `Cldr.Unit.Additional.unit_localization/4` should made for each combination of unit, locale and style.
+
+#### Parameters to unit_localization/4
+
+* `unit` is the name of the additional unit as an `atom`.
+
+* `locale` is the locale name for this localization. It should be one of the locale configured in this backend although this cannot currently be confirmed at compile tiem.
+
+* `style` is one of `:long`, `:short`, or `:narrow`.
+
+* `localizations` is a keyword like of localization strings. Two keys - `:display_name` and `:other` are mandatory. They represent the localizations for a non-count display name and `:other` is the localization for a unit when no other pluralization is defined.
+
+#### Localisation definition
+
+Localization keyword list defines localizations that match the plural rules for a given locale. Plural rules for a given number in a given locale resolve to one of
+six keys:
+
+* `:zero`
+* `:one` (singular)
+* `:two` (dual)
+* `:few` (paucal)
+* `:many` (also used for fractions if they have a separate class)
+* `:other` (required — general plural form. Also used if the language only has a single form)
+
+Only the `:other` key is required. For english, providing keys for `:one` and `:other` is enough. Other languages have different grammatical requirements.
+
+The key `:display_name` is used by the function `Cldr.Unit.display_name/1` which is primarly used to support UI applications.
+
 ### Sorting Units
 
-With Elixir 1.10, `Enum.sort/2` supports module-based comparisons to provide a simpler API for sorting structs. `ex_cldr_units` supports Elixir 1.10 as the following example shows:
+From Elixir 1.10, `Enum.sort/2` supports module-based comparisons to provide a simpler API for sorting structs. `ex_cldr_units` supports Elixir 1.10 as the following example shows:
 ```
-iex> alias Cldr.Unit                                                                             Cldr.Unit
+iex> alias Cldr.Unit
+Cldr.Unit
 
-iex> unit_list = [Unit.new(:millimeter, 100), Unit.new(:centimeter, 100), Unit.new(:meter, 100), Unit.new(:kilometer, 100)]
+iex> unit_list = [Unit.new!(:millimeter, 100), Unit.new!(:centimeter, 100), Unit.new!(:meter, 100), Unit.new!(:kilometer, 100)]
 [#Unit<:millimeter, 100>, #Unit<:centimeter, 100>, #Unit<:meter, 100>,
  #Unit<:kilometer, 100>]
 
@@ -326,15 +484,13 @@ iex> Enum.sort unit_list, {:asc, Cldr.Unit}
  #Unit<:kilometer, 100>]
 ```
 
-## Further information
-For help in `iex`:
-
+Note that the items being sorted must be all of the same unit category (length, volume, ...). Where units are of the same category but different units, conversion to a common unit will occur before the comparison. If units of different categories are encountered an exception will be raised as the following example shows:
 ```elixir
-iex> h MyApp.Cldr.Unit.new
-iex> h MyApp.Cldr.Unit.to_string
-iex> h MyApp.Cldr.Unit.localize
-iex> h MyApp.Cldr.Unit.convert
-iex> h MyApp.Cldr.Unit.units
-iex> h MyApp.Cldr.Unit.unit_categories
+iex> unit_list = [Unit.new!(:millimeter, 100), Unit.new!(:centimeter, 100), Unit.new!(:meter, 100), Unit.new!(:liter, 100)]
+[#Cldr.Unit<:millimeter, 100>, #Cldr.Unit<:centimeter, 100>,
+ #Cldr.Unit<:meter, 100>, #Cldr.Unit<:liter, 100>]
+
+iex> Enum.sort unit_list, Cldr.Unit
+** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units with the same category and base unit. Received :liter and :meter
 ```
 
