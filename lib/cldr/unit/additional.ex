@@ -81,6 +81,8 @@ defmodule Cldr.Unit.Additional do
 
     quote do
       @before_compile Cldr.Unit.Additional
+      @after_compile Cldr.Unit.Additional
+
       import Cldr.Unit.Additional
       Module.register_attribute(unquote(module), :custom_localizations, accumulate: true)
     end
@@ -201,6 +203,8 @@ defmodule Cldr.Unit.Additional do
     end
   end
 
+  # This is the empty module created if the backend does not
+  # include `use Cldr.Unit.Additional`
   @doc false
   def define_localization_module(localizations, module) do
     quote bind_quoted: [module: module, localizations: Macro.escape(localizations)] do
@@ -216,6 +220,41 @@ defmodule Cldr.Unit.Additional do
         def units_for(locale, style) do
           %{}
         end
+
+        def known_locale_names do
+          unquote(Map.keys(localizations))
+        end
+      end
+    end
+  end
+
+  @doc false
+  def __after_compile__(env, _bytecode) do
+    additional_module = Module.concat(env.module, Unit.Additional)
+
+    additional_locales = MapSet.new(additional_module.known_locale_names())
+    backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
+    styles = Cldr.Unit.styles()
+
+    case MapSet.difference(backend_locales, additional_locales) do
+      [] ->
+        :ok
+
+      other ->
+        IO.warn("The locales #{inspect MapSet.to_list(other)} configured in " <>
+         "the CLDR backend #{inspect env.module} " <>
+         "do not have localizations defined in #{inspect additional_module}", [])
+    end
+
+    for locale <- MapSet.intersection(backend_locales, additional_locales),
+        style <- styles do
+      case additional_module.units_for(locale, style) do
+        :error ->
+          IO.warn("#{inspect additional_module} does not define localizations " <>
+          "for locale #{inspect locale} with style #{inspect style}", [])
+
+        _other ->
+          :ok
       end
     end
   end
