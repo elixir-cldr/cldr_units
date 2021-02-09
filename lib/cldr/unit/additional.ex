@@ -228,21 +228,26 @@ defmodule Cldr.Unit.Additional do
     end
   end
 
+  # These locales are required for the correct operation of
+  # ex_cldr but they are not considered part of the users
+  # configuration
+  @dont_consider_this_locales ["root", "en-001"]
+
   @doc false
   def __after_compile__(env, _bytecode) do
     additional_module = Module.concat(env.module, Unit.Additional)
 
     additional_units = MapSet.new(Cldr.Unit.Additional.additional_units())
     additional_locales = MapSet.new(additional_module.known_locale_names())
-    backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
+    backend_locales = MapSet.new(env.module.known_locale_names() -- @dont_consider_this_locales)
     styles = Cldr.Unit.styles()
 
-    case MapSet.difference(backend_locales, additional_locales) do
+    case MapSet.to_list(MapSet.difference(backend_locales, additional_locales)) do
       [] ->
         :ok
 
       other ->
-        IO.warn("The locales #{inspect MapSet.to_list(other)} configured in " <>
+        IO.warn("The locales #{inspect other} configured in " <>
          "the CLDR backend #{inspect env.module} " <>
          "do not have localizations defined in #{inspect additional_module}", [])
     end
