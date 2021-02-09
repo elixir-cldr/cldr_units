@@ -334,6 +334,7 @@ defmodule Cldr.Unit.Additional do
 
   def conversions do
     Application.get_env(:ex_cldr_units, :additional_units, [])
+    |> validate_keyword_list!()
     |> Enum.map(fn {unit, config} ->
       new_config =
         config
@@ -346,13 +347,27 @@ defmodule Cldr.Unit.Additional do
     end)
   end
 
+  defp validate_keyword_list!(list) do
+    unless Keyword.keyword?(list) do
+      raise ArgumentError, "Additional unit configuration must be a keyword list. See Cldr.Unit.Addition"
+    end
+
+    Enum.each(list, fn {k, v} ->
+      unless Keyword.keyword?(v) do
+        raise ArgumentError, "Additional unit configuration for #{inspect k} must be a keyword list. See Cldr.Unit.Addition"
+      end
+    end)
+
+    list
+  end
+
   defp validate_unit!(unit) do
     unless Keyword.keyword?(unit) do
       raise ArgumentError,
             "Additional unit configuration must be a keyword list. Found #{inspect(unit)}"
     end
 
-    unless Keyword.has_key?(unit, :base_unit) do
+    unless Keyword.has_key?(unit, :factor) do
       raise ArgumentError, "Additional unit configuration must have a :factor configured"
     end
 
@@ -380,7 +395,7 @@ defmodule Cldr.Unit.Additional do
 
       other ->
         raise ArgumentError,
-              "Additional unit factor must be a number of a rational " <>
+              "Additional unit factor must be a number or a rational " <>
                 "of the form %{numerator: number, denominator: number}. Found #{inspect(other)}"
     end
 
