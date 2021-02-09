@@ -232,6 +232,7 @@ defmodule Cldr.Unit.Additional do
   def __after_compile__(env, _bytecode) do
     additional_module = Module.concat(env.module, Unit.Additional)
 
+    additional_units = MapSet.new(Cldr.Unit.Additional.additional_units())
     additional_locales = MapSet.new(additional_module.known_locale_names())
     backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
     styles = Cldr.Unit.styles()
@@ -249,12 +250,21 @@ defmodule Cldr.Unit.Additional do
     for locale <- MapSet.intersection(backend_locales, additional_locales),
         style <- styles do
       case additional_module.units_for(locale, style) do
-        :error ->
+        map when map == %{} ->
           IO.warn("#{inspect additional_module} does not define localizations " <>
           "for locale #{inspect locale} with style #{inspect style}", [])
 
-        _other ->
-          :ok
+        other ->
+          localized_units = MapSet.new(Map.keys(other))
+          case MapSet.to_list(MapSet.difference(additional_units, localized_units)) do
+            [] ->
+              :ok
+
+            other ->
+              IO.warn("#{inspect additional_module} does not define localizations " <>
+                      "for the units #{inspect other} in " <>
+                      "locale #{inspect locale} with style #{inspect style}", [])
+          end
       end
     end
   end
@@ -379,7 +389,9 @@ defmodule Cldr.Unit.Additional do
 
   @doc false
   def additional_units do
-    Keyword.keys(conversions())
+    conversions()
+    |> Keyword.keys()
+    |> Enum.sort()
   end
 
   @doc false

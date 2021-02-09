@@ -221,9 +221,9 @@ iex> Cldr.Unit.convert Cldr.Unit.new!(:foot, 3), :meter
 
 ```
 
-### Localising units for a give locale or territory
+### Localising units for a given locale or territory
 
-Differnent locales or territories use different measurement systems and sometimes different measurement scales that also vary based upon usage. For example, in the US a person's height is considered in `inches` up to a certain point and `feet and inches` after that. For distances when driving, the length is considered in `yards` for certain distances and `miles` after that. For most other countries the same quantity would be expressed in `centimeters` or `meters` or `kilometers`.
+Different locales or territories use different measurement systems and sometimes different measurement scales that also vary based upon usage. For example, in the US a person's height is considered in `inches` up to a certain point and `feet and inches` after that. For distances when driving, the length is considered in `yards` for certain distances and `miles` after that. For most other countries the same quantity would be expressed in `centimeters` or `meters` or `kilometers`.
 
 `ex_cldr_units` makes it easy to take a unit and convert it to the units appropriate for a given locale and usage.
 
