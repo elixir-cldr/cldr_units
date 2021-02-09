@@ -47,7 +47,7 @@ defmodule Cldr.Unit do
   @type unit :: translatable_unit | String.t()
   @type category :: atom()
   @type usage :: atom()
-  @type measurement_system :: :metric | :ussystem | :uksystem
+  @type measurement_system :: :metric | :ussystem | :uksystem | :si
   @type measurement_system_key :: :default | :temperature | :paper_size
   @type style :: :narrow | :short | :long
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
@@ -95,8 +95,8 @@ defmodule Cldr.Unit do
 
   @unit_tree "en"
              |> Cldr.Config.get_locale(@config)
-             |> Map.get(:units)
-             |> Map.get(:short)
+             |> Map.fetch!(:units)
+             |> Map.fetch!(:long)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
              |> Map.new()
 
@@ -1440,7 +1440,7 @@ defmodule Cldr.Unit do
       [:ussystem, :uksystem]
 
       iex> Cldr.Unit.measurement_systems_for_unit :meter
-      [:metric]
+      [:metric, :si]
 
       iex> Cldr.Unit.measurement_systems_for_unit :invalid
       {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
@@ -1504,10 +1504,8 @@ defmodule Cldr.Unit do
           alias: :imperial,
           description: "UK System of measurement: feet, pints, etc.; pints are 20oz"
         },
-        ussystem: %{
-          alias: nil,
-          description: "US System of measurement: feet, pints, etc.; pints are 16oz"
-        }
+        ussystem: %{alias: nil, description: "US System of measurement: feet, pints, etc.; pints are 16oz"},
+        si: %{alias: nil, description: "SI System"}
       }
 
   """
@@ -1516,6 +1514,22 @@ defmodule Cldr.Unit do
 
   def known_measurement_systems do
     @measurement_systems
+  end
+
+  @doc """
+  Return a list of known measurement system names.
+
+  ## Example
+
+      iex> Cldr.Unit.known_measurement_system_names()
+      [:metric, :si, :uksystem, :ussystem]
+
+  """
+  @doc since: "3.5.0"
+  @spec known_measurement_system_names :: [measurement_system(), ...]
+
+  def known_measurement_system_names do
+    @system_names
   end
 
   @doc """
@@ -1610,13 +1624,12 @@ defmodule Cldr.Unit do
         area: [:default, :geograph, :land],
         concentration: [:blood_glucose, :default],
         consumption: [:default, :vehicle_fuel],
-        consumption_inverse: [:default, :vehicle_fuel],
         duration: [:default, :media],
         energy: [:default, :food],
         length: [:default, :focal_length, :person, :person_height, :rainfall, :road,
          :snowfall, :vehicle, :visiblty],
         mass: [:default, :person],
-        mass_density: [:blood_glucose, :default],
+        mass_density: [:default],
         power: [:default, :engine],
         pressure: [:baromtrc, :default],
         speed: [:default, :wind],
@@ -2120,6 +2133,7 @@ defmodule Cldr.Unit do
     String.replace(name, [" ", "-"], "_")
   end
 
+  @doc false
   def maybe_translatable_unit(name) do
     atom_name = String.to_existing_atom(name)
 

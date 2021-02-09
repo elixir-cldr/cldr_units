@@ -1,6 +1,16 @@
-# Changelog for Cldr_Units v3.4.0-rc.0
+# Changelog for Cldr_Units v3.5.0
 
-This is the changelog for Cldr_units v3.4.0-rc.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.5.0 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Updated to [CLDR 39]
+
+* Adds `Cldr.Unit.known_measurement_system_names/0`
+
+# Changelog for Cldr_Units v3.4.0
+
+This is the changelog for Cldr_units v3.4.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -10,7 +20,7 @@ This is the changelog for Cldr_units v3.4.0-rc.0 released on February 9th, 2021.
 
 ### Enhancements
 
-* Supports the definition of custom units in `config.exs`. Units can be defined and operated on however they cannot yet be localised (that functionality will be in place before release). See the examples in `dev.exs`.
+* Supports the definition of custom units in `config.exs`.
 
 * Add `Cldr.Unit.display_name/2`
 
