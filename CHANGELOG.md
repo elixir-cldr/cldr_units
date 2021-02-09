@@ -1,6 +1,6 @@
-# Changelog for Cldr_Units v3.4.0-rc.0
+# Changelog for Cldr_Units v3.4.0
 
-This is the changelog for Cldr_units v3.4.0-rc.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.4.0 released on February 10th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 

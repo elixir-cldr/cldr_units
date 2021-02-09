@@ -106,6 +106,7 @@ defmodule Cldr.Unit.Additional do
   backend module.  For example:
   ```elixir
   defmodule MyApp.Cldr do
+    # Note that this line should come before the `use Cldr` line
     use Cldr.Unit.Additional
 
     use Cldr,
@@ -231,7 +232,7 @@ defmodule Cldr.Unit.Additional do
   # These locales are required for the correct operation of
   # ex_cldr but they are not considered part of the users
   # configuration
-  @dont_consider_this_locales ["root", "en-001"]
+  @dont_consider_these_locales ["root", "en-001"]
 
   @doc false
   def __after_compile__(env, _bytecode) do
@@ -239,7 +240,7 @@ defmodule Cldr.Unit.Additional do
 
     additional_units = MapSet.new(Cldr.Unit.Additional.additional_units())
     additional_locales = MapSet.new(additional_module.known_locale_names())
-    backend_locales = MapSet.new(env.module.known_locale_names() -- @dont_consider_this_locales)
+    backend_locales = MapSet.new(env.module.known_locale_names() -- @dont_consider_these_locales)
     styles = Cldr.Unit.styles()
 
     case MapSet.to_list(MapSet.difference(backend_locales, additional_locales)) do
@@ -247,28 +248,38 @@ defmodule Cldr.Unit.Additional do
         :ok
 
       other ->
-        IO.warn("The locales #{inspect other} configured in " <>
-         "the CLDR backend #{inspect env.module} " <>
-         "do not have localizations defined in #{inspect additional_module}", [])
+        IO.warn(
+          "The locales #{inspect(other)} configured in " <>
+            "the CLDR backend #{inspect(env.module)} " <>
+            "do not have localizations defined in #{inspect(additional_module)}",
+          []
+        )
     end
 
     for locale <- MapSet.intersection(backend_locales, additional_locales),
         style <- styles do
       case additional_module.units_for(locale, style) do
         map when map == %{} ->
-          IO.warn("#{inspect additional_module} does not define localizations " <>
-          "for locale #{inspect locale} with style #{inspect style}", [])
+          IO.warn(
+            "#{inspect(additional_module)} does not define localizations " <>
+              "for locale #{inspect(locale)} with style #{inspect(style)}",
+            []
+          )
 
         other ->
           localized_units = MapSet.new(Map.keys(other))
+
           case MapSet.to_list(MapSet.difference(additional_units, localized_units)) do
             [] ->
               :ok
 
             other ->
-              IO.warn("#{inspect additional_module} does not define localizations " <>
-                      "for the units #{inspect other} in " <>
-                      "locale #{inspect locale} with style #{inspect style}", [])
+              IO.warn(
+                "#{inspect(additional_module)} does not define localizations " <>
+                  "for the units #{inspect(other)} in " <>
+                  "locale #{inspect(locale)} with style #{inspect(style)}",
+                []
+              )
           end
       end
     end
@@ -354,12 +365,14 @@ defmodule Cldr.Unit.Additional do
 
   defp validate_keyword_list!(list) do
     unless Keyword.keyword?(list) do
-      raise ArgumentError, "Additional unit configuration must be a keyword list. See Cldr.Unit.Addition"
+      raise ArgumentError,
+            "Additional unit configuration must be a keyword list. See Cldr.Unit.Addition"
     end
 
     Enum.each(list, fn {k, v} ->
       unless Keyword.keyword?(v) do
-        raise ArgumentError, "Additional unit configuration for #{inspect k} must be a keyword list. See Cldr.Unit.Addition"
+        raise ArgumentError,
+              "Additional unit configuration for #{inspect(k)} must be a keyword list. See Cldr.Unit.Addition"
       end
     end)
 

@@ -397,6 +397,7 @@ Although defining a unit in `config.exs` is enough to create, operate on and ser
 
 ```elixir
 defmodule MyApp.Cldr do
+  # Note that this line should come before the `use Cldr` line
   use Cldr.Unit.Additional
 
   use Cldr,
