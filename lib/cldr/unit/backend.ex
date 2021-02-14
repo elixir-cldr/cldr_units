@@ -24,6 +24,10 @@ defmodule Cldr.Unit.Backend do
           def units_for(_locale, _style) do
             %{}
           end
+
+          def additional_units do
+            []
+          end
         end
       end
 
