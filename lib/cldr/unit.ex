@@ -33,7 +33,7 @@ defmodule Cldr.Unit do
 
   alias Cldr.Unit
   alias Cldr.{Locale, LanguageTag, Substitution}
-  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, Prefix}
+  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, Prefix, BaseUnit}
 
   @enforce_keys [:unit, :value, :base_conversion, :usage, :format_options]
 
@@ -51,8 +51,10 @@ defmodule Cldr.Unit do
   @type measurement_system_key :: :default | :temperature | :paper_size
   @type style :: :narrow | :short | :long
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
-  @type conversion :: Conversion.t() | {[Conversion.t(), ...], [Conversion.t(), ...]} | list()
   @type locale :: Locale.locale_name() | LanguageTag.t()
+
+  @type base_conversion :: {translatable_unit, Conversion.t()}
+  @type conversion :: [base_conversion()] | {[base_conversion()], [base_conversion()]}
 
   @type t :: %__MODULE__{
           unit: unit(),
@@ -306,7 +308,7 @@ defmodule Cldr.Unit do
     format_options = Keyword.get(options, :format_options, @default_format_options)
 
     with {:ok, unit, base_conversion} <- validate_unit(unit),
-         {:ok, usage} <- validate_usage(unit, usage) do
+         {:ok, usage} <- validate_usage(unit, usage, base_conversion) do
       unit = %Unit{
         unit: unit,
         value: value,
@@ -319,15 +321,16 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp validate_usage(unit, usage) do
-    with {:ok, category} <- unit_category(unit) do
+  @doc false
+  def validate_usage(unit, usage, base_conversion) do
+    with {:ok, category} <- unit_category(unit, base_conversion) do
       validate_category_usage(category, usage)
     end
   end
 
-  defp validate_category_usage(:substance_amount, _) do
-    {:ok, nil}
-  end
+  # defp validate_category_usage(:substance_amount, _) do
+  #   {:ok, nil}
+  # end
 
   @default_category_usage [@default_use]
   defp validate_category_usage(category, usage) when is_atom(usage) do
@@ -673,7 +676,6 @@ defmodule Cldr.Unit do
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style) do
       number = value(unit)
-
       options =
         unit.format_options
         |> Keyword.merge(options)
@@ -1680,22 +1682,19 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
 
   """
-  def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
-    with {:ok, _unit, conversion} <- validate_unit(unit_name) do
-      base_unit(conversion)
-    end
-  end
-
-  # def base_unit(%{base_unit: [base_name]}) when is_atom(base_name) do
-  #   {:ok, base_name}
-  # end
 
   def base_unit(%Unit{base_conversion: conversion}) do
-    base_unit(conversion)
+    BaseUnit.canonical_base_unit(conversion)
   end
 
-  def base_unit(conversion) when is_list(conversion) or is_tuple(conversion) do
-    Parser.canonical_base_unit(conversion)
+  def base_unit(conversions) when is_list(conversions) or is_tuple(conversions) do
+    BaseUnit.canonical_base_unit(conversions)
+  end
+
+  def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
+    with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name) do
+      BaseUnit.canonical_base_unit(conversion)
+    end
   end
 
   def unknown_base_unit_error(unit_name) do
@@ -1734,6 +1733,13 @@ defmodule Cldr.Unit do
   def unit_category(unit) do
     with {:ok, _unit, conversion} <- validate_unit(unit),
          {:ok, base_unit} <- base_unit(conversion) do
+      {:ok, Map.get(base_unit_category_map(), Kernel.to_string(base_unit))}
+    end
+  end
+
+  @doc false
+  def unit_category(_unit, conversion) do
+    with {:ok, base_unit} <- base_unit(conversion) do
       {:ok, Map.get(base_unit_category_map(), Kernel.to_string(base_unit))}
     end
   end
@@ -2086,7 +2092,7 @@ defmodule Cldr.Unit do
 
   """
   def validate_unit(unit_name) when unit_name in @translatable_units do
-    {:ok, unit_name, [{unit_name, Conversions.conversion_for!(unit_name)}]}
+    {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
 
   @aliases Alias.aliases() |> Map.keys()
@@ -2096,28 +2102,17 @@ defmodule Cldr.Unit do
     |> validate_unit
   end
 
-  # FIXME refactor this hacky conditional
-  def validate_unit(unit_name) when is_binary(unit_name) do
-    unit_name =
-      unit_name
-      |> normalize_unit_name
-      |> maybe_translatable_unit
-
-    if is_atom(unit_name) do
-      validate_unit(unit_name)
-    else
-      with {:ok, parsed} <- Parser.parse_unit(unit_name) do
-        name = Parser.canonical_unit_name(parsed)
-        canonical_name = maybe_translatable_unit(name)
-        {:ok, canonical_name, parsed}
-      end
-    end
-  end
-
   def validate_unit(unit_name) when is_atom(unit_name) do
     unit_name
     |> Atom.to_string()
     |> validate_unit
+  end
+
+  def validate_unit(unit_name) when is_binary(unit_name) do
+    unit_name
+    |> normalize_unit_name
+    |> maybe_translatable_unit
+    |> return_unit
   end
 
   def validate_unit(%Unit{unit: unit_name, base_conversion: base_conversion}) do
@@ -2126,6 +2121,21 @@ defmodule Cldr.Unit do
 
   def validate_unit(unknown_unit) do
     {:error, unit_error(unknown_unit)}
+  end
+
+  defp return_unit(unit_name) when is_atom(unit_name) do
+    validate_unit(unit_name)
+  end
+
+  defp return_unit(unit_name) do
+    with {:ok, parsed} <- Parser.parse_unit(unit_name) do
+      name =
+        parsed
+        |> Parser.canonical_unit_name()
+        |> maybe_translatable_unit()
+
+      {:ok, name, parsed}
+    end
   end
 
   @doc false
@@ -2208,7 +2218,7 @@ defmodule Cldr.Unit do
   def incompatible_units_error(unit_1, unit_2) do
     {
       Unit.IncompatibleUnitsError,
-      "Operations can only be performed between units with the same category and base unit. " <>
+      "Operations can only be performed between units with the same base unit. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }
   end

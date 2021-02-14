@@ -2,6 +2,12 @@
 
 This is the changelog for Cldr_units v3.5.0 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
+### Bug Fixes
+
+* Fixes calculating the base unit for a unit when the unit is a complex compound unit.
+
+* Remove double parsing when calling `Cldr.Unit.new/2` and the unit is not in `Cldr.Unit.known_units/0`
+
 ### Enhancements
 
 * Updated to [CLDR 39]

@@ -243,14 +243,14 @@ defmodule Cldr.Unit.Additional do
       other ->
         IO.warn("The locales #{inspect MapSet.to_list(other)} configured in " <>
          "the CLDR backend #{inspect env.module} " <>
-         "do not have localizations defined in #{inspect additional_module}", [])
+         "do not have localizations defined.", [])
     end
 
     for locale <- MapSet.intersection(backend_locales, additional_locales),
         style <- styles do
       case additional_module.units_for(locale, style) do
         :error ->
-          IO.warn("#{inspect additional_module} does not define localizations " <>
+          IO.warn("#{inspect env.module} does not define localizations " <>
           "for locale #{inspect locale} with style #{inspect style}", [])
 
         _other ->

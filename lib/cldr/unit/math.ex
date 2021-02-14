@@ -34,7 +34,7 @@ defmodule Cldr.Unit.Math do
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
       {:error, {Cldr.Unit.IncompatibleUnitsError,
-        "Operations can only be performed between units with the same category and base unit. Received #Cldr.Unit<:foot, 1> and #Cldr.Unit<:gallon, 1>"}}
+        "Operations can only be performed between units with the same base unit. Received #Cldr.Unit<:foot, 1> and #Cldr.Unit<:gallon, 1>"}}
 
   """
   @spec add(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}

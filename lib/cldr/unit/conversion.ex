@@ -50,7 +50,7 @@ defmodule Cldr.Unit.Conversion do
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :gallon
       {:error, {Cldr.Unit.IncompatibleUnitsError,
-        "Operations can only be performed between units with the same category and base unit. Received :mile and :gallon"}}
+        "Operations can only be performed between units with the same base unit. Received :mile and :gallon"}}
 
   """
   @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
@@ -156,7 +156,7 @@ defmodule Cldr.Unit.Conversion do
          true <- to_string(base_unit_from) == to_string(base_unit_to) do
       {:ok, from, to}
     else
-      _ -> {:error, incompatible_units_error(from, to)}
+      _ -> {:error, incompatible_units_error(Unit.base_unit(from), Unit.base_unit(to))}
     end
   end
 

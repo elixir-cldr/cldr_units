@@ -5,8 +5,8 @@ defmodule Cldr.Unit.Conversion.Test do
 
   for t <- ConversionData.conversions() do
     test "##{t.line} that #{t.from} is convertible to #{t.to}" do
-      {:ok, from} = Cldr.Unit.Parser.canonical_base_unit(unquote(t.from))
-      {:ok, to} = Cldr.Unit.Parser.canonical_base_unit(unquote(t.to))
+      {:ok, from} = Cldr.Unit.BaseUnit.canonical_base_unit(unquote(t.from))
+      {:ok, to} = Cldr.Unit.BaseUnit.canonical_base_unit(unquote(t.to))
       assert from == to
     end
   end
