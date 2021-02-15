@@ -97,3 +97,14 @@ defmodule Cldr.Unit.UnknownCategoryError do
   end
 end
 
+defmodule Cldr.Unit.NotInvertableError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
+
+

@@ -390,6 +390,39 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Inverts a unit
+
+  Only "per" units can be inverted.
+
+  """
+  @spec invert(t()) :: {:ok, t()} | {:error, {module(), String.t()}}
+
+  def invert(%Unit{value: value, base_conversion: conversion} = unit) when is_tuple(conversion) and is_number(value) do
+    new_value = 1 / value
+    new_unit = inverted_unit(unit)
+
+    {:ok, %{new_unit | value: new_value}}
+  end
+
+  @one Decimal.new(1)
+  def invert(%Unit{value: %Decimal{} = value, base_conversion: conversion} = unit) when is_tuple(conversion) do
+    new_value = Decimal.div(@one, value)
+    new_unit = inverted_unit(unit)
+
+    {:ok, %{new_unit | value: new_value}}
+  end
+
+  def invert(%Unit{} = unit) do
+    {:error, not_invertable_error(unit)}
+  end
+
+  defp inverted_unit(%Unit{base_conversion: {numerator, denominator}} = unit) do
+    new_unit = %{unit | base_conversion: {denominator, numerator}}
+    new_name = Cldr.Unit.Parser.canonical_unit_name(new_unit.base_conversion)
+    %{new_unit | unit: new_name}
+  end
+
+  @doc """
   Returns a boolean indicating if two units are
   of the same unit category.
 
@@ -2279,6 +2312,14 @@ defmodule Cldr.Unit do
       "No localisation pattern was found for unit #{inspect(unit)} in " <>
         "locale #{inspect(locale.requested_locale_name)} for " <>
         "style #{inspect(style)}"
+    }
+  end
+
+  def not_invertable_error(unit) do
+    {
+      Cldr.Unit.NotInvertableError,
+      "The unit #{inspect unit} cannot be inverted. Only compound 'per' units " <>
+      "can be inverted"
     }
   end
 
