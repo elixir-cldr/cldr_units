@@ -10,7 +10,7 @@ This is the changelog for Cldr_units v3.5.0 released on ______.  For older chang
 
 ### Enhancements
 
-* Updated to [CLDR 39]
+* Updated to require [ex_cldr version 2.19](https://hex.pm/packages/ex_cldr/2.19.0) which includes [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39) data.
 
 * Adds `Cldr.Unit.known_measurement_system_names/0`
 
