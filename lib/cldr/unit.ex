@@ -322,15 +322,15 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def validate_usage(_unit, @default_use = usage, _base_conversion) do
+    {:ok, usage}
+  end
+
   def validate_usage(unit, usage, base_conversion) do
     with {:ok, category} <- unit_category(unit, base_conversion) do
       validate_category_usage(category, usage)
     end
   end
-
-  # defp validate_category_usage(:substance_amount, _) do
-  #   {:ok, nil}
-  # end
 
   @default_category_usage [@default_use]
   defp validate_category_usage(category, usage) when is_atom(usage) do
@@ -1726,21 +1726,29 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.unit_category :stone
       {:ok, :mass}
 
+      iex> Cldr.Unit.unit_category "kilowatt hour"
+      {:error,
+       {Cldr.Unit.UnknownCategoryError,
+        "The category for \\"kilowatt hour\\" is not known."}}
+
   """
   @spec unit_category(Unit.t() | String.t() | atom()) ::
           {:ok, category()} | {:error, {module(), String.t()}}
 
   def unit_category(unit) do
-    with {:ok, _unit, conversion} <- validate_unit(unit),
-         {:ok, base_unit} <- base_unit(conversion) do
-      {:ok, Map.get(base_unit_category_map(), Kernel.to_string(base_unit))}
+    with {:ok, _unit, conversion} <- validate_unit(unit) do
+      unit_category(unit, conversion)
     end
   end
 
   @doc false
-  def unit_category(_unit, conversion) do
-    with {:ok, base_unit} <- base_unit(conversion) do
-      {:ok, Map.get(base_unit_category_map(), Kernel.to_string(base_unit))}
+  def unit_category(unit, conversion) do
+    with {:ok, base_unit} <- base_unit(conversion),
+         {:ok, category} <- Map.fetch(base_unit_category_map(), Kernel.to_string(base_unit)) do
+      {:ok, category}
+    else
+      :error -> {:error, unknown_category_error(unit)}
+      other -> other
     end
   end
 
@@ -1795,14 +1803,17 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.styles
+      iex> Cldr.Unit.known_styles
       [:long, :short, :narrow]
 
   """
-  @spec styles :: [style(), ...]
-  def styles do
+  @spec known_styles :: [style(), ...]
+  def known_styles do
     @styles
   end
+
+  @deprecated "Use Cldr.Unit.known_styles/0"
+  defdelegate styles, to: __MODULE__, as: :known_styles
 
   @doc """
   Returns the default formatting style.
@@ -2207,6 +2218,11 @@ defmodule Cldr.Unit do
   @doc false
   def unit_category_error(category) do
     {Cldr.Unit.UnknownUnitCategoryError, "The unit category #{inspect(category)} is not known."}
+  end
+
+  @doc false
+  def unknown_category_error(unit) do
+    {Cldr.Unit.UnknownCategoryError, "The category for #{inspect unit} is not known."}
   end
 
   @doc false

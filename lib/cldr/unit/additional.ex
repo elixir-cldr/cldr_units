@@ -246,7 +246,7 @@ defmodule Cldr.Unit.Additional do
     additional_units = additional_module.additional_units()
     additional_locales = MapSet.new(additional_module.known_locale_names())
     backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
-    styles = Cldr.Unit.styles()
+    styles = Cldr.Unit.known_styles()
 
     case MapSet.difference(backend_locales, additional_locales) do
       [] ->

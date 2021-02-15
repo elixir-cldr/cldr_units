@@ -4,13 +4,15 @@ This is the changelog for Cldr_units v3.5.0 released on ______.  For older chang
 
 ### Bug Fixes
 
-* Fixes calculating the base unit for a unit when the unit is a complex compound unit.
+* Fixes calculating the base unit when the unit is a complex compound unit.
 
 * Remove double parsing when calling `Cldr.Unit.new/2` and the unit is not in `Cldr.Unit.known_units/0`
 
+* Ensure `Cldr.Unit.unit_category/1` returns an error tuple if the category is unknown
+
 ### Enhancements
 
-* Updated to [CLDR 39]
+* Requires [ex_cldr version 2.20.0](https://hex.pm.packages/ex_cldr/2.20.0) that is based upon [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39).
 
 * Adds `Cldr.Unit.known_measurement_system_names/0`
 

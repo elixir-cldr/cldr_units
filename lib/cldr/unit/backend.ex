@@ -77,11 +77,12 @@ defmodule Cldr.Unit.Backend do
 
         defdelegate known_units, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
-        defdelegate styles, to: Cldr.Unit
+        defdelegate known_styles, to: Cldr.Unit
+        defdelegate styles, to: Cldr.Unit, as: :known_styles
         defdelegate default_style, to: Cldr.Unit
+
         defdelegate validate_unit(unit), to: Cldr.Unit
         defdelegate validate_style(unit), to: Cldr.Unit
-
         defdelegate unit_category(unit), to: Cldr.Unit
 
         defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
