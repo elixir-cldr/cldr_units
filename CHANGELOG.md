@@ -14,7 +14,9 @@ This is the changelog for Cldr_units v3.5.0 released on ______.  For older chang
 
 * Updated to require [ex_cldr version 2.19](https://hex.pm/packages/ex_cldr/2.19.0) which includes [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39) data.
 
-* Adds `Cldr.Unit.known_measurement_system_names/0`
+* Add `Cldr.Unit.known_measurement_system_names/0`
+
+* Add `Cldr.Unit.invert/1` to invert a "per" unit. This allows for increased compatibility for conversions. For example, "liters per 100 kilometers" is a measure of consumption, as is "miles per gallon".  However these two units are not convertible without inverting one of them first since one is "volume per length" and the other is "length per volume".
 
 # Changelog for Cldr_Units v3.4.0
 
