@@ -47,12 +47,13 @@ defmodule Cldr.Unit.BaseUnit do
       {:ok, "kilogram_per_meter"}
 
   """
-  def canonical_base_unit(unit) when is_binary(unit) or is_atom(unit) do
+  def canonical_base_unit(unit) when is_binary(unit) do
     with {:ok, parsed} <- Parser.parse_unit(unit) do
       canonical_base_unit(parsed)
     end
   end
 
+  # A "per" unit
   def canonical_base_unit({numerator, denominator}) do
     with numerator <- do_canonical_base_unit(numerator),
          denominator <- do_canonical_base_unit(denominator) do
@@ -66,6 +67,7 @@ defmodule Cldr.Unit.BaseUnit do
     end
   end
 
+  # A list of conversions
   def canonical_base_unit(numerator) do
     numerator
     |> do_canonical_base_unit()

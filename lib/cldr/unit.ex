@@ -481,28 +481,18 @@ defmodule Cldr.Unit do
   @spec compatible?(t() | unit(), t() | unit()) :: boolean
 
   def compatible?(unit_1, unit_2) do
-    with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
-         {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
-      (base_unit_1 == base_unit_2) || inverse_compatible?(base_unit_1, conversion_2)
-    else
-      _other -> false
+    case conversion_for(unit_1, unit_2) do
+      {:ok, _conversion} -> true
+      {:error, _error} -> false
     end
   end
 
-  # Invert the compatibility target and check if the base units
-  # compare
-  defp inverse_compatible?(base_unit_1, {numerator_2, denominator_2}) do
-    with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit({denominator_2, numerator_2}) do
-      base_unit_1 == base_unit_2
-    end
-  end
+  @doc """
+  Returns the conversion that calculates
+  the base unit into another unit or
+  and error.
 
-  # If the unit isn't a "per" unit then we can't invert
-  # so can't be compatible
-  defp inverse_compatible?(_base_unit_1, _base_unit_2) do
-    false
-  end
-
+  """
   def conversion_for(unit_1, unit_2) do
     with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
          {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
@@ -1792,11 +1782,6 @@ defmodule Cldr.Unit do
     BaseUnit.canonical_base_unit(conversion)
   end
 
-  # If needed, call this directly on  BaseUnit.canonical_base_unit(conversions)
-  # def base_unit(conversions) when is_list(conversions) or is_tuple(conversions) do
-  #   BaseUnit.canonical_base_unit(conversions)
-  # end
-
   def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
     with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name) do
       BaseUnit.canonical_base_unit(conversion)
@@ -2379,6 +2364,14 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def incompatible_units_error(%Unit{unit: unit_1}, unit_2) do
+    incompatible_units_error(unit_1, unit_2)
+  end
+
+  def incompatible_units_error(unit_1, %Unit{unit: unit_2}) do
+    incompatible_units_error(unit_1, unit_2)
+  end
+
   def incompatible_units_error(unit_1, unit_2) do
     {
       Unit.IncompatibleUnitsError,

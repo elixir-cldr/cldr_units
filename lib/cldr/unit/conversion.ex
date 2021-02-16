@@ -20,7 +20,6 @@ defmodule Cldr.Unit.Conversion do
         }
 
   alias Cldr.Unit
-  alias Cldr.Unit.BaseUnit
 
   @doc """
   Convert one unit into another unit of the same
@@ -50,28 +49,20 @@ defmodule Cldr.Unit.Conversion do
   """
   @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
 
-  def convert(%Unit{} = unit, to_unit) do
-    %{unit: from_unit, value: value, base_conversion: from_conversion} = unit
-
-    with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
-         {:ok, converted} <- convert(value, from_conversion, to_conversion) do
+  def convert(%Unit{value: value, base_conversion: from_conversion} = unit, to_unit) do
+    with {:ok, to_conversion} <- Cldr.Unit.conversion_for(unit, to_unit) do
+      converted = convert(value, from_conversion, to_conversion)
       Unit.new(to_unit, converted, usage: unit.usage, format_options: unit.format_options)
-    else
-      {:error, {Cldr.Unit.IncompatibleUnitsError, _}} ->
-        {:error, Unit.incompatible_units_error(from_unit, to_unit)}
     end
   end
 
   defp convert(value, from, to) when is_number(value) or is_map(value) do
     use Ratio
 
-    with {:ok, from, to} <- compatible(from, to) do
-      value
-      |> Ratio.new()
-      |> convert_to_base(from)
-      |> convert_from_base(to)
-      |> wrap_ok
-    end
+    value
+    |> Ratio.new()
+    |> convert_to_base(from)
+    |> convert_from_base(to)
   end
 
   def convert_to_base(value, %__MODULE__{} = from) do
@@ -143,20 +134,6 @@ defmodule Cldr.Unit.Conversion do
 
   def convert_from_base(value, [numerator | rest]) do
     convert_from_base(value, numerator) |> convert_from_base(rest)
-  end
-
-  defp compatible(from, to) do
-    with {:ok, base_unit_from} <- BaseUnit.canonical_base_unit(from),
-         {:ok, base_unit_to} <- BaseUnit.canonical_base_unit(to),
-         true <- base_unit_from == base_unit_to do
-      {:ok, from, to}
-    else
-      _ -> {:error, Unit.incompatible_units_error(BaseUnit.canonical_base_unit(from), BaseUnit.canonical_base_unit(to))}
-    end
-  end
-
-  defp wrap_ok(unit) do
-    {:ok, unit}
   end
 
   @doc """

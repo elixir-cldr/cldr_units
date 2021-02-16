@@ -18,6 +18,8 @@ This is the changelog for Cldr_units v3.5.0 released on ______.  For older chang
 
 * Add `Cldr.Unit.invert/1` to invert a "per" unit. This allows for increased compatibility for conversions. For example, "liters per 100 kilometers" is a measure of consumption, as is "miles per gallon".  However these two units are not convertible without inverting one of them first since one is "volume per length" and the other is "length per volume".
 
+* Add `Cldr.Unit.conversion_for/2` to return a conversion list used when converting one unit to another.
+
 # Changelog for Cldr_Units v3.4.0
 
 This is the changelog for Cldr_units v3.4.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
