@@ -17,6 +17,12 @@ defmodule Cldr.Unit.Parser do
   defdelegate wrap(term, token), to: Cldr.Unit.BaseUnit
   defdelegate base_units_in_order, to: Cldr.Unit.BaseUnit
 
+  @doc false
+  @per "_per_"
+  def per do
+    @per
+  end
+
   @doc """
   Parses a unit name expressed as a
   string and returns the parsed
@@ -72,12 +78,11 @@ defmodule Cldr.Unit.Parser do
         ]}}
 
   """
-  @spec parse_unit(String.t) ::
-    {:ok, [Unit.base_conversion()]} |
-    {:ok, {[Unit.base_conversion()], [Unit.base_conversion()]}} |
-    {:error, {module(), String.t()}}
+  @spec parse_unit(String.t()) ::
+          {:ok, [Unit.base_conversion()]}
+          | {:ok, {[Unit.base_conversion()], [Unit.base_conversion()]}}
+          | {:error, {module(), String.t()}}
 
-  @per "_per_"
   def parse_unit(unit_string) when is_binary(unit_string) do
     unit_string
     |> Cldr.Unit.normalize_unit_name()
@@ -390,5 +395,4 @@ defmodule Cldr.Unit.Parser do
   defp unit_sort_key({_unit, %Conversion{base_unit: [_prefix, base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
-
 end

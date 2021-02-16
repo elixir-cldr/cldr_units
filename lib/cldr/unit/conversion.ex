@@ -20,12 +20,7 @@ defmodule Cldr.Unit.Conversion do
         }
 
   alias Cldr.Unit
-
-  import Unit, only: [incompatible_units_error: 2]
-
-  defmodule Options do
-    defstruct usage: nil, locale: nil, backend: nil, territory: nil
-  end
+  alias Cldr.Unit.BaseUnit
 
   @doc """
   Convert one unit into another unit of the same
@@ -63,7 +58,7 @@ defmodule Cldr.Unit.Conversion do
       Unit.new(to_unit, converted, usage: unit.usage, format_options: unit.format_options)
     else
       {:error, {Cldr.Unit.IncompatibleUnitsError, _}} ->
-        {:error, incompatible_units_error(from_unit, to_unit)}
+        {:error, Unit.incompatible_units_error(from_unit, to_unit)}
     end
   end
 
@@ -151,12 +146,12 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp compatible(from, to) do
-    with {:ok, base_unit_from} <- Unit.base_unit(from),
-         {:ok, base_unit_to} <- Unit.base_unit(to),
-         true <- to_string(base_unit_from) == to_string(base_unit_to) do
+    with {:ok, base_unit_from} <- BaseUnit.canonical_base_unit(from),
+         {:ok, base_unit_to} <- BaseUnit.canonical_base_unit(to),
+         true <- base_unit_from == base_unit_to do
       {:ok, from, to}
     else
-      _ -> {:error, incompatible_units_error(Unit.base_unit(from), Unit.base_unit(to))}
+      _ -> {:error, Unit.incompatible_units_error(BaseUnit.canonical_base_unit(from), BaseUnit.canonical_base_unit(to))}
     end
   end
 

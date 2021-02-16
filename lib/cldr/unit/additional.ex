@@ -209,13 +209,17 @@ defmodule Cldr.Unit.Additional do
   def define_localization_module(localizations, module) do
     additional_units =
       localizations
-      |> Map.values
+      |> Map.values()
       |> hd()
       |> Map.values()
       |> hd()
       |> Map.keys()
 
-    quote bind_quoted: [module: module, localizations: Macro.escape(localizations), additional_units: additional_units] do
+    quote bind_quoted: [
+            module: module,
+            localizations: Macro.escape(localizations),
+            additional_units: additional_units
+          ] do
       defmodule module do
         for {locale, styles} <- localizations do
           for {style, formats} <- styles do
@@ -253,26 +257,34 @@ defmodule Cldr.Unit.Additional do
         :ok
 
       other ->
-        IO.warn("The locales #{inspect MapSet.to_list(other)} configured in " <>
-         "the CLDR backend #{inspect env.module} " <>
-         "do not have localizations defined for additional units #{inspect additional_units}.", [])
+        IO.warn(
+          "The locales #{inspect(MapSet.to_list(other))} configured in " <>
+            "the CLDR backend #{inspect(env.module)} " <>
+            "do not have localizations defined for additional units #{inspect(additional_units)}.",
+          []
+        )
     end
 
     for locale <- MapSet.intersection(backend_locales, additional_locales),
         style <- styles do
-
       with found_units when is_map(found_units) <- additional_module.units_for(locale, style),
            [] <- additional_units -- Map.keys(found_units) do
         :ok
       else
         :error ->
-          IO.warn("#{inspect env.module} does not define localizations " <>
-          "for locale #{inspect locale} with style #{inspect style}", [])
+          IO.warn(
+            "#{inspect(env.module)} does not define localizations " <>
+              "for locale #{inspect(locale)} with style #{inspect(style)}",
+            []
+          )
 
         not_defined when is_list(not_defined) ->
-          IO.warn("#{inspect env.module} does not define localizations " <>
-          "for locale #{inspect locale} with style #{inspect style} " <>
-          "for units #{inspect not_defined}", [])
+          IO.warn(
+            "#{inspect(env.module)} does not define localizations " <>
+              "for locale #{inspect(locale)} with style #{inspect(style)} " <>
+              "for units #{inspect(not_defined)}",
+            []
+          )
       end
     end
   end

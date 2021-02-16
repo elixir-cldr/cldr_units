@@ -96,7 +96,7 @@ defmodule Cldr.Unit.BaseUnit do
     unit
     |> to_string
     |> Cldr.Unit.normalize_unit_name()
-    |> Parser.parse_unit!
+    |> Parser.parse_unit!()
   end
 
   # Base units are either
@@ -115,7 +115,9 @@ defmodule Cldr.Unit.BaseUnit do
   # And simplify base units (ie unwrap them)
   defp extract_keys(list) do
     Enum.map(list, fn
-      [prefix, conversion] -> [prefix, hd(extract_keys(conversion))]
+      [prefix, conversion] ->
+        [prefix, hd(extract_keys(conversion))]
+
       {_unit, conversion} ->
         conversion
         |> Map.fetch!(:base_unit)
@@ -230,7 +232,7 @@ defmodule Cldr.Unit.BaseUnit do
 
   def flatten_and_stringify(numerator) do
     numerator
-    |> List.flatten
+    |> List.flatten()
     |> Enum.map(&to_string/1)
     |> Enum.join("_")
   end

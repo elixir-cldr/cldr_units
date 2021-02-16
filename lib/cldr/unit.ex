@@ -397,28 +397,56 @@ defmodule Cldr.Unit do
   """
   @spec invert(t()) :: {:ok, t()} | {:error, {module(), String.t()}}
 
-  def invert(%Unit{value: value, base_conversion: conversion} = unit) when is_tuple(conversion) and is_number(value) do
-    new_value = 1 / value
+  def invert(%Unit{value: value, base_conversion: conversion} = unit)
+      when is_tuple(conversion) and is_number(value) do
     new_unit = inverted_unit(unit)
 
-    {:ok, %{new_unit | value: new_value}}
+    {:ok, %{new_unit | value: invert_value(value)}}
   end
 
-  @one Decimal.new(1)
-  def invert(%Unit{value: %Decimal{} = value, base_conversion: conversion} = unit) when is_tuple(conversion) do
-    new_value = Decimal.div(@one, value)
+  def invert(%Unit{value: %Decimal{} = value, base_conversion: conversion} = unit)
+      when is_tuple(conversion) do
     new_unit = inverted_unit(unit)
 
-    {:ok, %{new_unit | value: new_value}}
+    {:ok, %{new_unit | value: invert_value(value)}}
+  end
+
+  @per Cldr.Unit.Parser.per()
+
+  def invert(%Unit{unit: name, value: value}) when is_atom(name) do
+    case Atom.to_string(name) |> String.split(@per) do
+      [_unit_name] ->
+        {:error, not_invertable_error(name)}
+
+      [left, right] ->
+        new_name = right <> @per <> left
+        new_value = invert_value(value)
+        Cldr.Unit.new(new_name, new_value)
+    end
   end
 
   def invert(%Unit{} = unit) do
     {:error, not_invertable_error(unit)}
   end
 
+  defp invert_value(value) when is_number(value) do
+    1 / value
+  end
+
+  @one Decimal.new(1)
+  defp invert_value(%Decimal{} = value) do
+    Decimal.div(@one, value)
+  end
+
   defp inverted_unit(%Unit{base_conversion: {numerator, denominator}} = unit) do
-    new_unit = %{unit | base_conversion: {denominator, numerator}}
-    new_name = Cldr.Unit.Parser.canonical_unit_name(new_unit.base_conversion)
+    new_conversion = {denominator, numerator}
+    new_unit = %{unit | base_conversion: new_conversion}
+
+    new_name =
+      new_conversion
+      |> Cldr.Unit.Parser.canonical_unit_name()
+      |> maybe_translatable_unit()
+
     %{new_unit | unit: new_name}
   end
 
@@ -451,15 +479,57 @@ defmodule Cldr.Unit do
 
   """
   @spec compatible?(t() | unit(), t() | unit()) :: boolean
+
   def compatible?(unit_1, unit_2) do
-    with {:ok, _unit_1, conversion_1} <- validate_unit(unit_1),
-         {:ok, _unit_2, conversion_2} <- validate_unit(unit_2),
-         {:ok, base_unit_1} <- base_unit(conversion_1),
-         {:ok, base_unit_2} <- base_unit(conversion_2) do
-      Kernel.to_string(base_unit_1) == Kernel.to_string(base_unit_2)
+    with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
+         {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
+      (base_unit_1 == base_unit_2) || inverse_compatible?(base_unit_1, conversion_2)
     else
-      _ -> false
+      _other -> false
     end
+  end
+
+  # Invert the compatibility target and check if the base units
+  # compare
+  defp inverse_compatible?(base_unit_1, {numerator_2, denominator_2}) do
+    with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit({denominator_2, numerator_2}) do
+      base_unit_1 == base_unit_2
+    end
+  end
+
+  # If the unit isn't a "per" unit then we can't invert
+  # so can't be compatible
+  defp inverse_compatible?(_base_unit_1, _base_unit_2) do
+    false
+  end
+
+  def conversion_for(unit_1, unit_2) do
+    with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
+         {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
+      conversion_for(unit_1, unit_2, base_unit_1, base_unit_2, conversion_2)
+    end
+  end
+
+  # Base units match so are compatible
+  defp conversion_for(_unit_1, _unit_2, base_unit, base_unit, conversion_2) do
+    {:ok, conversion_2}
+  end
+
+  # Its invertable so see if thats convertible
+  defp conversion_for(unit_1, unit_2, base_unit_1, _base_unit_2, {numerator_2, denominator_2}) do
+    inverted_conversion = {denominator_2, numerator_2}
+    with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit(inverted_conversion) do
+      if base_unit_1 == base_unit_2 do
+        {:ok, inverted_conversion}
+      else
+        {:error, incompatible_units_error(unit_1, unit_2)}
+      end
+    end
+  end
+
+  # Not invertable so not compatible
+  defp conversion_for(unit_1, unit_2, _base_unit_1, _base_unit_2, _conversion) do
+    {:error, incompatible_units_error(unit_1, unit_2)}
   end
 
   @doc """
@@ -709,6 +779,7 @@ defmodule Cldr.Unit do
          {:ok, locale} <- backend.validate_locale(locale),
          {:ok, style} <- validate_style(style) do
       number = value(unit)
+
       options =
         unit.format_options
         |> Keyword.merge(options)
@@ -1698,7 +1769,8 @@ defmodule Cldr.Unit do
 
   ## Argument
 
-  * `unit` is either a `t:Cldr.Unit` or an `atom`
+  * `unit` is either a `t:Cldr.Unit`, an `atom` or
+    a `t:String`
 
   ## Returns
 
@@ -1720,9 +1792,10 @@ defmodule Cldr.Unit do
     BaseUnit.canonical_base_unit(conversion)
   end
 
-  def base_unit(conversions) when is_list(conversions) or is_tuple(conversions) do
-    BaseUnit.canonical_base_unit(conversions)
-  end
+  # If needed, call this directly on  BaseUnit.canonical_base_unit(conversions)
+  # def base_unit(conversions) when is_list(conversions) or is_tuple(conversions) do
+  #   BaseUnit.canonical_base_unit(conversions)
+  # end
 
   def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
     with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name) do
@@ -1730,8 +1803,45 @@ defmodule Cldr.Unit do
     end
   end
 
-  def unknown_base_unit_error(unit_name) do
-    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect(unit_name)} is not known"}
+  @doc """
+  Returns the base unit and the base unit
+  conversionfor a given unit.
+
+  ## Argument
+
+  * `unit` is either a `t:Cldr.Unit`, an `atom` or
+    a `t:String`
+
+  ## Returns
+
+  * `{:ok, base_unit, conversion}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Example
+
+      iex> Cldr.Unit.base_unit_and_conversion :square_kilometer
+      {
+        :ok,
+        :square_meter,
+        [square_kilometer: %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}]
+      }
+
+      iex> Cldr.Unit.base_unit_and_conversion :square_table
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
+
+  """
+
+  def base_unit_and_conversion(%Unit{base_conversion: conversion}) do
+    {:ok, base_unit} = BaseUnit.canonical_base_unit(conversion)
+    {:ok, base_unit, conversion}
+  end
+
+  def base_unit_and_conversion(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
+    with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name),
+         {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) do
+      {:ok, base_unit, conversion}
+    end
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
@@ -1776,7 +1886,7 @@ defmodule Cldr.Unit do
 
   @doc false
   def unit_category(unit, conversion) do
-    with {:ok, base_unit} <- base_unit(conversion),
+    with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion),
          {:ok, category} <- Map.fetch(base_unit_category_map(), Kernel.to_string(base_unit)) do
       {:ok, category}
     else
@@ -2237,6 +2347,11 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def unknown_base_unit_error(unit_name) do
+    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect(unit_name)} is not known"}
+  end
+
+  @doc false
   def unit_error(nil) do
     {
       Cldr.UnknownUnitError,
@@ -2255,7 +2370,7 @@ defmodule Cldr.Unit do
 
   @doc false
   def unknown_category_error(unit) do
-    {Cldr.Unit.UnknownCategoryError, "The category for #{inspect unit} is not known."}
+    {Cldr.Unit.UnknownCategoryError, "The category for #{inspect(unit)} is not known."}
   end
 
   @doc false
@@ -2318,8 +2433,8 @@ defmodule Cldr.Unit do
   def not_invertable_error(unit) do
     {
       Cldr.Unit.NotInvertableError,
-      "The unit #{inspect unit} cannot be inverted. Only compound 'per' units " <>
-      "can be inverted"
+      "The unit #{inspect(unit)} cannot be inverted. Only compound 'per' units " <>
+        "can be inverted"
     }
   end
 

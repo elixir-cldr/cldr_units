@@ -31,7 +31,11 @@ defmodule Cldr.Unit.Conversions do
 
   @identity_conversions Enum.map(@conversions, fn
                           {_k, [{_v, %Conversion{base_unit: [base_unit]}}]} ->
-                            {base_unit, [{base_unit, %Conversion{base_unit: [base_unit], offset: 0, factor: 1}}]}
+                            {base_unit,
+                             [
+                               {base_unit,
+                                %Conversion{base_unit: [base_unit], offset: 0, factor: 1}}
+                             ]}
                         end)
                         |> Map.new()
 
