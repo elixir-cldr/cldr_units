@@ -37,15 +37,19 @@ defmodule Cldr.Unit.Conversion do
 
   # Base units match so are compatible
   defp conversion_for(_unit_1, _unit_2, base_unit, base_unit, conversion_2) do
-    {:ok, conversion_2}
+    {:ok, conversion_2, :forward}
   end
 
-  # Its invertable so see if thats convertible
+  # Its invertable so see if thats convertible. Note that
+  # there is no difference in the conversion for an inverted
+  # conversion. Its only a hint so that in convert_from_base/2
+  # we know to divide, not multiple the value.
   defp conversion_for(unit_1, unit_2, base_unit_1, _base_unit_2, {numerator_2, denominator_2}) do
     inverted_conversion = {denominator_2, numerator_2}
+
     with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit(inverted_conversion) do
       if base_unit_1 == base_unit_2 do
-        {:ok, inverted_conversion}
+        {:ok, {numerator_2, denominator_2}, :inverted}
       else
         {:error, Unit.incompatible_units_error(unit_1, unit_2)}
       end
@@ -127,85 +131,88 @@ defmodule Cldr.Unit.Conversion do
   @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
 
   def convert(%Unit{value: value, base_conversion: from_conversion} = unit, to_unit) do
-    with {:ok, to_conversion} <- conversion_for(unit, to_unit) do
-      converted = convert(value, from_conversion, to_conversion)
-      Unit.new(to_unit, converted, usage: unit.usage, format_options: unit.format_options)
+    with {:ok, to_conversion, maybe_inverted} <- conversion_for(unit, to_unit) do
+      converted_value = convert(value, from_conversion, to_conversion, maybe_inverted)
+      Unit.new(to_unit, converted_value, usage: unit.usage, format_options: unit.format_options)
     end
   end
 
-  defp convert(value, from, to) when is_number(value) or is_map(value) do
+  defp convert(value, from, to, maybe_inverted) when is_number(value) or is_map(value) do
     use Ratio
 
     value
     |> Ratio.new()
     |> convert_to_base(from)
+    |> maybe_invert_value(maybe_inverted)
     |> convert_from_base(to)
   end
 
-  def convert_to_base(value, %__MODULE__{} = from) do
+  def maybe_invert_value(value, :inverted) do
+    use Ratio
+
+    1 / value
+  end
+
+  def maybe_invert_value(value, _) do
+    value
+  end
+
+  # All conversions are ultimately a list of
+  # 2-tuples of the unit and conversion struct
+  defp convert_to_base(value, {_, %__MODULE__{} = from}) do
     use Ratio
 
     %{factor: from_factor, offset: from_offset} = from
     value * from_factor + from_offset
   end
 
-  def convert_to_base(value, [{_, [{_, from}]}]) do
-    convert_to_base(value, from)
-  end
-
-  def convert_to_base(value, {_, %__MODULE__{} = from}) do
-    convert_to_base(value, from)
-  end
-
-  def convert_to_base(value, {numerator, denominator}) do
+  # A per module is a 2-tuple of the numerator and
+  # denominator. Both are lists of conversion tuples.
+  defp convert_to_base(value, {numerator, denominator}) do
     use Ratio
 
-    convert_to_base(1.0, numerator) / convert_to_base(1.0, denominator) * value
+    (convert_to_base(1.0, numerator) / convert_to_base(1.0, denominator)) * value
   end
 
-  def convert_to_base(value, []) do
+  # We recurse over the list of conversions
+  # and accumulate the value as we go
+  defp convert_to_base(value, []) do
     value
   end
 
-  def convert_to_base(value, [numerator | rest]) do
-    convert_to_base(value, numerator) |> convert_to_base(rest)
+  defp convert_to_base(value, [first | rest]) do
+    convert_to_base(value, first) |> convert_to_base(rest)
   end
 
-  def convert_to_base(_value, conversion) do
+  # But if we meet a shape of data we don't
+  # understand then its a raisable error
+  defp convert_to_base(_value, conversion) do
     raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
   end
 
-  def convert_from_base(value, %__MODULE__{} = to) do
+  defp convert_from_base(value, {_, %__MODULE__{} = to}) do
     use Ratio
+
     %{factor: to_factor, offset: to_offset} = to
     (value - to_offset) / to_factor
   end
 
-  def convert_from_base(value, [{_, [{_, to}]}]) do
-    convert_from_base(value, to)
-  end
-
-  # A known translation with a "per" conversion
-  def convert_from_base(value, [{_, {_, _} = to}]) do
-    convert_from_base(value, to)
-  end
-
-  def convert_from_base(value, {_, %__MODULE__{} = to}) do
-    convert_from_base(value, to)
-  end
-
-  def convert_from_base(value, {numerator, denominator}) do
+  defp convert_from_base(value, {numerator, denominator}) do
     use Ratio
 
-    convert_from_base(1.0, numerator) / convert_from_base(1.0, denominator) * value
+    (convert_from_base(1.0, numerator) / convert_from_base(1.0, denominator)) * value
   end
 
-  def convert_from_base(value, []) do
+  defp convert_from_base(value, []) do
     value
   end
 
-  def convert_from_base(value, [numerator | rest]) do
-    convert_from_base(value, numerator) |> convert_from_base(rest)
+  defp convert_from_base(value, [first | rest]) do
+    convert_from_base(value, first) |> convert_from_base(rest)
+  end
+
+  defp convert_from_base(_value, conversion) do
+    raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
   end
 
   @doc """

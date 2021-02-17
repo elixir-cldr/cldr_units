@@ -482,7 +482,7 @@ defmodule Cldr.Unit do
 
   def compatible?(unit_1, unit_2) do
     case Conversion.conversion_for(unit_1, unit_2) do
-      {:ok, _conversion} -> true
+      {:ok, _conversion, _maybe_inverted} -> true
       {:error, _error} -> false
     end
   end

@@ -191,6 +191,10 @@ defmodule Cldr.Unit.Test.ConversionData do
     |> Decimal.to_integer()
   end
 
+  def round_precision(%Cldr.Unit{value: value} = unit, round_digits) do
+    %{unit | value: round_precision(value, round_digits)}
+  end
+
   def round_precision(float_or_decimal, digits) do
     Cldr.Math.round_significant(float_or_decimal, digits)
   end

@@ -4,7 +4,7 @@
 
 Target date of March 2021 to match the release of CLDR 39
 
-* Fix inverse conversions: MPG to L/100km is the example
+* [x] Fix inverse conversions: MPG to L/100km is the example
 
 * Update unit parsing to accord for grammatical case. Treat the current data as data for the nominative case.
 
