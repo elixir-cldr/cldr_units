@@ -6,11 +6,7 @@ defmodule Cldr.Unit.Preference.Test do
 
   @maybe_data_bugs []
 
-  # Currently we're not handling `-inverse` quantities (categories) so
-  # omit those tests for now
-
   for t <- PreferenceData.preferences(),
-      !String.contains?(t.quantity, "-inverse"),
       t.line not in @maybe_data_bugs do
     test_name =
       """

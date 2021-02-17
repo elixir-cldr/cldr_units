@@ -481,45 +481,10 @@ defmodule Cldr.Unit do
   @spec compatible?(t() | unit(), t() | unit()) :: boolean
 
   def compatible?(unit_1, unit_2) do
-    case conversion_for(unit_1, unit_2) do
+    case Conversion.conversion_for(unit_1, unit_2) do
       {:ok, _conversion} -> true
       {:error, _error} -> false
     end
-  end
-
-  @doc """
-  Returns the conversion that calculates
-  the base unit into another unit or
-  and error.
-
-  """
-  def conversion_for(unit_1, unit_2) do
-    with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
-         {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
-      conversion_for(unit_1, unit_2, base_unit_1, base_unit_2, conversion_2)
-    end
-  end
-
-  # Base units match so are compatible
-  defp conversion_for(_unit_1, _unit_2, base_unit, base_unit, conversion_2) do
-    {:ok, conversion_2}
-  end
-
-  # Its invertable so see if thats convertible
-  defp conversion_for(unit_1, unit_2, base_unit_1, _base_unit_2, {numerator_2, denominator_2}) do
-    inverted_conversion = {denominator_2, numerator_2}
-    with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit(inverted_conversion) do
-      if base_unit_1 == base_unit_2 do
-        {:ok, inverted_conversion}
-      else
-        {:error, incompatible_units_error(unit_1, unit_2)}
-      end
-    end
-  end
-
-  # Not invertable so not compatible
-  defp conversion_for(unit_1, unit_2, _base_unit_1, _base_unit_2, _conversion) do
-    {:error, incompatible_units_error(unit_1, unit_2)}
   end
 
   @doc """
@@ -1788,47 +1753,6 @@ defmodule Cldr.Unit do
     end
   end
 
-  @doc """
-  Returns the base unit and the base unit
-  conversionfor a given unit.
-
-  ## Argument
-
-  * `unit` is either a `t:Cldr.Unit`, an `atom` or
-    a `t:String`
-
-  ## Returns
-
-  * `{:ok, base_unit, conversion}` or
-
-  * `{:error, {exception, reason}}`
-
-  ## Example
-
-      iex> Cldr.Unit.base_unit_and_conversion :square_kilometer
-      {
-        :ok,
-        :square_meter,
-        [square_kilometer: %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}]
-      }
-
-      iex> Cldr.Unit.base_unit_and_conversion :square_table
-      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
-
-  """
-
-  def base_unit_and_conversion(%Unit{base_conversion: conversion}) do
-    {:ok, base_unit} = BaseUnit.canonical_base_unit(conversion)
-    {:ok, base_unit, conversion}
-  end
-
-  def base_unit_and_conversion(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
-    with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name),
-         {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) do
-      {:ok, base_unit, conversion}
-    end
-  end
-
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
   defdelegate unit_categories(), to: __MODULE__, as: :known_unit_categories
 
@@ -2328,6 +2252,18 @@ defmodule Cldr.Unit do
   end
 
   def ratio_to_float(%Unit{} = unit) do
+    unit
+  end
+
+  @doc """
+  Convert a ratio Unit to a decimal unit
+  """
+  def ratio_to_decimal(%Unit{value: %Ratio{} = value} = unit) do
+    value = Decimal.div(Decimal.new(value.numerator), Decimal.new(value.denominator))
+    %{unit | value: value}
+  end
+
+  def ratio_to_decimal(%Unit{} = unit) do
     unit
   end
 

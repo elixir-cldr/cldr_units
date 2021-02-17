@@ -150,7 +150,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     String.to_float(integer <> "." <> fraction)
   end
 
-  def round(%Cldr.Unit{value: value} = unit, digits, significant) when is_number(value) do
+  def round(%Cldr.Unit{value: value} = unit, digits, significant) do
     value =
       value
       |> round_precision(significant)
@@ -165,6 +165,10 @@ defmodule Cldr.Unit.Test.ConversionData do
 
   def round(float, digits) when is_float(float) do
     Float.round(float, digits)
+  end
+
+  def round(%Decimal{} = decimal, digits) do
+    Decimal.round(decimal, digits)
   end
 
   def round(other, _digits) do
@@ -187,7 +191,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     |> Decimal.to_integer()
   end
 
-  def round_precision(float, digits) when is_float(float) do
-    Cldr.Math.round_significant(float, digits)
+  def round_precision(float_or_decimal, digits) do
+    Cldr.Math.round_significant(float_or_decimal, digits)
   end
 end

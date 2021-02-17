@@ -20,6 +20,83 @@ defmodule Cldr.Unit.Conversion do
         }
 
   alias Cldr.Unit
+  alias Cldr.Unit.BaseUnit
+
+  @doc """
+  Returns the conversion that calculates
+  the base unit into another unit or
+  and error.
+
+  """
+  def conversion_for(unit_1, unit_2) do
+    with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
+         {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
+      conversion_for(unit_1, unit_2, base_unit_1, base_unit_2, conversion_2)
+    end
+  end
+
+  # Base units match so are compatible
+  defp conversion_for(_unit_1, _unit_2, base_unit, base_unit, conversion_2) do
+    {:ok, conversion_2}
+  end
+
+  # Its invertable so see if thats convertible
+  defp conversion_for(unit_1, unit_2, base_unit_1, _base_unit_2, {numerator_2, denominator_2}) do
+    inverted_conversion = {denominator_2, numerator_2}
+    with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit(inverted_conversion) do
+      if base_unit_1 == base_unit_2 do
+        {:ok, inverted_conversion}
+      else
+        {:error, Unit.incompatible_units_error(unit_1, unit_2)}
+      end
+    end
+  end
+
+  # Not invertable so not compatible
+  defp conversion_for(unit_1, unit_2, _base_unit_1, _base_unit_2, _conversion) do
+    {:error, Unit.incompatible_units_error(unit_1, unit_2)}
+  end
+
+  @doc """
+  Returns the base unit and the base unit
+  conversionfor a given unit.
+
+  ## Argument
+
+  * `unit` is either a `t:Cldr.Unit`, an `atom` or
+    a `t:String`
+
+  ## Returns
+
+  * `{:ok, base_unit, conversion}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Example
+
+      iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_kilometer
+      {
+        :ok,
+        :square_meter,
+        [square_kilometer: %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}]
+      }
+
+      iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_table
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
+
+  """
+
+  def base_unit_and_conversion(%Unit{base_conversion: conversion}) do
+    {:ok, base_unit} = BaseUnit.canonical_base_unit(conversion)
+    {:ok, base_unit, conversion}
+  end
+
+  def base_unit_and_conversion(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
+    with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name),
+         {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) do
+      {:ok, base_unit, conversion}
+    end
+  end
 
   @doc """
   Convert one unit into another unit of the same
@@ -50,7 +127,7 @@ defmodule Cldr.Unit.Conversion do
   @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
 
   def convert(%Unit{value: value, base_conversion: from_conversion} = unit, to_unit) do
-    with {:ok, to_conversion} <- Cldr.Unit.conversion_for(unit, to_unit) do
+    with {:ok, to_conversion} <- conversion_for(unit, to_unit) do
       converted = convert(value, from_conversion, to_conversion)
       Unit.new(to_unit, converted, usage: unit.usage, format_options: unit.format_options)
     end
@@ -73,11 +150,6 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def convert_to_base(value, [{_, [{_, from}]}]) do
-    convert_to_base(value, from)
-  end
-
-  # A known translation with a "per" conversion
-  def convert_to_base(value, [{_, {_, _} = from}]) do
     convert_to_base(value, from)
   end
 
