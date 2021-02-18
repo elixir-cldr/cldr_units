@@ -90,11 +90,11 @@ defmodule Cldr.Unit.BaseUnit do
     |> extract_unit_names()
   end
 
-  def parse_base_units([prefix, unit]) do
+  defp parse_base_units([prefix, unit]) do
     [[prefix, parse_base_units([unit])]]
   end
 
-  def parse_base_units([unit]) do
+  defp parse_base_units([unit]) do
     unit
     |> to_string
     |> Cldr.Unit.normalize_unit_name()
@@ -142,93 +142,93 @@ defmodule Cldr.Unit.BaseUnit do
 
   # Take two list elements and merge them noting that either
   # element might be a "per tuple" represnted by a tuple
-  def merge_unit_names({numerator_a, denominator_a}, {numerator_b, denominator_b}) do
+  defp merge_unit_names({numerator_a, denominator_a}, {numerator_b, denominator_b}) do
     {merge_unit_names(numerator_a, numerator_b), merge_unit_names(denominator_a, denominator_b)}
   end
 
-  def merge_unit_names({numerator_a, denominator_a}, numerator_b) do
+  defp merge_unit_names({numerator_a, denominator_a}, numerator_b) do
     {merge_unit_names(numerator_a, numerator_b), denominator_a}
   end
 
-  def merge_unit_names(numerator_a, {numerator_b, denominator_b}) do
+  defp merge_unit_names(numerator_a, {numerator_b, denominator_b}) do
     {merge_unit_names(numerator_a, numerator_b), denominator_b}
   end
 
-  def merge_unit_names(numerator_a, numerator_b) do
+  defp merge_unit_names(numerator_a, numerator_b) do
     numerator_a ++ numerator_b
   end
 
   # Final pass for "per" base units
-  def merge_unit_names({{_numerator_a, _denominator_a}, {_numerator_b, _denominator_b}}) do
+  defp merge_unit_names({{_numerator_a, _denominator_a}, {_numerator_b, _denominator_b}}) do
     raise ArgumentError, "unexpected"
   end
 
-  def merge_unit_names({{numerator_a, denominator_a}, numerator_b}) do
+  defp merge_unit_names({{numerator_a, denominator_a}, numerator_b}) do
     {numerator_a, merge_unit_names(numerator_b, denominator_a)}
   end
 
-  def merge_unit_names(other) do
+  defp merge_unit_names(other) do
     other
   end
 
   # Sort the units in canonical order
-  def sort_base_units({numerator, denominator}) do
+  defp sort_base_units({numerator, denominator}) do
     {Enum.sort(numerator, &base_unit_sorter/2), Enum.sort(denominator, &base_unit_sorter/2)}
   end
 
-  def sort_base_units(numerator) do
+  defp sort_base_units(numerator) do
     Enum.sort(numerator, &base_unit_sorter/2)
   end
 
   # Relies on base units only ever being a single unit
   # or a list with two elements being a prefix and a unit
-  def base_unit_sorter(unit_a, unit_b) when is_atom(unit_a) and is_atom(unit_b) do
+  defp base_unit_sorter(unit_a, unit_b) when is_atom(unit_a) and is_atom(unit_b) do
     Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
   end
 
-  def base_unit_sorter(unit_a, [_prefix, unit_b]) when is_atom(unit_a) do
+  defp base_unit_sorter(unit_a, [_prefix, unit_b]) when is_atom(unit_a) do
     Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
   end
 
-  def base_unit_sorter([_prefix, unit_a], unit_b) when is_atom(unit_b) do
+  defp base_unit_sorter([_prefix, unit_a], unit_b) when is_atom(unit_b) do
     Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
   end
 
-  def base_unit_sorter([_prefix_a, unit_a], [_prefix_b, unit_b]) do
+  defp base_unit_sorter([_prefix_a, unit_a], [_prefix_b, unit_b]) do
     Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
   end
 
   # Reduce powers to square and cubic
-  def reduce_powers({numerator, denominator}) do
+  defp reduce_powers({numerator, denominator}) do
     {reduce_powers(numerator), reduce_powers(denominator)}
   end
 
-  def reduce_powers([first]) do
+  defp reduce_powers([first]) do
     [first]
   end
 
-  def reduce_powers([first, first | rest]) do
+  defp reduce_powers([first, first | rest]) do
     reduce_powers([[:square, first] | rest])
   end
 
-  def reduce_powers([[:square, first], first | rest]) do
+  defp reduce_powers([[:square, first], first | rest]) do
     reduce_powers([[:cubic, first] | rest])
   end
 
-  def reduce_powers([first, [:square, first] | rest]) do
+  defp reduce_powers([first, [:square, first] | rest]) do
     reduce_powers([[:cubic, first] | rest])
   end
 
-  def reduce_powers([first | rest]) do
+  defp reduce_powers([first | rest]) do
     [first | reduce_powers(rest)]
   end
 
   # Flaten the list and turn it into a string
-  def flatten_and_stringify({numerator, denominator}) do
+  defp flatten_and_stringify({numerator, denominator}) do
     flatten_and_stringify(numerator) <> @per <> flatten_and_stringify(denominator)
   end
 
-  def flatten_and_stringify(numerator) do
+  defp flatten_and_stringify(numerator) do
     numerator
     |> List.flatten()
     |> Enum.map(&to_string/1)
