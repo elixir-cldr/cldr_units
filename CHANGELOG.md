@@ -14,6 +14,28 @@ This is the changelog for Cldr_units v3.5.0 released on ______.  For older chang
 
 * Updated to require [ex_cldr version 2.19](https://hex.pm/packages/ex_cldr/2.19.0) which includes [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39) data.
 
+* Add support for grammatical cases for `Cldr.Unit.to_string/2` and `Cldr.Unit.to_iolist/2`. Not all locales support more than the nominative case. The nominative case is the default. Any configured "Additional Units" in a backend module will need to be modified to put the localisations a map with the key `:nominative`.  See the readme for more information on migrating additional units.  On example is:
+```elixir
+defmodule MyApp.Cldr do
+  use Cldr.Unit.Additional
+
+  use Cldr,
+    locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE"],
+    default_locale: "en",
+    providers: [Cldr.Number, Cldr.Unit, Cldr.List]
+
+  unit_localization(:person, "en", :long,
+    nominative: %{
+      one: "{0} person",
+      other: "{0} people"
+    },
+    display_name: "people"
+  )
+end
+```
+
+* Support conversions where one of the base units is the inverted conversion of the other. This allows conversion between, for example, `mile per gallon` and `liter per 100 kilometer`. These are both compound units of `length` and `volume` but are inverse representations from each other.
+
 * Add `Cldr.Unit.known_measurement_system_names/0`
 
 * Add `Cldr.Unit.invert/1` to invert a "per" unit. This allows for increased compatibility for conversions. For example, "liters per 100 kilometers" is a measure of consumption, as is "miles per gallon".  However these two units are not convertible without inverting one of them first since one is "volume per length" and the other is "length per volume".
