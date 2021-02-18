@@ -132,10 +132,6 @@ defmodule Cldr.Unit.BaseUnit do
 
   # Merge all list elements, starting with the first
   # two until the end of the list
-  defp resolve_unit_names({numerator, denominator}) do
-    {resolve_unit_names(numerator), resolve_unit_names(denominator)}
-  end
-
   defp resolve_unit_names([first]) do
     first
   end

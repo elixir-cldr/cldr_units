@@ -252,13 +252,13 @@ defmodule Cldr.Unit.Additional do
     backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
     styles = Cldr.Unit.known_styles()
 
-    case MapSet.difference(backend_locales, additional_locales) do
+    case MapSet.to_list(MapSet.difference(backend_locales, additional_locales)) do
       [] ->
         :ok
 
       other ->
         IO.warn(
-          "The locales #{inspect(MapSet.to_list(other))} configured in " <>
+          "The locales #{inspect(other)} configured in " <>
             "the CLDR backend #{inspect(env.module)} " <>
             "do not have localizations defined for additional units #{inspect(additional_units)}.",
           []
