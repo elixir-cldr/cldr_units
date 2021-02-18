@@ -198,4 +198,19 @@ defmodule Cldr.Unit.Test.ConversionData do
   def round_precision(float_or_decimal, digits) do
     Cldr.Math.round_significant(float_or_decimal, digits)
   end
+
+  # Just for testing support
+  def to_float_unit(%Cldr.Unit{value: %Ratio{} = value} = unit) do
+    value = Ratio.to_float(value)
+    %{unit | value: value}
+  end
+
+  def to_float_unit(%Cldr.Unit{value: %Decimal{} = value} = unit) do
+    value = Decimal.to_float(value)
+    %{unit | value: value}
+  end
+
+  def to_float_unit(%Cldr.Unit{} = other) do
+    other
+  end
 end

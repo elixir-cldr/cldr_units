@@ -24,7 +24,7 @@ defmodule Cldr.Unit.Conversion.Test do
       result =
         unit
         |> Cldr.Unit.Conversion.convert!(unquote(t.to))
-        |> Cldr.Unit.ratio_to_float()
+        |> Cldr.Unit.Test.ConversionData.to_float_unit()
         |> ConversionData.round(round_digits, round_significant)
 
       if is_integer(result.value) and is_float(expected_result) do
@@ -51,7 +51,7 @@ defmodule Cldr.Unit.Conversion.Test do
       result =
         unit
         |> Cldr.Unit.Conversion.convert!(unquote(t.to))
-        |> Cldr.Unit.ratio_to_decimal()
+        |> Cldr.Unit.to_decimal_unit()
         |> ConversionData.round(round_digits, round_significant)
 
       if is_float(expected_result) do
