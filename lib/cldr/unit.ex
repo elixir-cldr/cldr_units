@@ -43,16 +43,43 @@ defmodule Cldr.Unit do
             usage: :default,
             format_options: []
 
-  @type translatable_unit :: atom()
+  @grammatical_cases [
+    :nominative,
+    :genetive,
+    :accusative,
+    :dative,
+    :locative,
+    :instrumental,
+    :vocative
+  ]
+
+  @styles [
+    :long,
+    :short,
+    :narrow
+  ]
+
+  @measurement_systems Cldr.Config.measurement_systems()
+  @system_names Map.keys(@measurement_systems)
+
+  @measurement_system_keys [
+    :default,
+    :temperature,
+    :paper_size
+  ]
+
+  # Converts a list of atoms into a typespec
+  type = &Enum.reduce(&1, fn x, acc -> {:|, [], [x, acc]} end)
+
+  @type translatable_unit :: atom() | list(atom())
   @type unit :: translatable_unit | String.t()
   @type category :: atom()
   @type usage :: atom()
-  @type measurement_system :: :metric | :ussystem | :uksystem | :si
-  @type measurement_system_key :: :default | :temperature | :paper_size
-  @type style :: :narrow | :short | :long
+  @type measurement_system :: unquote(type.(@system_names))
+  @type measurement_system_key :: unquote(type.(@measurement_system_keys))
+  @type style :: unquote(type.(@styles))
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
   @type locale :: Locale.locale_name() | LanguageTag.t()
-
   @type base_conversion :: {translatable_unit, Conversion.t()}
   @type conversion :: [base_conversion()] | {[base_conversion()], [base_conversion()]}
 
@@ -65,18 +92,20 @@ defmodule Cldr.Unit do
         }
 
   @default_style :long
-  @styles [:long, :short, :narrow]
-
   @default_grammatical_case :nominative
-  @grammatical_cases [
-    :genetive,
-    :accusative,
-    :dative,
-    :locative,
-    :instrumental,
-    :vocative,
-    :nominative
-  ]
+
+  @app_name Cldr.Config.app_name()
+  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
+  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
+
+  @unit_tree "en"
+             |> Cldr.Config.get_locale(@config)
+             |> Map.fetch!(:units)
+             |> Map.fetch!(:long)
+             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+             |> Map.new()
+
+  @units Cldr.Config.units()
 
   defdelegate convert(unit_1, to_unit), to: Conversion
   defdelegate convert!(unit_1, to_unit), to: Conversion
@@ -100,78 +129,6 @@ defmodule Cldr.Unit do
 
   defdelegate compare(unit_1, unit_2), to: Math
 
-  @app_name Cldr.Config.app_name()
-  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
-  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
-
-  @units Cldr.Config.units()
-
-  @unit_tree "en"
-             |> Cldr.Config.get_locale(@config)
-             |> Map.fetch!(:units)
-             |> Map.fetch!(:long)
-             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-             |> Map.new()
-
-  @units_by_category @unit_tree
-                     |> Map.delete(:compound)
-                     |> Map.delete(:coordinate)
-
-  @unit_categories Map.keys(@units_by_category) -- [:"10p", :compound, :coordinate]
-
-  @translatable_units @units_by_category
-                      |> Map.values()
-                      |> List.flatten()
-                      |> List.delete(:generic)
-                      |> Kernel.++(Cldr.Unit.Additional.additional_units())
-
-  @measurement_systems Cldr.Config.measurement_systems()
-  @system_names Map.keys(@measurement_systems)
-
-  @doc """
-  Returns the known units.
-
-  Known units means units that can
-  be localised directly.
-
-  ## Example
-
-      => Cldr.Unit.known_units
-      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
-       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
-       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
-       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
-       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
-       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
-       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
-       :hour, :inch, ...]
-
-  """
-
-  @spec known_units :: [translatable_unit(), ...]
-  def known_units do
-    @translatable_units
-  end
-
-  @deprecated "Use Cldr.Unit.known_units/0"
-  def units, do: known_units()
-
-  @doc """
-  Returns a list of the known unit categories.
-
-  ## Example
-
-      iex> Cldr.Unit.known_unit_categories
-      [:acceleration, :angle, :area, :concentr, :consumption, :digital,
-       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
-       :power, :pressure, :speed, :temperature, :torque, :volume]
-
-  """
-  @spec known_unit_categories :: list(category())
-  def known_unit_categories do
-    @unit_categories
-  end
-
   @doc """
   Returns the units that are defined for
   a given category (such as :volume, :length)
@@ -191,11 +148,68 @@ defmodule Cldr.Unit do
        }
 
   """
+  @units_by_category @unit_tree
+                     |> Map.delete(:compound)
+                     |> Map.delete(:coordinate)
+
   @doc since: "3.4.0"
   @spec known_units_by_category :: %{category() => [translatable_unit(), ...]}
 
   def known_units_by_category do
     @units_by_category
+  end
+
+  @doc """
+  Returns the known units that are directly
+  translatable.
+
+  These units have localised content in CLDR
+  and are used as a key to retrieving that
+  content.
+
+  ## Example
+
+      => Cldr.Unit.known_units
+      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
+       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
+       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
+       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
+       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
+       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
+       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
+       :hour, :inch, ...]
+
+  """
+  @translatable_units @units_by_category
+                      |> Map.values()
+                      |> List.flatten()
+                      |> List.delete(:generic)
+                      |> Kernel.++(Cldr.Unit.Additional.additional_units())
+
+  @spec known_units :: [translatable_unit(), ...]
+  def known_units do
+    @translatable_units
+  end
+
+  @deprecated "Use Cldr.Unit.known_units/0"
+  defdelegate unit(), to: __MODULE__, as: :known_units
+
+  @doc """
+  Returns a list of the known unit categories.
+
+  ## Example
+
+      iex> Cldr.Unit.known_unit_categories
+      [:acceleration, :angle, :area, :concentr, :consumption, :digital,
+       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
+       :power, :pressure, :speed, :temperature, :torque, :volume]
+
+  """
+  @unit_categories Map.keys(@units_by_category)
+
+  @spec known_unit_categories :: list(category())
+  def known_unit_categories do
+    @unit_categories
   end
 
   @doc """
@@ -239,13 +253,33 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Returns a list of the known grammatical
+  cases.
+
+  A grammatical case can be provided as an option to
+  `Cldr.Unit.to_string/2` in order to localise a unit
+  appropriate to the context in which it is used.
+
+  ## Example
+
+      iex> Cldr.Unit.known_grammatical_cases
+      [:nominative, :genetive, :accusative, :dative, :locative, :instrumental,
+       :vocative]
+
+  """
+  @doc since: "3.5.0"
+  def known_grammatical_cases do
+    @grammatical_cases
+  end
+
+  @doc """
   Returns a new `Unit.t` struct.
 
   ## Arguments
 
   * `value` is any float, integer, `Ratio` or `Decimal`
 
-  * `unit` is any unit returned by `Cldr.Unit.known_units/0`
+  * `unit` is any unit name returned by `Cldr.Unit.known_units/0`
 
   * `options` is Keyword list of options. The default
     is `[]`
@@ -255,9 +289,10 @@ defmodule Cldr.Unit do
   * `:usage` is the intended use of the unit. This
     is used during localization to convert the unit
     to that appropriate for the unit category,
-    usage, target territory and unit value. The `:use`
-    must be known for the unit's category. See
-    `Cldr.Unit` for more information.
+    usage, target territory and unit value. The usage
+    must be defined for the unit's category. See
+    `Cldr.Unit.unit_category_usage/0` for the known
+    usage types for each category.
 
   ## Returns
 
@@ -423,6 +458,7 @@ defmodule Cldr.Unit do
   end
 
   @per Cldr.Unit.Parser.per()
+  @one Decimal.new(1)
 
   def invert(%Unit{unit: name, value: value}) when is_atom(name) do
     case Atom.to_string(name) |> String.split(@per) do
@@ -444,7 +480,6 @@ defmodule Cldr.Unit do
     1 / value
   end
 
-  @one Decimal.new(1)
   defp invert_value(%Decimal{} = value) do
     Decimal.div(@one, value)
   end
@@ -526,7 +561,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
-    `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -536,7 +571,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
+    the number to be formatted is a `t:Cldr.Unit` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -544,6 +579,12 @@ defmodule Cldr.Unit do
   * `:style` is one of those returned by `Cldr.Unit.styles`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
+
+  * `:grammatical_case` indicates that a localisation for the given
+    locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+    for the list of known grammatical cases. Note that not all locales
+    define all cases. However all locales do define the `:nominative`
+    case, which is also the default.
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
@@ -644,9 +685,9 @@ defmodule Cldr.Unit do
   end
 
   # Now we have a unit, a backend and some options but ratio
-  # values need to be converted to floats
+  # values need to be converted to decimals
   def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
-    unit = ratio_to_float(unit)
+    unit = to_decimal_unit(unit)
     to_string(unit, backend, options)
   end
 
@@ -698,7 +739,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
+    the number to be formatted is a `t:Cldr.Unit` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -706,6 +747,12 @@ defmodule Cldr.Unit do
   * `:style` is one of those returned by `Cldr.Unit.styles`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
+
+  * `:grammatical_case` indicates that a localisation for the given
+    locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+    for the list of known grammatical cases. Note that not all locales
+    define all cases. However all locales do define the `:nominative`
+    case, which is also the default.
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
@@ -895,7 +942,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
+    the number to be formatted is a `t:Cldr.Unit` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -2292,6 +2339,7 @@ defmodule Cldr.Unit do
   @doc """
   Convert a ratio, Decimal or integer `t:Unit` to a float `t:Unit`
   """
+  @doc since: "3.5.0"
   def to_float_unit(%Unit{value: %Ratio{} = value} = unit) do
     value = Ratio.to_float(value)
     %{unit | value: value}
@@ -2317,6 +2365,7 @@ defmodule Cldr.Unit do
   @doc """
   Convert a ratio, float or integer `t:Unit` to a Decimal `t:Unit`
   """
+  @doc since: "3.5.0"
   def to_decimal_unit(%Unit{value: %Ratio{} = value} = unit) do
     value = Decimal.div(Decimal.new(value.numerator), Decimal.new(value.denominator))
     %{unit | value: value}

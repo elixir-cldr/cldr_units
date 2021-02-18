@@ -108,14 +108,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -124,13 +124,11 @@ defmodule Cldr.Unit.Backend do
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
-        * `:per` allows compound units to be formatted. For example, assume
-          we want to format a string which represents "kilograms per second".
-          There is no such unit defined in CLDR (or perhaps anywhere!).
-          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
-          we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
-          Each locale defines a specific way to format such a compount unit.
-          Usually it will return something like `20 kilograms/second`
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -192,14 +190,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -207,6 +205,12 @@ defmodule Cldr.Unit.Backend do
         * `:style` is one of those returned by `Cldr.Unit.available_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
+
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -247,14 +251,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -263,13 +267,11 @@ defmodule Cldr.Unit.Backend do
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
-        * `:per` allows compound units to be formatted. For example, assume
-          we want to format a string which represents "kilograms per second".
-          There is no such unit defined in CLDR (or perhaps anywhere!).
-          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
-          we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
-          Each locale defines a specific way to format such a compount unit.
-          Usually it will return something like `20 kilograms/second`
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -307,14 +309,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -322,6 +324,12 @@ defmodule Cldr.Unit.Backend do
         * `:style` is one of those returned by `Cldr.Unit.available_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
+
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
