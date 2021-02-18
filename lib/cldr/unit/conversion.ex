@@ -171,7 +171,7 @@ defmodule Cldr.Unit.Conversion do
   defp convert_to_base(value, {numerator, denominator}) do
     use Ratio
 
-    (convert_to_base(1.0, numerator) / convert_to_base(1.0, denominator)) * value
+    convert_to_base(1.0, numerator) / convert_to_base(1.0, denominator) * value
   end
 
   # We recurse over the list of conversions
@@ -200,7 +200,7 @@ defmodule Cldr.Unit.Conversion do
   defp convert_from_base(value, {numerator, denominator}) do
     use Ratio
 
-    (convert_from_base(1.0, numerator) / convert_from_base(1.0, denominator)) * value
+    convert_from_base(1.0, numerator) / convert_from_base(1.0, denominator) * value
   end
 
   defp convert_from_base(value, []) do

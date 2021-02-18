@@ -67,6 +67,17 @@ defmodule Cldr.Unit do
   @default_style :long
   @styles [:long, :short, :narrow]
 
+  @default_grammatical_case :nominative
+  @grammatical_cases [
+    :genetive,
+    :accusative,
+    :dative,
+    :locative,
+    :instrumental,
+    :vocative,
+    :nominative
+  ]
+
   defdelegate convert(unit_1, to_unit), to: Conversion
   defdelegate convert!(unit_1, to_unit), to: Conversion
 
@@ -732,13 +743,15 @@ defmodule Cldr.Unit do
   def to_iolist(%Unit{} = unit, backend, options) when is_list(options) do
     with {locale, style, options} <- normalize_options(backend, options),
          {:ok, locale} <- backend.validate_locale(locale),
-         {:ok, style} <- validate_style(style) do
+         {:ok, style} <- validate_style(style),
+         {:ok, grammatical_case} <- validate_grammatical_case(options[:grammatical_case]) do
       number = value(unit)
 
       options =
         unit.format_options
         |> Keyword.merge(options)
         |> Keyword.put(:locale, locale)
+        |> Keyword.put(:grammatical_case, grammatical_case)
 
       {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
 
@@ -992,11 +1005,20 @@ defmodule Cldr.Unit do
   @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
           list()
 
-  defp to_pattern(number, unit, locale, style, backend, _options)
+  defp to_pattern(number, unit, locale, style, backend, options)
        when unit in @translatable_units do
     with {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
       cardinal_module = Module.concat(backend, Number.Cardinal)
-      cardinal_module.pluralize(number, locale, patterns)
+
+      grammatical_case =
+        options
+        |> Keyword.fetch!(:grammatical_case)
+
+      cased_patterns =
+        Map.get(patterns, grammatical_case) ||
+          Map.fetch!(patterns, @default_grammatical_case)
+
+      cardinal_module.pluralize(number, locale, cased_patterns)
     end
   end
 
@@ -2075,6 +2097,7 @@ defmodule Cldr.Unit do
       options
       |> Keyword.delete(:locale)
       |> Keyword.put(:style, style)
+      |> Keyword.put_new(:grammatical_case, @default_grammatical_case)
 
     {locale, style, options}
   end
@@ -2244,6 +2267,29 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Validates a grammatical case and normalizes it to a
+  standard downcased atom form
+
+  """
+  def validate_grammatical_case(grammatical_case) when grammatical_case in @grammatical_cases do
+    {:ok, grammatical_case}
+  end
+
+  def validate_grammatical_case(grammatical_case) when is_binary(grammatical_case) do
+    grammatical_case
+    |> String.downcase()
+    |> String.to_existing_atom()
+    |> validate_grammatical_case()
+  catch
+    ArgumentError ->
+      {:error, grammatical_case_error(grammatical_case)}
+  end
+
+  def validate_grammatical_case(grammatical_case) do
+    {:error, grammatical_case_error(grammatical_case)}
+  end
+
+  @doc """
   Convert a ratio Unit to a float unit
   """
   def ratio_to_float(%Unit{value: %Ratio{} = value} = unit) do
@@ -2297,6 +2343,15 @@ defmodule Cldr.Unit do
   @doc false
   def style_error(style) do
     {Cldr.UnknownFormatError, "The unit style #{inspect(style)} is not known."}
+  end
+
+  @doc false
+  def grammatical_case_error(grammatical_case) do
+    {
+      Cldr.UnknownGrammaticalCaseError,
+      "The unit grammatical_case #{inspect(grammatical_case)} " <>
+        "is not known. The valid cases are #{inspect(@grammatical_cases)}"
+    }
   end
 
   @doc false

@@ -105,3 +105,12 @@ defmodule Cldr.Unit.NotInvertableError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.UnknownGrammaticalCaseError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end

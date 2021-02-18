@@ -312,8 +312,19 @@ defmodule Cldr.Unit.Additional do
 
   defp parse(localizations) do
     Enum.map(localizations, fn
-      {:display_name, name} -> {:display_name, name}
-      {key, value} -> {key, Cldr.Substitution.parse(value)}
+      {:display_name, name} ->
+        {:display_name, name}
+
+      {:gender, gender} ->
+        {:gender, gender}
+
+      {grammatical_case, counts} ->
+        counts =
+          Enum.map(counts, fn {count, template} ->
+            {count, Cldr.Substitution.parse(template)}
+          end)
+
+        {grammatical_case, Map.new(counts)}
     end)
     |> Map.new()
   end
@@ -336,8 +347,12 @@ defmodule Cldr.Unit.Additional do
       raise ArgumentError, "Localizations must be a keyword list. Found #{inspect(localizations)}"
     end
 
-    unless Keyword.has_key?(localizations, :other) do
-      raise ArgumentError, "Localizations must have an :other key"
+    unless Keyword.has_key?(localizations, :nominative) do
+      raise ArgumentError, "Localizations must have an :nominative key"
+    end
+
+    unless Map.has_key?(localizations[:nominative], :other) do
+      raise ArgumentError, "The nominative case must have an :other key"
     end
 
     unless Keyword.has_key?(localizations, :display_name) do
