@@ -2290,28 +2290,54 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Convert a ratio Unit to a float unit
+  Convert a ratio, Decimal or integer `t:Unit` to a float `t:Unit`
   """
-  def ratio_to_float(%Unit{value: %Ratio{} = value} = unit) do
+  def to_float_unit(%Unit{value: %Ratio{} = value} = unit) do
     value = Ratio.to_float(value)
     %{unit | value: value}
   end
 
-  def ratio_to_float(%Unit{} = unit) do
-    unit
+  def to_float_unit(%Unit{value: value} = unit) when is_integer(value) do
+    value = 1.0 * value
+    %{unit | value: value}
   end
 
+  def to_float_unit(%Unit{value: %Decimal{} = value} = unit) do
+    value = Decimal.to_float(value)
+    %{unit | value: value}
+  end
+
+  def to_float_unit(%Unit{} = other) do
+    other
+  end
+
+  @deprecated "Use Cldr.Unit.to_float_unit/1"
+  defdelegate ratio_to_float(unit), to: __MODULE__, as: :to_float_unit
+
   @doc """
-  Convert a ratio Unit to a decimal unit
+  Convert a ratio, float or integer `t:Unit` to a Decimal `t:Unit`
   """
-  def ratio_to_decimal(%Unit{value: %Ratio{} = value} = unit) do
+  def to_decimal_unit(%Unit{value: %Ratio{} = value} = unit) do
     value = Decimal.div(Decimal.new(value.numerator), Decimal.new(value.denominator))
     %{unit | value: value}
   end
 
-  def ratio_to_decimal(%Unit{} = unit) do
-    unit
+  def to_decimal_unit(%Unit{value: value} = unit) when is_float(value) do
+    value = Decimal.from_float(value)
+    %{unit | value: value}
   end
+
+  def to_decimal_unit(%Unit{value: value} = unit) when is_integer(value) do
+    value = Decimal.new(value)
+    %{unit | value: value}
+  end
+
+  def to_decimal_unit(%Unit{} = other) do
+    other
+  end
+
+  @deprecated "Use Cldr.Unit.to_decimal_unit/1"
+  defdelegate ratio_to_decimal(unit), to: __MODULE__, as: :to_decimal_unit
 
   @doc false
   def unknown_base_unit_error(unit_name) do
