@@ -8,7 +8,9 @@ Target date of March 2021 to match the release of CLDR 39
 
 * [x] Update unit parsing to accord for grammatical case. Treat the current data as data for the nominative case.
 
-* [ ] Add tests for different grammatical cases
+* [x] Add tests for different grammatical cases
+
+* [ ] Add support for Compound Unit <gender> <count> <grammatial case>
 
 * [ ] Refactor Cldr.Unit.Parser.canonical_unit_name
 

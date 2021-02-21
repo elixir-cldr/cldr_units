@@ -2424,7 +2424,7 @@ defmodule Cldr.Unit do
   def grammatical_case_error(grammatical_case) do
     {
       Cldr.UnknownGrammaticalCaseError,
-      "The unit grammatical_case #{inspect(grammatical_case)} " <>
+      "The grammatical case #{inspect(grammatical_case)} " <>
         "is not known. The valid cases are #{inspect(@grammatical_cases)}"
     }
   end

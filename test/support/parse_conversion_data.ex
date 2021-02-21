@@ -199,7 +199,8 @@ defmodule Cldr.Unit.Test.ConversionData do
     Cldr.Math.round_significant(float_or_decimal, digits)
   end
 
-  # Just for testing support
+  # Just for testing support. It does not touch
+  # integer units.
   def to_float_unit(%Cldr.Unit{value: %Ratio{} = value} = unit) do
     value = Ratio.to_float(value)
     %{unit | value: value}
