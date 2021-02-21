@@ -1075,7 +1075,7 @@ defmodule Cldr.Unit do
 
     defp to_pattern(number, unquote(match), locale, style, backend, options) do
       units = units_for(locale, style, backend)
-      pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern1])
+      pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern, :nominative])
       unit = maybe_translatable_unit(unit)
 
       pattern
