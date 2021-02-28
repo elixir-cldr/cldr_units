@@ -43,14 +43,33 @@ defmodule Cldr.Unit do
             usage: :default,
             format_options: []
 
+  # See https://unicode.org/reports/tr35/tr35-general.html#Case
   @grammatical_cases [
-    :nominative,
-    :genetive,
+    :ablative,
     :accusative,
+    :comitative,
     :dative,
-    :locative,
+    :ergative,
+    :genitive,
     :instrumental,
+    :locative,
+    :localtivecopulative,
+    :nominative,
+    :oblique,
+    :partitive,
+    :prepositional,
+    :sociative,
     :vocative
+  ]
+
+  @gender [
+    :animate,
+    :inanimate,
+    :personal,
+    :common,
+    :feminine,
+    :masculine,
+    :neuter
   ]
 
   @styles [
@@ -263,13 +282,54 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.known_grammatical_cases
-      [:nominative, :genetive, :accusative, :dative, :locative, :instrumental,
-       :vocative]
+      [
+        :ablative,
+        :accusative,
+        :comitative,
+        :dative,
+        :ergative,
+        :genitive,
+        :instrumental,
+        :locative,
+        :localtivecopulative,
+        :nominative,
+        :oblique,
+        :partitive,
+        :prepositional,
+        :sociative,
+        :vocative
+      ]
 
   """
   @doc since: "3.5.0"
   def known_grammatical_cases do
     @grammatical_cases
+  end
+
+  @doc """
+  Returns a list of the known genders.
+
+  A gender can be provided as an option to
+  `Cldr.Unit.to_string/2` in order to localise a unit
+  appropriate to the context in which it is used.
+
+  ## Example
+
+      iex> Cldr.Unit.known_genders
+      [
+        :animate,
+        :inanimate,
+        :personal,
+        :common,
+        :feminine,
+        :masculine,
+        :neuter
+      ]
+
+  """
+  @doc since: "3.5.0"
+  def known_genders do
+    @gender
   end
 
   @doc """

@@ -10,7 +10,7 @@ Target date of March 2021 to match the release of CLDR 39
 
 * [x] Add tests for different grammatical cases
 
-* [ ] Update full list of potential grammatical cases from TR35
+* [x] Update full list of potential grammatical cases from TR35
 
 * [ ] Add support for Compound Unit <gender> <count> <grammatial case>
 
