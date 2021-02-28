@@ -42,6 +42,8 @@ end
 
 * Add `Cldr.Unit.conversion_for/2` to return a conversion list used when converting one unit to another.
 
+* Add `Cldr.Unit.grammatical_gender/2` to return the grammatical gender for a given unit and locale
+
 # Changelog for Cldr_Units v3.4.0
 
 This is the changelog for Cldr_units v3.4.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

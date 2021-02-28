@@ -75,6 +75,7 @@ defmodule Cldr.Unit do
   @type unit :: translatable_unit | String.t()
   @type category :: atom()
   @type usage :: atom()
+  @type grammatical_gender :: unquote(type.(@grammatical_gender))
   @type measurement_system :: unquote(type.(@system_names))
   @type measurement_system_key :: unquote(type.(@measurement_system_keys))
   @type style :: unquote(type.(@styles))
@@ -1876,6 +1877,32 @@ defmodule Cldr.Unit do
   @deprecated "Please use `Cldr.Unit.unit_category/1"
   def unit_type(unit) do
     unit_category(unit)
+  end
+
+  @doc """
+  Return the grammatical gender for a
+  unit.
+
+  ## Arguments
+
+  ## Options
+
+  ## Returns
+
+  ## Examples
+
+  """
+  @doc since: "3.5.0"
+  @spec grammatical_gender(t(), Keyword.t()) :: grammatical_gender()
+
+  def grammatical_gender(%__MODULE__{} = unit, options) when is_list(options) do
+    {locale, backend} = Cldr.locale_and_backend_from(options)
+    units = units_for(locale)
+    locale_features = Module.concat(backend, Unit).grammatical_features(locale)
+    root_features = Module.concat(backend, Unit).grammatical_features("root")
+    grammatical_features = Map.merge(root_features, locale_features)
+
+
   end
 
   @base_unit_category_map Cldr.Config.units()

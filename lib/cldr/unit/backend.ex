@@ -483,6 +483,8 @@ defmodule Cldr.Unit.Backend do
           Cldr.Unit.Preference.preferred_units!(unit, unquote(backend), options)
         end
 
+        @grammatical_features Cldr.Config.grammatical_features()
+
         # Generate the functions that encapsulate the unit data from CDLR
         @doc false
         def units_for(locale \\ unquote(backend).get_locale(), style \\ Cldr.Unit.default_style())
@@ -507,10 +509,23 @@ defmodule Cldr.Unit.Backend do
               unquote(Macro.escape(units))
             end
           end
+
+          language_tag = Cldr.Config.language_tag(locale_name)
+          language = Map.fetch!(language_tag, :language)
+          grammatical_features = Map.get(@grammatical_features, language, %{})
+          # IO.inspect grammatical_features, label: language
+
+          def grammatical_features(unquote(locale_name)) do
+            unquote(Macro.escape(grammatical_features))
+          end
         end
 
         def units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
           units_for(cldr_locale_name, style)
+        end
+
+        def grammatical_features(%LanguageTag{language: language}) do
+          grammatical_features(language)
         end
       end
     end
