@@ -331,7 +331,7 @@ defmodule Cldr.Unit do
   """
   @doc since: "3.5.0"
   def known_grammatical_genders do
-    @gender
+    @grammatical_gender
   end
 
   @doc """
@@ -1953,12 +1953,13 @@ defmodule Cldr.Unit do
   ## Examples
 
   """
+  @unknown_gender :undefined
   @doc since: "3.5.0"
   @spec grammatical_gender(t(), Keyword.t()) :: grammatical_gender()
 
-  def grammatical_gender(%__MODULE__{} = unit, options) when is_list(options) do
+  def grammatical_gender(%__MODULE__{} = unit, options \\ []) when is_list(options) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
-    module =  Module.concat(backend, Unit)
+    module =  Module.concat(backend, :Unit)
 
     units =
       locale
@@ -1969,6 +1970,13 @@ defmodule Cldr.Unit do
       |> Map.merge(module.grammatical_features(locale))
       |> Map.fetch!(:gender)
 
+    Cldr.Unit.Format.traverse(unit, fn
+      {:unit, unit} -> Map.fetch!(units, unit) |> Map.get(:gender, @unknown_gender)
+      {:times, left_right} -> elem(left_right, features.times)
+      {:per, left_right} -> elem(left_right, features.per)
+      {:prefix, left_right} -> elem(left_right, features.prefix)
+      {:power, left_right} -> elem(left_right, features.power)
+    end)
   end
 
   @base_unit_category_map Cldr.Config.units()
@@ -2411,7 +2419,7 @@ defmodule Cldr.Unit do
   standard downcased atom form
 
   """
-  def validate_grammatical_case(grammatical_case) when grammatical_case in @grammatical_cases do
+  def validate_grammatical_case(grammatical_case) when grammatical_case in @grammatical_case do
     {:ok, grammatical_case}
   end
 
@@ -2518,7 +2526,7 @@ defmodule Cldr.Unit do
     {
       Cldr.UnknownGrammaticalCaseError,
       "The grammatical case #{inspect(grammatical_case)} " <>
-        "is not known. The valid cases are #{inspect(@grammatical_cases)}"
+        "is not known. The valid cases are #{inspect(@grammatical_case)}"
     }
   end
 

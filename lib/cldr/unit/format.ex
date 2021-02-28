@@ -1,8 +1,8 @@
 defmodule Cldr.Unit.Format do
   alias Cldr.Unit
 
-  @prefix Cldr.Unit.Prefix.si_power_prefixes() |> Map.keys
-  @power Cldr.Unit.Prefix.power_units() |> Enum.map(&(elem(&1, 0)))
+  @prefix Cldr.Unit.Prefix.si_power_prefixes()
+  @power Cldr.Unit.Prefix.power_units() |> Map.new()
 
   @doc """
   Traverses a unit's decomposition and invokes
@@ -18,10 +18,10 @@ defmodule Cldr.Unit.Format do
     of the following form:
 
     * `{:unit, argument}`
-    * `{:times, argument_1, argument_2}`
-    * `{:prefix, prefix_name, argument}`
-    * `{:power, power_name, argument}`
-    * `{:per, argument_1, argument_2}`
+    * `{:times, {argument_1, argument_2}}`
+    * `{:prefix, {prefix_name, argument}}`
+    * `{:power, {power_name, argument}}`
+    * `{:per, {argument_1, argument_2}}`
 
     Where the arguments are the results returned
     from the `fun/1`.
@@ -32,7 +32,7 @@ defmodule Cldr.Unit.Format do
 
   """
   def traverse(%Unit{base_conversion: {left, right}}, fun) when is_function(fun) do
-    fun.({:per, do_traverse(left, fun), do_traverse(right, fun)})
+    fun.({:per, {do_traverse(left, fun), do_traverse(right, fun)}})
   end
 
   def traverse(%Unit{base_conversion: conversion}, fun) when is_function(fun) do
@@ -44,7 +44,7 @@ defmodule Cldr.Unit.Format do
   end
 
   defp do_traverse([head | rest], fun) do
-    fun.({:times, do_traverse(head, fun), do_traverse(rest, fun)})
+    fun.({:times, {do_traverse(head, fun), do_traverse(rest, fun)}})
   end
 
   defp do_traverse({unit, _}, fun) do
@@ -52,15 +52,17 @@ defmodule Cldr.Unit.Format do
   end
 
   # String decomposition
-  for power <- @power do
+  for {power, exp} <- @power do
+    power_unit = String.to_existing_atom("power#{exp}")
     defp do_traverse(unquote(power) <> "_" <> unit, fun) do
-      fun.({:power, unquote(power), do_traverse(unit, fun)})
+      fun.({:power, {fun.({:unit, unquote(power_unit)}), do_traverse(unit, fun)}})
     end
   end
 
-  for prefix <- @prefix do
+  for {prefix, exp} <- @prefix do
+    prefix_unit = String.to_existing_atom("10p#{exp}" |> String.replace("-", "_"))
     defp do_traverse(unquote(prefix) <> unit, fun) do
-       fun.({:prefix, unquote(prefix), fun.({:unit, String.to_existing_atom(unit)})})
+      fun.({:prefix, {fun.({:unit, unquote(prefix_unit)}), fun.({:unit, String.to_existing_atom(unit)})}})
     end
   end
 
