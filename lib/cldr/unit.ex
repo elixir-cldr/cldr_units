@@ -43,14 +43,33 @@ defmodule Cldr.Unit do
             usage: :default,
             format_options: []
 
-  @grammatical_cases [
-    :nominative,
-    :genetive,
+  # See https://unicode.org/reports/tr35/tr35-general.html#Case
+  @grammatical_case [
+    :ablative,
     :accusative,
+    :comitative,
     :dative,
-    :locative,
+    :ergative,
+    :genitive,
     :instrumental,
+    :locative,
+    :localtivecopulative,
+    :nominative,
+    :oblique,
+    :partitive,
+    :prepositional,
+    :sociative,
     :vocative
+  ]
+
+  @grammatical_gender [
+    :animate,
+    :inanimate,
+    :personal,
+    :common,
+    :feminine,
+    :masculine,
+    :neuter
   ]
 
   @styles [
@@ -76,6 +95,7 @@ defmodule Cldr.Unit do
   @type category :: atom()
   @type usage :: atom()
   @type grammatical_gender :: unquote(type.(@grammatical_gender))
+  @type grammatical_case :: unquote(type.(@grammatical_case))
   @type measurement_system :: unquote(type.(@system_names))
   @type measurement_system_key :: unquote(type.(@measurement_system_keys))
   @type style :: unquote(type.(@styles))
@@ -264,13 +284,54 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.known_grammatical_cases
-      [:nominative, :genetive, :accusative, :dative, :locative, :instrumental,
-       :vocative]
+      [
+        :ablative,
+        :accusative,
+        :comitative,
+        :dative,
+        :ergative,
+        :genitive,
+        :instrumental,
+        :locative,
+        :localtivecopulative,
+        :nominative,
+        :oblique,
+        :partitive,
+        :prepositional,
+        :sociative,
+        :vocative
+      ]
 
   """
   @doc since: "3.5.0"
   def known_grammatical_cases do
-    @grammatical_cases
+    @grammatical_case
+  end
+
+  @doc """
+  Returns a list of the known grammatical genders.
+
+  A gender can be provided as an option to
+  `Cldr.Unit.to_string/2` in order to localise a unit
+  appropriate to the context in which it is used.
+
+  ## Example
+
+      iex> Cldr.Unit.known_grammatical_genders
+      [
+        :animate,
+        :inanimate,
+        :personal,
+        :common,
+        :feminine,
+        :masculine,
+        :neuter
+      ]
+
+  """
+  @doc since: "3.5.0"
+  def known_grammatical_genders do
+    @gender
   end
 
   @doc """
@@ -1897,11 +1958,16 @@ defmodule Cldr.Unit do
 
   def grammatical_gender(%__MODULE__{} = unit, options) when is_list(options) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
-    units = units_for(locale)
-    locale_features = Module.concat(backend, Unit).grammatical_features(locale)
-    root_features = Module.concat(backend, Unit).grammatical_features("root")
-    grammatical_features = Map.merge(root_features, locale_features)
+    module =  Module.concat(backend, Unit)
 
+    units =
+      locale
+      |> units_for()
+
+    features =
+      module.grammatical_features("root")
+      |> Map.merge(module.grammatical_features(locale))
+      |> Map.fetch!(:gender)
 
   end
 
