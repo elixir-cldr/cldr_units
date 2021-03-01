@@ -1957,26 +1957,29 @@ defmodule Cldr.Unit do
   @doc since: "3.5.0"
   @spec grammatical_gender(t(), Keyword.t()) :: grammatical_gender()
 
-  def grammatical_gender(%__MODULE__{} = unit, options \\ []) when is_list(options) do
+  def grammatical_gender(unit, options \\ [])
+
+  def grammatical_gender(%__MODULE__{} = unit, options) when is_list(options) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
     module =  Module.concat(backend, :Unit)
-
-    units =
-      locale
-      |> units_for()
+    units = units_for(locale, :long)
 
     features =
       module.grammatical_features("root")
       |> Map.merge(module.grammatical_features(locale))
       |> Map.fetch!(:gender)
 
-    Cldr.Unit.Format.traverse(unit, fn
+    Cldr.Unit.Format.reduce(unit, fn
       {:unit, unit} -> Map.fetch!(units, unit) |> Map.get(:gender, @unknown_gender)
       {:times, left_right} -> elem(left_right, features.times)
       {:per, left_right} -> elem(left_right, features.per)
-      {:prefix, left_right} -> elem(left_right, features.prefix)
-      {:power, left_right} -> elem(left_right, features.power)
+      {:prefix, left_right} -> elem(left_right, features.prefix + 1)
+      {:power, left_right} -> elem(left_right, features.power + 1)
     end)
+  end
+
+  def grammatical_gender(unit, options) when is_binary(unit) do
+    grammatical_gender(new!(1, unit), options)
   end
 
   @base_unit_category_map Cldr.Config.units()
