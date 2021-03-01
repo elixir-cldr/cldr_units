@@ -1,6 +1,11 @@
 defmodule Cldr.Unit.Format do
   alias Cldr.Unit
 
+  @type grammar ::
+    {Unit.translatable_unit(), {Unit.grammatical_case(), Cldr.Number.PluralRule.plural_type()}}
+
+  @type grammar_list :: [grammar, ...]
+
   @prefix Cldr.Unit.Prefix.si_power_prefixes()
   @power Cldr.Unit.Prefix.power_units() |> Map.new()
 
@@ -18,22 +23,24 @@ defmodule Cldr.Unit.Format do
 
   """
   @doc since: "3.5.0"
-  @spec grammatical_case(Unit.t(), Keyword.t()) :: Unit.grammatical_case()
+  @spec grammar(Unit.t(), Keyword.t()) :: grammar_list() | {grammar_list(), grammar_list()}
 
-  def grammatical_case(unit, options \\ [])
+  def grammar(unit, options \\ [])
 
-  def grammatical_case(%Unit{} = unit, options) do
+  def grammar(%Unit{} = unit, options) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
     module =  Module.concat(backend, :Unit)
 
     features =
       module.grammatical_features("root")
       |> Map.merge(module.grammatical_features(locale))
-      |> Map.fetch!(:case)
+
+    gcase = Map.fetch!(features, :case)
+    plural = Map.fetch!(features, :plural)
 
     traverse(unit, fn
       {:unit, unit} ->
-        {:compound, unit}
+        {unit, {:compound, :compound}}
 
       # For :per we return a tuple which is
       # a consistent representation. Each element
@@ -41,14 +48,14 @@ defmodule Cldr.Unit.Format do
       {:per, {left, right}} when is_list(left) and is_list(right) ->
         {left, right}
 
-      {:per, {left, {_, right}}} when is_list(left) ->
-        {left, [{features.per[1], right}]}
+      {:per, {left, {right, _}}} when is_list(left) ->
+        {left, [{right, {gcase.per[1], plural.per[1]}}]}
 
-      {:per, {{_, left}, right}} when is_list(right) ->
-        {[{features.per[0], left}], right}
+      {:per, {{left, _}, right}} when is_list(right) ->
+        {[{left, {gcase.per[0], plural.per[0]}}], right}
 
-      {:per, {{_, left}, {_, right}}} ->
-        {[{features.per[0], left}], [{features.per[1], right}]}
+      {:per, {{left, _}, {right, _}}} ->
+        {[{left, {gcase.per[0], plural.per[0]}}], [{right, {gcase.per[1], plural.per[1]}}]}
 
       # :times will always have a unit as the
       # `left`, and a unit or a list as the `right`
@@ -59,14 +66,14 @@ defmodule Cldr.Unit.Format do
       {:times, {left, right}} when is_list(left) and is_list(right) ->
         left ++ right
 
-      {:times, {{_, left}, right}} when is_list(right) ->
-        [{features.times[0], left} | right]
+      {:times, {{left, _}, right}} when is_list(right) ->
+        [{left, {gcase.times[0], plural.times[0]}} | right]
 
-      {:times, {left, {_, right}}} when is_list(left) ->
-        left ++ [{features.times[1], right}]
+      {:times, {left, {right, _}}} when is_list(left) ->
+        left ++ [{right, {gcase.times[1], plural.times[1]}}]
 
-      {:times, {{_, left}, {_, right}}} ->
-        [{features.times[0], left}, {features.times[1], right}]
+      {:times, {{left, _}, {right, _}}} ->
+        [{left, {gcase.times[0], plural.times[0]}}, {right, {gcase.times[1], plural.times[1]}}]
 
       # :power will always have a unit as the
       # `left`, and a unit or a prefix as the `right`
@@ -74,21 +81,21 @@ defmodule Cldr.Unit.Format do
       # If the `right` is a list then its a `:times`
       # in which case there is no transform to apply
       # and all locales are marked as `:compound` anyway.
-      {:power, {{_, left}, right}} when is_list(right) ->
-        [{features.power[0], left} | right]
+      {:power, {{left, _}, right}} when is_list(right) ->
+        [{left, {gcase.power[0], plural.power[0]}} | right]
 
-      {:power, {{_, left}, {_, right}}} ->
-        [{features.power[0], left}, {features.power[1], right}]
+      {:power, {{left, _}, {right, _}}} ->
+        [{left, {gcase.power[0], plural.power[0]}}, {right, {gcase.power[1], plural.power[1]}}]
 
       # :prefix can only have a prefix and
       # a unit so apply the transform to both
-      {:prefix, {{_, left}, {_, right}}} ->
-        [{features.prefix[0], left}, {features.prefix[1], right}]
+      {:prefix, {{left, _}, {right, _}}} ->
+        [{left, {gcase.prefix[0], plural.prefix[0]}}, {right, {gcase.prefix[1], plural.prefix[1]}}]
     end)
   end
 
-  def grammatical_case(unit, options) when is_binary(unit) do
-    grammatical_case(Unit.new!(1, unit), options)
+  def grammar(unit, options) when is_binary(unit) do
+    grammar(Unit.new!(1, unit), options)
   end
 
   @doc """

@@ -1969,7 +1969,7 @@ defmodule Cldr.Unit do
       |> Map.merge(module.grammatical_features(locale))
       |> Map.fetch!(:gender)
 
-    Cldr.Unit.Format.reduce(unit, fn
+    Cldr.Unit.Format.traverse(unit, fn
       {:unit, unit} -> Map.fetch!(units, unit) |> Map.get(:gender, @unknown_gender)
       {:times, left_right} -> elem(left_right, features.times)
       {:per, left_right} -> elem(left_right, features.per)
