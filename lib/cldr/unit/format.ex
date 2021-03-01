@@ -2,11 +2,12 @@ defmodule Cldr.Unit.Format do
   alias Cldr.Unit
 
   @type grammar ::
-    {Unit.translatable_unit(), {Unit.grammatical_case(), Cldr.Number.PluralRule.plural_type()}}
+          {Unit.translatable_unit(),
+           {Unit.grammatical_case(), Cldr.Number.PluralRule.plural_type()}}
 
   @type grammar_list :: [grammar, ...]
 
-  @prefix Cldr.Unit.Prefix.si_power_prefixes()
+  @si_prefix Cldr.Unit.Prefix.si_power_prefixes()
   @power Cldr.Unit.Prefix.power_units() |> Map.new()
 
   @doc """
@@ -43,7 +44,7 @@ defmodule Cldr.Unit.Format do
 
   def grammar(%Unit{} = unit, options) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
-    module =  Module.concat(backend, :Unit)
+    module = Module.concat(backend, :Unit)
 
     features =
       module.grammatical_features("root")
@@ -64,7 +65,7 @@ defmodule Cldr.Unit.Format do
   end
 
   defp grammar({:per, {left, right}}, _gcase, _plural, _options)
-      when is_list(left) and is_list(right) do
+       when is_list(left) and is_list(right) do
     {left, right}
   end
 
@@ -81,7 +82,7 @@ defmodule Cldr.Unit.Format do
   end
 
   defp grammar({:times, {left, right}}, _gcase, _plural, _options)
-      when is_list(left) and is_list(right) do
+       when is_list(left) and is_list(right) do
     left ++ right
   end
 
@@ -159,15 +160,20 @@ defmodule Cldr.Unit.Format do
   # String decomposition
   for {power, exp} <- @power do
     power_unit = String.to_existing_atom("power#{exp}")
+
     defp do_traverse(unquote(power) <> "_" <> unit, fun) do
       fun.({:power, {fun.({:unit, unquote(power_unit)}), do_traverse(unit, fun)}})
     end
   end
 
-  for {prefix, exp} <- @prefix do
+  for {prefix, exp} <- @si_prefix do
     prefix_unit = String.to_existing_atom("10p#{exp}" |> String.replace("-", "_"))
+
     defp do_traverse(unquote(prefix) <> unit, fun) do
-      fun.({:prefix, {fun.({:unit, unquote(prefix_unit)}), fun.({:unit, String.to_existing_atom(unit)})}})
+      fun.(
+        {:prefix,
+         {fun.({:unit, unquote(prefix_unit)}), fun.({:unit, String.to_existing_atom(unit)})}}
+      )
     end
   end
 
@@ -178,5 +184,4 @@ defmodule Cldr.Unit.Format do
   defp do_traverse(unit, fun) when is_atom(unit) do
     fun.({:unit, unit})
   end
-
 end

@@ -1961,7 +1961,7 @@ defmodule Cldr.Unit do
 
   def grammatical_gender(%__MODULE__{} = unit, options) when is_list(options) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
-    module =  Module.concat(backend, :Unit)
+    module = Module.concat(backend, :Unit)
     units = units_for(locale, :long)
 
     features =

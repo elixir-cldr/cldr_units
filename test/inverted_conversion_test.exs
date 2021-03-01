@@ -6,7 +6,7 @@ defmodule Cldr.Unit.InvertedConversion.Test do
 
     liters_per_100_kilometers =
       Cldr.Unit.convert!(mpg, :liter_per_100_kilometer)
-      |> Cldr.Unit.to_decimal_unit
+      |> Cldr.Unit.to_decimal_unit()
       |> Cldr.Unit.Test.ConversionData.round_precision(6)
 
     target_value =
