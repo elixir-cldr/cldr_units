@@ -10,12 +10,26 @@ defmodule Cldr.Unit.Format do
   @power Cldr.Unit.Prefix.power_units() |> Map.new()
 
   @doc """
-  Return the grammatical case for a
-  unit.
+  Traverses the components of a unit
+  and resolves a list of base units with
+  their gramatical case and plural selector
+  definitions for a given locale.
+
+  This function relies upon the internal
+  representation of units and grammatical features
+  and is primarily for the support of
+  formatting a function through `Cldr.Unit.to_string/2`.
 
   ## Arguments
 
+  * `unit` is a `t:Cldr.Unit.t()` or a binary
+    unit string
+
   ## Options
+
+  * `:locale`
+
+  * `:backend`
 
   ## Returns
 
@@ -38,64 +52,61 @@ defmodule Cldr.Unit.Format do
     gcase = Map.fetch!(features, :case)
     plural = Map.fetch!(features, :plural)
 
-    traverse(unit, fn
-      {:unit, unit} ->
-        {unit, {:compound, :compound}}
-
-      # For :per we return a tuple which is
-      # a consistent representation. Each element
-      # is a list.
-      {:per, {left, right}} when is_list(left) and is_list(right) ->
-        {left, right}
-
-      {:per, {left, {right, _}}} when is_list(left) ->
-        {left, [{right, {gcase.per[1], plural.per[1]}}]}
-
-      {:per, {{left, _}, right}} when is_list(right) ->
-        {[{left, {gcase.per[0], plural.per[0]}}], right}
-
-      {:per, {{left, _}, {right, _}}} ->
-        {[{left, {gcase.per[0], plural.per[0]}}], [{right, {gcase.per[1], plural.per[1]}}]}
-
-      # :times will always have a unit as the
-      # `left`, and a unit or a list as the `right`
-
-      # If the `right` is a list then its a `:times`
-      # in which case there is no transform to apply
-      # and all locales are marked as `:compound` anyway.
-      {:times, {left, right}} when is_list(left) and is_list(right) ->
-        left ++ right
-
-      {:times, {{left, _}, right}} when is_list(right) ->
-        [{left, {gcase.times[0], plural.times[0]}} | right]
-
-      {:times, {left, {right, _}}} when is_list(left) ->
-        left ++ [{right, {gcase.times[1], plural.times[1]}}]
-
-      {:times, {{left, _}, {right, _}}} ->
-        [{left, {gcase.times[0], plural.times[0]}}, {right, {gcase.times[1], plural.times[1]}}]
-
-      # :power will always have a unit as the
-      # `left`, and a unit or a prefix as the `right`
-
-      # If the `right` is a list then its a `:times`
-      # in which case there is no transform to apply
-      # and all locales are marked as `:compound` anyway.
-      {:power, {{left, _}, right}} when is_list(right) ->
-        [{left, {gcase.power[0], plural.power[0]}} | right]
-
-      {:power, {{left, _}, {right, _}}} ->
-        [{left, {gcase.power[0], plural.power[0]}}, {right, {gcase.power[1], plural.power[1]}}]
-
-      # :prefix can only have a prefix and
-      # a unit so apply the transform to both
-      {:prefix, {{left, _}, {right, _}}} ->
-        [{left, {gcase.prefix[0], plural.prefix[0]}}, {right, {gcase.prefix[1], plural.prefix[1]}}]
-    end)
+    traverse(unit, &grammar(&1, gcase, plural, options))
   end
 
   def grammar(unit, options) when is_binary(unit) do
     grammar(Unit.new!(1, unit), options)
+  end
+
+  defp grammar({:unit, unit}, _gcase, _plural, _options) do
+    {unit, {:compound, :compound}}
+  end
+
+  defp grammar({:per, {left, right}}, _gcase, _plural, _options)
+      when is_list(left) and is_list(right) do
+    {left, right}
+  end
+
+  defp grammar({:per, {left, {right, _}}}, gcase, plural, _options) when is_list(left) do
+    {left, [{right, {gcase.per[1], plural.per[1]}}]}
+  end
+
+  defp grammar({:per, {{left, _}, right}}, gcase, plural, _options) when is_list(right) do
+    {[{left, {gcase.per[0], plural.per[0]}}], right}
+  end
+
+  defp grammar({:per, {{left, _}, {right, _}}}, gcase, plural, _options) do
+    {[{left, {gcase.per[0], plural.per[0]}}], [{right, {gcase.per[1], plural.per[1]}}]}
+  end
+
+  defp grammar({:times, {left, right}}, _gcase, _plural, _options)
+      when is_list(left) and is_list(right) do
+    left ++ right
+  end
+
+  defp grammar({:times, {{left, _}, right}}, gcase, plural, _options) when is_list(right) do
+    [{left, {gcase.times[0], plural.times[0]}} | right]
+  end
+
+  defp grammar({:times, {left, {right, _}}}, gcase, plural, _options) when is_list(left) do
+    left ++ [{right, {gcase.times[1], plural.times[1]}}]
+  end
+
+  defp grammar({:times, {{left, _}, {right, _}}}, gcase, plural, _options) do
+    [{left, {gcase.times[0], plural.times[0]}}, {right, {gcase.times[1], plural.times[1]}}]
+  end
+
+  defp grammar({:power, {{left, _}, right}}, gcase, plural, _options) when is_list(right) do
+    [{left, {gcase.power[0], plural.power[0]}} | right]
+  end
+
+  defp grammar({:power, {{left, _}, {right, _}}}, gcase, plural, _options) do
+    [{left, {gcase.power[0], plural.power[0]}}, {right, {gcase.power[1], plural.power[1]}}]
+  end
+
+  defp grammar({:prefix, {{left, _}, {right, _}}}, gcase, plural, _options) do
+    [{left, {gcase.prefix[0], plural.prefix[0]}}, {right, {gcase.prefix[1], plural.prefix[1]}}]
   end
 
   @doc """
@@ -113,8 +124,8 @@ defmodule Cldr.Unit.Format do
 
     * `{:unit, argument}`
     * `{:times, {argument_1, argument_2}}`
-    * `{:prefix, {prefix_name, argument}}`
-    * `{:power, {power_name, argument}}`
+    * `{:prefix, {prefix_unit, argument}}`
+    * `{:power, {power_unit, argument}}`
     * `{:per, {argument_1, argument_2}}`
 
     Where the arguments are the results returned
