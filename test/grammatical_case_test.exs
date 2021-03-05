@@ -6,7 +6,7 @@ defmodule Cldr.Unit.GrammaticalCase.Test do
     u = Unit.new!(3, :meter)
 
     assert Unit.to_string(u, locale: "de") == {:ok, "3 Meter"}
-    assert Unit.to_string(u, locale: "de", grammatical_case: :genetive) == {:ok, "3 Meter"}
+    assert Unit.to_string(u, locale: "de", grammatical_case: :genitive) == {:ok, "3 Meter"}
     assert Unit.to_string(u, locale: "de", grammatical_case: :dative) == {:ok, "3 Metern"}
     assert Unit.to_string(u, locale: "de", grammatical_case: :nominative) == {:ok, "3 Meter"}
     assert Unit.to_string(u, locale: "de", grammatical_case: :locative) == {:ok, "3 Meter"}
@@ -23,7 +23,7 @@ defmodule Cldr.Unit.GrammaticalCase.Test do
                :error,
                {Cldr.UnknownGrammaticalCaseError,
                 "The grammatical case :bogus is not known. The valid cases are " <>
-                  "[:nominative, :genetive, :accusative, :dative, :locative, :instrumental, :vocative]"}
+                  inspect(Cldr.Unit.known_grammatical_cases())}
              }
   end
 end
