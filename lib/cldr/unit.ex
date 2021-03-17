@@ -264,9 +264,8 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError,
         "Unknown unit was detected at \\"gadzoots\\""}}
 
-      iex> Cldr.Unit.new(:gallon, 23, usage: :fluid)
-
-      iex> Cldr.Unit.new(:gallon, 23, usage: "fluid")
+      Cldr.Unit.new(:gallon, 23, usage: :fluid)
+      #=> {:ok, #Cldr.Unit<:gallon, 23, usage: :fluid, format_options: []>}
 
   """
   @spec new(unit() | value(), value() | unit(), Keyword.t()) ::
