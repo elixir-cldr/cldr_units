@@ -7,9 +7,6 @@ defmodule Cldr.Unit.Format do
 
   @type grammar_list :: [grammar, ...]
 
-  @si_prefix Cldr.Unit.Prefix.si_power_prefixes()
-  @power Cldr.Unit.Prefix.power_units() |> Map.new()
-
   @doc """
   Traverses the components of a unit
   and resolves a list of base units with
@@ -156,6 +153,9 @@ defmodule Cldr.Unit.Format do
   defp do_traverse({unit, _}, fun) do
     do_traverse(unit, fun)
   end
+
+  @si_prefix Cldr.Unit.Prefix.si_power_prefixes()
+  @power Cldr.Unit.Prefix.power_units() |> Map.new()
 
   # String decomposition
   for {power, exp} <- @power do

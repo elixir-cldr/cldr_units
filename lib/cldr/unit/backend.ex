@@ -484,6 +484,7 @@ defmodule Cldr.Unit.Backend do
         end
 
         @grammatical_features Cldr.Config.grammatical_features()
+        @grammatical_gender Cldr.Config.grammatical_gender()
 
         # Generate the functions that encapsulate the unit data from CDLR
         @doc false
@@ -510,13 +511,23 @@ defmodule Cldr.Unit.Backend do
             end
           end
 
+          default_gender = :masculine
           language_tag = Cldr.Config.language_tag(locale_name)
           language = Map.fetch!(language_tag, :language)
           grammatical_features = Map.get(@grammatical_features, language, %{})
-          # IO.inspect grammatical_features, label: language
+          grammatical_gender = Map.get(@grammatical_gender, language, [default_gender])
+          default_gender = Enum.find(grammatical_gender, &(&1 == :neuter)) || default_gender
 
           def grammatical_features(unquote(locale_name)) do
             unquote(Macro.escape(grammatical_features))
+          end
+
+          def grammatical_gender(unquote(locale_name)) do
+            unquote(Macro.escape(grammatical_gender))
+          end
+
+          def default_gender(unquote(locale_name)) do
+            unquote(default_gender)
           end
         end
 
@@ -526,6 +537,14 @@ defmodule Cldr.Unit.Backend do
 
         def grammatical_features(%LanguageTag{language: language}) do
           grammatical_features(language)
+        end
+
+        def grammatical_gender(%LanguageTag{language: language}) do
+          grammatical_gender(language)
+        end
+
+        def default_gender(%LanguageTag{language: language}) do
+          default_gender(language)
         end
       end
     end
