@@ -20,14 +20,16 @@ defmodule Cldr.Unit.Format do
 
   ## Arguments
 
-  * `unit` is a `t:Cldr.Unit.t()` or a binary
+  * `unit` is a `t:Cldr.Unit` or a binary
     unit string
 
   ## Options
 
-  * `:locale`
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
+    or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `:backend`
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
 
   ## Returns
 
