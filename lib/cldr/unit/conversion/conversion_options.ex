@@ -1,4 +1,7 @@
 defmodule Cldr.Unit.Conversion.Options do
-  @moduledoc false
+  @moduledoc """
+  Options structure for unit conversions
+  """
+
   defstruct usage: nil, locale: nil, backend: nil, territory: nil
 end

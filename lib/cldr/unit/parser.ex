@@ -14,7 +14,10 @@ defmodule Cldr.Unit.Parser do
   alias Cldr.Unit.Prefix
   alias Cldr.Unit
 
+  @doc false
   defdelegate wrap(term, token), to: Cldr.Unit.BaseUnit
+
+  @doc false
   defdelegate base_units_in_order, to: Cldr.Unit.BaseUnit
 
   @doc false

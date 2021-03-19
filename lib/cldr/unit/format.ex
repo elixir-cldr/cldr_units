@@ -1,11 +1,11 @@
 defmodule Cldr.Unit.Format do
   alias Cldr.Unit
 
-  @type grammar ::
+  @typep grammar ::
           {Unit.translatable_unit(),
            {Unit.grammatical_case(), Cldr.Number.PluralRule.plural_type()}}
 
-  @type grammar_list :: [grammar, ...]
+  @typep grammar_list :: [grammar, ...]
 
   @doc """
   Traverses the components of a unit

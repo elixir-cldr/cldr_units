@@ -19,10 +19,10 @@ defmodule Cldr.Unit.Preference do
   * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
   * `backend` is any Cldr backend module. That is, any module
-    that includes `use Cldr`. The default is `Cldr.default_backend/0`
+    that includes `use Cldr`. The default is `Cldr.default_backend!/0`
 
   * `options` is a keyword list of options or a
-    `Cldr.Unit.Conversion.Options` struct. The default
+    `t:Cldr.Unit.Conversion.Options` struct. The default
     is `[]`.
 
   ## Options
@@ -176,10 +176,10 @@ defmodule Cldr.Unit.Preference do
   * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
   * `backend` is any Cldr backend module. That is, any module
-    that includes `use Cldr`. The default is `Cldr.default_backend/0`
+    that includes `use Cldr`. The default is `Cldr.default_backend!/0`
 
   * `options` is a keyword list of options or a
-    `Cldr.Unit.Conversion.Options` struct. The default
+    `t:Cldr.Unit.Conversion.Options` struct. The default
     is `[]`.
 
   ## Options
