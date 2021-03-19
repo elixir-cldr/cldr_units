@@ -1,6 +1,6 @@
-# Changelog for Cldr_Units v3.5.0
+# Changelog for Cldr_Units v3.5.0-rc.0
 
-This is the changelog for Cldr_units v3.5.0 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.5.0-rc.0 released on March 19th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -12,7 +12,7 @@ This is the changelog for Cldr_units v3.5.0 released on ______.  For older chang
 
 ### Enhancements
 
-* Updated to require [ex_cldr version 2.19](https://hex.pm/packages/ex_cldr/2.19.0) which includes [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39) data.
+* Updated to require [ex_cldr version 2.20](https://hex.pm/packages/ex_cldr/2.20.0) which includes [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39) data.
 
 * Add `Cldr.Unit.known_grammatical_cases/0`
 
