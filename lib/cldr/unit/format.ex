@@ -161,7 +161,7 @@ defmodule Cldr.Unit.Format do
 
   # String decomposition
   for {power, exp} <- @power do
-    power_unit = String.to_existing_atom("power#{exp}")
+    power_unit = String.to_atom("power#{exp}")
 
     defp do_traverse(unquote(power) <> "_" <> unit, fun) do
       fun.({:power, {fun.({:unit, unquote(power_unit)}), do_traverse(unit, fun)}})
@@ -169,7 +169,7 @@ defmodule Cldr.Unit.Format do
   end
 
   for {prefix, exp} <- @si_prefix do
-    prefix_unit = String.to_existing_atom("10p#{exp}" |> String.replace("-", "_"))
+    prefix_unit = String.to_atom("10p#{exp}" |> String.replace("-", "_"))
 
     defp do_traverse(unquote(prefix) <> unit, fun) do
       fun.(
