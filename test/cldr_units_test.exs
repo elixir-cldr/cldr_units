@@ -7,23 +7,23 @@ defmodule Cldr.UnitsTest do
   end
 
   test "that pluralization in non-en locales works" do
-    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :microsecond) ==
+    assert Cldr.Unit.Format.to_string!(1, MyApp.Cldr, locale: "de", unit: :microsecond) ==
              "1 Mikrosekunde"
 
-    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :microsecond) ==
+    assert Cldr.Unit.Format.to_string!(123, MyApp.Cldr, locale: "de", unit: :microsecond) ==
              "123 Mikrosekunden"
 
-    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :pint) == "1 Pint"
-    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :pint) == "123 Pints"
+    assert Cldr.Unit.Format.to_string!(1, MyApp.Cldr, locale: "de", unit: :pint) == "1 Pint"
+    assert Cldr.Unit.Format.to_string!(123, MyApp.Cldr, locale: "de", unit: :pint) == "123 Pints"
 
-    assert Cldr.Unit.to_string!(1, MyApp.Cldr, locale: "de", unit: :century) == "1 Jahrhundert"
+    assert Cldr.Unit.Format.to_string!(1, MyApp.Cldr, locale: "de", unit: :century) == "1 Jahrhundert"
 
-    assert Cldr.Unit.to_string!(123, MyApp.Cldr, locale: "de", unit: :century) ==
+    assert Cldr.Unit.Format.to_string!(123, MyApp.Cldr, locale: "de", unit: :century) ==
              "123 Jahrhunderte"
   end
 
   test "locale option is passed to Cldr.Number.to_string" do
-    assert Cldr.Unit.to_string!(1, MyApp.Cldr, format: :spellout, locale: "de", unit: :pint) ==
+    assert Cldr.Unit.Format.to_string!(1, MyApp.Cldr, format: :spellout, locale: "de", unit: :pint) ==
              "eins Pint"
   end
 
@@ -134,15 +134,15 @@ defmodule Cldr.UnitsTest do
 
   test "to_string a compound unit" do
     unit = Cldr.Unit.new!("meter_per_kilogram", 1)
-    assert {:ok, "1 meter per kilogram"} = Cldr.Unit.to_string(unit)
+    assert {:ok, "1 meter per kilogram"} = Cldr.Unit.Format.to_string(unit)
   end
 
   test "to_string a per compound unit" do
     unit = Cldr.Unit.new!("meter_per_square_kilogram", 1)
-    assert Cldr.Unit.to_string(unit) == {:ok, "1 meter per square kilogram"}
+    assert Cldr.Unit.Format.to_string(unit) == {:ok, "1 meter per square kilogram"}
 
     unit = Cldr.Unit.new!("meter_per_square_kilogram", 2)
-    assert Cldr.Unit.to_string(unit) == {:ok, "2 meters per square kilogram"}
+    assert Cldr.Unit.Format.to_string(unit) == {:ok, "2 meters per square kilogram"}
   end
 
   test "localization with current process locales" do
@@ -150,9 +150,9 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.localize(Cldr.Unit.new!(2, :meter, usage: :person_height), locale: "fr")
   end
 
-  test "a muliplied unit to_string" do
+  test "a multiplied unit to_string" do
     unit = Cldr.Unit.new!("meter ampere volt", 3)
-    assert Cldr.Unit.to_string(unit) == {:ok, "3 volt-meter-amperes"}
+    assert Cldr.Unit.Format.to_string(unit) == {:ok, "3 volt-meter-amperes"}
   end
 
   test "create a unit that is directly translatable but has no explicit conversion" do
