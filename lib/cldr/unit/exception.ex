@@ -83,6 +83,15 @@ defmodule Cldr.Unit.NoPatternError do
   @moduledoc false
   defexception [:message]
 
+  def exception({name, grammatical_case, gender, plural}) do
+    message =
+      "No format pattern was found for unit #{inspect(name)} " <>
+        "with grammatical case #{inspect(grammatical_case)}, " <>
+        "gender #{inspect(gender)} and plural type #{inspect(plural)}"
+
+    %__MODULE__{message: message}
+  end
+
   def exception(message) do
     %__MODULE__{message: message}
   end

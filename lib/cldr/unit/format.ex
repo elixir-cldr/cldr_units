@@ -1,11 +1,222 @@
 defmodule Cldr.Unit.Format do
   alias Cldr.Unit
 
+  defmacrop is_grammar(unit) do
+    quote do
+      is_tuple(unquote(unit))
+    end
+  end
+
   @typep grammar ::
-          {Unit.translatable_unit(),
-           {Unit.grammatical_case(), Cldr.Number.PluralRule.plural_type()}}
+           {Unit.translatable_unit(),
+            {Unit.grammatical_case(), Cldr.Number.PluralRule.plural_type()}}
 
   @typep grammar_list :: [grammar, ...]
+
+  @translatable_units Cldr.Unit.known_units()
+  @si_keys Cldr.Unit.Prefix.si_keys()
+  @power_keys Cldr.Unit.Prefix.power_keys()
+
+  @default_case :nominative
+  @default_format :long
+
+  # Direct formatting of the unit since
+  # it is translatable directly
+  def to_iolist(unit, options \\ [])
+
+  def to_iolist(%Cldr.Unit{unit: name} = unit, options) when name in @translatable_units do
+    {locale, backend, format, grammatical_case, gender, plural} = extract_options!(unit, options)
+    formats = Cldr.Unit.units_for(locale, format, backend)
+    number_format_options = Keyword.merge(unit.format_options, options)
+    unit_grammar = {name, {grammatical_case, plural}}
+
+    formatted_number = format_number!(unit, number_format_options)
+    unit_pattern = get_unit_pattern!(unit_grammar, formats, grammatical_case, gender, plural)
+    Cldr.Substitution.substitute(formatted_number, unit_pattern)
+  end
+
+  def to_iolist(%Cldr.Unit{} = unit, options) do
+    {locale, backend, format, grammatical_case, gender, plural} = extract_options!(unit, options)
+    formats = Cldr.Unit.units_for(locale, format, backend)
+    number_format_options = Keyword.merge(unit.format_options, options)
+    formatted_number = format_number!(unit, number_format_options)
+    grammar = grammar(unit, locale: locale, backend: backend)
+
+    head_pattern =
+      to_iolist([hd(grammar)], formats, grammatical_case, gender, plural)
+
+    head =
+      Cldr.Substitution.substitute(formatted_number, head_pattern)
+
+    tail =
+      to_iolist(tl(grammar), formats, grammatical_case, gender, plural)
+      |> extract_unit
+
+    to_iolist([head, tail], formats, grammatical_case, gender, plural)
+  end
+
+  def to_iolist([], _formats, _grammatical_case, _gender, _plural) do
+    []
+  end
+
+  # SI Prefixes
+  def to_iolist([{si_prefix, _}, {name, _} | rest], formats, grammatical_case, gender, plural)
+      when si_prefix in @si_keys do
+    si_pattern =
+      get_in(formats, [si_prefix, :unit_prefix_pattern]) ||
+        raise(Cldr.Unit.NoPatternError, {si_prefix, grammatical_case, gender, plural})
+
+    unit_pattern =
+      get_in(formats, [name, grammatical_case, plural]) ||
+        get_in(formats, [name, plural]) ||
+        raise(Cldr.Unit.NoPatternError, {name, grammatical_case, gender, plural})
+
+    [merge_SI_prefix(si_pattern, unit_pattern) | rest]
+    |> to_iolist(formats, grammatical_case, gender, plural)
+  end
+
+  # Power prefixes
+  def to_iolist([{power_prefix, _} | rest], formats, grammatical_case, gender, plural)
+      when power_prefix in @power_keys do
+    power_formats =
+      get_in(formats, [power_prefix, :compound_unit_pattern])
+
+    power_pattern =
+      get_in(power_formats, [gender, plural, grammatical_case]) ||
+        get_in(power_formats, [gender, plural]) ||
+        get_in(power_formats, [plural, grammatical_case]) ||
+        get_in(power_formats, [plural]) ||
+        get_in(power_formats, [@default_case]) ||
+        raise(Cldr.Unit.NoPatternError, {power_prefix, grammatical_case, gender, plural})
+
+    IO.inspect(power_pattern, label: "power pattern")
+
+    rest = to_iolist(rest, formats, grammatical_case, gender, plural)
+    |> IO.inspect(label: "rest")
+    merge_power_prefix(power_pattern, rest)
+  end
+
+  # Two grammar units
+  def to_iolist([unit_1, unit_2 | rest], formats, grammatical_case, gender, plural)
+      when is_grammar(unit_1) do
+    times_pattern =
+      get_in(formats, [:times, :compound_unit_pattern])
+
+    unit_pattern_1 =
+      get_unit_pattern!(unit_1, formats, grammatical_case, gender, plural)
+
+    unit_pattern_2 =
+      get_unit_pattern!(unit_2, formats, grammatical_case, gender, plural)
+      |> extract_unit
+
+    [Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern) | rest]
+    |> to_iolist(formats, grammatical_case, gender, plural)
+  end
+
+  def to_iolist([unit], formats, grammatical_case, gender, plural) when is_grammar(unit) do
+    get_unit_pattern!(unit, formats, grammatical_case, gender, plural)
+  end
+
+  def to_iolist([pattern_list], _formats, _grammatical_case, _gender, _plural) do
+    pattern_list
+  end
+
+  # When unit_1 is already in pattern form
+  def to_iolist([unit_pattern_1 | rest], formats, grammatical_case, gender, plural) do
+    times_pattern =
+      get_in(formats, [:times, :compound_unit_pattern])
+
+    unit_pattern_2 =
+      to_iolist(rest, formats, grammatical_case, gender, plural)
+
+    Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern)
+  end
+
+  defp get_unit_pattern!(unit, formats, grammatical_case, gender, plural) do
+    {name, {unit_case, unit_plural}} = unit
+    unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
+    unit_plural = if unit_plural == :compound, do: plural, else: unit_plural
+
+    get_in(formats, [name, unit_case, unit_plural]) ||
+      get_in(formats, [name, @default_case, unit_plural]) ||
+      raise(Cldr.Unit.NoPatternError, {name, unit_case, gender, unit_plural})
+  end
+
+  defp extract_unit([place, string]) when is_integer(place) do
+    String.trim(string)
+  end
+
+  defp extract_unit([string, place]) when is_integer(place) do
+    String.trim(string)
+  end
+
+  defp format_number!(unit, options) do
+    number_format_options = Keyword.merge(unit.format_options, options)
+    Cldr.Number.to_string!(unit.value, number_format_options)
+  end
+
+  # Merging power and SI prefixes into a pattern is a heuristic since the
+  # underlying data does not convey those rules.
+
+  @merge_SI_prefix ~r/([^\s]+)$/u
+  defp merge_SI_prefix([prefix, place], [place, string]) when is_integer(place) do
+    string = maybe_downcase(prefix, string)
+    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
+  end
+
+  defp merge_SI_prefix([prefix, place], [string, place]) when is_integer(place) do
+    string = maybe_downcase(prefix, string)
+    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
+  end
+
+  defp merge_SI_prefix([place, prefix], [place, string]) when is_integer(place) do
+    string = maybe_downcase(prefix, string)
+    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
+  end
+
+  defp merge_SI_prefix([place, prefix], [string, place]) when is_integer(place) do
+    string = maybe_downcase(prefix, string)
+    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
+  end
+
+  @merge_power_prefix ~r/([^\s]+)/u
+  defp merge_power_prefix([prefix, place], [place, string]) when is_integer(place) do
+    [place, String.replace(string, @merge_power_prefix, "#{prefix}\\1")]
+  end
+
+  defp merge_power_prefix([prefix, place], [string, place]) when is_integer(place) do
+    [String.replace(string, @merge_power_prefix, "#{prefix}\\1"), place]
+  end
+
+  defp merge_power_prefix([place, prefix], [place, string]) when is_integer(place) do
+    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
+  end
+
+  defp merge_power_prefix([place, prefix], [string, place]) when is_integer(place) do
+    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
+  end
+
+  # If the prefix has no trailing whitespace then
+  # downcase the string since it will be
+  # joined adjacent to the prefix
+  defp maybe_downcase(prefix, string) do
+    if String.match?(prefix, ~r/\s+$/u) do
+      string
+    else
+      String.downcase(string)
+    end
+  end
+
+  defp extract_options!(unit, options) do
+    {locale, backend} = Cldr.locale_and_backend_from(options)
+    unit_backend = Module.concat(backend, :Unit)
+
+    format = Keyword.get(options, :format, @default_format)
+    grammatical_case = Keyword.get(options, :case, @default_case)
+    gender = Keyword.get(options, :gender, unit_backend.default_gender(locale))
+    plural = Cldr.Number.PluralRule.plural_type(unit.value, backend, locale: locale)
+    {locale, backend, format, grammatical_case, gender, plural}
+  end
 
   @doc """
   Traverses the components of a unit
@@ -49,64 +260,78 @@ defmodule Cldr.Unit.Format do
       module.grammatical_features("root")
       |> Map.merge(module.grammatical_features(locale))
 
-    gcase = Map.fetch!(features, :case)
+    grammatical_case = Map.fetch!(features, :case)
     plural = Map.fetch!(features, :plural)
 
-    traverse(unit, &grammar(&1, gcase, plural, options))
+    traverse(unit, &grammar(&1, grammatical_case, plural, options))
   end
 
   def grammar(unit, options) when is_binary(unit) do
     grammar(Unit.new!(1, unit), options)
   end
 
-  defp grammar({:unit, unit}, _gcase, _plural, _options) do
+  defp grammar({:unit, unit}, _grammatical_case, _plural, _options) do
     {unit, {:compound, :compound}}
   end
 
-  defp grammar({:per, {left, right}}, _gcase, _plural, _options)
+  defp grammar({:per, {left, right}}, _grammatical_case, _plural, _options)
        when is_list(left) and is_list(right) do
     {left, right}
   end
 
-  defp grammar({:per, {left, {right, _}}}, gcase, plural, _options) when is_list(left) do
-    {left, [{right, {gcase.per[1], plural.per[1]}}]}
+  defp grammar({:per, {left, {right, _}}}, grammatical_case, plural, _options) when is_list(left) do
+    {left, [{right, {grammatical_case.per[1], plural.per[1]}}]}
   end
 
-  defp grammar({:per, {{left, _}, right}}, gcase, plural, _options) when is_list(right) do
-    {[{left, {gcase.per[0], plural.per[0]}}], right}
+  defp grammar({:per, {{left, _}, right}}, grammatical_case, plural, _options)
+       when is_list(right) do
+    {[{left, {grammatical_case.per[0], plural.per[0]}}], right}
   end
 
-  defp grammar({:per, {{left, _}, {right, _}}}, gcase, plural, _options) do
-    {[{left, {gcase.per[0], plural.per[0]}}], [{right, {gcase.per[1], plural.per[1]}}]}
+  defp grammar({:per, {{left, _}, {right, _}}}, grammatical_case, plural, _options) do
+    {[{left, {grammatical_case.per[0], plural.per[0]}}],
+     [{right, {grammatical_case.per[1], plural.per[1]}}]}
   end
 
-  defp grammar({:times, {left, right}}, _gcase, _plural, _options)
+  defp grammar({:times, {left, right}}, _grammatical_case, _plural, _options)
        when is_list(left) and is_list(right) do
     left ++ right
   end
 
-  defp grammar({:times, {{left, _}, right}}, gcase, plural, _options) when is_list(right) do
-    [{left, {gcase.times[0], plural.times[0]}} | right]
+  defp grammar({:times, {{left, _}, right}}, grammatical_case, plural, _options)
+       when is_list(right) do
+    [{left, {grammatical_case.times[0], plural.times[0]}} | right]
   end
 
-  defp grammar({:times, {left, {right, _}}}, gcase, plural, _options) when is_list(left) do
-    left ++ [{right, {gcase.times[1], plural.times[1]}}]
+  defp grammar({:times, {left, {right, _}}}, grammatical_case, plural, _options)
+       when is_list(left) do
+    left ++ [{right, {grammatical_case.times[1], plural.times[1]}}]
   end
 
-  defp grammar({:times, {{left, _}, {right, _}}}, gcase, plural, _options) do
-    [{left, {gcase.times[0], plural.times[0]}}, {right, {gcase.times[1], plural.times[1]}}]
+  defp grammar({:times, {{left, _}, {right, _}}}, grammatical_case, plural, _options) do
+    [
+      {left, {grammatical_case.times[0], plural.times[0]}},
+      {right, {grammatical_case.times[1], plural.times[1]}}
+    ]
   end
 
-  defp grammar({:power, {{left, _}, right}}, gcase, plural, _options) when is_list(right) do
-    [{left, {gcase.power[0], plural.power[0]}} | right]
+  defp grammar({:power, {{left, _}, right}}, grammatical_case, plural, _options)
+       when is_list(right) do
+    [{left, {grammatical_case.power[0], plural.power[0]}} | right]
   end
 
-  defp grammar({:power, {{left, _}, {right, _}}}, gcase, plural, _options) do
-    [{left, {gcase.power[0], plural.power[0]}}, {right, {gcase.power[1], plural.power[1]}}]
+  defp grammar({:power, {{left, _}, {right, _}}}, grammatical_case, plural, _options) do
+    [
+      {left, {grammatical_case.power[0], plural.power[0]}},
+      {right, {grammatical_case.power[1], plural.power[1]}}
+    ]
   end
 
-  defp grammar({:prefix, {{left, _}, {right, _}}}, gcase, plural, _options) do
-    [{left, {gcase.prefix[0], plural.prefix[0]}}, {right, {gcase.prefix[1], plural.prefix[1]}}]
+  defp grammar({:prefix, {{left, _}, {right, _}}}, grammatical_case, plural, _options) do
+    [
+      {left, {grammatical_case.prefix[0], plural.prefix[0]}},
+      {right, {grammatical_case.prefix[1], plural.prefix[1]}}
+    ]
   end
 
   @doc """

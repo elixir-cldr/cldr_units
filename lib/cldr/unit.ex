@@ -877,7 +877,8 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp wrap(term, tag) do
+  @doc false
+  def wrap(term, tag) do
     {tag, term}
   end
 
