@@ -42,6 +42,12 @@ defmodule Cldr.Unit.Format do
     formatted_number = format_number!(unit, number_format_options)
     grammar = grammar(unit, locale: locale, backend: backend)
 
+    to_iolist(grammar, formatted_number, formats, grammatical_case, gender, plural)
+  end
+
+  # For the numerator of a unit
+  defp to_iolist(grammar, formatted_number, formats, grammatical_case, gender, plural)
+      when is_list(grammar) do
     head_pattern =
       to_iolist([hd(grammar)], formats, grammatical_case, gender, plural)
 
@@ -55,12 +61,28 @@ defmodule Cldr.Unit.Format do
     to_iolist([head, tail], formats, grammatical_case, gender, plural)
   end
 
-  def to_iolist([], _formats, _grammatical_case, _gender, _plural) do
+  # For compound "per" units
+  defp to_iolist({numerator, denominator}, formatted_number, formats, grammatical_case, gender, plural) do
+    per_pattern =
+      get_in(formats, [:per, :compound_unit_pattern])
+
+    numerator_pattern =
+      to_iolist(numerator, formatted_number, formats, grammatical_case, gender, plural)
+
+    denominator_pattern =
+      to_iolist(denominator, formats, grammatical_case, gender, plural)
+      |> extract_unit()
+
+    Cldr.Substitution.substitute([numerator_pattern, denominator_pattern], per_pattern)
+  end
+
+  # Recurive processing of a unit grammar
+  defp to_iolist([], _formats, _grammatical_case, _gender, _plural) do
     []
   end
 
   # SI Prefixes
-  def to_iolist([{si_prefix, _}, {name, _} | rest], formats, grammatical_case, gender, plural)
+  defp to_iolist([{si_prefix, _}, {name, _} | rest], formats, grammatical_case, gender, plural)
       when si_prefix in @si_keys do
     si_pattern =
       get_in(formats, [si_prefix, :unit_prefix_pattern]) ||
@@ -76,7 +98,7 @@ defmodule Cldr.Unit.Format do
   end
 
   # Power prefixes
-  def to_iolist([{power_prefix, _} | rest], formats, grammatical_case, gender, plural)
+  defp to_iolist([{power_prefix, _} | rest], formats, grammatical_case, gender, plural)
       when power_prefix in @power_keys do
     power_formats =
       get_in(formats, [power_prefix, :compound_unit_pattern])
@@ -89,21 +111,19 @@ defmodule Cldr.Unit.Format do
         get_in(power_formats, [@default_case]) ||
         raise(Cldr.Unit.NoPatternError, {power_prefix, grammatical_case, gender, plural})
 
-    IO.inspect(power_pattern, label: "power pattern")
-
     rest = to_iolist(rest, formats, grammatical_case, gender, plural)
-    |> IO.inspect(label: "rest")
     merge_power_prefix(power_pattern, rest)
   end
 
   # Two grammar units
-  def to_iolist([unit_1, unit_2 | rest], formats, grammatical_case, gender, plural)
+  defp to_iolist([unit_1, unit_2 | rest], formats, grammatical_case, gender, plural)
       when is_grammar(unit_1) do
     times_pattern =
       get_in(formats, [:times, :compound_unit_pattern])
 
     unit_pattern_1 =
       get_unit_pattern!(unit_1, formats, grammatical_case, gender, plural)
+      |> extract_unit
 
     unit_pattern_2 =
       get_unit_pattern!(unit_2, formats, grammatical_case, gender, plural)
@@ -113,16 +133,20 @@ defmodule Cldr.Unit.Format do
     |> to_iolist(formats, grammatical_case, gender, plural)
   end
 
-  def to_iolist([unit], formats, grammatical_case, gender, plural) when is_grammar(unit) do
+  defp to_iolist([unit], formats, grammatical_case, gender, plural) when is_grammar(unit) do
     get_unit_pattern!(unit, formats, grammatical_case, gender, plural)
   end
 
-  def to_iolist([pattern_list], _formats, _grammatical_case, _gender, _plural) do
+  defp to_iolist([pattern_list], _formats, _grammatical_case, _gender, _plural) do
     pattern_list
   end
 
   # When unit_1 is already in pattern form
-  def to_iolist([unit_pattern_1 | rest], formats, grammatical_case, gender, plural) do
+  defp to_iolist([unit_pattern, []], _formats, _grammatical_case, _gender, _plural) do
+    [unit_pattern]
+  end
+
+  defp to_iolist([unit_pattern_1 | rest], formats, grammatical_case, gender, plural) do
     times_pattern =
       get_in(formats, [:times, :compound_unit_pattern])
 
@@ -148,6 +172,10 @@ defmodule Cldr.Unit.Format do
 
   defp extract_unit([string, place]) when is_integer(place) do
     String.trim(string)
+  end
+
+  defp extract_unit([]) do
+    []
   end
 
   defp format_number!(unit, options) do
