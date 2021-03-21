@@ -64,7 +64,7 @@ defmodule Cldr.Unit.Format do
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `style` is one of those returned by `Cldr.Unit.styles`.
+  * `style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
 
@@ -75,10 +75,10 @@ defmodule Cldr.Unit.Format do
     case, which is also the default.
 
   * `:gender` indicates that a localisation for the given
-    locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+    locale and given grammatical gender should be used.
+    See `Cldr.Unit.known_grammatical_genders/0`
     for the list of known grammatical genders. Note that not all locales
-    define all genders. The default gender is `Cldr.Unit.default_gender/1`
-    for the given locale.
+    define all genders.
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
@@ -344,10 +344,9 @@ defmodule Cldr.Unit.Format do
     case, which is also the default.
 
   * `:gender` indicates that a localisation for the given
-    locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+    locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
     for the list of known grammatical genders. Note that not all locales
-    define all genders. The default gender is `Cldr.Unit.default_gender/1`
-    for the given locale.
+    define all genders.
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
@@ -462,7 +461,7 @@ defmodule Cldr.Unit.Format do
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `:style` is one of those returned by `Cldr.Unit.available_styles/0`.
+  * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`.
 
@@ -473,10 +472,9 @@ defmodule Cldr.Unit.Format do
     case, which is also the default.
 
   * `:gender` indicates that a localisation for the given
-    locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+    locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
     for the list of known grammatical genders. Note that not all locales
-    define all genders. The default gender is `Cldr.Unit.default_gender/1`
-    for the given locale.
+    define all genders.
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
