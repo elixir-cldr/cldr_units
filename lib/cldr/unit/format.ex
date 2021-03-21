@@ -119,8 +119,7 @@ defmodule Cldr.Unit.Format do
       iex> Cldr.Unit.Format.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
       {:ok, "1,234MHz"}
 
-      iex> unit = Cldr.Unit.new!(123, :foot)
-      iex> Cldr.Unit.Format.to_string unit, MyApp.Cldr
+      iex> Cldr.Unit.Format.to_string Cldr.Unit.new!(123, :foot), MyApp.Cldr
       {:ok, "123 feet"}
 
       iex> Cldr.Unit.Format.to_string 123, MyApp.Cldr, unit: :foot
@@ -131,6 +130,12 @@ defmodule Cldr.Unit.Format do
 
       iex> Cldr.Unit.Format.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
+
+      iex> Cldr.Unit.Format.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en",
+      ...> grammatical_gender: :feminine
+      {:error, {Cldr.UnknownGrammaticalGenderError,
+        "The locale \\"en\\" does not define a grammatical gender :feminine. The valid genders are [:masculine]"
+      }}
 
   """
 
@@ -281,16 +286,21 @@ defmodule Cldr.Unit.Format do
 
   defp normalize_options(backend, options) do
     {locale, backend} = Cldr.locale_and_backend_from(options[:locale], backend)
+    unit_backend = Module.concat(backend, :Unit)
     style = Keyword.get(options, :style, @default_style)
     grammatical_case = Keyword.get(options, :grammatical_case, @default_case)
+    grammatical_gender = Keyword.get(options, :grammatical_gender)
 
     with {:ok, locale} <- Cldr.validate_locale(locale, backend),
          {:ok, grammatical_case} <- Cldr.Unit.validate_grammatical_case(grammatical_case),
+         {:ok, default_gender} <- unit_backend.default_gender(locale),
+         {:ok, gender} <- Cldr.Unit.validate_grammatical_gender(grammatical_gender, default_gender, locale),
          {:ok, style} <- Cldr.Unit.validate_style(style) do
       options
       |> Keyword.put(:locale, locale)
-      |> Keyword.put_new(:style, style)
-      |> Keyword.put_new(:grammatical_case, grammatical_case)
+      |> Keyword.put(:style, style)
+      |> Keyword.put(:grammatical_case, grammatical_case)
+      |> Keyword.put(:grammatical_gender, gender)
       |> wrap(:ok)
     end
   end

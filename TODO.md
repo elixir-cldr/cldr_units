@@ -2,7 +2,7 @@
 
 ## Release 3.5.0
 
-Target date of March 2021 to match the release of CLDR 39
+Target date of April 2021 to match the release of CLDR 39
 
 * [x] Fix inverse conversions: MPG to L/100km is the example
 
@@ -12,12 +12,10 @@ Target date of March 2021 to match the release of CLDR 39
 
 * [x] Update full list of potential grammatical cases from TR35
 
-* [ ] Add support for Compound Unit <gender> <count> <grammatial case>
+* [x] Add support for Compound Unit <gender> <count> <grammatial case>
 
 * [x] add Cldr.Unit.grammatical_gender/1
 
 * [x] Add structuring grammaticalFeatures.json
 
-* [ ] Refactor Cldr.Unit.Parser.canonical_unit_name
-
-* [ ] Include binary prefixes
+* [ ] Include binary prefixes (may delay to release 3.6.0)

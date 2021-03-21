@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.5.0-rc.2
+
+This is the changelog for Cldr_units v3.5.0-rc.2 released on ______, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Add `Cldr.Unit.validate_grammatical_gender/2`
+
 # Changelog for Cldr_Units v3.5.0-rc.1
 
 This is the changelog for Cldr_units v3.5.0-rc.1 released on March 21st, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

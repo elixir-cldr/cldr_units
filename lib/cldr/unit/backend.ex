@@ -544,11 +544,11 @@ defmodule Cldr.Unit.Backend do
           end
 
           def grammatical_gender(unquote(locale_name)) do
-            unquote(Macro.escape(grammatical_gender))
+            {:ok, unquote(Macro.escape(grammatical_gender))}
           end
 
           def default_gender(unquote(locale_name)) do
-            unquote(default_gender)
+            {:ok, unquote(default_gender)}
           end
         end
 
@@ -560,16 +560,24 @@ defmodule Cldr.Unit.Backend do
           grammatical_features(language)
         end
 
+        def grammatical_features(language) do
+          {:error, Cldr.Locale.locale_error(language)}
+        end
+
         def grammatical_gender(%LanguageTag{language: language}) do
           grammatical_gender(language)
+        end
+
+        def grammatical_gender(language) do
+          {:error, Cldr.Locale.locale_error(language)}
         end
 
         def default_gender(%LanguageTag{language: language}) do
           default_gender(language)
         end
 
-        def default_gender(_other) do
-          unquote(@default_gender)
+        def default_gender(language) do
+          {:error, Cldr.Locale.locale_error(language)}
         end
       end
     end

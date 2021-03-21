@@ -123,3 +123,12 @@ defmodule Cldr.UnknownGrammaticalCaseError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.UnknownGrammaticalGenderError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end

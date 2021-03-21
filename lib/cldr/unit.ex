@@ -2010,6 +2010,7 @@ defmodule Cldr.Unit do
   standard downcased atom form
 
   """
+  @doc since: "3.5.0"
   def validate_grammatical_case(grammatical_case) when grammatical_case in @grammatical_case do
     {:ok, grammatical_case}
   end
@@ -2026,6 +2027,44 @@ defmodule Cldr.Unit do
 
   def validate_grammatical_case(grammatical_case) do
     {:error, grammatical_case_error(grammatical_case)}
+  end
+
+  @doc false
+  def validate_grammatical_gender(nil, default_gender, locale) do
+    validate_grammatical_gender(default_gender, locale)
+  end
+
+  def validate_grammatical_gender(grammatical_gender, _default_gender, locale) do
+    validate_grammatical_gender(grammatical_gender, locale)
+  end
+
+  @doc """
+  Validates a grammatical gender and normalizes it to a
+  standard downcased atom form
+
+  """
+  @doc since: "3.5.0"
+  def validate_grammatical_gender(grammatical_gender, locale \\ Cldr.default_locale())
+
+  def validate_grammatical_gender(grammatical_gender, locale) when is_atom(grammatical_gender) do
+    with {:ok, locale} <- Cldr.validate_locale(locale),
+         {:ok, genders} = Module.concat(locale.backend, :Unit).grammatical_gender(locale) do
+      if grammatical_gender in genders do
+        {:ok, grammatical_gender}
+      else
+        {:error, grammatical_gender_error(grammatical_gender, genders, locale)}
+      end
+    end
+  end
+
+  def validate_grammatical_gender(grammatical_gender, locale) when is_binary(grammatical_gender) do
+    grammatical_gender
+    |> String.downcase()
+    |> String.to_existing_atom()
+    |> validate_grammatical_gender(locale)
+  catch
+    ArgumentError ->
+      {:error, grammatical_gender_error(grammatical_gender, locale)}
   end
 
   @doc """
@@ -2118,6 +2157,23 @@ defmodule Cldr.Unit do
       Cldr.UnknownGrammaticalCaseError,
       "The grammatical case #{inspect(grammatical_case)} " <>
         "is not known. The valid cases are #{inspect(@grammatical_case)}"
+    }
+  end
+
+  @doc false
+  def grammatical_gender_error(grammatical_gender, known_genders, locale) do
+    {
+      Cldr.UnknownGrammaticalGenderError,
+      "The locale #{inspect locale.cldr_locale_name} does not define " <>
+      "a grammatical gender #{inspect(grammatical_gender)}. " <>
+      "The valid genders are #{inspect(known_genders)}"
+    }
+  end
+
+  def grammatical_gender_error(grammatical_gender, _locale) do
+    {
+      Cldr.UnknownGrammaticalGenderError,
+      "The grammatical gender #{inspect(grammatical_gender)} is invalid"
     }
   end
 
