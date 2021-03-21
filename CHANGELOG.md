@@ -1,3 +1,26 @@
+# Changelog for Cldr_Units v3.5.0-rc.1
+
+This is the changelog for Cldr_units v3.5.0-rc.1 released on March 21st, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Overview
+
+In this release the `Cldr.Unit.to_string/{1, 2, 3}` function has been rewritten and the concrete impementation is now in `Cldr.Unit.Format`.  The primary reasons for rewriting are:
+
+1. Improves performance by 20% over the old implementation.
+2. Supports grammatical case and grammatical gender. These allow for better sentence formation in a localised fashion. Only are few locales have the required data for now (for example, `fr` and `de`) however more locales will have data in upcoming CLDR releases.
+
+Note that full testing of grammatical case and grammatical gender variations is not yet complete.
+
+### Soft Deprecation
+
+* The function `Cldr.Unit.to_iolist/{1, 2, 3}` is soft deprecated. It is still available and no deprecation warning is emitted. It will however be removed from the public API in a future release. This function is primarily used to support implementation of `Cldr.Unit.to_string/3`
+
+* As of this release, argument checking in `Cldr.Unit.to_iolist/3` is less rigorous in order to avoid the relatively expensive argument normalization process happening twice (once in `Cldr.Unit.to_string/3` and then again in `Cldr.Unit.to_iolist/3`).
+
+### Bug Fixes
+
+* The new string formatter correctly assembles units with an SI prefix (ie `millimeter`) in languages such as German where the noun is capitalized.
+
 # Changelog for Cldr_Units v3.5.0-rc.0
 
 This is the changelog for Cldr_units v3.5.0-rc.0 released on March 19th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

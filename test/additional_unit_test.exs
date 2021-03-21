@@ -12,9 +12,9 @@ defmodule Cldr.Unit.AdditionalUnitTest do
       assert {:ok, _} = Cldr.Unit.new(:square_person_kilometer, 1)
     end
 
-    test "Cldr.Unit.to_string/2" do
-      assert Cldr.Unit.to_string(Cldr.Unit.new!(:vehicle, 1)) == {:ok, "1 vehicle"}
-      assert Cldr.Unit.to_string(Cldr.Unit.new!(:vehicle, 2)) == {:ok, "2 vehicles"}
+    test "Cldr.Unit.Format.to_string/2" do
+      assert Cldr.Unit.Format.to_string(Cldr.Unit.new!(:vehicle, 1)) == {:ok, "1 vehicle"}
+      assert Cldr.Unit.Format.to_string(Cldr.Unit.new!(:vehicle, 2)) == {:ok, "2 vehicles"}
     end
   end
 end

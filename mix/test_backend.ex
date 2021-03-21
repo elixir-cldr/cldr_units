@@ -63,6 +63,6 @@ defmodule NoDocs.Cldr do
     generate_docs: false
 
   def for_dialyzer do
-    Cldr.Unit.to_string!(1.234, unit: :kilogram)
+    Cldr.Unit.Format.to_string!(1.234, unit: :kilogram)
   end
 end

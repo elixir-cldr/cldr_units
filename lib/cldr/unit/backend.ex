@@ -130,6 +130,12 @@ defmodule Cldr.Unit.Backend do
           define all cases. However all locales do define the `:nominative`
           case, which is also the default.
 
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
+
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
           applicable when formatting a list of units.
@@ -180,7 +186,7 @@ defmodule Cldr.Unit.Backend do
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
-          Cldr.Unit.to_string(number, unquote(backend), options)
+          Cldr.Unit.Format.to_string(number, unquote(backend), options)
         end
 
         @doc """
@@ -212,6 +218,12 @@ defmodule Cldr.Unit.Backend do
           define all cases. However all locales do define the `:nominative`
           case, which is also the default.
 
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
+
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
           applicable when formatting a list of units.
@@ -241,7 +253,7 @@ defmodule Cldr.Unit.Backend do
                 String.t() | no_return()
 
         def to_string!(number, options \\ []) do
-          Cldr.Unit.to_string!(number, unquote(backend), options)
+          Cldr.Unit.Format.to_string!(number, unquote(backend), options)
         end
 
         @doc """
@@ -273,6 +285,12 @@ defmodule Cldr.Unit.Backend do
           define all cases. However all locales do define the `:nominative`
           case, which is also the default.
 
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
+
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
           applicable when formatting a list of units.
@@ -291,15 +309,12 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.to_iolist Cldr.Unit.new!(:gallon, 123)
             {:ok, ["123", " gallons"]}
 
-            iex> #{inspect(__MODULE__)}.to_iolist Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
-            {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
         """
         @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, list()} | {:error, {atom, binary}}
 
         def to_iolist(number, options \\ []) do
-          Cldr.Unit.to_iolist(number, unquote(backend), options)
+          Cldr.Unit.Format.to_iolist(number, unquote(backend), options)
         end
 
         @doc """
@@ -321,15 +336,21 @@ defmodule Cldr.Unit.Backend do
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+        * `:style` is one of those returned by `Cldr.Unit.available_styles/0`.
           The current styles are `:long`, `:short` and `:narrow`.
-          The default is `style: :long`
+          The default is `style: :long`.
 
         * `:grammatical_case` indicates that a localisation for the given
           locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
           for the list of known grammatical cases. Note that not all locales
           define all cases. However all locales do define the `:nominative`
           case, which is also the default.
+
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -354,7 +375,7 @@ defmodule Cldr.Unit.Backend do
                 list() | no_return()
 
         def to_iolist!(number, options \\ []) do
-          Cldr.Unit.to_iolist!(number, unquote(backend), options)
+          Cldr.Unit.Format.to_iolist!(number, unquote(backend), options)
         end
 
         @doc """

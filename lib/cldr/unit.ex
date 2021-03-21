@@ -32,8 +32,8 @@ defmodule Cldr.Unit do
   """
 
   alias Cldr.Unit
-  alias Cldr.{Locale, LanguageTag, Substitution}
-  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, Prefix, BaseUnit}
+  alias Cldr.{Locale, LanguageTag}
+  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, BaseUnit, Format}
 
   @enforce_keys [:unit, :value, :base_conversion, :usage, :format_options]
 
@@ -113,7 +113,6 @@ defmodule Cldr.Unit do
         }
 
   @default_style :long
-  @default_grammatical_case :nominative
 
   @app_name Cldr.Config.app_name()
   @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
@@ -497,6 +496,249 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Formats a number into a string according to a unit definition
+  for the current process's locale and backend.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.to_string/3` for full details.
+
+  """
+  @spec to_string(list_or_number :: Unit.value() | Unit.t() | [Unit.t()]) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
+
+  def to_string(unit) do
+    Format.to_string(unit)
+  end
+
+  @doc """
+  Formats a number into a string according to a unit definition for a locale.
+
+  During processing any `:format_options` of a `Unit.t()` are merged with
+  `options` with `options` taking precedence.
+
+  ## Arguments
+
+  * `list_or_number` is any number (integer, float or Decimal) or a
+    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  * `options` is a keyword list of options.
+
+  ## Options
+
+  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
+    the number to be formatted is a `t:Cldr.Unit` struct
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `style` is one of those returned by `Cldr.Unit.styles`.
+    The current styles are `:long`, `:short` and `:narrow`.
+    The default is `style: :long`
+
+  * `:grammatical_case` indicates that a localisation for the given
+    locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+    for the list of known grammatical cases. Note that not all locales
+    define all cases. However all locales do define the `:nominative`
+    case, which is also the default.
+
+  * `:gender` indicates that a localisation for the given
+    locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+    for the list of known grammatical genders. Note that not all locales
+    define all genders. The default gender is `Cldr.Unit.default_gender/1`
+    for the given locale.
+
+  * `:list_options` is a keyword list of options for formatting a list
+    which is passed through to `Cldr.List.to_string/3`. This is only
+    applicable when formatting a list of units.
+
+  * Any other options are passed to `Cldr.Number.to_string/2`
+    which is used to format the `number`
+
+  ## Returns
+
+  * `{:ok, formatted_string}` or
+
+  * `{:error, {exception, message}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
+      {:ok, "123 gallons"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr
+      {:ok, "1 gallon"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
+      {:ok, "1 gelling"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "bs"
+      {:ok, "1 galon"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :long
+      {:ok, "1 thousand gallons"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :short
+      {:ok, "1K gallons"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr
+      {:ok, "1,234 megahertz"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
+      {:ok, "1,234MHz"}
+
+      iex> unit = Cldr.Unit.new!(123, :foot)
+      iex> Cldr.Unit.to_string unit, MyApp.Cldr
+      {:ok, "123 feet"}
+
+      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :foot
+      {:ok, "123 feet"}
+
+      iex> Cldr.Unit.to_string Decimal.new(123), MyApp.Cldr, unit: :foot
+      {:ok, "123 feet"}
+
+      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
+      {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
+
+  """
+
+  @spec to_string(
+          Unit.value() | Unit.t() | list(Unit.t()),
+          Cldr.backend() | Keyword.t(),
+          Keyword.t()
+        ) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
+
+  def to_string(list_or_unit, backend, options \\ [])
+
+  # Options but no backend
+  def to_string(list_or_unit, options, []) when is_list(options) do
+    Format.to_string(list_or_unit, options, [])
+  end
+
+  def to_string(list_or_unit, backend, options) do
+    Format.to_string(list_or_unit, backend, options)
+  end
+
+  @doc """
+  Formats a number into a string according to a unit definition
+  for the current process's locale and backend or raises
+  on error.
+
+  The curent process's locale is set with
+  `Cldr.put_locale/1`.
+
+  See `Cldr.Unit.to_string!/3` for full details.
+
+  """
+  @spec to_string!(list_or_number :: Unit.value() | Unit.t() | [Unit.t()]) ::
+          String.t() | no_return()
+
+  def to_string!(unit) do
+    Format.to_string!(unit)
+  end
+
+  @doc """
+  Formats a number into a string according to a unit definition
+  for the current process's locale and backend or raises
+  on error.
+
+  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
+  `options` with `options` taking precedence.
+
+  ## Arguments
+
+  * `number` is any number (integer, float or Decimal) or a
+    `t:Cldr.Unit` struct
+
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  * `options` is a keyword list
+
+  ## Options
+
+  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
+    the number to be formatted is a `t:Cldr.Unit` struct
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+    The current styles are `:long`, `:short` and `:narrow`.
+    The default is `style: :long`
+
+  * Any other options are passed to `Cldr.Number.to_string/2`
+    which is used to format the `number`
+
+  ## Returns
+
+  * `formatted_string` or
+
+  * raises an exception
+
+  ## Examples
+
+      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
+      "123 gallons"
+
+      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr
+      "1 gallon"
+
+      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
+      "1 gelling"
+
+  """
+  @spec to_string!(
+          Unit.value() | Unit.t() | list(Unit.t()),
+          Cldr.backend() | Keyword.t(),
+          Keyword.t()
+        ) ::
+          String.t() | no_return()
+
+  def to_string!(unit, backend, options \\ []) do
+    Format.to_string!(unit, backend, options)
+  end
+
+  ## TODO remove in ex_cldr 4.0
+
+  @doc false
+  @spec to_iolist(list_or_number :: Unit.value() | Unit.t() | [Unit.t()]) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
+
+  def to_iolist(unit) do
+    Format.to_iolist(unit)
+  end
+
+  @doc false
+  @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+          {:ok, list()} | {:error, {atom, binary}}
+
+  def to_iolist(unit, backend, options \\ []) do
+    Format.to_iolist(unit, backend, options)
+  end
+
+  @doc false
+  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...]) ::
+          list() | no_return()
+
+  def to_iolist!(unit) do
+    Format.to_iolist!(unit)
+  end
+
+  @doc false
+  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+          list() | no_return()
+
+  def to_iolist!(unit, backend, options \\ []) do
+    Format.to_iolist!(unit, backend, options)
+  end
+
+  @doc """
   Inverts a unit
 
   Only "per" units can be inverted.
@@ -592,614 +834,6 @@ defmodule Cldr.Unit do
       {:ok, _conversion, _maybe_inverted} -> true
       {:error, _error} -> false
     end
-  end
-
-  @doc """
-  Formats a number into a string according to a unit definition
-  for the current process's locale and backend.
-
-  The curent process's locale is set with
-  `Cldr.put_locale/1`.
-
-  See `Cldr.Unit.to_string/3` for full details.
-
-  """
-  @spec to_string(list_or_number :: value | t() | [t()]) ::
-          {:ok, String.t()} | {:error, {atom, binary}}
-
-  def to_string(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_string(unit, backend, locale: locale)
-  end
-
-  @doc """
-  Formats a number into a string according to a unit definition for a locale.
-
-  During processing any `:format_options` of a `Unit.t()` are merged with
-  `options` with `options` taking precedence.
-
-  ## Arguments
-
-  * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
-
-  * `backend` is any module that includes `use Cldr` and therefore
-    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
-
-  * `options` is a keyword list of options.
-
-  ## Options
-
-  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
-
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
-
-  * `:style` is one of those returned by `Cldr.Unit.styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
-
-  * `:grammatical_case` indicates that a localisation for the given
-    locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
-    for the list of known grammatical cases. Note that not all locales
-    define all cases. However all locales do define the `:nominative`
-    case, which is also the default.
-
-  * `:list_options` is a keyword list of options for formatting a list
-    which is passed through to `Cldr.List.to_string/3`. This is only
-    applicable when formatting a list of units.
-
-  * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
-
-  ## Returns
-
-  * `{:ok, formatted_string}` or
-
-  * `{:error, {exception, message}}`
-
-  ## Examples
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
-      {:ok, "123 gallons"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr
-      {:ok, "1 gallon"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
-      {:ok, "1 gelling"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "bs"
-      {:ok, "1 galon"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :long
-      {:ok, "1 thousand gallons"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 1234), MyApp.Cldr, format: :short
-      {:ok, "1K gallons"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr
-      {:ok, "1,234 megahertz"}
-
-      iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
-      {:ok, "1,234MHz"}
-
-      iex> unit = Cldr.Unit.new!(123, :foot)
-      iex> Cldr.Unit.to_string unit, MyApp.Cldr
-      {:ok, "123 feet"}
-
-      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :foot
-      {:ok, "123 feet"}
-
-      iex> Cldr.Unit.to_string Decimal.new(123), MyApp.Cldr, unit: :foot
-      {:ok, "123 feet"}
-
-      iex> Cldr.Unit.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
-      {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
-  """
-
-  @spec to_string(value | t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
-          {:ok, String.t()} | {:error, {atom, binary}}
-
-  def to_string(list_or_unit, backend, options \\ [])
-
-  # Options but no backend
-  def to_string(list_or_unit, options, []) when is_list(options) do
-    locale = Cldr.get_locale()
-    to_string(list_or_unit, locale.backend, options)
-  end
-
-  # It's a list of units so we format each of them
-  # and combine the list
-  def to_string(unit_list, backend, options) when is_list(unit_list) do
-    with {locale, _style, options} <- normalize_options(backend, options),
-         {:ok, locale} <- backend.validate_locale(locale) do
-      options =
-        options
-        |> Keyword.put(:locale, locale)
-
-      list_options =
-        options
-        |> Keyword.get(:list_options, [])
-        |> Keyword.put(:locale, locale)
-
-      unit_list
-      |> Enum.map(&to_string!(&1, backend, options))
-      |> Cldr.List.to_string(backend, list_options)
-    end
-  end
-
-  # It's a number, not a unit struct
-  def to_string(number, backend, options) when is_number(number) do
-    with {:ok, unit} <- new(options[:unit], number) do
-      to_string(unit, backend, options)
-    end
-  end
-
-  def to_string(%Decimal{} = number, backend, options) do
-    with {:ok, unit} <- new(options[:unit], number) do
-      to_string(unit, backend, options)
-    end
-  end
-
-  # Now we have a unit, a backend and some options but ratio
-  # values need to be converted to decimals
-  def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
-    unit = to_decimal_unit(unit)
-    to_string(unit, backend, options)
-  end
-
-  def to_string(%Unit{} = unit, backend, options) when is_list(options) do
-    with {:ok, list} <- to_iolist(unit, backend, options) do
-      list
-      |> :erlang.iolist_to_binary()
-      |> String.replace(~r/([\s])+/, "\\1")
-      |> wrap(:ok)
-    end
-  end
-
-  @doc """
-  Formats a number into a iolist according to a unit definition
-  for the current process's locale and backend.
-
-  The curent process's locale is set with
-  `Cldr.put_locale/1`.
-
-  See `Cldr.Unit.to_iolist/3` for full details.
-
-  """
-  @spec to_iolist(list_or_number :: value | t() | [t()]) ::
-          {:ok, String.t()} | {:error, {atom, binary}}
-
-  def to_iolist(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_iolist(unit, backend, locale: locale)
-  end
-
-  @doc """
-  Formats a number into an `iolist` according to a unit definition
-  for a locale.
-
-  During processing any `:format_options` of a `t:Unit()` are merged with
-  `options` with `options` taking precedence.
-
-  ## Arguments
-
-  * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit()` struct or a list of `t.Cldr.Unit()` structs
-
-  * `backend` is any module that includes `use Cldr` and therefore
-    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
-
-  * `options` is a keyword list of options.
-
-  ## Options
-
-  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
-
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
-
-  * `:style` is one of those returned by `Cldr.Unit.styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
-
-  * `:grammatical_case` indicates that a localisation for the given
-    locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
-    for the list of known grammatical cases. Note that not all locales
-    define all cases. However all locales do define the `:nominative`
-    case, which is also the default.
-
-  * `:list_options` is a keyword list of options for formatting a list
-    which is passed through to `Cldr.List.to_string/3`. This is only
-    applicable when formatting a list of units.
-
-  * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
-
-  ## Returns
-
-  * `{:ok, io_list}` or
-
-  * `{:error, {exception, message}}`
-
-  ## Examples
-
-      iex> Cldr.Unit.to_iolist Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
-      {:ok, ["123", " gallons"]}
-
-      iex> Cldr.Unit.to_iolist 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
-      {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
-  """
-  @spec to_iolist(value() | t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
-          {:ok, list()} | {:error, {module, binary}}
-
-  def to_iolist(unit, backend, options \\ [])
-
-  # Options but no backend
-  def to_iolist(unit, options, []) when is_list(options) do
-    locale = Cldr.get_locale()
-    to_iolist(unit, locale.backend, options)
-  end
-
-  def to_iolist(%Unit{} = unit, backend, options) when is_list(options) do
-    with {locale, style, options} <- normalize_options(backend, options),
-         {:ok, locale} <- backend.validate_locale(locale),
-         {:ok, style} <- validate_style(style),
-         {:ok, grammatical_case} <- validate_grammatical_case(options[:grammatical_case]) do
-      number = value(unit)
-
-      options =
-        unit.format_options
-        |> Keyword.merge(options)
-        |> Keyword.put(:locale, locale)
-        |> Keyword.put(:grammatical_case, grammatical_case)
-
-      {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
-
-      number
-      |> extract_patterns(unit.base_conversion, locale, style, backend, options)
-      |> combine_patterns(number_string, locale, style, backend, options)
-      |> maybe_combine_per_unit(locale, style, backend, options)
-      |> wrap(:ok)
-    end
-  end
-
-  def to_iolist(number, backend, options) when is_number(number) do
-    with {:ok, unit} <- new(options[:unit], number) do
-      to_iolist(unit, backend, options)
-    end
-  end
-
-  @doc false
-  def wrap(term, tag) do
-    {tag, term}
-  end
-
-  @doc """
-  Formats a number into a string according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
-
-  The curent process's locale is set with
-  `Cldr.put_locale/1`.
-
-  See `Cldr.Unit.to_string!/3` for full details.
-
-  """
-  @spec to_string!(list_or_number :: value() | t() | [t()]) ::
-          String.t() | no_return()
-
-  def to_string!(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_string!(unit, backend, locale: locale)
-  end
-
-  @doc """
-  Formats a number into a string according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
-
-  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
-  `options` with `options` taking precedence.
-
-  ## Arguments
-
-  * `number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct
-
-  * `backend` is any module that includes `use Cldr` and therefore
-    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
-
-  * `options` is a keyword list
-
-  ## Options
-
-  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
-
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
-
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
-
-  * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
-
-  ## Returns
-
-  * `formatted_string` or
-
-  * raises an exception
-
-  ## Examples
-
-      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
-      "123 gallons"
-
-      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr
-      "1 gallon"
-
-      iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
-      "1 gelling"
-
-  """
-  @spec to_string!(value() | t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
-          String.t() | no_return()
-
-  def to_string!(unit, backend, options \\ []) do
-    case to_string(unit, backend, options) do
-      {:ok, string} -> string
-      {:error, {exception, message}} -> raise exception, message
-    end
-  end
-
-  @doc """
-  Formats a number into an iolist according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
-
-  The curent process's locale is set with
-  `Cldr.put_locale/1`.
-
-  See `Cldr.Unit.to_iolist!/3` for full details.
-
-  """
-  @spec to_iolist!(list_or_number :: value | t() | [t()]) ::
-          list() | no_return()
-
-  def to_iolist!(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_iolist!(unit, backend, locale: locale)
-  end
-
-  @doc """
-  Formats a number into an iolist according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
-
-  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
-  `options` with `options` taking precedence.
-
-  ## Arguments
-
-  * `number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct
-
-  * `backend` is any module that includes `use Cldr` and therefore
-    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
-
-  * `options` is a keyword list
-
-  ## Options
-
-  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
-
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
-
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
-
-  * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
-
-  ## Returns
-
-  * `io_list` or
-
-  * raises an exception
-
-  ## Examples
-
-      iex> Cldr.Unit.to_iolist! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
-      ["123", " gallons"]
-
-  """
-  @spec to_iolist!(value() | t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
-          list() | no_return()
-
-  def to_iolist!(unit, backend, options \\ []) do
-    case to_iolist(unit, backend, options) do
-      {:ok, string} -> string
-      {:error, {exception, message}} -> raise exception, message
-    end
-  end
-
-  @dialyzer {:nowarn_function, {:extract_patterns, 6}}
-  defp extract_patterns(number, {unit_list, per_list}, locale, style, backend, options) do
-    {
-      extract_patterns(number, unit_list, locale, style, backend, options),
-      extract_patterns(1, per_list, locale, style, backend, options)
-    }
-  end
-
-  # When extracting a list of patterns the objective is to use the singluar
-  # form of the pattern for all except the last element which uses the
-  # plural form indicated by the number
-  defp extract_patterns(number, [{unit, _conversion}], locale, style, backend, options) do
-    [to_pattern(number, unit, locale, style, backend, options)]
-  end
-
-  defp extract_patterns(number, [{unit, _conversion} | rest], locale, style, backend, options) do
-    [
-      to_pattern(1, unit, locale, style, backend, options)
-      | extract_patterns(number, rest, locale, style, backend, options)
-    ]
-  end
-
-  # Combine the patterns merging prefix and units, applying "times" for
-  # compound units and the "per" pattern if required.  This are some heuristics
-  # here than may not result in a grammatically correct result for some
-  # languages
-  @dialyzer {:nowarn_function, {:combine_patterns, 6}}
-  defp combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
-    {
-      combine_patterns(patterns, number_string, locale, style, backend, options),
-      combine_patterns(per_patterns, "", locale, style, backend, options)
-    }
-  end
-
-  defp combine_patterns([pattern], number_string, _locale, _style, _backend, _options) do
-    Substitution.substitute(number_string, pattern)
-  end
-
-  defp combine_patterns([pattern | rest], number_string, locale, style, backend, _options) do
-    units = units_for(locale, style, backend)
-    times_pattern = get_in(units, [:times, :compound_unit_pattern])
-
-    [
-      Substitution.substitute(number_string, pattern)
-      | Enum.map(rest, fn p ->
-          Substitution.substitute("", p)
-          |> Enum.map(&String.trim/1)
-        end)
-    ]
-    |> join_list(times_pattern)
-  end
-
-  defp join_list([head, tail], times_pattern) do
-    Substitution.substitute([head, tail], times_pattern)
-  end
-
-  defp join_list([head | rest], times_pattern) do
-    tail = join_list(rest, times_pattern)
-    join_list([head, tail], times_pattern)
-  end
-
-  @dialyzer {:nowarn_function, {:maybe_combine_per_unit, 5}}
-  defp maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
-    units = units_for(locale, style, backend)
-    per_pattern = get_in(units, [:per, :compound_unit_pattern])
-
-    Substitution.substitute([unit_list, per_units], per_pattern)
-  end
-
-  defp maybe_combine_per_unit(unit_list, _locale, _style, _backend, _options) do
-    unit_list
-  end
-
-  @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
-          list()
-
-  defp to_pattern(number, unit, locale, style, backend, options)
-       when unit in @translatable_units do
-    with {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
-      cardinal_module = Module.concat(backend, Number.Cardinal)
-
-      grammatical_case =
-        options
-        |> Keyword.fetch!(:grammatical_case)
-
-      cased_patterns =
-        Map.get(patterns, grammatical_case) ||
-          Map.fetch!(patterns, @default_grammatical_case)
-
-      cardinal_module.pluralize(number, locale, cased_patterns)
-    end
-  end
-
-  for {prefix, power} <- Prefix.power_units() do
-    localize_key = String.to_atom("power#{power}")
-    match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
-
-    defp to_pattern(number, unquote(match), locale, style, backend, options) do
-      units = units_for(locale, style, backend)
-      pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern, :nominative])
-      unit = maybe_translatable_unit(unit)
-
-      pattern
-      |> merge_power_prefix(to_pattern(number, unit, locale, style, backend, options))
-    end
-  end
-
-  # is there an SI prefix? If so, try reformatting the unit again
-  for {prefix, power} <- Prefix.si_power_prefixes() do
-    localize_key = "10p#{power}" |> String.replace("-", "_") |> String.to_atom()
-    match = quote do: <<unquote(prefix), var!(unit)::binary>>
-
-    defp to_pattern(number, unquote(match), locale, style, backend, options) do
-      units = units_for(locale, style, backend)
-      pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
-      unit = maybe_translatable_unit(unit)
-
-      pattern
-      |> merge_SI_prefix(to_pattern(number, unit, locale, style, backend, options))
-    end
-  end
-
-  defp to_pattern(_number, unit, locale, style, _backend, _options) do
-    {exception, message} = no_pattern_error(unit, locale, style)
-    raise exception, message
-  end
-
-  # Merging power and SI prefixes into a pattern is a heuristic since the
-  # underlying data does not convey those rules.
-
-  @merge_SI_prefix ~r/([^\s]+)$/u
-  defp merge_SI_prefix([prefix, place], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
-  end
-
-  defp merge_SI_prefix([prefix, place], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
-  end
-
-  defp merge_SI_prefix([place, prefix], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
-  end
-
-  defp merge_SI_prefix([place, prefix], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
-  end
-
-  @merge_power_prefix ~r/^(\s)+/u
-  defp merge_power_prefix([prefix, place], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
-  end
-
-  defp merge_power_prefix([prefix, place], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
-  end
-
-  defp merge_power_prefix([place, prefix], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
-  end
-
-  defp merge_power_prefix([place, prefix], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
   end
 
   @doc """
@@ -2205,52 +1839,6 @@ defmodule Cldr.Unit do
     with {:ok, territory} <- Cldr.validate_territory(territory) do
       get_in(measurement_systems_by_territory(), [territory, key]) || default
     end
-  end
-
-  @doc false
-  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend)
-      when unit in @translatable_units do
-    with {:ok, style} <- validate_style(style),
-         {:ok, unit, _conversion} <- validate_unit(unit) do
-      units = units_for(locale_name, style, backend)
-      pattern = Map.fetch!(units, unit)
-      {:ok, pattern}
-    end
-  end
-
-  def pattern_for(locale_name, style, unit, backend) do
-    with {:ok, locale} <- backend.validate_locale(locale_name) do
-      pattern_for(locale, style, unit, backend)
-    end
-  end
-
-  def per_pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
-    with {:ok, style} <- validate_style(style),
-         {:ok, unit, _conversion} <- validate_unit(unit) do
-      units = units_for(locale_name, style, backend)
-      pattern = get_in(units, [unit, :per_unit_pattern])
-      default_pattern = get_in(units, [:per, :compound_unit_pattern])
-      {:ok, pattern || default_pattern}
-    end
-  end
-
-  def per_pattern_for(locale_name, style, unit, backend) do
-    with {:ok, locale} <- backend.validate_locale(locale_name) do
-      per_pattern_for(locale, style, unit, backend)
-    end
-  end
-
-  defp normalize_options(backend, options) do
-    locale = Keyword.get(options, :locale, backend.get_locale())
-    style = Keyword.get(options, :style, @default_style)
-
-    options =
-      options
-      |> Keyword.delete(:locale)
-      |> Keyword.put(:style, style)
-      |> Keyword.put_new(:grammatical_case, @default_grammatical_case)
-
-    {locale, style, options}
   end
 
   @doc """

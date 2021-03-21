@@ -1,7 +1,7 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "3.5.0-rc.0"
+  @version "3.5.0-rc.1"
 
   def project do
     [
@@ -44,7 +44,8 @@ defmodule CldrUnits.Mixfile do
       {:decimal, "~> 1.6 or ~> 2.0", optional: true},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.18", only: [:dev, :release]},
-      {:jason, "~> 1.0", optional: true}
+      {:jason, "~> 1.0", optional: true},
+      {:benchee, "~> 1.0", optional: true, only: :dev}
     ]
   end
 

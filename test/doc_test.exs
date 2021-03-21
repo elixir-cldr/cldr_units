@@ -8,6 +8,7 @@ defmodule Doc.Test do
   doctest Cldr.Unit.Math
   doctest Cldr.Unit.Parser
   doctest Cldr.Unit.Alias
+  doctest Cldr.Unit.Format
 
   doctest MyApp.Cldr.Unit
 end
