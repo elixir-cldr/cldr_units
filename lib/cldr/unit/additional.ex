@@ -106,7 +106,6 @@ defmodule Cldr.Unit.Additional do
   backend module.  For example:
   ```elixir
   defmodule MyApp.Cldr do
-    # Note that this line should come before the `use Cldr` line
     use Cldr.Unit.Additional
 
     use Cldr,
@@ -245,17 +244,12 @@ defmodule Cldr.Unit.Additional do
     end
   end
 
-  # These locales are required for the correct operation of
-  # ex_cldr but they are not considered part of the users
-  # configuration
-  @dont_consider_these_locales ["root"]
-
   @doc false
   def __after_compile__(env, _bytecode) do
     additional_module = Module.concat(env.module, Unit.Additional)
     additional_units = additional_module.additional_units()
     additional_locales = MapSet.new(additional_module.known_locale_names())
-    backend_locales = MapSet.new(env.module.known_locale_names() -- [@dont_consider_these_locales])
+    backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
     styles = Cldr.Unit.known_styles()
 
     case MapSet.to_list(MapSet.difference(backend_locales, additional_locales)) do
@@ -375,7 +369,6 @@ defmodule Cldr.Unit.Additional do
 
   def conversions do
     Application.get_env(:ex_cldr_units, :additional_units, [])
-    |> validate_keyword_list!()
     |> Enum.map(fn {unit, config} ->
       new_config =
         config
@@ -388,29 +381,13 @@ defmodule Cldr.Unit.Additional do
     end)
   end
 
-  defp validate_keyword_list!(list) do
-    unless Keyword.keyword?(list) do
-      raise ArgumentError,
-            "Additional unit configuration must be a keyword list. See Cldr.Unit.Addition"
-    end
-
-    Enum.each(list, fn {k, v} ->
-      unless Keyword.keyword?(v) do
-        raise ArgumentError,
-              "Additional unit configuration for #{inspect(k)} must be a keyword list. See Cldr.Unit.Addition"
-      end
-    end)
-
-    list
-  end
-
   defp validate_unit!(unit) do
     unless Keyword.keyword?(unit) do
       raise ArgumentError,
             "Additional unit configuration must be a keyword list. Found #{inspect(unit)}"
     end
 
-    unless Keyword.has_key?(unit, :factor) do
+    unless Keyword.has_key?(unit, :base_unit) do
       raise ArgumentError, "Additional unit configuration must have a :factor configured"
     end
 
@@ -438,7 +415,7 @@ defmodule Cldr.Unit.Additional do
 
       other ->
         raise ArgumentError,
-              "Additional unit factor must be a number or a rational " <>
+              "Additional unit factor must be a number of a rational " <>
                 "of the form %{numerator: number, denominator: number}. Found #{inspect(other)}"
     end
 
@@ -447,9 +424,7 @@ defmodule Cldr.Unit.Additional do
 
   @doc false
   def additional_units do
-    conversions()
-    |> Keyword.keys()
-    |> Enum.sort()
+    Keyword.keys(conversions())
   end
 
   @doc false
