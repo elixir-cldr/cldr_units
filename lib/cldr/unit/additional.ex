@@ -205,7 +205,32 @@ defmodule Cldr.Unit.Additional do
 
   # This is the empty module created if the backend does not
   # include `use Cldr.Unit.Additional`
+
   @doc false
+  def define_localization_module(%{} = localizations, module) when localizations == %{} do
+    IO.warn(
+      "The CLDR backend #{inspect(module)} calls `use Cldr.Unit.Additional` " <>
+        "but does not have any localizations defined",
+      []
+    )
+
+    quote bind_quoted: [module: module] do
+      defmodule module do
+        def units_for(locale, style) do
+          %{}
+        end
+
+        def known_locale_names do
+          unquote([])
+        end
+
+        def additional_units do
+          unquote([])
+        end
+      end
+    end
+  end
+
   def define_localization_module(localizations, module) do
     additional_units =
       localizations
@@ -368,17 +393,35 @@ defmodule Cldr.Unit.Additional do
   @default_offset 0
 
   def conversions do
-    Application.get_env(:ex_cldr_units, :additional_units, [])
-    |> Enum.map(fn {unit, config} ->
-      new_config =
-        config
-        |> Keyword.put_new(:offset, @default_offset)
-        |> Keyword.put_new(:sort_before, @default_sort_before)
-        |> Keyword.put_new(:systems, @default_systems)
-        |> validate_unit!
+    :ex_cldr_units
+    |> Application.get_env(:additional_units, [])
+    |> conversions()
+  end
 
-      {unit, new_config}
+  defp conversions(config) when is_list(config) do
+    config
+    |> Enum.map(fn {unit, config} ->
+      if Keyword.keyword?(config) do
+        new_config =
+          config
+          |> Keyword.put_new(:offset, @default_offset)
+          |> Keyword.put_new(:sort_before, @default_sort_before)
+          |> Keyword.put_new(:systems, @default_systems)
+          |> validate_unit!
+
+        {unit, new_config}
+      else
+        raise ArgumentError,
+              "Additional unit configuration for #{inspect(unit)} must be a keyword list. Found #{
+                inspect(config)
+              }"
+      end
     end)
+  end
+
+  defp conversions(config) do
+    raise ArgumentError,
+          "Additional unit configuration must be a keyword list. Found #{inspect(config)}"
   end
 
   defp validate_unit!(unit) do
@@ -387,7 +430,7 @@ defmodule Cldr.Unit.Additional do
             "Additional unit configuration must be a keyword list. Found #{inspect(unit)}"
     end
 
-    unless Keyword.has_key?(unit, :base_unit) do
+    unless Keyword.has_key?(unit, :factor) do
       raise ArgumentError, "Additional unit configuration must have a :factor configured"
     end
 
@@ -415,7 +458,7 @@ defmodule Cldr.Unit.Additional do
 
       other ->
         raise ArgumentError,
-              "Additional unit factor must be a number of a rational " <>
+              "Additional unit factor must be a number or a rational " <>
                 "of the form %{numerator: number, denominator: number}. Found #{inspect(other)}"
     end
 

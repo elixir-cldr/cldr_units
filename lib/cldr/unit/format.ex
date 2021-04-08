@@ -294,7 +294,8 @@ defmodule Cldr.Unit.Format do
     with {:ok, locale} <- Cldr.validate_locale(locale, backend),
          {:ok, grammatical_case} <- Cldr.Unit.validate_grammatical_case(grammatical_case),
          {:ok, default_gender} <- unit_backend.default_gender(locale),
-         {:ok, gender} <- Cldr.Unit.validate_grammatical_gender(grammatical_gender, default_gender, locale),
+         {:ok, gender} <-
+           Cldr.Unit.validate_grammatical_gender(grammatical_gender, default_gender, locale),
          {:ok, style} <- Cldr.Unit.validate_style(style) do
       options
       |> Keyword.put(:locale, locale)

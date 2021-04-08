@@ -2164,9 +2164,9 @@ defmodule Cldr.Unit do
   def grammatical_gender_error(grammatical_gender, known_genders, locale) do
     {
       Cldr.UnknownGrammaticalGenderError,
-      "The locale #{inspect locale.cldr_locale_name} does not define " <>
-      "a grammatical gender #{inspect(grammatical_gender)}. " <>
-      "The valid genders are #{inspect(known_genders)}"
+      "The locale #{inspect(locale.cldr_locale_name)} does not define " <>
+        "a grammatical gender #{inspect(grammatical_gender)}. " <>
+        "The valid genders are #{inspect(known_genders)}"
     }
   end
 

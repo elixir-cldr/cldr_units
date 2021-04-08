@@ -127,7 +127,7 @@ defmodule Cldr.Unit.AdditionalUnitTest do
                  end
                end)
              end) =~
-               ~r/The locales \[\"en\"] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend do not have localizations defined.*/
+               ~r/The CLDR backend Cldr.Unit.AdditionalUnitTest.Backend.Unit.Additional calls `use Cldr.Unit.Additional`.*/
     end
 
     test "backend with missing localizations" do
@@ -142,8 +142,10 @@ defmodule Cldr.Unit.AdditionalUnitTest do
                 providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 
               unit_localization(:person, "en", :long,
-                one: "{0} person",
-                other: "{0} people",
+                nominative: %{
+                  one: "{0} person",
+                  other: "{0} people"
+                },
                 display_name: "people"
               )
             end
@@ -151,14 +153,11 @@ defmodule Cldr.Unit.AdditionalUnitTest do
         end)
 
       assert warnings =~
-               ~r/.*The locales \[\"fr\"\] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend2 do not have localizations defined.*/
-
-      assert warnings =~
-               ~r/.*Cldr.Unit.AdditionalUnitTest.Backend2.Unit.Additional does not define localizations for the units \[:vehicle\] in locale \"en\" with style :long.*/
+               ~r/.*The locales \[\"en-001\", \"fr\"\] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend2 do not have localizations defined.*/
     end
 
     test "backend with localization missing the :other key" do
-      assert_raise ArgumentError, ~r/Localizations must have an :other key/, fn ->
+      assert_raise ArgumentError, ~r/The nominative case must have an :other key/, fn ->
         defmodule Backend3 do
           use Cldr.Unit.Additional
 
@@ -167,7 +166,9 @@ defmodule Cldr.Unit.AdditionalUnitTest do
             providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 
           unit_localization(:person, "en", :long,
-            one: "{0} person",
+            nominative: %{
+              one: "{0} person"
+            },
             display_name: "people"
           )
         end
@@ -184,8 +185,10 @@ defmodule Cldr.Unit.AdditionalUnitTest do
             providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 
           unit_localization(:person, "en", :long,
-            one: "{0} person",
-            other: "{0} people"
+            nominative: %{
+              one: "{0} person",
+              other: "{0} people"
+            }
           )
         end
       end
