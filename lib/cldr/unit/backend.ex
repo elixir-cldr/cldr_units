@@ -17,7 +17,7 @@ defmodule Cldr.Unit.Backend do
       unless Code.ensure_loaded?(additional_units) do
         defmodule additional_units do
           @moduledoc false
-          def known_locale_names do
+          def known_locales do
             []
           end
 
