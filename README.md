@@ -141,7 +141,7 @@ iex> Cldr.Unit.new "cubic gigalux per inch", 1
 
   * `options` which are:
 
-    * `:unit` is any unit returned by `Cldr.Unit.units/0`.  This option is required unless a `Unit.t` is passed as the first argument.
+    * `:unit` is any unit returned by `Cldr.Unit.known_units/0`.  This option is required unless a `Unit.t` is passed as the first argument.
 
     * `:locale` is any configured locale. See `Cldr.known_locale_names/0`. The default
       is `locale: Cldr.get_current_locale()`

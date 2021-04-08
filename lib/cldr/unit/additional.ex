@@ -208,7 +208,19 @@ defmodule Cldr.Unit.Additional do
   # include `use Cldr.Unit.Additional`
   @doc false
   def define_localization_module(localizations, module) do
-    quote bind_quoted: [module: module, localizations: Macro.escape(localizations)] do
+    additional_units =
+      localizations
+      |> Map.values()
+      |> hd()
+      |> Map.values()
+      |> hd()
+      |> Map.keys()
+
+    quote bind_quoted: [
+            module: module,
+            localizations: Macro.escape(localizations),
+            additional_units: additional_units
+          ] do
       defmodule module do
         for {locale, styles} <- localizations do
           for {style, formats} <- styles do
@@ -225,6 +237,10 @@ defmodule Cldr.Unit.Additional do
         def known_locale_names do
           unquote(Map.keys(localizations))
         end
+
+        def additional_units do
+          unquote(additional_units)
+        end
       end
     end
   end
@@ -232,16 +248,15 @@ defmodule Cldr.Unit.Additional do
   # These locales are required for the correct operation of
   # ex_cldr but they are not considered part of the users
   # configuration
-  @dont_consider_these_locales ["root", "en-001"]
+  @dont_consider_these_locales ["root"]
 
   @doc false
   def __after_compile__(env, _bytecode) do
     additional_module = Module.concat(env.module, Unit.Additional)
-
-    additional_units = MapSet.new(Cldr.Unit.Additional.additional_units())
+    additional_units = additional_module.additional_units()
     additional_locales = MapSet.new(additional_module.known_locale_names())
-    backend_locales = MapSet.new(env.module.known_locale_names() -- @dont_consider_these_locales)
-    styles = Cldr.Unit.styles()
+    backend_locales = MapSet.new(env.module.known_locale_names() -- [@dont_consider_these_locales])
+    styles = Cldr.Unit.known_styles()
 
     case MapSet.to_list(MapSet.difference(backend_locales, additional_locales)) do
       [] ->
@@ -251,36 +266,31 @@ defmodule Cldr.Unit.Additional do
         IO.warn(
           "The locales #{inspect(other)} configured in " <>
             "the CLDR backend #{inspect(env.module)} " <>
-            "do not have localizations defined in #{inspect(additional_module)}",
+            "do not have localizations defined for additional units #{inspect(additional_units)}.",
           []
         )
     end
 
     for locale <- MapSet.intersection(backend_locales, additional_locales),
         style <- styles do
-      case additional_module.units_for(locale, style) do
-        map when map == %{} ->
+      with found_units when is_map(found_units) <- additional_module.units_for(locale, style),
+           [] <- additional_units -- Map.keys(found_units) do
+        :ok
+      else
+        :error ->
           IO.warn(
-            "#{inspect(additional_module)} does not define localizations " <>
+            "#{inspect(env.module)} does not define localizations " <>
               "for locale #{inspect(locale)} with style #{inspect(style)}",
             []
           )
 
-        other ->
-          localized_units = MapSet.new(Map.keys(other))
-
-          case MapSet.to_list(MapSet.difference(additional_units, localized_units)) do
-            [] ->
-              :ok
-
-            other ->
-              IO.warn(
-                "#{inspect(additional_module)} does not define localizations " <>
-                  "for the units #{inspect(other)} in " <>
-                  "locale #{inspect(locale)} with style #{inspect(style)}",
-                []
-              )
-          end
+        not_defined when is_list(not_defined) ->
+          IO.warn(
+            "#{inspect(env.module)} does not define localizations " <>
+              "for locale #{inspect(locale)} with style #{inspect(style)} " <>
+              "for units #{inspect(not_defined)}",
+            []
+          )
       end
     end
   end
@@ -308,8 +318,19 @@ defmodule Cldr.Unit.Additional do
 
   defp parse(localizations) do
     Enum.map(localizations, fn
-      {:display_name, name} -> {:display_name, name}
-      {key, value} -> {key, Cldr.Substitution.parse(value)}
+      {:display_name, name} ->
+        {:display_name, name}
+
+      {:gender, gender} ->
+        {:gender, gender}
+
+      {grammatical_case, counts} ->
+        counts =
+          Enum.map(counts, fn {count, template} ->
+            {count, Cldr.Substitution.parse(template)}
+          end)
+
+        {grammatical_case, Map.new(counts)}
     end)
     |> Map.new()
   end
@@ -332,8 +353,12 @@ defmodule Cldr.Unit.Additional do
       raise ArgumentError, "Localizations must be a keyword list. Found #{inspect(localizations)}"
     end
 
-    unless Keyword.has_key?(localizations, :other) do
-      raise ArgumentError, "Localizations must have an :other key"
+    unless Keyword.has_key?(localizations, :nominative) do
+      raise ArgumentError, "Localizations must have an :nominative key"
+    end
+
+    unless Map.has_key?(localizations[:nominative], :other) do
+      raise ArgumentError, "The nominative case must have an :other key"
     end
 
     unless Keyword.has_key?(localizations, :display_name) do

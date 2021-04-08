@@ -1,6 +1,95 @@
+<<<<<<< HEAD
 # Changelog for Cldr_Units v3.4.0
 
 This is the changelog for Cldr_units v3.4.0 released on February 10th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+=======
+# Changelog for Cldr_Units v3.5.0-rc.2
+
+This is the changelog for Cldr_units v3.5.0-rc.2 released on ______, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Add `Cldr.Unit.validate_grammatical_gender/2`
+
+# Changelog for Cldr_Units v3.5.0-rc.1
+
+This is the changelog for Cldr_units v3.5.0-rc.1 released on March 21st, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Overview
+
+In this release the `Cldr.Unit.to_string/{1, 2, 3}` function has been rewritten and the concrete impementation is now in `Cldr.Unit.Format`.  The primary reasons for rewriting are:
+
+1. Improves performance by 20% over the old implementation.
+2. Supports grammatical case and grammatical gender. These allow for better sentence formation in a localised fashion. Only are few locales have the required data for now (for example, `fr` and `de`) however more locales will have data in upcoming CLDR releases.
+
+Note that full testing of grammatical case and grammatical gender variations is not yet complete.
+
+### Soft Deprecation
+
+* The function `Cldr.Unit.to_iolist/{1, 2, 3}` is soft deprecated. It is still available and no deprecation warning is emitted. It will however be removed from the public API in a future release. This function is primarily used to support implementation of `Cldr.Unit.to_string/3`
+
+* As of this release, argument checking in `Cldr.Unit.to_iolist/3` is less rigorous in order to avoid the relatively expensive argument normalization process happening twice (once in `Cldr.Unit.to_string/3` and then again in `Cldr.Unit.to_iolist/3`).
+
+### Bug Fixes
+
+* The new string formatter correctly assembles units with an SI prefix (ie `millimeter`) in languages such as German where the noun is capitalized.
+
+# Changelog for Cldr_Units v3.5.0-rc.0
+
+This is the changelog for Cldr_units v3.5.0-rc.0 released on March 19th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes calculating the base unit when the unit is a complex compound unit.
+
+* Remove double parsing when calling `Cldr.Unit.new/2` and the unit is not in `Cldr.Unit.known_units/0`
+
+* Ensure `Cldr.Unit.unit_category/1` returns an error tuple if the category is unknown
+
+### Enhancements
+
+* Updated to require [ex_cldr version 2.20](https://hex.pm/packages/ex_cldr/2.20.0) which includes [CLDR 39](http://cldr.unicode.org/index/downloads/cldr-39) data.
+
+* Add `Cldr.Unit.known_grammatical_cases/0`
+
+* Add `Cldr.Unit.known_grammatical_genders/0`
+
+* Add `Cldr.Unit.known_measurement_system_names/0`
+
+* Add `Cldr.Unit.invert/1` to invert a "per" unit. This allows for increased compatibility for conversions. For example, "liters per 100 kilometers" is a measure of consumption, as is "miles per gallon".  However these two units are not convertible without inverting one of them first since one is "volume per length" and the other is "length per volume".
+
+* Add `Cldr.Unit.conversion_for/2` to return a conversion list used when converting one unit to another.
+
+* Add `Cldr.Unit.grammatical_gender/2` to return the grammatical gender for a given unit and locale
+
+* Add `Cldr.Unit.conversion_for/2` to return a conversion list used when converting one unit to another.
+
+* Add support for grammatical cases for `Cldr.Unit.to_string/2` and `Cldr.Unit.to_iolist/2`. Not all locales support more than the nominative case. The nominative case is the default. Any configured "Additional Units" in a backend module will need to be modified to put the localisations a map with the key `:nominative`.  See the readme for more information on migrating additional units.  On example is:
+```elixir
+defmodule MyApp.Cldr do
+  use Cldr.Unit.Additional
+
+  use Cldr,
+    locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE"],
+    default_locale: "en",
+    providers: [Cldr.Number, Cldr.Unit, Cldr.List]
+
+  unit_localization(:person, "en", :long,
+    nominative: %{
+      one: "{0} person",
+      other: "{0} people"
+    },
+    display_name: "people"
+  )
+end
+```
+
+* Support conversions where one of the base units is the inverted conversion of the other. This allows conversion between, for example, `mile per gallon` and `liter per 100 kilometer`. These are both compound units of `length` and `volume` but are inverse representations from each other.
+
+# Changelog for Cldr_Units v3.4.0
+
+This is the changelog for Cldr_units v3.4.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+>>>>>>> cldr39
 
 ### Bug Fixes
 

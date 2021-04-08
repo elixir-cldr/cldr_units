@@ -1,4 +1,6 @@
 defmodule Cldr.Unit.Prefix do
+  @moduledoc false
+
   @si_factors %{
     "yokto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000),
     "zepto" => Ratio.new(1, 1_000_000_000_000_000_000_000),
@@ -61,5 +63,23 @@ defmodule Cldr.Unit.Prefix do
   @prefixes Map.keys(@si_factors) ++ Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
   def prefixes do
     @prefixes
+  end
+
+  @si_keys @si_power_prefixes
+           |> Enum.map(fn {_name, exp} ->
+             String.replace("10p#{exp}", "-", "_") |> String.to_atom()
+           end)
+
+  def si_keys do
+    @si_keys
+  end
+
+  @power_keys @power_units
+              |> Enum.map(fn {_name, exp} ->
+                String.to_atom("power#{exp}")
+              end)
+
+  def power_keys do
+    @power_keys
   end
 end

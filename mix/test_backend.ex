@@ -9,38 +9,50 @@ defmodule MyApp.Cldr do
     providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 
   unit_localization(:person, "en", :long,
-    one: "{0} person",
-    other: "{0} people",
+    nominative: %{
+      one: "{0} person",
+      other: "{0} people"
+    },
     display_name: "people"
   )
 
   unit_localization(:person, "en", :short,
-    one: "{0} per",
-    other: "{0} pers",
+    nominative: %{
+      one: "{0} per",
+      other: "{0} pers"
+    },
     display_name: "people"
   )
 
   unit_localization(:person, "en", :narrow,
-    one: "{0} p",
-    other: "{0} p",
+    nominative: %{
+      one: "{0} p",
+      other: "{0} p"
+    },
     display_name: "p"
   )
 
   unit_localization(:vehicle, "en", :long,
-    one: "{0} vehicle",
-    other: "{0} vehicles",
+    nominative: %{
+      one: "{0} vehicle",
+      other: "{0} vehicles"
+    },
     display_name: "vehicles"
   )
 
   unit_localization(:vehicle, "en", :short,
-    one: "{0} veh",
-    other: "{0} veh",
+    nominative: %{
+      one: "{0} veh",
+      other: "{0} veh"
+    },
     display_name: "vehicles"
   )
 
   unit_localization(:vehicle, "en", :narrow,
-    one: "{0} v",
-    other: "{0} v",
+    nominative: %{
+      one: "{0} v",
+      other: "{0} v"
+    },
     display_name: "v"
   )
 end
@@ -51,6 +63,6 @@ defmodule NoDocs.Cldr do
     generate_docs: false
 
   def for_dialyzer do
-    Cldr.Unit.to_string!(1.234, unit: :kilogram)
+    Cldr.Unit.Format.to_string!(1.234, unit: :kilogram)
   end
 end

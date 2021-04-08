@@ -20,11 +20,86 @@ defmodule Cldr.Unit.Conversion do
         }
 
   alias Cldr.Unit
+  alias Cldr.Unit.BaseUnit
 
-  import Unit, only: [incompatible_units_error: 2]
+  @doc """
+  Returns the conversion that calculates
+  the base unit into another unit or
+  and error.
 
-  defmodule Options do
-    defstruct usage: nil, locale: nil, backend: nil, territory: nil
+  """
+  def conversion_for(unit_1, unit_2) do
+    with {:ok, base_unit_1, _conversion_1} <- base_unit_and_conversion(unit_1),
+         {:ok, base_unit_2, conversion_2} <- base_unit_and_conversion(unit_2) do
+      conversion_for(unit_1, unit_2, base_unit_1, base_unit_2, conversion_2)
+    end
+  end
+
+  # Base units match so are compatible
+  defp conversion_for(_unit_1, _unit_2, base_unit, base_unit, conversion_2) do
+    {:ok, conversion_2, :forward}
+  end
+
+  # Its invertable so see if thats convertible. Note that
+  # there is no difference in the conversion for an inverted
+  # conversion. Its only a hint so that in convert_from_base/2
+  # we know to divide, not multiple the value.
+  defp conversion_for(unit_1, unit_2, base_unit_1, _base_unit_2, {numerator_2, denominator_2}) do
+    inverted_conversion = {denominator_2, numerator_2}
+
+    with {:ok, base_unit_2} <- BaseUnit.canonical_base_unit(inverted_conversion) do
+      if base_unit_1 == base_unit_2 do
+        {:ok, {numerator_2, denominator_2}, :inverted}
+      else
+        {:error, Unit.incompatible_units_error(unit_1, unit_2)}
+      end
+    end
+  end
+
+  # Not invertable so not compatible
+  defp conversion_for(unit_1, unit_2, _base_unit_1, _base_unit_2, _conversion) do
+    {:error, Unit.incompatible_units_error(unit_1, unit_2)}
+  end
+
+  @doc """
+  Returns the base unit and the base unit
+  conversionfor a given unit.
+
+  ## Argument
+
+  * `unit` is either a `t:Cldr.Unit`, an `atom` or
+    a `t:String`
+
+  ## Returns
+
+  * `{:ok, base_unit, conversion}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Example
+
+      iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_kilometer
+      {
+        :ok,
+        :square_meter,
+        [square_kilometer: %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}]
+      }
+
+      iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_table
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
+
+  """
+
+  def base_unit_and_conversion(%Unit{base_conversion: conversion}) do
+    {:ok, base_unit} = BaseUnit.canonical_base_unit(conversion)
+    {:ok, base_unit, conversion}
+  end
+
+  def base_unit_and_conversion(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
+    with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name),
+         {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) do
+      {:ok, base_unit, conversion}
+    end
   end
 
   @doc """
@@ -35,7 +110,7 @@ defmodule Cldr.Unit.Conversion do
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  * `to_unit` is any unit name returned by `Cldr.Unit.units/0`
+  * `to_unit` is any unit name returned by `Cldr.Unit.known_units/0`
 
   ## Returns
 
@@ -50,118 +125,94 @@ defmodule Cldr.Unit.Conversion do
 
       iex> Cldr.Unit.convert Cldr.Unit.new!(:mile, 1), :gallon
       {:error, {Cldr.Unit.IncompatibleUnitsError,
-        "Operations can only be performed between units with the same category and base unit. Received :mile and :gallon"}}
+        "Operations can only be performed between units with the same base unit. Received :mile and :gallon"}}
 
   """
   @spec convert(Unit.t(), Unit.unit()) :: {:ok, Unit.t()} | {:error, {module(), String.t()}}
 
-  def convert(%Unit{} = unit, to_unit) do
-    %{unit: from_unit, value: value, base_conversion: from_conversion} = unit
-
-    with {:ok, to_unit, to_conversion} <- Unit.validate_unit(to_unit),
-         {:ok, converted} <- convert(value, from_conversion, to_conversion) do
-      Unit.new(to_unit, converted, usage: unit.usage, format_options: unit.format_options)
-    else
-      {:error, {Cldr.Unit.IncompatibleUnitsError, _}} ->
-        {:error, incompatible_units_error(from_unit, to_unit)}
+  def convert(%Unit{value: value, base_conversion: from_conversion} = unit, to_unit) do
+    with {:ok, to_conversion, maybe_inverted} <- conversion_for(unit, to_unit) do
+      converted_value = convert(value, from_conversion, to_conversion, maybe_inverted)
+      Unit.new(to_unit, converted_value, usage: unit.usage, format_options: unit.format_options)
     end
   end
 
-  defp convert(value, from, to) when is_number(value) or is_map(value) do
+  defp convert(value, from, to, maybe_inverted) when is_number(value) or is_map(value) do
     use Ratio
 
-    with {:ok, from, to} <- compatible(from, to) do
-      value
-      |> Ratio.new()
-      |> convert_to_base(from)
-      |> convert_from_base(to)
-      |> wrap_ok
-    end
+    value
+    |> Ratio.new()
+    |> convert_to_base(from)
+    |> maybe_invert_value(maybe_inverted)
+    |> convert_from_base(to)
   end
 
-  def convert_to_base(value, %__MODULE__{} = from) do
+  def maybe_invert_value(value, :inverted) do
+    use Ratio
+
+    1 / value
+  end
+
+  def maybe_invert_value(value, _) do
+    value
+  end
+
+  # All conversions are ultimately a list of
+  # 2-tuples of the unit and conversion struct
+  defp convert_to_base(value, {_, %__MODULE__{} = from}) do
     use Ratio
 
     %{factor: from_factor, offset: from_offset} = from
     value * from_factor + from_offset
   end
 
-  def convert_to_base(value, [{_, [{_, from}]}]) do
-    convert_to_base(value, from)
-  end
-
-  # A known translation with a "per" conversion
-  def convert_to_base(value, [{_, {_, _} = from}]) do
-    convert_to_base(value, from)
-  end
-
-  def convert_to_base(value, {_, %__MODULE__{} = from}) do
-    convert_to_base(value, from)
-  end
-
-  def convert_to_base(value, {numerator, denominator}) do
+  # A per module is a 2-tuple of the numerator and
+  # denominator. Both are lists of conversion tuples.
+  defp convert_to_base(value, {numerator, denominator}) do
     use Ratio
 
     convert_to_base(1.0, numerator) / convert_to_base(1.0, denominator) * value
   end
 
-  def convert_to_base(value, []) do
+  # We recurse over the list of conversions
+  # and accumulate the value as we go
+  defp convert_to_base(value, []) do
     value
   end
 
-  def convert_to_base(value, [numerator | rest]) do
-    convert_to_base(value, numerator) |> convert_to_base(rest)
+  defp convert_to_base(value, [first | rest]) do
+    convert_to_base(value, first) |> convert_to_base(rest)
   end
 
-  def convert_to_base(_value, conversion) do
+  # But if we meet a shape of data we don't
+  # understand then its a raisable error
+  defp convert_to_base(_value, conversion) do
     raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
   end
 
-  def convert_from_base(value, %__MODULE__{} = to) do
+  defp convert_from_base(value, {_, %__MODULE__{} = to}) do
     use Ratio
+
     %{factor: to_factor, offset: to_offset} = to
     (value - to_offset) / to_factor
   end
 
-  def convert_from_base(value, [{_, [{_, to}]}]) do
-    convert_from_base(value, to)
-  end
-
-  # A known translation with a "per" conversion
-  def convert_from_base(value, [{_, {_, _} = to}]) do
-    convert_from_base(value, to)
-  end
-
-  def convert_from_base(value, {_, %__MODULE__{} = to}) do
-    convert_from_base(value, to)
-  end
-
-  def convert_from_base(value, {numerator, denominator}) do
+  defp convert_from_base(value, {numerator, denominator}) do
     use Ratio
 
     convert_from_base(1.0, numerator) / convert_from_base(1.0, denominator) * value
   end
 
-  def convert_from_base(value, []) do
+  defp convert_from_base(value, []) do
     value
   end
 
-  def convert_from_base(value, [numerator | rest]) do
-    convert_from_base(value, numerator) |> convert_from_base(rest)
+  defp convert_from_base(value, [first | rest]) do
+    convert_from_base(value, first) |> convert_from_base(rest)
   end
 
-  defp compatible(from, to) do
-    with {:ok, base_unit_from} <- Unit.base_unit(from),
-         {:ok, base_unit_to} <- Unit.base_unit(to),
-         true <- to_string(base_unit_from) == to_string(base_unit_to) do
-      {:ok, from, to}
-    else
-      _ -> {:error, incompatible_units_error(from, to)}
-    end
-  end
-
-  defp wrap_ok(unit) do
-    {:ok, unit}
+  defp convert_from_base(_value, conversion) do
+    raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
   end
 
   @doc """
@@ -173,7 +224,7 @@ defmodule Cldr.Unit.Conversion do
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  * `to_unit` is any unit name returned by `Cldr.Unit.units/0`
+  * `to_unit` is any unit name returned by `Cldr.Unit.known_units/0`
 
   ## Returns
 

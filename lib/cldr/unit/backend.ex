@@ -24,6 +24,10 @@ defmodule Cldr.Unit.Backend do
           def units_for(_locale, _style) do
             %{}
           end
+
+          def additional_units do
+            []
+          end
         end
       end
 
@@ -73,11 +77,12 @@ defmodule Cldr.Unit.Backend do
 
         defdelegate known_units, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
-        defdelegate styles, to: Cldr.Unit
+        defdelegate known_styles, to: Cldr.Unit
+        defdelegate styles, to: Cldr.Unit, as: :known_styles
         defdelegate default_style, to: Cldr.Unit
+
         defdelegate validate_unit(unit), to: Cldr.Unit
         defdelegate validate_style(unit), to: Cldr.Unit
-
         defdelegate unit_category(unit), to: Cldr.Unit
 
         defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
@@ -103,14 +108,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -119,13 +124,17 @@ defmodule Cldr.Unit.Backend do
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
-        * `:per` allows compound units to be formatted. For example, assume
-          we want to format a string which represents "kilograms per second".
-          There is no such unit defined in CLDR (or perhaps anywhere!).
-          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
-          we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
-          Each locale defines a specific way to format such a compount unit.
-          Usually it will return something like `20 kilograms/second`
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
+
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -177,7 +186,7 @@ defmodule Cldr.Unit.Backend do
                 {:ok, String.t()} | {:error, {atom, binary}}
 
         def to_string(number, options \\ []) do
-          Cldr.Unit.to_string(number, unquote(backend), options)
+          Cldr.Unit.Format.to_string(number, unquote(backend), options)
         end
 
         @doc """
@@ -187,14 +196,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -202,6 +211,18 @@ defmodule Cldr.Unit.Backend do
         * `:style` is one of those returned by `Cldr.Unit.available_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
+
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
+
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -232,7 +253,7 @@ defmodule Cldr.Unit.Backend do
                 String.t() | no_return()
 
         def to_string!(number, options \\ []) do
-          Cldr.Unit.to_string!(number, unquote(backend), options)
+          Cldr.Unit.Format.to_string!(number, unquote(backend), options)
         end
 
         @doc """
@@ -242,14 +263,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -258,13 +279,17 @@ defmodule Cldr.Unit.Backend do
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
-        * `:per` allows compound units to be formatted. For example, assume
-          we want to format a string which represents "kilograms per second".
-          There is no such unit defined in CLDR (or perhaps anywhere!).
-          If however we define the unit `unit = Cldr.Unit.new!(:kilogram, 20)`
-          we can then execute `Cldr.Unit.to_string(unit, per: :second)`.
-          Each locale defines a specific way to format such a compount unit.
-          Usually it will return something like `20 kilograms/second`
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
+
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -284,15 +309,12 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.to_iolist Cldr.Unit.new!(:gallon, 123)
             {:ok, ["123", " gallons"]}
 
-            iex> #{inspect(__MODULE__)}.to_iolist Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
-            {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
         """
         @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
                 {:ok, list()} | {:error, {atom, binary}}
 
         def to_iolist(number, options \\ []) do
-          Cldr.Unit.to_iolist(number, unquote(backend), options)
+          Cldr.Unit.Format.to_iolist(number, unquote(backend), options)
         end
 
         @doc """
@@ -302,21 +324,33 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `Cldr.Unit.t()` struct
+          the number to be formatted is a `t:Cldr.Unit` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+        * `:style` is one of those returned by `Cldr.Unit.available_styles/0`.
           The current styles are `:long`, `:short` and `:narrow`.
-          The default is `style: :long`
+          The default is `style: :long`.
+
+        * `:grammatical_case` indicates that a localisation for the given
+          locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+          for the list of known grammatical cases. Note that not all locales
+          define all cases. However all locales do define the `:nominative`
+          case, which is also the default.
+
+        * `:gender` indicates that a localisation for the given
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          for the list of known grammatical genders. Note that not all locales
+          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
           which is passed through to `Cldr.List.to_string/3`. This is only
@@ -341,7 +375,7 @@ defmodule Cldr.Unit.Backend do
                 list() | no_return()
 
         def to_iolist!(number, options \\ []) do
-          Cldr.Unit.to_iolist!(number, unquote(backend), options)
+          Cldr.Unit.Format.to_iolist!(number, unquote(backend), options)
         end
 
         @doc """
@@ -400,9 +434,9 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :person
             {:ok, [:centimeter], []}
             iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-US", usage: :road
-            {:ok, [:foot], [round_nearest: 10]}
+            {:ok, [:foot], [round_nearest: 1]}
             iex> #{inspect(__MODULE__)}.preferred_units meter, locale: "en-AU", usage: :road
-            {:ok, [:meter], [round_nearest: 10]}
+            {:ok, [:meter], [round_nearest: 1]}
 
         """
         def preferred_units(unit, options \\ []) do
@@ -470,6 +504,10 @@ defmodule Cldr.Unit.Backend do
           Cldr.Unit.Preference.preferred_units!(unit, unquote(backend), options)
         end
 
+        @grammatical_features Cldr.Config.grammatical_features()
+        @grammatical_gender Cldr.Config.grammatical_gender()
+        @default_gender :masculine
+
         # Generate the functions that encapsulate the unit data from CDLR
         @doc false
         def units_for(locale \\ unquote(backend).get_locale(), style \\ Cldr.Unit.default_style())
@@ -494,10 +532,52 @@ defmodule Cldr.Unit.Backend do
               unquote(Macro.escape(units))
             end
           end
+
+          language_tag = Cldr.Config.language_tag(locale_name)
+          language = Map.fetch!(language_tag, :language)
+          grammatical_features = Map.get(@grammatical_features, language, %{})
+          grammatical_gender = Map.get(@grammatical_gender, language, [@default_gender])
+          default_gender = Enum.find(grammatical_gender, &(&1 == :neuter)) || @default_gender
+
+          def grammatical_features(unquote(locale_name)) do
+            unquote(Macro.escape(grammatical_features))
+          end
+
+          def grammatical_gender(unquote(locale_name)) do
+            {:ok, unquote(Macro.escape(grammatical_gender))}
+          end
+
+          def default_gender(unquote(locale_name)) do
+            {:ok, unquote(default_gender)}
+          end
         end
 
         def units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
           units_for(cldr_locale_name, style)
+        end
+
+        def grammatical_features(%LanguageTag{language: language}) do
+          grammatical_features(language)
+        end
+
+        def grammatical_features(language) do
+          {:error, Cldr.Locale.locale_error(language)}
+        end
+
+        def grammatical_gender(%LanguageTag{language: language}) do
+          grammatical_gender(language)
+        end
+
+        def grammatical_gender(language) do
+          {:error, Cldr.Locale.locale_error(language)}
+        end
+
+        def default_gender(%LanguageTag{language: language}) do
+          default_gender(language)
+        end
+
+        def default_gender(language) do
+          {:error, Cldr.Locale.locale_error(language)}
         end
       end
     end

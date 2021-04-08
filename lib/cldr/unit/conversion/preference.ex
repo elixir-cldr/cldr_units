@@ -19,10 +19,10 @@ defmodule Cldr.Unit.Preference do
   * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
   * `backend` is any Cldr backend module. That is, any module
-    that includes `use Cldr`. The default is `Cldr.default_backend/0`
+    that includes `use Cldr`. The default is `Cldr.default_backend!/0`
 
   * `options` is a keyword list of options or a
-    `Cldr.Unit.Conversion.Options` struct. The default
+    `t:Cldr.Unit.Conversion.Options` struct. The default
     is `[]`.
 
   ## Options
@@ -55,9 +55,9 @@ defmodule Cldr.Unit.Preference do
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
       {:ok, [:centimeter], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
-      {:ok, [:foot], [round_nearest: 10]}
+      {:ok, [:foot], [round_nearest: 1]}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
-      {:ok, [:meter], [round_nearest: 10]}
+      {:ok, [:meter], [round_nearest: 1]}
 
   ## Notes
 
@@ -176,10 +176,10 @@ defmodule Cldr.Unit.Preference do
   * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
   * `backend` is any Cldr backend module. That is, any module
-    that includes `use Cldr`. The default is `Cldr.default_backend/0`
+    that includes `use Cldr`. The default is `Cldr.default_backend!/0`
 
   * `options` is a keyword list of options or a
-    `Cldr.Unit.Conversion.Options` struct. The default
+    `t:Cldr.Unit.Conversion.Options` struct. The default
     is `[]`.
 
   ## Options

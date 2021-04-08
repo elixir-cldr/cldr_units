@@ -32,8 +32,8 @@ defmodule Cldr.Unit do
   """
 
   alias Cldr.Unit
-  alias Cldr.{Locale, LanguageTag, Substitution}
-  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, Prefix}
+  alias Cldr.{Locale, LanguageTag}
+  alias Cldr.Unit.{Math, Alias, Parser, Conversion, Conversions, Preference, BaseUnit, Format}
 
   @enforce_keys [:unit, :value, :base_conversion, :usage, :format_options]
 
@@ -43,16 +43,66 @@ defmodule Cldr.Unit do
             usage: :default,
             format_options: []
 
-  @type translatable_unit :: atom()
+  # See https://unicode.org/reports/tr35/tr35-general.html#Case
+  @grammatical_case [
+    :ablative,
+    :accusative,
+    :comitative,
+    :dative,
+    :ergative,
+    :genitive,
+    :instrumental,
+    :locative,
+    :localtivecopulative,
+    :nominative,
+    :oblique,
+    :partitive,
+    :prepositional,
+    :sociative,
+    :vocative
+  ]
+
+  @grammatical_gender [
+    :animate,
+    :inanimate,
+    :personal,
+    :common,
+    :feminine,
+    :masculine,
+    :neuter
+  ]
+
+  @styles [
+    :long,
+    :short,
+    :narrow
+  ]
+
+  @measurement_systems Cldr.Config.measurement_systems()
+  @system_names Map.keys(@measurement_systems)
+
+  @measurement_system_keys [
+    :default,
+    :temperature,
+    :paper_size
+  ]
+
+  # Converts a list of atoms into a typespec
+  type = &Enum.reduce(&1, fn x, acc -> {:|, [], [x, acc]} end)
+
+  @type translatable_unit :: atom() | list(atom())
   @type unit :: translatable_unit | String.t()
   @type category :: atom()
   @type usage :: atom()
-  @type measurement_system :: :metric | :ussystem | :uksystem
-  @type measurement_system_key :: :default | :temperature | :paper_size
-  @type style :: :narrow | :short | :long
+  @type grammatical_gender :: unquote(type.(@grammatical_gender))
+  @type grammatical_case :: unquote(type.(@grammatical_case))
+  @type measurement_system :: unquote(type.(@system_names))
+  @type measurement_system_key :: unquote(type.(@measurement_system_keys))
+  @type style :: unquote(type.(@styles))
   @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
-  @type conversion :: Conversion.t() | {[Conversion.t(), ...], [Conversion.t(), ...]} | list()
   @type locale :: Locale.locale_name() | LanguageTag.t()
+  @type base_conversion :: {translatable_unit, Conversion.t()}
+  @type conversion :: [base_conversion()] | {[base_conversion()], [base_conversion()]}
 
   @type t :: %__MODULE__{
           unit: unit(),
@@ -63,7 +113,19 @@ defmodule Cldr.Unit do
         }
 
   @default_style :long
-  @styles [:long, :short, :narrow]
+
+  @app_name Cldr.Config.app_name()
+  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
+  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
+
+  @unit_tree "en"
+             |> Cldr.Config.get_locale(@config)
+             |> Map.fetch!(:units)
+             |> Map.fetch!(:long)
+             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+             |> Map.new()
+
+  @units Cldr.Config.units()
 
   defdelegate convert(unit_1, to_unit), to: Conversion
   defdelegate convert!(unit_1, to_unit), to: Conversion
@@ -87,78 +149,6 @@ defmodule Cldr.Unit do
 
   defdelegate compare(unit_1, unit_2), to: Math
 
-  @app_name Cldr.Config.app_name()
-  @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
-  @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
-
-  @units Cldr.Config.units()
-
-  @unit_tree "en"
-             |> Cldr.Config.get_locale(@config)
-             |> Map.get(:units)
-             |> Map.get(:short)
-             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
-             |> Map.new()
-
-  @units_by_category @unit_tree
-                     |> Map.delete(:compound)
-                     |> Map.delete(:coordinate)
-
-  @unit_categories Map.keys(@units_by_category) -- [:"10p", :compound, :coordinate]
-
-  @translatable_units @units_by_category
-                      |> Map.values()
-                      |> List.flatten()
-                      |> List.delete(:generic)
-                      |> Kernel.++(Cldr.Unit.Additional.additional_units())
-
-  @measurement_systems Cldr.Config.measurement_systems()
-  @system_names Map.keys(@measurement_systems)
-
-  @doc """
-  Returns the known units.
-
-  Known units means units that can
-  be localised directly.
-
-  ## Example
-
-      => Cldr.Unit.known_units
-      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
-       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
-       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
-       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
-       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
-       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
-       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
-       :hour, :inch, ...]
-
-  """
-
-  @spec known_units :: [translatable_unit(), ...]
-  def known_units do
-    @translatable_units
-  end
-
-  @deprecated "Use Cldr.Unit.known_units/0"
-  def units, do: known_units()
-
-  @doc """
-  Returns a list of the known unit categories.
-
-  ## Example
-
-      iex> Cldr.Unit.known_unit_categories
-      [:acceleration, :angle, :area, :concentr, :consumption, :digital,
-       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
-       :power, :pressure, :speed, :temperature, :torque, :volume]
-
-  """
-  @spec known_unit_categories :: list(category())
-  def known_unit_categories do
-    @unit_categories
-  end
-
   @doc """
   Returns the units that are defined for
   a given category (such as :volume, :length)
@@ -178,11 +168,68 @@ defmodule Cldr.Unit do
        }
 
   """
+  @units_by_category @unit_tree
+                     |> Map.delete(:compound)
+                     |> Map.delete(:coordinate)
+
   @doc since: "3.4.0"
   @spec known_units_by_category :: %{category() => [translatable_unit(), ...]}
 
   def known_units_by_category do
     @units_by_category
+  end
+
+  @doc """
+  Returns the known units that are directly
+  translatable.
+
+  These units have localised content in CLDR
+  and are used as a key to retrieving that
+  content.
+
+  ## Example
+
+      => Cldr.Unit.known_units
+      [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
+       :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
+       :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
+       :cubic_mile, :cubic_yard, :cup, :cup_metric, :day, :deciliter, :decimeter,
+       :degree, :fahrenheit, :fathom, :fluid_ounce, :foodcalorie, :foot, :furlong,
+       :g_force, :gallon, :gallon_imperial, :generic, :gigabit, :gigabyte, :gigahertz,
+       :gigawatt, :gram, :hectare, :hectoliter, :hectopascal, :hertz, :horsepower,
+       :hour, :inch, ...]
+
+  """
+  @translatable_units @units_by_category
+                      |> Map.values()
+                      |> List.flatten()
+                      |> List.delete(:generic)
+                      |> Kernel.++(Cldr.Unit.Additional.additional_units())
+
+  @spec known_units :: [translatable_unit(), ...]
+  def known_units do
+    @translatable_units
+  end
+
+  @deprecated "Use Cldr.Unit.known_units/0"
+  defdelegate unit(), to: __MODULE__, as: :known_units
+
+  @doc """
+  Returns a list of the known unit categories.
+
+  ## Example
+
+      iex> Cldr.Unit.known_unit_categories
+      [:acceleration, :angle, :area, :concentr, :consumption, :digital,
+       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
+       :power, :pressure, :speed, :temperature, :torque, :volume]
+
+  """
+  @unit_categories Map.keys(@units_by_category)
+
+  @spec known_unit_categories :: list(category())
+  def known_unit_categories do
+    @unit_categories
   end
 
   @doc """
@@ -226,13 +273,74 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Returns a list of the known grammatical
+  cases.
+
+  A grammatical case can be provided as an option to
+  `Cldr.Unit.to_string/2` in order to localise a unit
+  appropriate to the context in which it is used.
+
+  ## Example
+
+      iex> Cldr.Unit.known_grammatical_cases
+      [
+        :ablative,
+        :accusative,
+        :comitative,
+        :dative,
+        :ergative,
+        :genitive,
+        :instrumental,
+        :locative,
+        :localtivecopulative,
+        :nominative,
+        :oblique,
+        :partitive,
+        :prepositional,
+        :sociative,
+        :vocative
+      ]
+
+  """
+  @doc since: "3.5.0"
+  def known_grammatical_cases do
+    @grammatical_case
+  end
+
+  @doc """
+  Returns a list of the known grammatical genders.
+
+  A gender can be provided as an option to
+  `Cldr.Unit.to_string/2` in order to localise a unit
+  appropriate to the context in which it is used.
+
+  ## Example
+
+      iex> Cldr.Unit.known_grammatical_genders
+      [
+        :animate,
+        :inanimate,
+        :personal,
+        :common,
+        :feminine,
+        :masculine,
+        :neuter
+      ]
+
+  """
+  @doc since: "3.5.0"
+  def known_grammatical_genders do
+    @grammatical_gender
+  end
+
+  @doc """
   Returns a new `Unit.t` struct.
 
   ## Arguments
 
   * `value` is any float, integer, `Ratio` or `Decimal`
 
-  * `unit` is any unit returned by `Cldr.Unit.known_units/0`
+  * `unit` is any unit name returned by `Cldr.Unit.known_units/0`
 
   * `options` is Keyword list of options. The default
     is `[]`
@@ -242,9 +350,10 @@ defmodule Cldr.Unit do
   * `:usage` is the intended use of the unit. This
     is used during localization to convert the unit
     to that appropriate for the unit category,
-    usage, target territory and unit value. The `:use`
-    must be known for the unit's category. See
-    `Cldr.Unit` for more information.
+    usage, target territory and unit value. The usage
+    must be defined for the unit's category. See
+    `Cldr.Unit.unit_category_usage/0` for the known
+    usage types for each category.
 
   ## Returns
 
@@ -305,7 +414,7 @@ defmodule Cldr.Unit do
     format_options = Keyword.get(options, :format_options, @default_format_options)
 
     with {:ok, unit, base_conversion} <- validate_unit(unit),
-         {:ok, usage} <- validate_usage(unit, usage) do
+         {:ok, usage} <- validate_usage(unit, usage, base_conversion) do
       unit = %Unit{
         unit: unit,
         value: value,
@@ -318,14 +427,15 @@ defmodule Cldr.Unit do
     end
   end
 
-  defp validate_usage(unit, usage) do
-    with {:ok, category} <- unit_category(unit) do
-      validate_category_usage(category, usage)
-    end
+  @doc false
+  def validate_usage(_unit, @default_use = usage, _base_conversion) do
+    {:ok, usage}
   end
 
-  defp validate_category_usage(:substance_amount, _) do
-    {:ok, nil}
+  def validate_usage(unit, usage, base_conversion) do
+    with {:ok, category} <- unit_category(unit, base_conversion) do
+      validate_category_usage(category, usage)
+    end
   end
 
   @default_category_usage [@default_use]
@@ -386,46 +496,6 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Returns a boolean indicating if two units are
-  of the same unit category.
-
-  ## Arguments
-
-  * `unit_1` and `unit_2` are any units returned by
-    `Cldr.Unit.new/2` or a valid unit name.
-
-  ## Returns
-
-  * `true` or `false`
-
-  ## Examples
-
-      iex> Cldr.Unit.compatible? :foot, :meter
-      true
-
-      iex> Cldr.Unit.compatible? Cldr.Unit.new!(:foot, 23), :meter
-      true
-
-      iex> Cldr.Unit.compatible? :foot, :liter
-      false
-
-      iex> Cldr.Unit.compatible? "light_year_per_second", "meter_per_gallon"
-      false
-
-  """
-  @spec compatible?(t() | unit(), t() | unit()) :: boolean
-  def compatible?(unit_1, unit_2) do
-    with {:ok, _unit_1, conversion_1} <- validate_unit(unit_1),
-         {:ok, _unit_2, conversion_2} <- validate_unit(unit_2),
-         {:ok, base_unit_1} <- base_unit(conversion_1),
-         {:ok, base_unit_2} <- base_unit(conversion_2) do
-      Kernel.to_string(base_unit_1) == Kernel.to_string(base_unit_2)
-    else
-      _ -> false
-    end
-  end
-
-  @doc """
   Formats a number into a string according to a unit definition
   for the current process's locale and backend.
 
@@ -435,13 +505,11 @@ defmodule Cldr.Unit do
   See `Cldr.Unit.to_string/3` for full details.
 
   """
-  @spec to_string(list_or_number :: value | t() | [t()]) ::
+  @spec to_string(list_or_number :: Unit.value() | Unit.t() | [Unit.t()]) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_string(unit, backend, locale: locale)
+    Format.to_string(unit)
   end
 
   @doc """
@@ -453,7 +521,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
-    `Cldr.Unit.t()` struct or a list of `Cldr.Unit.t()` structs
+    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -463,14 +531,26 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
+    the number to be formatted is a `t:Cldr.Unit` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `:style` is one of those returned by `Cldr.Unit.styles`.
+  * `style` is one of those returned by `Cldr.Unit.styles`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
+
+  * `:grammatical_case` indicates that a localisation for the given
+    locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
+    for the list of known grammatical cases. Note that not all locales
+    define all cases. However all locales do define the `:nominative`
+    case, which is also the default.
+
+  * `:gender` indicates that a localisation for the given
+    locale and given grammatical gender should be used.
+    See `Cldr.Unit.known_grammatical_genders/0`
+    for the list of known grammatical genders. Note that not all locales
+    define all genders.
 
   * `:list_options` is a keyword list of options for formatting a list
     which is passed through to `Cldr.List.to_string/3`. This is only
@@ -526,176 +606,22 @@ defmodule Cldr.Unit do
 
   """
 
-  @spec to_string(value | t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_string(
+          Unit.value() | Unit.t() | list(Unit.t()),
+          Cldr.backend() | Keyword.t(),
+          Keyword.t()
+        ) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
   def to_string(list_or_unit, backend, options \\ [])
 
   # Options but no backend
   def to_string(list_or_unit, options, []) when is_list(options) do
-    locale = Cldr.get_locale()
-    to_string(list_or_unit, locale.backend, options)
+    Format.to_string(list_or_unit, options, [])
   end
 
-  # It's a list of units so we format each of them
-  # and combine the list
-  def to_string(unit_list, backend, options) when is_list(unit_list) do
-    with {locale, _style, options} <- normalize_options(backend, options),
-         {:ok, locale} <- backend.validate_locale(locale) do
-      options =
-        options
-        |> Keyword.put(:locale, locale)
-
-      list_options =
-        options
-        |> Keyword.get(:list_options, [])
-        |> Keyword.put(:locale, locale)
-
-      unit_list
-      |> Enum.map(&to_string!(&1, backend, options))
-      |> Cldr.List.to_string(backend, list_options)
-    end
-  end
-
-  # It's a number, not a unit struct
-  def to_string(number, backend, options) when is_number(number) do
-    with {:ok, unit} <- new(options[:unit], number) do
-      to_string(unit, backend, options)
-    end
-  end
-
-  def to_string(%Decimal{} = number, backend, options) do
-    with {:ok, unit} <- new(options[:unit], number) do
-      to_string(unit, backend, options)
-    end
-  end
-
-  # Now we have a unit, a backend and some options but ratio
-  # values need to be converted to floats
-  def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
-    unit = ratio_to_float(unit)
-    to_string(unit, backend, options)
-  end
-
-  def to_string(%Unit{} = unit, backend, options) when is_list(options) do
-    with {:ok, list} <- to_iolist(unit, backend, options) do
-      list
-      |> :erlang.iolist_to_binary()
-      |> String.replace(~r/([\s])+/, "\\1")
-      |> wrap(:ok)
-    end
-  end
-
-  @doc """
-  Formats a number into a iolist according to a unit definition
-  for the current process's locale and backend.
-
-  The curent process's locale is set with
-  `Cldr.put_locale/1`.
-
-  See `Cldr.Unit.to_iolist/3` for full details.
-
-  """
-  @spec to_iolist(list_or_number :: value | t() | [t()]) ::
-          {:ok, String.t()} | {:error, {atom, binary}}
-
-  def to_iolist(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_iolist(unit, backend, locale: locale)
-  end
-
-  @doc """
-  Formats a number into an `iolist` according to a unit definition
-  for a locale.
-
-  During processing any `:format_options` of a `t:Unit()` are merged with
-  `options` with `options` taking precedence.
-
-  ## Arguments
-
-  * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit()` struct or a list of `t.Cldr.Unit()` structs
-
-  * `backend` is any module that includes `use Cldr` and therefore
-    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
-
-  * `options` is a keyword list of options.
-
-  ## Options
-
-  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
-
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
-
-  * `:style` is one of those returned by `Cldr.Unit.styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
-
-  * `:list_options` is a keyword list of options for formatting a list
-    which is passed through to `Cldr.List.to_string/3`. This is only
-    applicable when formatting a list of units.
-
-  * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
-
-  ## Returns
-
-  * `{:ok, io_list}` or
-
-  * `{:error, {exception, message}}`
-
-  ## Examples
-
-      iex> Cldr.Unit.to_iolist Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
-      {:ok, ["123", " gallons"]}
-
-      iex> Cldr.Unit.to_iolist 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
-      {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
-
-  """
-  @spec to_iolist(value() | t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
-          {:ok, list()} | {:error, {module, binary}}
-
-  def to_iolist(unit, backend, options \\ [])
-
-  # Options but no backend
-  def to_iolist(unit, options, []) when is_list(options) do
-    locale = Cldr.get_locale()
-    to_iolist(unit, locale.backend, options)
-  end
-
-  def to_iolist(%Unit{} = unit, backend, options) when is_list(options) do
-    with {locale, style, options} <- normalize_options(backend, options),
-         {:ok, locale} <- backend.validate_locale(locale),
-         {:ok, style} <- validate_style(style) do
-      number = value(unit)
-
-      options =
-        unit.format_options
-        |> Keyword.merge(options)
-        |> Keyword.put(:locale, locale)
-
-      {:ok, number_string} = Cldr.Number.to_string(number, backend, options)
-
-      number
-      |> extract_patterns(unit.base_conversion, locale, style, backend, options)
-      |> combine_patterns(number_string, locale, style, backend, options)
-      |> maybe_combine_per_unit(locale, style, backend, options)
-      |> wrap(:ok)
-    end
-  end
-
-  def to_iolist(number, backend, options) when is_number(number) do
-    with {:ok, unit} <- new(options[:unit], number) do
-      to_iolist(unit, backend, options)
-    end
-  end
-
-  defp wrap(term, tag) do
-    {tag, term}
+  def to_string(list_or_unit, backend, options) do
+    Format.to_string(list_or_unit, backend, options)
   end
 
   @doc """
@@ -709,13 +635,11 @@ defmodule Cldr.Unit do
   See `Cldr.Unit.to_string!/3` for full details.
 
   """
-  @spec to_string!(list_or_number :: value() | t() | [t()]) ::
+  @spec to_string!(list_or_number :: Unit.value() | Unit.t() | [Unit.t()]) ::
           String.t() | no_return()
 
   def to_string!(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_string!(unit, backend, locale: locale)
+    Format.to_string!(unit)
   end
 
   @doc """
@@ -769,244 +693,147 @@ defmodule Cldr.Unit do
       "1 gelling"
 
   """
-  @spec to_string!(value() | t() | list(t()), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @spec to_string!(
+          Unit.value() | Unit.t() | list(Unit.t()),
+          Cldr.backend() | Keyword.t(),
+          Keyword.t()
+        ) ::
           String.t() | no_return()
 
   def to_string!(unit, backend, options \\ []) do
-    case to_string(unit, backend, options) do
-      {:ok, string} -> string
-      {:error, {exception, message}} -> raise exception, message
-    end
+    Format.to_string!(unit, backend, options)
   end
 
-  @doc """
-  Formats a number into an iolist according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
+  ## TODO remove in ex_cldr 4.0
 
-  The curent process's locale is set with
-  `Cldr.put_locale/1`.
+  @doc false
+  @spec to_iolist(list_or_number :: Unit.value() | Unit.t() | [Unit.t()]) ::
+          {:ok, String.t()} | {:error, {atom, binary}}
 
-  See `Cldr.Unit.to_iolist!/3` for full details.
+  def to_iolist(unit) do
+    Format.to_iolist(unit)
+  end
 
-  """
-  @spec to_iolist!(list_or_number :: value | t() | [t()]) ::
+  @doc false
+  @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+          {:ok, list()} | {:error, {atom, binary}}
+
+  def to_iolist(unit, backend, options \\ []) do
+    Format.to_iolist(unit, backend, options)
+  end
+
+  @doc false
+  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...]) ::
           list() | no_return()
 
   def to_iolist!(unit) do
-    locale = Cldr.get_locale()
-    backend = locale.backend
-    to_iolist!(unit, backend, locale: locale)
+    Format.to_iolist!(unit)
   end
 
-  @doc """
-  Formats a number into an iolist according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
-
-  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
-  `options` with `options` taking precedence.
-
-  ## Arguments
-
-  * `number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct
-
-  * `backend` is any module that includes `use Cldr` and therefore
-    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
-
-  * `options` is a keyword list
-
-  ## Options
-
-  * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `Cldr.Unit.t()` struct
-
-  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
-
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
-
-  * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
-
-  ## Returns
-
-  * `io_list` or
-
-  * raises an exception
-
-  ## Examples
-
-      iex> Cldr.Unit.to_iolist! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
-      ["123", " gallons"]
-
-  """
-  @spec to_iolist!(value() | t(), Cldr.backend() | Keyword.t(), Keyword.t()) ::
+  @doc false
+  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
           list() | no_return()
 
   def to_iolist!(unit, backend, options \\ []) do
-    case to_iolist(unit, backend, options) do
-      {:ok, string} -> string
-      {:error, {exception, message}} -> raise exception, message
+    Format.to_iolist!(unit, backend, options)
+  end
+
+  @doc """
+  Inverts a unit
+
+  Only "per" units can be inverted.
+
+  """
+  @spec invert(t()) :: {:ok, t()} | {:error, {module(), String.t()}}
+
+  def invert(%Unit{value: value, base_conversion: conversion} = unit)
+      when is_tuple(conversion) and is_number(value) do
+    new_unit = inverted_unit(unit)
+
+    {:ok, %{new_unit | value: invert_value(value)}}
+  end
+
+  def invert(%Unit{value: %Decimal{} = value, base_conversion: conversion} = unit)
+      when is_tuple(conversion) do
+    new_unit = inverted_unit(unit)
+
+    {:ok, %{new_unit | value: invert_value(value)}}
+  end
+
+  @per Cldr.Unit.Parser.per()
+  @one Decimal.new(1)
+
+  def invert(%Unit{unit: name, value: value}) when is_atom(name) do
+    case Atom.to_string(name) |> String.split(@per) do
+      [_unit_name] ->
+        {:error, not_invertable_error(name)}
+
+      [left, right] ->
+        new_name = right <> @per <> left
+        new_value = invert_value(value)
+        Cldr.Unit.new(new_name, new_value)
     end
   end
 
-  @dialyzer {:nowarn_function, {:extract_patterns, 6}}
-  defp extract_patterns(number, {unit_list, per_list}, locale, style, backend, options) do
-    {
-      extract_patterns(number, unit_list, locale, style, backend, options),
-      extract_patterns(1, per_list, locale, style, backend, options)
-    }
+  def invert(%Unit{} = unit) do
+    {:error, not_invertable_error(unit)}
   end
 
-  # When extracting a list of patterns the objective is to use the singluar
-  # form of the pattern for all except the last element which uses the
-  # plural form indicated by the number
-  defp extract_patterns(number, [{unit, _conversion}], locale, style, backend, options) do
-    [to_pattern(number, unit, locale, style, backend, options)]
+  defp invert_value(value) when is_number(value) do
+    1 / value
   end
 
-  defp extract_patterns(number, [{unit, _conversion} | rest], locale, style, backend, options) do
-    [
-      to_pattern(1, unit, locale, style, backend, options)
-      | extract_patterns(number, rest, locale, style, backend, options)
-    ]
+  defp invert_value(%Decimal{} = value) do
+    Decimal.div(@one, value)
   end
 
-  # Combine the patterns merging prefix and units, applying "times" for
-  # compound units and the "per" pattern if required.  This are some heuristics
-  # here than may not result in a grammatically correct result for some
-  # languages
-  @dialyzer {:nowarn_function, {:combine_patterns, 6}}
-  defp combine_patterns({patterns, per_patterns}, number_string, locale, style, backend, options) do
-    {
-      combine_patterns(patterns, number_string, locale, style, backend, options),
-      combine_patterns(per_patterns, "", locale, style, backend, options)
-    }
+  defp inverted_unit(%Unit{base_conversion: {numerator, denominator}} = unit) do
+    new_conversion = {denominator, numerator}
+    new_unit = %{unit | base_conversion: new_conversion}
+
+    new_name =
+      new_conversion
+      |> Cldr.Unit.Parser.canonical_unit_name()
+      |> maybe_translatable_unit()
+
+    %{new_unit | unit: new_name}
   end
 
-  defp combine_patterns([pattern], number_string, _locale, _style, _backend, _options) do
-    Substitution.substitute(number_string, pattern)
-  end
+  @doc """
+  Returns a boolean indicating if two units are
+  of the same unit category.
 
-  defp combine_patterns([pattern | rest], number_string, locale, style, backend, _options) do
-    units = units_for(locale, style, backend)
-    times_pattern = get_in(units, [:times, :compound_unit_pattern])
+  ## Arguments
 
-    [
-      Substitution.substitute(number_string, pattern)
-      | Enum.map(rest, fn p ->
-          Substitution.substitute("", p)
-          |> Enum.map(&String.trim/1)
-        end)
-    ]
-    |> join_list(times_pattern)
-  end
+  * `unit_1` and `unit_2` are any units returned by
+    `Cldr.Unit.new/2` or a valid unit name.
 
-  defp join_list([head, tail], times_pattern) do
-    Substitution.substitute([head, tail], times_pattern)
-  end
+  ## Returns
 
-  defp join_list([head | rest], times_pattern) do
-    tail = join_list(rest, times_pattern)
-    join_list([head, tail], times_pattern)
-  end
+  * `true` or `false`
 
-  @dialyzer {:nowarn_function, {:maybe_combine_per_unit, 5}}
-  defp maybe_combine_per_unit({unit_list, per_units}, locale, style, backend, _options) do
-    units = units_for(locale, style, backend)
-    per_pattern = get_in(units, [:per, :compound_unit_pattern])
+  ## Examples
 
-    Substitution.substitute([unit_list, per_units], per_pattern)
-  end
+      iex> Cldr.Unit.compatible? :foot, :meter
+      true
 
-  defp maybe_combine_per_unit(unit_list, _locale, _style, _backend, _options) do
-    unit_list
-  end
+      iex> Cldr.Unit.compatible? Cldr.Unit.new!(:foot, 23), :meter
+      true
 
-  @spec to_pattern(value(), unit(), locale(), style(), Cldr.backend(), Keyword.t()) ::
-          list()
+      iex> Cldr.Unit.compatible? :foot, :liter
+      false
 
-  defp to_pattern(number, unit, locale, style, backend, _options)
-       when unit in @translatable_units do
-    with {:ok, patterns} <- pattern_for(locale, style, unit, backend) do
-      cardinal_module = Module.concat(backend, Number.Cardinal)
-      cardinal_module.pluralize(number, locale, patterns)
+      iex> Cldr.Unit.compatible? "light_year_per_second", "meter_per_gallon"
+      false
+
+  """
+  @spec compatible?(t() | unit(), t() | unit()) :: boolean
+
+  def compatible?(unit_1, unit_2) do
+    case Conversion.conversion_for(unit_1, unit_2) do
+      {:ok, _conversion, _maybe_inverted} -> true
+      {:error, _error} -> false
     end
-  end
-
-  for {prefix, power} <- Prefix.power_units() do
-    localize_key = String.to_atom("power#{power}")
-    match = quote do: <<unquote(prefix), "_", var!(unit)::binary>>
-
-    defp to_pattern(number, unquote(match), locale, style, backend, options) do
-      units = units_for(locale, style, backend)
-      pattern = get_in(units, [unquote(localize_key), :compound_unit_pattern1])
-      unit = maybe_translatable_unit(unit)
-
-      pattern
-      |> merge_power_prefix(to_pattern(number, unit, locale, style, backend, options))
-    end
-  end
-
-  # is there an SI prefix? If so, try reformatting the unit again
-  for {prefix, power} <- Prefix.si_power_prefixes() do
-    localize_key = "10p#{power}" |> String.replace("-", "_") |> String.to_atom()
-    match = quote do: <<unquote(prefix), var!(unit)::binary>>
-
-    defp to_pattern(number, unquote(match), locale, style, backend, options) do
-      units = units_for(locale, style, backend)
-      pattern = get_in(units, [unquote(localize_key), :unit_prefix_pattern])
-      unit = maybe_translatable_unit(unit)
-
-      pattern
-      |> merge_SI_prefix(to_pattern(number, unit, locale, style, backend, options))
-    end
-  end
-
-  defp to_pattern(_number, unit, locale, style, _backend, _options) do
-    {exception, message} = no_pattern_error(unit, locale, style)
-    raise exception, message
-  end
-
-  # Merging power and SI prefixes into a pattern is a heuristic since the
-  # underlying data does not convey those rules.
-
-  @merge_SI_prefix ~r/([^\s]+)$/u
-  defp merge_SI_prefix([prefix, place], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
-  end
-
-  defp merge_SI_prefix([prefix, place], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
-  end
-
-  defp merge_SI_prefix([place, prefix], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
-  end
-
-  defp merge_SI_prefix([place, prefix], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
-  end
-
-  @merge_power_prefix ~r/^(\s)+/u
-  defp merge_power_prefix([prefix, place], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
-  end
-
-  defp merge_power_prefix([prefix, place], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
-  end
-
-  defp merge_power_prefix([place, prefix], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
-  end
-
-  defp merge_power_prefix([place, prefix], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
   end
 
   @doc """
@@ -1439,7 +1266,7 @@ defmodule Cldr.Unit do
       [:ussystem, :uksystem]
 
       iex> Cldr.Unit.measurement_systems_for_unit :meter
-      [:metric]
+      [:metric, :si]
 
       iex> Cldr.Unit.measurement_systems_for_unit :invalid
       {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
@@ -1503,10 +1330,8 @@ defmodule Cldr.Unit do
           alias: :imperial,
           description: "UK System of measurement: feet, pints, etc.; pints are 20oz"
         },
-        ussystem: %{
-          alias: nil,
-          description: "US System of measurement: feet, pints, etc.; pints are 16oz"
-        }
+        ussystem: %{alias: nil, description: "US System of measurement: feet, pints, etc.; pints are 16oz"},
+        si: %{alias: nil, description: "SI System"}
       }
 
   """
@@ -1515,6 +1340,22 @@ defmodule Cldr.Unit do
 
   def known_measurement_systems do
     @measurement_systems
+  end
+
+  @doc """
+  Return a list of known measurement system names.
+
+  ## Example
+
+      iex> Cldr.Unit.known_measurement_system_names()
+      [:metric, :si, :uksystem, :ussystem]
+
+  """
+  @doc since: "3.5.0"
+  @spec known_measurement_system_names :: [measurement_system(), ...]
+
+  def known_measurement_system_names do
+    @system_names
   end
 
   @doc """
@@ -1609,13 +1450,12 @@ defmodule Cldr.Unit do
         area: [:default, :geograph, :land],
         concentration: [:blood_glucose, :default],
         consumption: [:default, :vehicle_fuel],
-        consumption_inverse: [:default, :vehicle_fuel],
         duration: [:default, :media],
         energy: [:default, :food],
         length: [:default, :focal_length, :person, :person_height, :rainfall, :road,
          :snowfall, :vehicle, :visiblty],
         mass: [:default, :person],
-        mass_density: [:blood_glucose, :default],
+        mass_density: [:default],
         power: [:default, :engine],
         pressure: [:baromtrc, :default],
         speed: [:default, :wind],
@@ -1649,7 +1489,8 @@ defmodule Cldr.Unit do
 
   ## Argument
 
-  * `unit` is either a `t:Cldr.Unit` or an `atom`
+  * `unit` is either a `t:Cldr.Unit`, an `atom` or
+    a `t:String`
 
   ## Returns
 
@@ -1666,26 +1507,15 @@ defmodule Cldr.Unit do
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
 
   """
-  def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
-    with {:ok, _unit, conversion} <- validate_unit(unit_name) do
-      base_unit(conversion)
-    end
-  end
-
-  # def base_unit(%{base_unit: [base_name]}) when is_atom(base_name) do
-  #   {:ok, base_name}
-  # end
 
   def base_unit(%Unit{base_conversion: conversion}) do
-    base_unit(conversion)
+    BaseUnit.canonical_base_unit(conversion)
   end
 
-  def base_unit(conversion) when is_list(conversion) or is_tuple(conversion) do
-    Parser.canonical_base_unit(conversion)
-  end
-
-  def unknown_base_unit_error(unit_name) do
-    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect(unit_name)} is not known"}
+  def base_unit(unit_name) when is_atom(unit_name) or is_binary(unit_name) do
+    with {:ok, _unit, conversion} <- Cldr.Unit.validate_unit(unit_name) do
+      BaseUnit.canonical_base_unit(conversion)
+    end
   end
 
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
@@ -1713,20 +1543,77 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.unit_category :stone
       {:ok, :mass}
 
+      iex> Cldr.Unit.unit_category "kilowatt hour"
+      {:error,
+       {Cldr.Unit.UnknownCategoryError,
+        "The category for \\"kilowatt hour\\" is not known."}}
+
   """
   @spec unit_category(Unit.t() | String.t() | atom()) ::
           {:ok, category()} | {:error, {module(), String.t()}}
 
   def unit_category(unit) do
-    with {:ok, _unit, conversion} <- validate_unit(unit),
-         {:ok, base_unit} <- base_unit(conversion) do
-      {:ok, Map.get(base_unit_category_map(), Kernel.to_string(base_unit))}
+    with {:ok, _unit, conversion} <- validate_unit(unit) do
+      unit_category(unit, conversion)
+    end
+  end
+
+  @doc false
+  def unit_category(unit, conversion) do
+    with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion),
+         {:ok, category} <- Map.fetch(base_unit_category_map(), Kernel.to_string(base_unit)) do
+      {:ok, category}
+    else
+      :error -> {:error, unknown_category_error(unit)}
+      other -> other
     end
   end
 
   @deprecated "Please use `Cldr.Unit.unit_category/1"
   def unit_type(unit) do
     unit_category(unit)
+  end
+
+  @doc """
+  Return the grammatical gender for a
+  unit.
+
+  ## Arguments
+
+  ## Options
+
+  ## Returns
+
+  ## Examples
+
+  """
+  @unknown_gender :undefined
+  @doc since: "3.5.0"
+  @spec grammatical_gender(t(), Keyword.t()) :: grammatical_gender()
+
+  def grammatical_gender(unit, options \\ [])
+
+  def grammatical_gender(%__MODULE__{} = unit, options) when is_list(options) do
+    {locale, backend} = Cldr.locale_and_backend_from(options)
+    module = Module.concat(backend, :Unit)
+    units = units_for(locale, :long)
+
+    features =
+      module.grammatical_features("root")
+      |> Map.merge(module.grammatical_features(locale))
+      |> Map.fetch!(:gender)
+
+    Cldr.Unit.Format.traverse(unit, fn
+      {:unit, unit} -> Map.fetch!(units, unit) |> Map.get(:gender, @unknown_gender)
+      {:times, left_right} -> elem(left_right, features.times)
+      {:per, left_right} -> elem(left_right, features.per)
+      {:prefix, left_right} -> elem(left_right, features.prefix + 1)
+      {:power, left_right} -> elem(left_right, features.power + 1)
+    end)
+  end
+
+  def grammatical_gender(unit, options) when is_binary(unit) do
+    grammatical_gender(new!(1, unit), options)
   end
 
   @base_unit_category_map Cldr.Config.units()
@@ -1775,14 +1662,17 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.styles
+      iex> Cldr.Unit.known_styles
       [:long, :short, :narrow]
 
   """
-  @spec styles :: [style(), ...]
-  def styles do
+  @spec known_styles :: [style(), ...]
+  def known_styles do
     @styles
   end
+
+  @deprecated "Use Cldr.Unit.known_styles/0"
+  defdelegate styles, to: __MODULE__, as: :known_styles
 
   @doc """
   Returns the default formatting style.
@@ -1951,51 +1841,6 @@ defmodule Cldr.Unit do
     end
   end
 
-  @doc false
-  def pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend)
-      when unit in @translatable_units do
-    with {:ok, style} <- validate_style(style),
-         {:ok, unit, _conversion} <- validate_unit(unit) do
-      units = units_for(locale_name, style, backend)
-      pattern = Map.fetch!(units, unit)
-      {:ok, pattern}
-    end
-  end
-
-  def pattern_for(locale_name, style, unit, backend) do
-    with {:ok, locale} <- backend.validate_locale(locale_name) do
-      pattern_for(locale, style, unit, backend)
-    end
-  end
-
-  def per_pattern_for(%LanguageTag{cldr_locale_name: locale_name}, style, unit, backend) do
-    with {:ok, style} <- validate_style(style),
-         {:ok, unit, _conversion} <- validate_unit(unit) do
-      units = units_for(locale_name, style, backend)
-      pattern = get_in(units, [unit, :per_unit_pattern])
-      default_pattern = get_in(units, [:per, :compound_unit_pattern])
-      {:ok, pattern || default_pattern}
-    end
-  end
-
-  def per_pattern_for(locale_name, style, unit, backend) do
-    with {:ok, locale} <- backend.validate_locale(locale_name) do
-      per_pattern_for(locale, style, unit, backend)
-    end
-  end
-
-  defp normalize_options(backend, options) do
-    locale = Keyword.get(options, :locale, backend.get_locale())
-    style = Keyword.get(options, :style, @default_style)
-
-    options =
-      options
-      |> Keyword.delete(:locale)
-      |> Keyword.put(:style, style)
-
-    {locale, style, options}
-  end
-
   @doc """
   Validates a unit name and normalizes it,
 
@@ -2072,7 +1917,7 @@ defmodule Cldr.Unit do
 
   """
   def validate_unit(unit_name) when unit_name in @translatable_units do
-    {:ok, unit_name, [{unit_name, Conversions.conversion_for!(unit_name)}]}
+    {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
 
   @aliases Alias.aliases() |> Map.keys()
@@ -2082,28 +1927,17 @@ defmodule Cldr.Unit do
     |> validate_unit
   end
 
-  # FIXME refactor this hacky conditional
-  def validate_unit(unit_name) when is_binary(unit_name) do
-    unit_name =
-      unit_name
-      |> normalize_unit_name
-      |> maybe_translatable_unit
-
-    if is_atom(unit_name) do
-      validate_unit(unit_name)
-    else
-      with {:ok, parsed} <- Parser.parse_unit(unit_name) do
-        name = Parser.canonical_unit_name(parsed)
-        canonical_name = maybe_translatable_unit(name)
-        {:ok, canonical_name, parsed}
-      end
-    end
-  end
-
   def validate_unit(unit_name) when is_atom(unit_name) do
     unit_name
     |> Atom.to_string()
     |> validate_unit
+  end
+
+  def validate_unit(unit_name) when is_binary(unit_name) do
+    unit_name
+    |> normalize_unit_name
+    |> maybe_translatable_unit
+    |> return_unit
   end
 
   def validate_unit(%Unit{unit: unit_name, base_conversion: base_conversion}) do
@@ -2114,11 +1948,27 @@ defmodule Cldr.Unit do
     {:error, unit_error(unknown_unit)}
   end
 
+  defp return_unit(unit_name) when is_atom(unit_name) do
+    validate_unit(unit_name)
+  end
+
+  defp return_unit(unit_name) do
+    with {:ok, parsed} <- Parser.parse_unit(unit_name) do
+      name =
+        parsed
+        |> Parser.canonical_unit_name()
+        |> maybe_translatable_unit()
+
+      {:ok, name, parsed}
+    end
+  end
+
   @doc false
   def normalize_unit_name(name) when is_binary(name) do
     String.replace(name, [" ", "-"], "_")
   end
 
+  @doc false
   def maybe_translatable_unit(name) do
     atom_name = String.to_existing_atom(name)
 
@@ -2156,15 +2006,122 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Convert a ratio Unit to a float unit
+  Validates a grammatical case and normalizes it to a
+  standard downcased atom form
+
   """
-  def ratio_to_float(%Unit{value: %Ratio{} = value} = unit) do
+  @doc since: "3.5.0"
+  def validate_grammatical_case(grammatical_case) when grammatical_case in @grammatical_case do
+    {:ok, grammatical_case}
+  end
+
+  def validate_grammatical_case(grammatical_case) when is_binary(grammatical_case) do
+    grammatical_case
+    |> String.downcase()
+    |> String.to_existing_atom()
+    |> validate_grammatical_case()
+  catch
+    ArgumentError ->
+      {:error, grammatical_case_error(grammatical_case)}
+  end
+
+  def validate_grammatical_case(grammatical_case) do
+    {:error, grammatical_case_error(grammatical_case)}
+  end
+
+  @doc false
+  def validate_grammatical_gender(nil, default_gender, locale) do
+    validate_grammatical_gender(default_gender, locale)
+  end
+
+  def validate_grammatical_gender(grammatical_gender, _default_gender, locale) do
+    validate_grammatical_gender(grammatical_gender, locale)
+  end
+
+  @doc """
+  Validates a grammatical gender and normalizes it to a
+  standard downcased atom form
+
+  """
+  @doc since: "3.5.0"
+  def validate_grammatical_gender(grammatical_gender, locale \\ Cldr.default_locale())
+
+  def validate_grammatical_gender(grammatical_gender, locale) when is_atom(grammatical_gender) do
+    with {:ok, locale} <- Cldr.validate_locale(locale),
+         {:ok, genders} = Module.concat(locale.backend, :Unit).grammatical_gender(locale) do
+      if grammatical_gender in genders do
+        {:ok, grammatical_gender}
+      else
+        {:error, grammatical_gender_error(grammatical_gender, genders, locale)}
+      end
+    end
+  end
+
+  def validate_grammatical_gender(grammatical_gender, locale) when is_binary(grammatical_gender) do
+    grammatical_gender
+    |> String.downcase()
+    |> String.to_existing_atom()
+    |> validate_grammatical_gender(locale)
+  catch
+    ArgumentError ->
+      {:error, grammatical_gender_error(grammatical_gender, locale)}
+  end
+
+  @doc """
+  Convert a ratio, Decimal or integer `t:Unit` to a float `t:Unit`
+  """
+  @doc since: "3.5.0"
+  def to_float_unit(%Unit{value: %Ratio{} = value} = unit) do
     value = Ratio.to_float(value)
     %{unit | value: value}
   end
 
-  def ratio_to_float(%Unit{} = unit) do
-    unit
+  def to_float_unit(%Unit{value: value} = unit) when is_integer(value) do
+    value = 1.0 * value
+    %{unit | value: value}
+  end
+
+  def to_float_unit(%Unit{value: %Decimal{} = value} = unit) do
+    value = Decimal.to_float(value)
+    %{unit | value: value}
+  end
+
+  def to_float_unit(%Unit{} = other) do
+    other
+  end
+
+  @deprecated "Use Cldr.Unit.to_float_unit/1"
+  defdelegate ratio_to_float(unit), to: __MODULE__, as: :to_float_unit
+
+  @doc """
+  Convert a ratio, float or integer `t:Unit` to a Decimal `t:Unit`
+  """
+  @doc since: "3.5.0"
+  def to_decimal_unit(%Unit{value: %Ratio{} = value} = unit) do
+    value = Decimal.div(Decimal.new(value.numerator), Decimal.new(value.denominator))
+    %{unit | value: value}
+  end
+
+  def to_decimal_unit(%Unit{value: value} = unit) when is_float(value) do
+    value = Decimal.from_float(value)
+    %{unit | value: value}
+  end
+
+  def to_decimal_unit(%Unit{value: value} = unit) when is_integer(value) do
+    value = Decimal.new(value)
+    %{unit | value: value}
+  end
+
+  def to_decimal_unit(%Unit{} = other) do
+    other
+  end
+
+  @deprecated "Use Cldr.Unit.to_decimal_unit/1"
+  defdelegate ratio_to_decimal(unit), to: __MODULE__, as: :to_decimal_unit
+
+  @doc false
+  def unknown_base_unit_error(unit_name) do
+    {Cldr.Unit.UnknownBaseUnitError, "Base unit for #{inspect(unit_name)} is not known"}
   end
 
   @doc false
@@ -2185,15 +2142,54 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def unknown_category_error(unit) do
+    {Cldr.Unit.UnknownCategoryError, "The category for #{inspect(unit)} is not known."}
+  end
+
+  @doc false
   def style_error(style) do
     {Cldr.UnknownFormatError, "The unit style #{inspect(style)} is not known."}
   end
 
   @doc false
+  def grammatical_case_error(grammatical_case) do
+    {
+      Cldr.UnknownGrammaticalCaseError,
+      "The grammatical case #{inspect(grammatical_case)} " <>
+        "is not known. The valid cases are #{inspect(@grammatical_case)}"
+    }
+  end
+
+  @doc false
+  def grammatical_gender_error(grammatical_gender, known_genders, locale) do
+    {
+      Cldr.UnknownGrammaticalGenderError,
+      "The locale #{inspect locale.cldr_locale_name} does not define " <>
+      "a grammatical gender #{inspect(grammatical_gender)}. " <>
+      "The valid genders are #{inspect(known_genders)}"
+    }
+  end
+
+  def grammatical_gender_error(grammatical_gender, _locale) do
+    {
+      Cldr.UnknownGrammaticalGenderError,
+      "The grammatical gender #{inspect(grammatical_gender)} is invalid"
+    }
+  end
+
+  @doc false
+  def incompatible_units_error(%Unit{unit: unit_1}, unit_2) do
+    incompatible_units_error(unit_1, unit_2)
+  end
+
+  def incompatible_units_error(unit_1, %Unit{unit: unit_2}) do
+    incompatible_units_error(unit_1, unit_2)
+  end
+
   def incompatible_units_error(unit_1, unit_2) do
     {
       Unit.IncompatibleUnitsError,
-      "Operations can only be performed between units with the same category and base unit. " <>
+      "Operations can only be performed between units with the same base unit. " <>
         "Received #{inspect(unit_1)} and #{inspect(unit_2)}"
     }
   end
@@ -2238,6 +2234,14 @@ defmodule Cldr.Unit do
       "No localisation pattern was found for unit #{inspect(unit)} in " <>
         "locale #{inspect(locale.requested_locale_name)} for " <>
         "style #{inspect(style)}"
+    }
+  end
+
+  def not_invertable_error(unit) do
+    {
+      Cldr.Unit.NotInvertableError,
+      "The unit #{inspect(unit)} cannot be inverted. Only compound 'per' units " <>
+        "can be inverted"
     }
   end
 
