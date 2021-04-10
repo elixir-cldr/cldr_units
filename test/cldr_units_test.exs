@@ -138,6 +138,17 @@ defmodule Cldr.UnitsTest do
     assert {:ok, "1 meter per kilogram"} = Cldr.Unit.Format.to_string(unit)
   end
 
+  test "to_string for a pattern with no substitutions when the unit value is 0, 1 or 2" do
+    unit =  Cldr.Unit.new!(1, :hour)
+    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "שעה"}
+
+    unit =  Cldr.Unit.new!(-1, :hour)
+    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "‎-1 שעות"}
+
+    unit =  Cldr.Unit.new!(3, :hour)
+    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "3 שעות"}
+  end
+
   test "to_string a complex compound unit" do
     unit = Cldr.Unit.new!("square millimeter per cubic fathom", 3)
     assert Cldr.Unit.Format.to_string(unit) == {:ok, "3 square millimeters per cubic fathom"}

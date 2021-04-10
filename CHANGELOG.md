@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.5.1
+
+This is the changelog for Cldr_units v3.5.1 released on April 11th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Use `:other` plural category to format units which have a value of 0, 1 or 2 when the natural unit pattern has no substitutions. This corrects the situation in locales such as `he` and `ar` where the unit pattern for plural category `:one` has no substitutions. Previously this would means the formatted string for a unit with a vaue of `1` and `-1` would both output the same string.  Thanks to @jarrodmoldrich for the report and to @voltone for his family's help with hebrew grammar.
+
 # Changelog for Cldr_Units v3.5.0
 
 This is the changelog for Cldr_units v3.5.0 released on April 8th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

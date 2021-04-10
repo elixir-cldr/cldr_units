@@ -4,7 +4,7 @@ defmodule MyApp.Cldr do
   use Cldr.Unit.Additional
 
   use Cldr,
-    locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE"],
+    locales: ["en", "fr", "de", "bs", "af", "af-NA", "se-SE", "he", "ar"],
     default_locale: "en",
     providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 

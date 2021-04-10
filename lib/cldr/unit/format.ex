@@ -400,7 +400,7 @@ defmodule Cldr.Unit.Format do
     unit_grammar = {name, {grammatical_case, plural}}
 
     formatted_number = format_number!(unit, number_format_options)
-    unit_pattern = get_unit_pattern!(unit_grammar, formats, grammatical_case, gender, plural)
+    unit_pattern = get_unit_pattern!(unit, unit_grammar, formats, grammatical_case, gender, plural)
 
     Cldr.Substitution.substitute(formatted_number, unit_pattern)
     |> wrap(:ok)
@@ -414,7 +414,7 @@ defmodule Cldr.Unit.Format do
     formatted_number = format_number!(unit, number_format_options)
     grammar = grammar(unit, locale: locale, backend: backend)
 
-    to_iolist(grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural)
+    do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural)
     |> wrap(:ok)
   end
 
@@ -530,94 +530,174 @@ defmodule Cldr.Unit.Format do
   ##
 
   # For the numerator of a unit
-  defp to_iolist(grammar, formatted_number, formats, grammatical_case, gender, plural, _per_plural)
+  defp do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, _per_plural)
        when is_list(grammar) do
-    grammar
-    |> to_iolist(formats, grammatical_case, gender, plural)
+    unit
+    |> do_iolist(grammar, formats, grammatical_case, gender, plural)
     |> substitute_number(formatted_number)
   end
 
   # For compound "per" units
-  defp to_iolist(grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural) do
+  defp do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural) do
     {numerator, denominator} = grammar
 
     per_pattern = get_in(formats, [:per, :compound_unit_pattern])
 
     numerator_pattern =
-      to_iolist(numerator, formatted_number, formats, grammatical_case, gender, plural, per_plural)
+      do_iolist(unit, numerator, formatted_number, formats, grammatical_case, gender, plural, per_plural)
 
     denominator_pattern =
-      to_iolist(denominator, formats, grammatical_case, gender, per_plural)
+      do_iolist(unit, denominator, formats, grammatical_case, gender, per_plural)
       |> extract_unit
 
     Cldr.Substitution.substitute([numerator_pattern, denominator_pattern], per_pattern)
   end
 
   # Recurive processing of a unit grammar
-  defp to_iolist([], _formats, _grammatical_case, _gender, _plural) do
+  defp do_iolist(_unit, [], _formats, _grammatical_case, _gender, _plural) do
     []
   end
 
   # SI Prefixes
-  defp to_iolist([{si_prefix, _} | rest], formats, grammatical_case, gender, plural)
+  defp do_iolist(unit, [{si_prefix, _} | rest], formats, grammatical_case, gender, plural)
        when si_prefix in @si_keys do
     si_pattern = get_si_pattern!(formats, si_prefix, grammatical_case, gender, plural)
-    rest = to_iolist(rest, formats, grammatical_case, gender, plural)
+    rest = do_iolist(unit, rest, formats, grammatical_case, gender, plural)
     merge_SI_prefix(si_pattern, rest)
   end
 
   # Power prefixes
-  defp to_iolist([{power_prefix, _} | rest], formats, grammatical_case, gender, plural)
+  defp do_iolist(unit, [{power_prefix, _} | rest], formats, grammatical_case, gender, plural)
        when power_prefix in @power_keys do
     power_pattern = get_power_pattern!(formats, power_prefix, grammatical_case, gender, plural)
 
-    rest = to_iolist(rest, formats, grammatical_case, gender, plural)
+    rest = do_iolist(unit, rest, formats, grammatical_case, gender, plural)
     merge_power_prefix(power_pattern, rest)
   end
 
-  defp to_iolist([unit], formats, grammatical_case, gender, plural) when is_grammar(unit) do
-    get_unit_pattern!(unit, formats, grammatical_case, gender, plural)
+  defp do_iolist(unit, [first], formats, grammatical_case, gender, plural) when is_grammar(first) do
+    get_unit_pattern!(unit, first, formats, grammatical_case, gender, plural)
   end
 
-  defp to_iolist([pattern_list], _formats, _grammatical_case, _gender, _plural) do
+  defp do_iolist(_unit, [pattern_list], _formats, _grammatical_case, _gender, _plural) do
     pattern_list
   end
 
   # List head is a grammar unit
-  defp to_iolist([unit | rest], formats, grammatical_case, gender, plural) when is_grammar(unit) do
+  defp do_iolist(unit, [first | rest], formats, grammatical_case, gender, plural) when is_grammar(first) do
     times_pattern = get_in(formats, [:times, :compound_unit_pattern])
 
-    unit_pattern_1 = get_unit_pattern!(unit, formats, grammatical_case, gender, plural)
+    unit_pattern_1 = get_unit_pattern!(unit, first, formats, grammatical_case, gender, plural)
 
     unit_pattern_2 =
-      to_iolist(rest, formats, grammatical_case, gender, plural)
+      do_iolist(unit, rest, formats, grammatical_case, gender, plural)
       |> extract_unit()
 
     Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern)
   end
 
   # List head is a format pattern
-  @dialyzer {:nowarn_function, to_iolist: 5}
+  @dialyzer {:nowarn_function, do_iolist: 6}
 
-  defp to_iolist([unit_pattern_1 | rest], formats, grammatical_case, gender, plural) do
+  defp do_iolist(unit, [unit_pattern_1 | rest], formats, grammatical_case, gender, plural) do
     times_pattern = get_in(formats, [:times, :compound_unit_pattern])
 
     unit_pattern_2 =
-      to_iolist(rest, formats, grammatical_case, gender, plural)
+      do_iolist(unit, rest, formats, grammatical_case, gender, plural)
       |> extract_unit()
 
     Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern)
   end
 
-  defp get_unit_pattern!(unit, formats, grammatical_case, gender, plural) do
-    {name, {unit_case, unit_plural}} = unit
+  # Get the appropriate unit pattern. An important part of
+  # this is the following from TR35:
+
+  # Note that for certain plural cases, the unit pattern may not
+  # provide for inclusion of a numeric value—that is, it may not
+  # include “{0}”. This is especially true for the explicit cases
+  # “0” and “1” (which may have patterns like “zero seconds”). In
+  # certain languages such as Arabic and Hebrew, this may also be
+  # true with certain units for the plural cases “zero”, “one”, or
+  # “two” (in these languages, such plural cases are only used for
+  # the corresponding exact numeric values, so there is no concern
+  # about loss of precision without the numeric value).
+
+  # Therefore the overall proess is as follows:
+  #
+  # If there is a tenplate for an explicit value, try that template.
+  # as of CLDR39 there are no locales that have any explicit cases
+  # but a custom unit may have such data.
+
+  # If there is no such value then proceed with the
+  # provided plural category
+
+  # If however the retrieved pattern has no substitutions
+  # then that pattern is only used if there is an exacf match
+  # with the value. This means that if the pattern has no
+  # substitutions for the plural category `:one` then it
+  # is applied only if the the unit value is "1". Otherwise
+  # use the unit category `:other`.
+
+  defp get_unit_pattern!(%Unit{} = unit, grammar, formats, grammatical_case, gender, plural) do
+    integer = integer_unit_value(unit)
+    integer_pattern = get_unit_pattern(grammar, formats, grammatical_case, gender, integer)
+
+    cond do
+      # If the pattern for an integer is found, use it
+      integer_pattern ->
+        integer_pattern
+        # |> IO.inspect(label: "Integer pattern")
+
+      # If the plural range and the integer are aligned, use the plural
+      # rule no matter whether it has substitutions
+      integer_and_plural_match?(integer, plural) ->
+        get_unit_pattern(grammar, formats, grammatical_case, gender, plural) ||
+        get_unit_pattern(grammar, formats, grammatical_case, gender, @default_plural)
+
+      # For these plurals get the template and use it only
+      # if it has substitutions. If it doesn't then use the default
+      # pattern
+      plural in [:zero, :one, :two] ->
+        pattern = get_unit_pattern(grammar, formats, grammatical_case, gender, plural)
+
+        if has_substitutions?(pattern) do
+          pattern
+        else
+          get_unit_pattern(grammar, formats, grammatical_case, gender, :force_default)
+        end
+
+      # For all other cases return the pattern for the given plural
+      # category or the default.
+      true ->
+        get_unit_pattern(grammar, formats, grammatical_case, gender, plural) ||
+        get_unit_pattern(grammar, formats, grammatical_case, gender, @default_plural)
+    end
+    || raise Cldr.Unit.NoPatternError, {unit, grammatical_case, gender, plural}
+  end
+
+  defp get_unit_pattern(grammar, formats, grammatical_case, _gender, plural) when is_integer(plural) do
+    {name, {unit_case, _unit_plural}} = grammar
+    unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
+
+    get_in(formats, [name, unit_case, plural]) ||
+      get_in(formats, [name, @default_case, plural])
+  end
+
+  defp get_unit_pattern(grammar, formats, grammatical_case, _gender, :force_default) do
+    {name, {unit_case, _unit_plural}} = grammar
+    unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
+
+    get_in(formats, [name, unit_case, @default_plural]) ||
+      get_in(formats, [name, @default_case, @default_plural])
+  end
+
+  defp get_unit_pattern(grammar, formats, grammatical_case, _gender, plural) do
+    {name, {unit_case, unit_plural}} = grammar
     unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
     unit_plural = if unit_plural == :compound, do: plural, else: unit_plural
 
     get_in(formats, [name, unit_case, unit_plural]) ||
-      get_in(formats, [name, @default_case, unit_plural]) ||
-      get_in(formats, [name, @default_case, @default_plural]) ||
-      raise(Cldr.Unit.NoPatternError, {name, unit_case, gender, unit_plural})
+      get_in(formats, [name, @default_case, unit_plural])
   end
 
   defp get_si_pattern!(formats, si_prefix, grammatical_case, gender, plural) do
@@ -635,6 +715,14 @@ defmodule Cldr.Unit.Format do
       get_in(power_formats, [@default_case]) ||
       raise(Cldr.Unit.NoPatternError, {power_prefix, grammatical_case, gender, plural})
   end
+
+  defp integer_and_plural_match?(0, :zero), do: true
+  defp integer_and_plural_match?(1, :one), do: true
+  defp integer_and_plural_match?(2, :two), do: true
+  defp integer_and_plural_match?(_, _), do: false
+
+  defp has_substitutions?(pattern) when is_list(pattern) and length(pattern) > 1, do: true
+  defp has_substitutions?(pattern) when is_list(pattern), do: false
 
   defp extract_unit([place, string]) when is_integer(place) do
     String.trim(string)
@@ -955,5 +1043,26 @@ defmodule Cldr.Unit.Format do
 
   defp do_traverse(unit, fun) when is_atom(unit) do
     fun.({:unit, unit})
+  end
+
+  defp integer_unit_value(%Unit{value: value}) when is_integer(value) do
+    value
+  end
+
+  defp integer_unit_value(%Unit{value: value}) when is_float(value) do
+    int_value = trunc(value)
+    if int_value == value, do: int_value, else: nil
+  end
+
+  defp integer_unit_value(%Unit{value: %Ratio{}} = value) do
+    value
+    |> Unit.to_float_unit()
+    |> integer_unit_value()
+  end
+
+  defp integer_unit_value(%Unit{value: %Decimal{}} = value) do
+    value
+    |> Unit.to_float_unit()
+    |> integer_unit_value()
   end
 end
