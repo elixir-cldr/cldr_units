@@ -654,6 +654,7 @@ defmodule Cldr.Unit.Format do
         get_unit_pattern(grammar, formats, grammatical_case, gender, plural) ||
         get_unit_pattern(grammar, formats, grammatical_case, gender, @default_plural)
 
+
       # For these plurals get the template and use it only
       # if it has substitutions. If it doesn't then use the default
       # pattern
@@ -697,7 +698,9 @@ defmodule Cldr.Unit.Format do
     unit_plural = if unit_plural == :compound, do: plural, else: unit_plural
 
     get_in(formats, [name, unit_case, unit_plural]) ||
-      get_in(formats, [name, @default_case, unit_plural])
+      get_in(formats, [name, @default_case, unit_plural]) ||
+      get_in(formats, [name, unit_case, @default_plural]) ||
+      get_in(formats, [name, @default_case, @default_plural])
   end
 
   defp get_si_pattern!(formats, si_prefix, grammatical_case, gender, plural) do

@@ -1,3 +1,11 @@
+# Changelog for Cldr_Units v3.5.2
+
+This is the changelog for Cldr_units v3.5.2 released on April 12th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix getting a unit pattern when the unit value is zero, one or two and there is no pattern for the default unit plural category. Thanks to @syfgkjasdkn for the report.  Closes #21.
+
 # Changelog for Cldr_Units v3.5.1
 
 This is the changelog for Cldr_units v3.5.1 released on April 11th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

@@ -237,6 +237,11 @@ defmodule Cldr.UnitsTest do
              {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
   end
 
+  test "Unit of 1 retrieves a default pattern is plural category pattern does not exist" do
+    unit = Cldr.Unit.new!(1, :pascal)
+    assert Cldr.Unit.to_string(unit, locale: "de", style: :short) == {:ok, "1 Pa"}
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)
