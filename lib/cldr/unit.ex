@@ -2046,9 +2046,9 @@ defmodule Cldr.Unit do
   @doc since: "3.5.0"
   def validate_grammatical_gender(grammatical_gender, locale \\ Cldr.default_locale())
 
-  def validate_grammatical_gender(grammatical_gender, locale) when is_atom(grammatical_gender) do
-    with {:ok, locale} <- Cldr.validate_locale(locale),
-         {:ok, genders} = Module.concat(locale.backend, :Unit).grammatical_gender(locale) do
+  def validate_grammatical_gender(grammatical_gender, %LanguageTag{} = locale)
+      when is_atom(grammatical_gender) do
+    with {:ok, genders} = Module.concat(locale.backend, :Unit).grammatical_gender(locale) do
       if grammatical_gender in genders do
         {:ok, grammatical_gender}
       else
@@ -2057,7 +2057,8 @@ defmodule Cldr.Unit do
     end
   end
 
-  def validate_grammatical_gender(grammatical_gender, locale) when is_binary(grammatical_gender) do
+  def validate_grammatical_gender(grammatical_gender, %LanguageTag{} = locale)
+      when is_binary(grammatical_gender) do
     grammatical_gender
     |> String.downcase()
     |> String.to_existing_atom()

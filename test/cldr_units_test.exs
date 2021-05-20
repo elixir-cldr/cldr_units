@@ -242,6 +242,15 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(unit, locale: "de", style: :short) == {:ok, "1 Pa"}
   end
 
+  test "Format a unit when there is no default backend" do
+    default = Application.get_env(:ex_cldr, :default_backend)
+    Application.put_env(:ex_cldr, :default_backend, nil)
+
+    assert MyApp.Cldr.Unit.to_string!(7.3, unit: :kilogram) == "7.3 kilograms"
+
+    Application.put_env(:ex_cldr, :default_backend, default)
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)

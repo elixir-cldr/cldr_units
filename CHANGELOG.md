@@ -1,4 +1,14 @@
-# Changelog for Cldr_Units v3.5.2
+# Changelog
+
+## Cldr_Units v3.5.3
+
+This is the changelog for Cldr_units v3.5.3 released on May 20th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes formatting units when invoking `MyApp.Cldr.Unit.to_string/2` (ie on the backend module) and no default backend is configured. Thanks again to @maennchen. Closes #22.  Require at least [ex_cldr version 2.22.1](https://hex.pm/packages/ex_cldr/2.22.1)
+
+## Cldr_Units v3.5.2
 
 This is the changelog for Cldr_units v3.5.2 released on April 12th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -6,7 +16,7 @@ This is the changelog for Cldr_units v3.5.2 released on April 12th, 2021.  For o
 
 * Fix getting a unit pattern when the unit value is zero, one or two and there is no pattern for the default unit plural category. Thanks to @syfgkjasdkn for the report.  Closes #21.
 
-# Changelog for Cldr_Units v3.5.1
+## Cldr_Units v3.5.1
 
 This is the changelog for Cldr_units v3.5.1 released on April 11th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -14,7 +24,7 @@ This is the changelog for Cldr_units v3.5.1 released on April 11th, 2021.  For o
 
 * Use `:other` plural category to format units which have a value of 0, 1 or 2 when the natural unit pattern has no substitutions. This corrects the situation in locales such as `he` and `ar` where the unit pattern for plural category `:one` has no substitutions. Previously this would means the formatted string for a unit with a vaue of `1` and `-1` would both output the same string.  Thanks to @jarrodmoldrich for the report and to @voltone for his family's help with hebrew grammar.
 
-# Changelog for Cldr_Units v3.5.0
+## Cldr_Units v3.5.0
 
 This is the changelog for Cldr_units v3.5.0 released on April 8th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -85,7 +95,7 @@ end
 
 * Support conversions where one of the base units is the inverted conversion of the other. This allows conversion between, for example, `mile per gallon` and `liter per 100 kilometer`. These are both compound units of `length` and `volume` but are inverse representations from each other.
 
-# Changelog for Cldr_Units v3.5.0-rc.1
+## Cldr_Units v3.5.0-rc.1
 
 This is the changelog for Cldr_units v3.5.0-rc.1 released on March 21st, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -108,7 +118,7 @@ Note that full testing of grammatical case and grammatical gender variations is 
 
 * The new string formatter correctly assembles units with an SI prefix (ie `millimeter`) in languages such as German where the noun is capitalized.
 
-# Changelog for Cldr_Units v3.5.0-rc.0
+## Cldr_Units v3.5.0-rc.0
 
 This is the changelog for Cldr_units v3.5.0-rc.0 released on March 19th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -160,7 +170,7 @@ end
 
 * Support conversions where one of the base units is the inverted conversion of the other. This allows conversion between, for example, `mile per gallon` and `liter per 100 kilometer`. These are both compound units of `length` and `volume` but are inverse representations from each other.
 
-# Changelog for Cldr_Units v3.4.0
+## Cldr_Units v3.4.0
 
 This is the changelog for Cldr_units v3.4.0 released on February 9th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -194,7 +204,7 @@ This is the changelog for Cldr_units v3.4.0 released on February 9th, 2021.  For
 
 * Requires `ex_cldr` version `~> 2.19` which includes the localised display name of units
 
-# Changelog for Cldr_Units v3.3.1
+## Cldr_Units v3.3.1
 
 This is the changelog for Cldr_units v3.3.1 released on November 3rd, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -202,7 +212,7 @@ This is the changelog for Cldr_units v3.3.1 released on November 3rd, 2020.  For
 
 * Fix `Cldr.Unit.localize/2` when no options are provided
 
-# Changelog for Cldr_Units v3.3.0
+## Cldr_Units v3.3.0
 
 This is the changelog for Cldr_units v3.3.0 released on November 1st, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -210,7 +220,7 @@ This is the changelog for Cldr_units v3.3.0 released on November 1st, 2020.  For
 
 * Update to [CLDR38](http://cldr.unicode.org/index/downloads/cldr-38)
 
-# Changelog for Cldr_Units v3.2.1
+## Cldr_Units v3.2.1
 
 This is the changelog for Cldr_units v3.2.1 released on September 26th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -218,7 +228,7 @@ This is the changelog for Cldr_units v3.2.1 released on September 26th, 2020.  F
 
 * Use `Cldr.default_backend!/0` when available (as in later ex_cldr releases) since `Cldr.default_backend/0` is deprecated.
 
-# Changelog for Cldr_Units v3.2.0
+## Cldr_Units v3.2.0
 
 This is the changelog for Cldr_units v3.2.0 released on September 5th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -232,7 +242,7 @@ This is the changelog for Cldr_units v3.2.0 released on September 5th, 2020.  Fo
 
 * Fix spec for `Cldr.Units.compatible?/2`. Thanks to @lostkobrakai.
 
-# Changelog for Cldr_Units v3.1.2
+## Cldr_Units v3.1.2
 
 This is the changelog for Cldr_units v3.1.2 released on August 29th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -242,7 +252,7 @@ This is the changelog for Cldr_units v3.1.2 released on August 29th, 2020.  For 
 
 * Support `Decimal` numbers in `Cldr.Unit.to_string/3` and `Cldr.Unit.to_string!/3`.
 
-# Changelog for Cldr_Units v3.1.1
+## Cldr_Units v3.1.1
 
 This is the changelog for Cldr_units v3.1.1 released on June 29th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -250,7 +260,7 @@ This is the changelog for Cldr_units v3.1.1 released on June 29th, 2020.  For ol
 
 * Ensure that `:locale` is passed through to `Cldr.Number.to_string/3`. Thanks for the PR to @Zurga. Closes #14.
 
-# Changelog for Cldr_Units v3.1.0
+## Cldr_Units v3.1.0
 
 This is the changelog for Cldr_units v3.1.0 released on May 18th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -264,7 +274,7 @@ This is the changelog for Cldr_units v3.1.0 released on May 18th, 2020.  For old
 
 * Fix converting translatable units that have a "per" conversion
 
-# Changelog for Cldr_Units v3.0.1
+## Cldr_Units v3.0.1
 
 This is the changelog for Cldr_units v3.0.1 released on May 15th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -272,7 +282,7 @@ This is the changelog for Cldr_units v3.0.1 released on May 15th, 2020.  For old
 
 * Corrects unit creation when the unit itself is directly translatable (like `:kilowatt_hour`) but there is no explicit conversion, just an implicit calculated conversion. Thanks to @syfgkjasdkn.
 
-# Changelog for Cldr_Units v3.0.0
+## Cldr_Units v3.0.0
 
 This is the changelog for Cldr_units v3.0.0 released on May 4th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -320,7 +330,7 @@ This is the changelog for Cldr_units v3.0.0 released on May 4th, 2020.  For olde
 
 * Add `Cldr.Unit.base_category_map/0` that maps base units to their unit categories. For example, map `mile_per_hour` to `:speed` or `kilogram_square_meter_per_cubic_second_ampere` to `:voltage`. Base units are derived from a unit name and are not normally the concern of the consumer of `ex_cldr_units`.
 
-# Changelog for Cldr_Units v2.8.1
+## Cldr_Units v2.8.1
 
 This is the changelog for Cldr_units v2.8.1 released on April 25th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -328,7 +338,7 @@ This is the changelog for Cldr_units v2.8.1 released on April 25th, 2020.  For o
 
 * Updates data management to be compatible with data from both both CLDR 36 (ex_cldr 2.13) and CLDR 37 (ex_cldr 2.14)
 
-# Changelog for Cldr_Units v2.8.0
+## Cldr_Units v2.8.0
 
 This is the changelog for Cldr_units v2.8.0 released on January 27th, 2020.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -359,7 +369,7 @@ iex> Enum.sort unit_list, {:asc, Cldr.Unit}
  #Unit<:kilometer, 100>]
 ```
 
-# Changelog for Cldr_Units v2.7.0
+## Cldr_Units v2.7.0
 
 This is the changelog for Cldr_units v2.7.0 released on October 10th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -371,7 +381,7 @@ This is the changelog for Cldr_units v2.7.0 released on October 10th, 2019.  For
 
 * Adds conversion for `newton meter`, `dalton`, `solar luminosity`, `pound foot`, `bar`, `newton`, `electron volt`, `barrel`, `dunam`, `decade`, `mole`, `pound force`, `megapascal`, `pascal`, `kilopascal`, `solar radius`, `therm US`, `British thermal unit`, `earth mass`.
 
-# Changelog for Cldr_Units v2.6.1
+## Cldr_Units v2.6.1
 
 This is the changelog for Cldr_units v2.6.1 released on August 31st, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -379,7 +389,7 @@ This is the changelog for Cldr_units v2.6.1 released on August 31st, 2019.  For 
 
 * Fix `Cldr.Unit.to_string/3` to ensure that `{:ok, string}` is returned when formatting a list of units
 
-# Changelog for Cldr_Units v2.6.0
+## Cldr_Units v2.6.0
 
 This is the changelog for Cldr_units v2.6.0 released on August 25th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -412,7 +422,7 @@ This is the changelog for Cldr_units v2.6.0 released on August 25th, 2019.  For 
 
 * Add `Cldr.Unit.unit_category/1` and deprecate `Cldr.Unit.unit_type/1` in order to be consistent with the nomenclature of CLDR
 
-# Changelog for Cldr_Units v2.5.3
+## Cldr_Units v2.5.3
 
 This is the changelog for Cldr_units v2.5.3 released on August 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -420,7 +430,7 @@ This is the changelog for Cldr_units v2.5.3 released on August 23rd, 2019.  For 
 
 * Fix `@spec` for `Cldr.Unit.to_string/3` and `Cldr.Unit.to_string!/3`
 
-# Changelog for Cldr_Units v2.5.2
+## Cldr_Units v2.5.2
 
 This is the changelog for Cldr_units v2.5.2 released on August 21st, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -430,7 +440,7 @@ This is the changelog for Cldr_units v2.5.2 released on August 21st, 2019.  For 
 
 * Fix dialyzer warnings
 
-# Changelog for Cldr_Units v2.5.1
+## Cldr_Units v2.5.1
 
 This is the changelog for Cldr_units v2.5.1 released on June 18th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -440,7 +450,7 @@ This is the changelog for Cldr_units v2.5.1 released on June 18th, 2019.  For ol
 
 * `Cldr.Unit.to_string/3` now allows for the `backend` parameter to default to `Cldr.default_backend/0`
 
-# Changelog for Cldr_Units v2.5.0
+## Cldr_Units v2.5.0
 
 This is the changelog for Cldr_units v2.5.0 released on March 28th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -448,7 +458,7 @@ This is the changelog for Cldr_units v2.5.0 released on March 28th, 2019.  For o
 
 * Updates to [CLDR version 35.0.0](http://cldr.unicode.org/index/downloads/cldr-35) released on March 27th 2019.
 
-# Changelog for Cldr_Units v2.4.0
+## Cldr_Units v2.4.0
 
 This is the changelog for Cldr_units v2.4.0 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -456,7 +466,7 @@ This is the changelog for Cldr_units v2.4.0 released on March 23rd, 2019.  For o
 
 * Supports `Cldr.default_backend()` as a default for `backend` parameters in `Cldr.Unit`
 
-# Changelog for Cldr_Units v2.3.3
+## Cldr_Units v2.3.3
 
 This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -464,7 +474,7 @@ This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For o
 
 * Include `priv` directory in the hex package (thats where the conversion json exists)
 
-# Changelog for Cldr_Units v2.3.2
+## Cldr_Units v2.3.2
 
 This is the changelog for Cldr_units v2.3.2 released on March 20th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -472,7 +482,7 @@ This is the changelog for Cldr_units v2.3.2 released on March 20th, 2019.  For o
 
 * Fix dialyzer warnings
 
-# Changelog for Cldr_Units v2.3.1
+## Cldr_Units v2.3.1
 
 This is the changelog for Cldr_units v2.3.1 released on March 15th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -490,7 +500,7 @@ defmodule MyApp.Cldr do
 end
 ```
 
-# Changelog for Cldr_Units v2.3.0
+## Cldr_Units v2.3.0
 
 This is the changelog for Cldr_units v2.3.0 released on March 4th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -498,7 +508,7 @@ This is the changelog for Cldr_units v2.3.0 released on March 4th, 2019.  For ol
 
 * The conversion tables are now stored as json and updates may be downloaded at any time with the mix task `mix cldr.unit.download`. This means that updates to the conversion table may be made without requiring a new release of `Cldr.Unit`.
 
-# Changelog for Cldr_Units v2.2.0
+## Cldr_Units v2.2.0
 
 This is the changelog for Cldr_units v2.2.0 released on February 24th, 2019.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -512,7 +522,7 @@ Currently the implementation uses a static map.  In order to give users a better
 
 * In most cases, return integer values from conversion and decomposition when the originating unit value is also an integer
 
-# Changelog for Cldr_Units v2.1.0
+## Cldr_Units v2.1.0
 
 This is the changelog for Cldr_units v2.1.0 released on December 8th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
@@ -530,7 +540,7 @@ This is the changelog for Cldr_units v2.1.0 released on December 8th, 2018.  For
 
 The appropriate backend equivalents are also added.
 
-# Changelog for Cldr_Units v2.0.0
+## Cldr_Units v2.0.0
 
 This is the changelog for Cldr_units v2.0.0 released on November 24th, 2018.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 

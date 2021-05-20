@@ -191,7 +191,7 @@ defmodule Cldr.Unit.Format do
 
   def to_string(%Unit{} = unit, backend, options) when is_list(options) do
     with {:ok, options} <- normalize_options(backend, options),
-         {:ok, list} <- to_iolist(unit, options) do
+         {:ok, list} <- to_iolist(unit, backend, options) do
       list
       |> :erlang.iolist_to_binary()
       # |> String.replace(~r/([\s])+/, "\\1")
@@ -399,7 +399,7 @@ defmodule Cldr.Unit.Format do
     number_format_options = Keyword.merge(unit.format_options, options)
     unit_grammar = {name, {grammatical_case, plural}}
 
-    formatted_number = format_number!(unit, number_format_options)
+    formatted_number = format_number!(unit, backend, number_format_options)
     unit_pattern = get_unit_pattern!(unit, unit_grammar, formats, grammatical_case, gender, plural)
 
     Cldr.Substitution.substitute(formatted_number, unit_pattern)
@@ -411,7 +411,7 @@ defmodule Cldr.Unit.Format do
 
     formats = Cldr.Unit.units_for(locale, format, backend)
     number_format_options = Keyword.merge(unit.format_options, options)
-    formatted_number = format_number!(unit, number_format_options)
+    formatted_number = format_number!(unit, backend, number_format_options)
     grammar = grammar(unit, locale: locale, backend: backend)
 
     do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural)
@@ -743,9 +743,9 @@ defmodule Cldr.Unit.Format do
     other
   end
 
-  defp format_number!(unit, options) do
+  defp format_number!(unit, backend, options) do
     number_format_options = Keyword.merge(unit.format_options, options)
-    Cldr.Number.to_string!(unit.value, number_format_options)
+    Cldr.Number.to_string!(unit.value, backend, number_format_options)
   end
 
   defp substitute_number([place, unit], formatted_number) when is_integer(place) do
