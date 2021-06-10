@@ -1,5 +1,5 @@
 defmodule Cldr.Unit.MeasurementSystemTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   test "Measurement system from locale" do
     assert Cldr.Unit.measurement_system_from_locale("en-AU") == :metric

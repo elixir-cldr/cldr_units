@@ -1,5 +1,5 @@
 defmodule Cldr.Unit.Preference.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   use Ratio
 
   alias Cldr.Unit.Test.PreferenceData

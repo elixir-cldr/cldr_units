@@ -406,6 +406,15 @@ defmodule Cldr.Unit do
     new(value, unit, options)
   end
 
+  @doc """
+  Parse a string an attempt to extract a unit
+  and a unit value which is parse to new/2
+
+  """
+  def parse(unit_string) do
+
+  end
+
   @default_use :default
   @default_format_options []
 
@@ -668,7 +677,7 @@ defmodule Cldr.Unit do
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+  * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
 

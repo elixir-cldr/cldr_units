@@ -1,5 +1,5 @@
 defmodule Doc.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   doctest Cldr.Unit
   doctest Cldr.Unit.Conversion

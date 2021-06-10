@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.6.0
+
+This is the changelog for Cldr_units v3.6.0 released on June 12th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Add `Cldr.Unit.parse/2` to parse unit strings of the form `1kg` into a `t:Cldr.Unit` struct.
+
 ## Cldr_Units v3.5.3
 
 This is the changelog for Cldr_units v3.5.3 released on May 20th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

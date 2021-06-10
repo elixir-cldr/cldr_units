@@ -518,15 +518,17 @@ defmodule Cldr.Unit.Backend do
             |> Cldr.Config.get_locale(config)
             |> Map.get(:units)
 
-          for style <- @styles do
-            additional_units = additional_units.units_for(locale_name, style)
-
-            units =
+            units_for_style = fn additional_units, style ->
               Map.get(locale_data, style)
               |> Enum.map(&elem(&1, 1))
               |> Cldr.Map.merge_map_list()
               |> Map.merge(additional_units)
               |> Map.new()
+            end
+
+          for style <- @styles do
+            additional_units = additional_units.units_for(locale_name, style)
+            units = units_for_style.(additional_units, style)
 
             def units_for(unquote(locale_name), unquote(style)) do
               unquote(Macro.escape(units))
