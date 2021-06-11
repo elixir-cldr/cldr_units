@@ -407,12 +407,141 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Parse a string an attempt to extract a unit
-  and a unit value which is parse to new/2
+  Parse a string to create a new unit.
+
+  This function attempts to parse a string
+  into a `number` and `unit type`. If successful
+  it attempts to create a new unit using
+  `Cldr.Unit.new/3`.
+
+  The parsed `unit type` is aliased against all the
+  known unit names for a give locale (or the current
+  locale if no locale is specified). The known
+  aliases for unit types can be returned with
+  `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+  is the name of a backend module.
+
+  ## Arguments
+
+  * `unit string` is any string to be parsed and if
+    possible used to create a new `t:Cldr.Unit`
+
+  * `options` is a keyword list of options
+
+  ## Options
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `:backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  ## Returns
+
+  * `{:ok, unit}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Examples
+
+      iex> Cldr.Unit.parse "1kg"
+      Cldr.Unit.new(1, :kilogram)
+
+      iex> Cldr.Unit.parse "1 tages", locale: "de"
+      Cldr.Unit.new(1, :day)
+
+      iex> Cldr.Unit.parse "1 tag", locale: "de"
+      Cldr.Unit.new(1, :day)
+
+      iex> Cldr.Unit.parse("42 millispangels")
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"spangels\\""}}
 
   """
-  def parse(unit_string) do
+  @spec parse(binary) :: {:ok, t()} | {:error, {module(), binary()}}
 
+  @doc since: "3.6.0"
+  def parse(unit_string, options \\ []) do
+    {locale, backend} = Cldr.locale_and_backend_from(options)
+
+    with {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale) do
+      case Cldr.Number.Parser.scan(unit_string, options) do
+        [number, unit] when is_number(number) and is_binary(unit)->
+          unit = resolve_unit_alias(unit, strings)
+          new(number, unit, options)
+        [unit, number] when is_number(number) and is_binary(unit) ->
+          unit = resolve_unit_alias(unit, strings)
+          new(number, unit, options)
+        _other ->
+          {:error, not_parseable_error(unit_string)}
+      end
+    end
+  end
+
+  @doc """
+  Parse a string to create a new unit or
+  raises an exception.
+
+  This function attempts to parse a string
+  into a `number` and `unit type`. If successful
+  it attempts to create a new unit using
+  `Cldr.Unit.new/3`.
+
+  The parsed `unit type` is un-aliased against all the
+  known unit names for a give locale (or the current
+  locale if no locale is specified). The known
+  aliases for unit types can be returned with
+  `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+  is the name of a backend module.
+
+  ## Arguments
+
+  * `unit string` is any string to be parsed and if
+    possible used to create a new `t:Cldr.Unit`
+
+  * `options` is a keyword list of options
+
+  ## Options
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+  * `:backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  ## Returns
+
+  * `unit` or
+
+  * raises an exception
+
+  ## Examples
+
+      iex> Cldr.Unit.parse! "1kg"
+      Cldr.Unit.new!(1, :kilogram)
+
+      iex> Cldr.Unit.parse! "1 tages", locale: "de"
+      Cldr.Unit.new!(1, :day)
+
+      iex> Cldr.Unit.parse!("42 candela per lux")
+      Cldr.Unit.new!(42, "candela per lux")
+
+      iex> Cldr.Unit.parse!("42 millispangels")
+      ** (Cldr.UnknownUnitError) Unknown unit was detected at "spangels"
+
+  """
+  @spec parse!(binary) :: t() | no_return()
+
+  @doc since: "3.6.0"
+  def parse!(unit_string, options \\ []) do
+    case parse(unit_string, options) do
+      {:ok, unit} -> unit
+      {:error, {exception, message}} -> raise exception, message
+    end
+  end
+
+  defp resolve_unit_alias(unit, strings) do
+    unit = String.trim(unit)
+    Map.get(strings, unit, unit)
   end
 
   @default_use :default
@@ -2252,6 +2381,13 @@ defmodule Cldr.Unit do
       Cldr.Unit.NotInvertableError,
       "The unit #{inspect(unit)} cannot be inverted. Only compound 'per' units " <>
         "can be inverted"
+    }
+  end
+
+  def not_parseable_error(string) do
+    {
+      Cldr.Unit.NotParseableError,
+      "The string #{inspect string} could not be parsed as a unit and a value"
     }
   end
 

@@ -132,3 +132,12 @@ defmodule Cldr.UnknownGrammaticalGenderError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.Unit.NotParseableError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end

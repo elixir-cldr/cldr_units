@@ -552,6 +552,42 @@ defmodule Cldr.Unit.Backend do
           def default_gender(unquote(locale_name)) do
             {:ok, unquote(default_gender)}
           end
+
+          unit_strings =
+            for style <- @styles do
+              additional_units =
+                additional_units.units_for(locale_name, style)
+
+              units =
+                units_for_style.(additional_units, style)
+                |> Cldr.Map.prune(fn
+                   {k, _v} when k in [:per_unit_pattern, :per, :times] ->
+                     true
+                   {k, _v} ->
+                     if String.starts_with?(Atom.to_string(k), "10"), do: true, else: false
+                   _other -> false
+                end)
+                |> Enum.map(fn {k, v} -> {k, Cldr.Map.extract_strings(v)} end)
+                |> Map.new()
+            end
+            |> Cldr.Map.merge_map_list(&Cldr.Map.combine_list_resolver/3)
+            |> Enum.map(fn {k, v} -> {k, Enum.map(v, &String.trim/1)} end)
+            |> Enum.map(fn {k, v} -> {k, Enum.map(v, &String.downcase/1)} end)
+            |> Enum.map(fn {k, v} -> {k, Enum.uniq(v)} end)
+            |> Map.new
+            |> Cldr.Map.invert()
+
+            def unit_strings_for(unquote(locale_name)) do
+              {:ok, unquote(Macro.escape(unit_strings))}
+            end
+        end
+
+        def unit_strings_for(locale) when is_binary(locale) do
+          {:error, Cldr.Locale.locale_error(locale)}
+        end
+
+        def unit_strings_for(%LanguageTag{cldr_locale_name: cldr_locale_name}) do
+          unit_strings_for(cldr_locale_name)
         end
 
         def units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
