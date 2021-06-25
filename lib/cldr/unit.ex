@@ -1553,10 +1553,11 @@ defmodule Cldr.Unit do
     end
   end
 
-  def measurement_system_from_locale(
-        %Cldr.LanguageTag{locale: %{measurement_system: system}},
-        _key
-      )
+  def measurement_system_from_locale(%LanguageTag{locale: %{ms: :imperial}}, _key) do
+    :uksystem
+  end
+
+  def measurement_system_from_locale(%LanguageTag{locale: %{ms: system}}, _key)
       when not is_nil(system) do
     system
   end

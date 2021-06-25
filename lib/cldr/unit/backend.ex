@@ -536,7 +536,7 @@ defmodule Cldr.Unit.Backend do
           end
 
           language_tag = Cldr.Config.language_tag(locale_name)
-          language = Map.fetch!(language_tag, :language)
+          language = if Map.fetch!(language_tag, :language) == "und", do: "root", else: "und"
           grammatical_features = Map.get(@grammatical_features, language, %{})
           grammatical_gender = Map.get(@grammatical_gender, language, [@default_gender])
           default_gender = Enum.find(grammatical_gender, &(&1 == :neuter)) || @default_gender

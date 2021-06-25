@@ -231,7 +231,7 @@ defmodule Cldr.UnitsTest do
              {:error, {Cldr.UnknownFormatError, "The unit style :invalid is not known."}}
 
     assert Cldr.Unit.display_name(:liter, locale: "xx", style: :short) ==
-             {:error, {Cldr.UnknownLocaleError, "The locale \"xx\" is not known."}}
+             {:error, {Cldr.InvalidLanguageError, "The language \"xx\" is invalid"}}
 
     assert Cldr.Unit.display_name(:invalid, locale: "fr", style: :short) ==
              {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
