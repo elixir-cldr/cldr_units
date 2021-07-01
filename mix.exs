@@ -1,13 +1,13 @@
 defmodule CldrUnits.Mixfile do
   use Mix.Project
 
-  @version "3.7.0-dev"
+  @version "3.7.0"
 
   def project do
     [
       app: :ex_cldr_units,
       version: @version,
-      elixir: "~> 1.8",
+      elixir: "~> 1.10",
       name: "Cldr Units",
       source_url: "https://github.com/elixir-cldr/cldr_units",
       description: description(),
@@ -38,8 +38,7 @@ defmodule CldrUnits.Mixfile do
 
   defp deps do
     [
-      # {:ex_cldr_numbers, "~> 2.17"},
-      {:ex_cldr_numbers, path: "../cldr_numbers", override: true},
+      {:ex_cldr_numbers, "~> 2.19"},
       {:cldr_utils, "~> 2.16"},
       {:ex_cldr_lists, "~> 2.8"},
       {:ratio, "~> 2.4"},
