@@ -6,7 +6,9 @@ This is the changelog for Cldr_units v3.7.0 released on ______, 2021.  For older
 
 ### Enhancements
 
-* Updated to [ex_cldr version 2.23.0](https://hex.pm/packages/ex_cldr/2.23.0) which changes the names of some of the field in the "-u-" extension to match the CLDR canonical name. In particular the field name `measurement_system` changes to `ms`. Also the value of `ms` for the UK System will be `:imperial` not `:uksystem`.
+* Add support for the `Cldr.DisplayName` protocol for `t:Cldr.Unit` structs.
+
+* Updated to [ex_cldr version 2.23.0](https://hex.pm/packages/ex_cldr/2.23.0) which changes the names of some of the fields in the "-u-" extension to match the CLDR canonical name. In particular the field name `measurement_system` changes to `ms`. Also the value of `ms` for the UK System will be `:imperial` not `:uksystem`.
 
 ## Cldr_Units v3.6.0
 

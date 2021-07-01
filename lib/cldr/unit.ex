@@ -1909,7 +1909,7 @@ defmodule Cldr.Unit do
       }
 
   """
-  @spec measurement_systems_by_territory() :: %{Cldr.territory() => map()}
+  @spec measurement_systems_by_territory() :: %{Cldr.Locale.territory() => map()}
   def measurement_systems_by_territory do
     @systems_by_territory
   end
@@ -2407,6 +2407,12 @@ defmodule Cldr.Unit do
   else
     def default_backend do
       Cldr.default_backend()
+    end
+  end
+
+  defimpl Cldr.DisplayName do
+    def display_name(unit, options) do
+      Cldr.Unit.display_name(unit, options)
     end
   end
 end

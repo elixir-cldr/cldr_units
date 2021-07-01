@@ -251,6 +251,10 @@ defmodule Cldr.UnitsTest do
     Application.put_env(:ex_cldr, :default_backend, default)
   end
 
+  test "Cldr.DisplayName protocol for Unit" do
+    assert Cldr.display_name(Cldr.Unit.new!(:foot, 1)) == "feet"
+  end
+
   if function_exported?(Code, :fetch_docs, 1) do
     test "that no module docs are generated for a backend" do
       assert {:docs_v1, _, :elixir, _, :hidden, %{}, _} = Code.fetch_docs(NoDocs.Cldr)
