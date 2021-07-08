@@ -1,4 +1,22 @@
 defmodule Cldr.Unit.Preference do
+  @moduledoc """
+  In many cultures, the common unit of measure for some
+  unit categories varies based upon the usage of the
+  unit.
+
+  For example, when describing unit length in the US, the
+  common use units vary based upon usage such as:
+
+  * road distance (miles for larger distances, feet for smaller)
+  * person height (feet and inches)
+  * snowfall (inches)
+
+  This module provides functions to introspect CLDRs
+  preference data for difference use cases in different
+  locales.
+
+  """
+
   alias Cldr.Unit
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Conversion.Options
@@ -50,14 +68,19 @@ defmodule Cldr.Unit.Preference do
   ## Examples
 
       iex> meter = Cldr.Unit.new!(:meter, 1)
+      iex> many_meters = Cldr.Unit.new!(:meter, 10_000)
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :person
       {:ok, [:inch], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :person
       {:ok, [:centimeter], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-US", usage: :road
       {:ok, [:foot], [round_nearest: 1]}
+      iex> Cldr.Unit.Preference.preferred_units many_meters, MyApp.Cldr, locale: "en-US", usage: :road
+      {:ok, [:mile], []}
       iex> Cldr.Unit.Preference.preferred_units meter, MyApp.Cldr, locale: "en-AU", usage: :road
       {:ok, [:meter], [round_nearest: 1]}
+      iex> Cldr.Unit.Preference.preferred_units many_meters, MyApp.Cldr, locale: "en-AU", usage: :road
+      {:ok, [:kilometer], []}
 
   ## Notes
 
@@ -194,7 +217,7 @@ defmodule Cldr.Unit.Preference do
 
   * `:usage` is the way in which the unit is intended
     to be used.  The available `usage` varyies according
-    to the unit category.  See `Cldr.Unit.preferred_units/3`.
+    to the unit category.  See `Cldr.Unit.unit_category_usage/0`.
 
   ## Returns
 
@@ -316,30 +339,30 @@ defmodule Cldr.Unit.Preference do
   #  preferred_units(category, :default, region, value)
   # end
 
-  # And it we get here is't game over
+  # And it we get here it's game over
   def preferred_units(category, usage, region, value) do
     {:error, unknown_preferences_error(category, usage, region, value)}
   end
 
-  def debug(category, usage, region, value) do
-    IO.inspect(
-      """
-      Category: #{inspect(category)} with usage #{inspect(usage)} for
-      region #{inspect(region)} and value #{inspect(value)}
-      """
-      |> String.replace("\n", " ")
-    )
-  end
-
-  def debug(category, usage, region, value, geq) do
-    IO.inspect(
-      """
-      Preference: #{inspect(category)} with usage #{inspect(usage)} for
-      region #{inspect(region)} and value #{inspect(value)} with >= #{inspect(geq)}
-      """
-      |> String.replace("\n", " ")
-    )
-  end
+  # defp debug(category, usage, region, value) do
+  #   IO.inspect(
+  #     """
+  #     Category: #{inspect(category)} with usage #{inspect(usage)} for
+  #     region #{inspect(region)} and value #{inspect(value)}
+  #     """
+  #     |> String.replace("\n", " ")
+  #   )
+  # end
+  #
+  # defp debug(category, usage, region, value, geq) do
+  #   IO.inspect(
+  #     """
+  #     Preference: #{inspect(category)} with usage #{inspect(usage)} for
+  #     region #{inspect(region)} and value #{inspect(value)} with >= #{inspect(geq)}
+  #     """
+  #     |> String.replace("\n", " ")
+  #   )
+  # end
 
   def unknown_preferences_error(category, usage, regions, value) do
     {
