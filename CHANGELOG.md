@@ -2,7 +2,7 @@
 
 ## Cldr_Units v3.7.0
 
-This is the changelog for Cldr_units v3.7.0 released on ______, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.7.0 released on July 1st, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Enhancements
 

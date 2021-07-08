@@ -495,3 +495,6 @@ iex> Enum.sort unit_list, Cldr.Unit
 ** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units with the same category and base unit. Received :liter and :meter
 ```
 
+### Serializing to a database with Ecto
+
+The companion package [ex_cldr_units_sql](https://hex.pm/packages/ex_cldr_units_sql) provides functions for the serialization of `Unit` data.  See the [README](https://hexdocs.pm/ex_cldr_units_sql/readme.html) for further information.

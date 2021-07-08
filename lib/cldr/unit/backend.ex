@@ -404,7 +404,7 @@ defmodule Cldr.Unit.Backend do
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
-          be seen with `Cldr.Config.unit_preferences/3`. The default is `nil`
+          be seen with `Cldr.Unit.unit_category_usage/0`. The default is `nil`
 
         * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
