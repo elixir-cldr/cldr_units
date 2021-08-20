@@ -120,7 +120,7 @@ defmodule Cldr.Unit.Backend do
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+        * `:style` is one of those returned by `Cldr.Unit.known_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
@@ -131,9 +131,9 @@ defmodule Cldr.Unit.Backend do
           case, which is also the default.
 
         * `:gender` indicates that a localisation for the given
-          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -208,7 +208,7 @@ defmodule Cldr.Unit.Backend do
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+        * `:style` is one of those returned by `Cldr.Unit.known_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
@@ -219,9 +219,9 @@ defmodule Cldr.Unit.Backend do
           case, which is also the default.
 
         * `:gender` indicates that a localisation for the given
-          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -275,7 +275,7 @@ defmodule Cldr.Unit.Backend do
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+        * `:style` is one of those returned by `Cldr.Unit.known_styles`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`
 
@@ -286,9 +286,9 @@ defmodule Cldr.Unit.Backend do
           case, which is also the default.
 
         * `:gender` indicates that a localisation for the given
-          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -336,7 +336,7 @@ defmodule Cldr.Unit.Backend do
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-        * `:style` is one of those returned by `Cldr.Unit.available_styles/0`.
+        * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
           The current styles are `:long`, `:short` and `:narrow`.
           The default is `style: :long`.
 
@@ -347,9 +347,9 @@ defmodule Cldr.Unit.Backend do
           case, which is also the default.
 
         * `:gender` indicates that a localisation for the given
-          locale and given grammatical gender should be used. See `Cldr.Unit.known_gender/0`
+          locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `Cldr.Unit.default_gender/1`
+          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -405,6 +405,14 @@ defmodule Cldr.Unit.Backend do
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
           be seen with `Cldr.Unit.unit_category_usage/0`. The default is `nil`
+
+        * `:scope` is either `:small` or `nil`. In some usage, the units
+          used are different when the unit size is small. It is up to the
+          developer to determine when `scope: :small` is appropriate.
+
+        * `:alt` is either `:informal` or `nil`. Like `:scope`, the units
+          in use depend on whether they are being used in a formal or informal
+          context.
 
         * `:locale` is any locale returned by `Cldr.validate_locale/2`
 
@@ -469,7 +477,7 @@ defmodule Cldr.Unit.Backend do
 
         * `:usage` is the unit usage. for example `;person` for a unit
           type of length. The available usage for a given unit category can
-          be seen with `Cldr.Config.unit_preferences/3`. The default is `nil`.
+          be seen with `Cldr.Unit.unit_category_usage/0`. The default is `nil`
 
         * `:scope` is either `:small` or `nil`. In some usage, the units
           used are different when the unit size is small. It is up to the
