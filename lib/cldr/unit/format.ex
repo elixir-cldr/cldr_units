@@ -21,6 +21,8 @@ defmodule Cldr.Unit.Format do
   @default_style :long
   @default_plural :other
 
+  @root_locale_name Cldr.Config.root_locale_name()
+
   @doc """
   Formats a number into a string according to a unit definition
   for the current process's locale and backend.
@@ -893,11 +895,11 @@ defmodule Cldr.Unit.Format do
     module = Module.concat(backend, :Unit)
 
     features =
-      module.grammatical_features("root")
+      module.grammatical_features(@root_locale_name)
       |> Map.merge(module.grammatical_features(locale))
 
-    grammatical_case = Map.fetch!(features, :case)
-    plural = Map.fetch!(features, :plural)
+    grammatical_case = Map.get(features, :case)
+    plural = Map.get(features, :plural)
 
     traverse(unit, &grammar(&1, grammatical_case, plural, options))
   end
