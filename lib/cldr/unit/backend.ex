@@ -546,9 +546,6 @@ defmodule Cldr.Unit.Backend do
           language_tag = Cldr.Config.language_tag(locale_name)
           language = Map.fetch!(language_tag, :language)
 
-          # FIXME Bug in CLDR 40 Json generation
-          language = if language == "und", do: "root", else: language
-
           grammatical_features = Map.get(@grammatical_features, language, %{})
           grammatical_gender = Map.get(@grammatical_gender, language, [@default_gender])
           default_gender = Enum.find(grammatical_gender, &(&1 == :neuter)) || @default_gender
