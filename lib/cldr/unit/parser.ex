@@ -152,6 +152,10 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  def canonical_unit_name({:currency, currency}) do
+    to_string(currency)
+  end
+
   def canonical_unit_name({numerator, denominator}) do
     to_string(canonical_subunit_name(numerator)) <>
       @per <>
@@ -268,6 +272,11 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  defp split_into_units(<<"curr_", currency::binary-3, rest::binary>>) do
+    {:ok, currency} = Cldr.validate_currency(currency)
+    [currency | split_into_units(rest)]
+  end
+
   defp split_into_units(<<"_", rest::binary>>) do
     split_into_units(rest)
   end
@@ -362,6 +371,11 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  @currencies Cldr.known_currencies()
+  defp resolve_base_unit(currency) when currency in @currencies do
+    {currency, %Cldr.Unit.Conversion{base_unit: [currency], factor: 1, offset: 0}}
+  end
+
   # Units are sorted in the order present in the base units
   # list. Within any base unit, SI prefixes are sorted by the
   # largest first. Therefore the sort keys may be an integer
@@ -391,6 +405,11 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  defp unit_sort_key({currency, %Conversion{base_unit: [_base_unit]}})
+      when currency in @currencies do
+    -1
+  end
+
   defp unit_sort_key({_unit, %Conversion{base_unit: [base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
@@ -398,4 +417,5 @@ defmodule Cldr.Unit.Parser do
   defp unit_sort_key({_unit, %Conversion{base_unit: [_prefix, base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
+
 end

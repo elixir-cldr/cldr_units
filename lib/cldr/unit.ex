@@ -41,7 +41,8 @@ defmodule Cldr.Unit do
             value: 0,
             base_conversion: [],
             usage: :default,
-            format_options: []
+            format_options: [],
+            backend: nil
 
   @root_locale_name Cldr.Config.root_locale_name()
 

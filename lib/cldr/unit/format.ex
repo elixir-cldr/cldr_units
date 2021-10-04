@@ -16,6 +16,7 @@ defmodule Cldr.Unit.Format do
   @translatable_units Cldr.Unit.known_units()
   @si_keys Cldr.Unit.Prefix.si_keys()
   @power_keys Cldr.Unit.Prefix.power_keys()
+  @currencies Cldr.known_currencies()
 
   @default_case :nominative
   @default_style :long
@@ -415,6 +416,7 @@ defmodule Cldr.Unit.Format do
     number_format_options = Keyword.merge(unit.format_options, options)
     formatted_number = format_number!(unit, backend, number_format_options)
     grammar = grammar(unit, locale: locale, backend: backend)
+    unit = %{unit | backend: backend}
 
     do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural)
     |> wrap(:ok)
@@ -560,6 +562,17 @@ defmodule Cldr.Unit.Format do
     []
   end
 
+  # This is for when we are formatting currencies
+  # Currently there is no format pattern we can use for
+  # this purpose
+  defp do_iolist(unit, [{currency, _} | rest], formats, grammatical_case, gender, plural)
+       when currency in @currencies do
+    backend = unit.backend
+    value = unit.value
+    {:ok, formatted} = Cldr.Currency.pluralize(value, currency, backend)
+
+    [formatted | do_iolist(unit, rest, formats, grammatical_case, gender, plural)]
+  end
   # SI Prefixes
   defp do_iolist(unit, [{si_prefix, _} | rest], formats, grammatical_case, gender, plural)
        when si_prefix in @si_keys do
@@ -645,6 +658,9 @@ defmodule Cldr.Unit.Format do
     integer_pattern = get_unit_pattern(grammar, formats, grammatical_case, gender, integer)
 
     cond do
+      currency = currency_unit?(grammar) ->
+        currency
+
       # If the pattern for an integer is found, use it
       integer_pattern ->
         integer_pattern
@@ -719,6 +735,14 @@ defmodule Cldr.Unit.Format do
       get_in(power_formats, [plural]) ||
       get_in(power_formats, [@default_case]) ||
       raise(Cldr.Unit.NoPatternError, {power_prefix, grammatical_case, gender, plural})
+  end
+
+  defp currency_unit?({currency, _}) when currency in @currencies do
+    currency
+  end
+
+  defp currency_unit?(_other) do
+    nil
   end
 
   defp integer_and_plural_match?(0, :zero), do: true
