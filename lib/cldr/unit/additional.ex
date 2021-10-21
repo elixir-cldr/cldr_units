@@ -75,6 +75,7 @@ defmodule Cldr.Unit.Additional do
   but is not found.
 
   """
+  @root_locale_name Cldr.Config.root_locale_name()
 
   defmacro __using__(_opts) do
     module = __CALLER__.module
@@ -274,7 +275,7 @@ defmodule Cldr.Unit.Additional do
     additional_module = Module.concat(env.module, Unit.Additional)
     additional_units = additional_module.additional_units()
     additional_locales = MapSet.new(additional_module.known_locale_names())
-    backend_locales = MapSet.new(env.module.known_locale_names() -- ["root"])
+    backend_locales = MapSet.new(env.module.known_locale_names() -- [@root_locale_name])
     styles = Cldr.Unit.known_styles()
 
     case MapSet.to_list(MapSet.difference(backend_locales, additional_locales)) do

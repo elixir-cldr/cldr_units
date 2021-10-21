@@ -544,7 +544,8 @@ defmodule Cldr.Unit.Backend do
           end
 
           language_tag = Cldr.Config.language_tag(locale_name)
-          language = if Map.fetch!(language_tag, :language) == "und", do: "root", else: "und"
+          language = Map.fetch!(language_tag, :language)
+
           grammatical_features = Map.get(@grammatical_features, language, %{})
           grammatical_gender = Map.get(@grammatical_gender, language, [@default_gender])
           default_gender = Enum.find(grammatical_gender, &(&1 == :neuter)) || @default_gender
@@ -583,7 +584,7 @@ defmodule Cldr.Unit.Backend do
             |> Enum.map(fn {k, v} -> {k, Enum.map(v, &String.downcase/1)} end)
             |> Enum.map(fn {k, v} -> {k, Enum.uniq(v)} end)
             |> Map.new
-            |> Cldr.Map.invert()
+            |> Cldr.Map.invert(duplicates: :shortest)
 
             def unit_strings_for(unquote(locale_name)) do
               {:ok, unquote(Macro.escape(unit_strings))}

@@ -1,8 +1,21 @@
 # Changelog
 
+## Cldr_Units v3.8.0-rc.0
+
+This is the changelog for Cldr_units v3.8.0-rc.0 released on October 3rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Updates to use [CLDR 40](https://cldr.unicode.org/index/downloads/cldr-40) data. The release notes say:
+
+In CLDR v40, the focus is on Grammatical features (gender and case) for units of measurement in additional locales. In many languages, forming grammatical phrases requires dealing with grammatical gender and case. Without that, it can sound as bad as "on top of 3 hours" instead of "in 3 hours":
+
+* Phase 1 (CLDR v39) of grammatical features included just 12 locales (da, de, es, fr, hi, it, nl, no, pl, pt, ru, sv).
+* Phase 2 (CLDR v40, this release) has expanded the number of locales by 29 (am, ar, bn, ca, cs, el, fi, gu, he, hr, hu, hy, is, kn, lt, lv, ml, mr, nb, pa, ro, si, sk, sl, sr, ta, te, uk, ur), but for a more restricted number of units.
+
 ## Cldr_Units v3.7.1
 
-This is the changelog for Cldr_units v3.7.1 released onAugust 20th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.7.1 released on August 20th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 

@@ -41,7 +41,10 @@ defmodule Cldr.Unit do
             value: 0,
             base_conversion: [],
             usage: :default,
-            format_options: []
+            format_options: [],
+            backend: nil
+
+  @root_locale_name Cldr.Config.root_locale_name()
 
   # See https://unicode.org/reports/tr35/tr35-general.html#Case
   @grammatical_case [
@@ -1738,7 +1741,7 @@ defmodule Cldr.Unit do
     units = units_for(locale, :long)
 
     features =
-      module.grammatical_features("root")
+      module.grammatical_features(@root_locale_name)
       |> Map.merge(module.grammatical_features(locale))
       |> Map.fetch!(:gender)
 
