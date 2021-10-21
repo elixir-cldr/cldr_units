@@ -562,7 +562,7 @@ defmodule Cldr.Unit.Format do
     []
   end
 
-  # This is for when we are formatting currencies
+  # TODO This is for when we are formatting currencies
   # Currently there is no format pattern we can use for
   # this purpose
   defp do_iolist(unit, [{currency, _} | rest], formats, grammatical_case, gender, plural)
