@@ -122,7 +122,7 @@ defmodule Cldr.Unit do
   @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
 
   @unit_tree "en"
-             |> Cldr.Config.get_locale(@config)
+             |> Cldr.Locale.Loader.get_locale(@config)
              |> Map.fetch!(:units)
              |> Map.fetch!(:long)
              |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)

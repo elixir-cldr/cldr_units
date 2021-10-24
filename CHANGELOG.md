@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.8.0
+
+This is the changelog for Cldr_units v3.8.0 released on October 27th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Don't call deprecated `Cldr.Config.get_locale/2`, use `Cldr.Locale.Loader.get_config/2` instead.
+
 ## Cldr_Units v3.8.0-rc.0
 
 This is the changelog for Cldr_units v3.8.0-rc.0 released on October 3rd, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
