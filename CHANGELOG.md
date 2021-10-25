@@ -1,10 +1,18 @@
 # Changelog
 
+## Cldr_Units v3.8.0-rc.2
+
+This is the changelog for Cldr_units v3.8.0-rc.2 released on October 25th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Deprecations
+
+* Don't call deprecated `Cldr.Config.known_locale_names/1`, call `Cldr.Locale.Loader.known_locale_names/1` instead.
+
 ## Cldr_Units v3.8.0-rc.1
 
 This is the changelog for Cldr_units v3.8.0-rc.1 released on October 24th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
-### Bug Fixes
+### Deprecations
 
 * Don't call deprecated `Cldr.Config.get_locale/2`, use `Cldr.Locale.Loader.get_config/2` instead.
 

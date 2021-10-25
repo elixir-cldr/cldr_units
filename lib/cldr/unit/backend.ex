@@ -520,7 +520,7 @@ defmodule Cldr.Unit.Backend do
         @doc false
         def units_for(locale \\ unquote(backend).get_locale(), style \\ Cldr.Unit.default_style())
 
-        for locale_name <- Cldr.Config.known_locale_names(config) do
+        for locale_name <- Cldr.Locale.Loader.known_locale_names(config) do
           locale_data =
             locale_name
             |> Cldr.Locale.Loader.get_locale(config)
