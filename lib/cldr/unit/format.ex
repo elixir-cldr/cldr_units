@@ -409,6 +409,15 @@ defmodule Cldr.Unit.Format do
     |> wrap(:ok)
   end
 
+  def to_iolist(%Cldr.Unit{unit: currency} = unit, backend, options) when currency in @currencies do
+    options =
+      options
+      |> Keyword.put(:currency, currency)
+      |> Keyword.put(:backend, backend)
+
+    Cldr.Number.to_string(unit.value, options)
+  end
+
   def to_iolist(%Cldr.Unit{} = unit, backend, options) do
     {locale, format, grammatical_case, gender, plural, per_plural} = extract_options!(unit, options)
 
@@ -557,11 +566,7 @@ defmodule Cldr.Unit.Format do
     Cldr.Substitution.substitute([numerator_pattern, denominator_pattern], per_pattern)
   end
 
-  # Recurive processing of a unit grammar
-  defp do_iolist(_unit, [], _formats, _grammatical_case, _gender, _plural) do
-    []
-  end
-
+  # For currency unit
   # TODO This is for when we are formatting currencies
   # Currently there is no format pattern we can use for
   # this purpose
@@ -569,10 +574,16 @@ defmodule Cldr.Unit.Format do
        when currency in @currencies do
     backend = unit.backend
     value = unit.value
-    {:ok, formatted} = Cldr.Currency.pluralize(value, currency, backend)
+    {:ok, formatted} = Cldr.Number.to_string(value, currency: currency, backend: backend)
 
     [formatted | do_iolist(unit, rest, formats, grammatical_case, gender, plural)]
   end
+
+  # Recurive processing of a unit grammar
+  defp do_iolist(_unit, [], _formats, _grammatical_case, _gender, _plural) do
+    []
+  end
+
   # SI Prefixes
   defp do_iolist(unit, [{si_prefix, _} | rest], formats, grammatical_case, gender, plural)
        when si_prefix in @si_keys do
@@ -780,6 +791,19 @@ defmodule Cldr.Unit.Format do
 
   defp substitute_number([unit, place], formatted_number) when is_integer(place) do
     Cldr.Substitution.substitute(formatted_number, [place, unit])
+  end
+
+  defp substitute_number([currency_string], _formatted_nunber) when is_binary(currency_string) do
+    [currency_string]
+  end
+
+  defp substitute_number([currency_string | rest], _formatted_nunber) when is_binary(currency_string) do
+    case rest do
+      [placeholder, string] when is_integer(placeholder) ->
+        [currency_string, string]
+      [[placeholder, string] | rest] when is_integer(placeholder) ->
+        [currency_string | [string | rest]]
+    end
   end
 
   defp substitute_number([head | rest], formatted_number) when is_list(rest) do
