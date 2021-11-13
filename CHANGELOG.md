@@ -1,5 +1,19 @@
 # Changelog
 
+## Cldr_Units v3.9.0
+
+This is the changelog for Cldr_units v3.9.0 released on ______, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Use `import Config` not deprecated `use Mix.Config` in config files. Only significant for developers of `ex_cldr_units`.
+
+* Make `decimal` a required dependency, not optional, since various pattern matches expect its presence.
+
+### Enhancements
+
+* Add support for currency-based units.  This allows for calculations and formatting on units such as "$2 per gallon". For this example, the unit would be created with `Cldr.Unit.new(2, "curr-usd-per-gallon")`.
+
 ## Cldr_Units v3.8.0
 
 This is the changelog for Cldr_units v3.8.0 released on October 27th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

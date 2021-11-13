@@ -131,6 +131,12 @@ defmodule Cldr.Unit.Format do
       iex> Cldr.Unit.Format.to_string Decimal.new(123), MyApp.Cldr, unit: :foot
       {:ok, "123 feet"}
 
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(2, "curr-usd-per-gallon"), MyApp.Cldr
+      {:ok, "$2.00 per gallon"}
+
+      iex> Cldr.Unit.to_string Cldr.Unit.new!(2, "gallon-per-curr-usd"), MyApp.Cldr
+      {:ok, "2 gallons per US dollar"}
+
       iex> Cldr.Unit.Format.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en", style: :unknown
       {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}
 
@@ -145,7 +151,7 @@ defmodule Cldr.Unit.Format do
   @spec to_string(
           Unit.value() | Unit.t() | list(Unit.t()),
           Cldr.backend() | Keyword.t(),
-          Keyword.t()
+          Keyword.t() | map()
         ) ::
           {:ok, String.t()} | {:error, {atom, binary}}
 
@@ -163,7 +169,7 @@ defmodule Cldr.Unit.Format do
     with {:ok, options} <- normalize_options(backend, options) do
       list_options =
         options
-        |> Keyword.get(:list_options, [])
+        |> Map.get(:list_options, [])
         |> Keyword.put(:locale, options[:locale])
 
       unit_list
@@ -187,17 +193,21 @@ defmodule Cldr.Unit.Format do
 
   # Now we have a unit, a backend and some options but ratio
   # values need to be converted to decimals
-  def to_string(%Unit{value: %Ratio{}} = unit, backend, options) when is_list(options) do
+  def to_string(%Unit{value: %Ratio{}} = unit, backend, options) do
     unit = Cldr.Unit.to_decimal_unit(unit)
     to_string(unit, backend, options)
   end
 
   def to_string(%Unit{} = unit, backend, options) when is_list(options) do
-    with {:ok, options} <- normalize_options(backend, options),
-         {:ok, list} <- to_iolist(unit, backend, options) do
+    with {:ok, options} <- normalize_options(backend, options) do
+      to_string(unit, backend, options)
+    end
+  end
+
+  def to_string(%Unit{} = unit, backend, options) when is_map(options) do
+    with {:ok, list} <- to_iolist(unit, backend, options) do
       list
       |> :erlang.iolist_to_binary()
-      # |> String.replace(~r/([\s])+/, "\\1")
       |> wrap(:ok)
     end
   end
@@ -276,7 +286,7 @@ defmodule Cldr.Unit.Format do
   @spec to_string!(
           Unit.value() | Unit.t() | list(Unit.t()),
           Cldr.backend() | Keyword.t(),
-          Keyword.t()
+          Keyword.t() | map()
         ) ::
           String.t() | no_return()
 
@@ -287,7 +297,11 @@ defmodule Cldr.Unit.Format do
     end
   end
 
-  defp normalize_options(backend, options) do
+  defp normalize_options(_backend, options) when is_map(options) do
+    {:ok, options}
+  end
+
+  defp normalize_options(backend, options) when is_list(options) do
     {locale, backend} = Cldr.locale_and_backend_from(options[:locale], backend)
     unit_backend = Module.concat(backend, :Unit)
     style = Keyword.get(options, :style, @default_style)
@@ -301,10 +315,12 @@ defmodule Cldr.Unit.Format do
            Cldr.Unit.validate_grammatical_gender(grammatical_gender, default_gender, locale),
          {:ok, style} <- Cldr.Unit.validate_style(style) do
       options
-      |> Keyword.put(:locale, locale)
-      |> Keyword.put(:style, style)
-      |> Keyword.put(:grammatical_case, grammatical_case)
-      |> Keyword.put(:grammatical_gender, gender)
+      |> Map.new()
+      |> Map.put(:locale, locale)
+      |> Map.put(:style, style)
+      |> Map.put(:grammatical_case, grammatical_case)
+      |> Map.put(:grammatical_gender, gender)
+      |> Map.put(:backend, backend)
       |> wrap(:ok)
     end
   end
@@ -381,7 +397,7 @@ defmodule Cldr.Unit.Format do
       {:ok, ["123", " gallons"]}
 
   """
-  @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+  @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t() | map()) ::
           {:ok, list()} | {:error, {atom, binary}}
 
   def to_iolist(unit, backend, options \\ [])
@@ -395,40 +411,38 @@ defmodule Cldr.Unit.Format do
   # Direct formatting of the unit since
   # it is translatable directly
   def to_iolist(%Cldr.Unit{unit: name} = unit, backend, options) when name in @translatable_units do
-    {locale, format, grammatical_case, gender, plural, _per_plural} =
-      extract_options!(unit, options)
+    with {:ok, options} <- normalize_options(backend, options) do
+      options = extract_options!(unit, options)
+      unit_grammar = {name, {options.grammatical_case, options.plural}}
+      unit_pattern = get_unit_pattern!(unit, unit_grammar, options)
 
-    formats = Cldr.Unit.units_for(locale, format, backend)
-    number_format_options = Keyword.merge(unit.format_options, options)
-    unit_grammar = {name, {grammatical_case, plural}}
-
-    formatted_number = format_number!(unit, backend, number_format_options)
-    unit_pattern = get_unit_pattern!(unit, unit_grammar, formats, grammatical_case, gender, plural)
-
-    Cldr.Substitution.substitute(formatted_number, unit_pattern)
-    |> wrap(:ok)
+      unit
+      |> format_number!(options)
+      |> Cldr.Substitution.substitute(unit_pattern)
+      |> wrap(:ok)
+    end
   end
 
   def to_iolist(%Cldr.Unit{unit: currency} = unit, backend, options) when currency in @currencies do
-    options =
-      options
-      |> Keyword.put(:currency, currency)
-      |> Keyword.put(:backend, backend)
+    with {:ok, options} <- normalize_options(backend, options) do
+      options =
+        options
+        |> Map.put(:currency, currency)
+        |> Map.put(:backend, backend)
 
-    Cldr.Number.to_string(unit.value, options)
+      Cldr.Number.to_string(unit.value, Map.to_list(options))
+    end
   end
 
   def to_iolist(%Cldr.Unit{} = unit, backend, options) do
-    {locale, format, grammatical_case, gender, plural, per_plural} = extract_options!(unit, options)
+    with {:ok, options} <- normalize_options(backend, options) do
+      options = extract_options!(unit, options)
+      grammar = grammar(unit, locale: options.locale, backend: options.backend)
 
-    formats = Cldr.Unit.units_for(locale, format, backend)
-    number_format_options = Keyword.merge(unit.format_options, options)
-    formatted_number = format_number!(unit, backend, number_format_options)
-    grammar = grammar(unit, locale: locale, backend: backend)
-    unit = %{unit | backend: backend}
-
-    do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural)
-    |> wrap(:ok)
+      formatted_number = format_number!(unit, options)
+      to_iolist(unit, grammar, formatted_number, options)
+      |> wrap(:ok)
+    end
   end
 
   def to_iolist(number, backend, options) when is_number(number) do
@@ -519,7 +533,7 @@ defmodule Cldr.Unit.Format do
       ["123", " gallons"]
 
   """
-  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t()) ::
+  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t() | map()) ::
           list() | no_return()
 
   def to_iolist!(number, backend, options \\ [])
@@ -543,93 +557,93 @@ defmodule Cldr.Unit.Format do
   ##
 
   # For the numerator of a unit
-  defp do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, _per_plural)
-       when is_list(grammar) do
+  defp to_iolist(unit, grammar, formatted_number, options) when is_list(grammar) do
     unit
-    |> do_iolist(grammar, formats, grammatical_case, gender, plural)
+    |> do_iolist(grammar, options)
     |> substitute_number(formatted_number)
   end
 
   # For compound "per" units
-  defp do_iolist(unit, grammar, formatted_number, formats, grammatical_case, gender, plural, per_plural) do
+  defp to_iolist(unit, grammar, formatted_number, options) do
     {numerator, denominator} = grammar
 
-    per_pattern = get_in(formats, [:per, :compound_unit_pattern])
+    per_pattern = get_in(options.formats, [:per, :compound_unit_pattern])
 
     numerator_pattern =
-      do_iolist(unit, numerator, formatted_number, formats, grammatical_case, gender, plural, per_plural)
+      to_iolist(unit, numerator, formatted_number, options)
 
     denominator_pattern =
-      do_iolist(unit, denominator, formats, grammatical_case, gender, per_plural)
-      |> extract_unit
+      unit
+      |> Map.put(:_denominator, true)
+      |> do_iolist(denominator, Map.put(options, :plural, options.per_plural))
+      |> extract_unit()
 
     Cldr.Substitution.substitute([numerator_pattern, denominator_pattern], per_pattern)
   end
 
-  # For currency unit
-  # TODO This is for when we are formatting currencies
-  # Currently there is no format pattern we can use for
-  # this purpose
-  defp do_iolist(unit, [{currency, _} | rest], formats, grammatical_case, gender, plural)
-       when currency in @currencies do
-    backend = unit.backend
-    value = unit.value
-    {:ok, formatted} = Cldr.Number.to_string(value, currency: currency, backend: backend)
-
-    [formatted | do_iolist(unit, rest, formats, grammatical_case, gender, plural)]
-  end
-
   # Recurive processing of a unit grammar
-  defp do_iolist(_unit, [], _formats, _grammatical_case, _gender, _plural) do
+
+  defp do_iolist(_unit, [], _options) do
     []
   end
 
+  # Currency units
+  defp do_iolist(%{_denominator: true} = unit, [{currency, _} | rest], options)
+      when currency in @currencies do
+    {:ok, currency} =
+      Cldr.Currency.currency_for_code(currency, options.backend, locale: options.locale)
+
+    formatted = Map.get(currency.count, options.plural, :other)
+    [formatted | do_iolist(unit, rest, options)]
+  end
+
+  defp do_iolist(unit, [{currency, _} | rest], options) when currency in @currencies do
+    formatted = format_number!(unit, Map.put(options, :currency, currency))
+    [formatted | do_iolist(unit, rest, options)]
+  end
+
   # SI Prefixes
-  defp do_iolist(unit, [{si_prefix, _} | rest], formats, grammatical_case, gender, plural)
-       when si_prefix in @si_keys do
-    si_pattern = get_si_pattern!(formats, si_prefix, grammatical_case, gender, plural)
-    rest = do_iolist(unit, rest, formats, grammatical_case, gender, plural)
+  defp do_iolist(unit, [{si_prefix, _} | rest], options) when si_prefix in @si_keys do
+    si_pattern = get_si_pattern!(si_prefix, options)
+    rest = do_iolist(unit, rest, options)
     merge_SI_prefix(si_pattern, rest)
   end
 
   # Power prefixes
-  defp do_iolist(unit, [{power_prefix, _} | rest], formats, grammatical_case, gender, plural)
-       when power_prefix in @power_keys do
-    power_pattern = get_power_pattern!(formats, power_prefix, grammatical_case, gender, plural)
-
-    rest = do_iolist(unit, rest, formats, grammatical_case, gender, plural)
+  defp do_iolist(unit, [{power_prefix, _} | rest], options) when power_prefix in @power_keys do
+    power_pattern = get_power_pattern!(power_prefix, options)
+    rest = do_iolist(unit, rest, options)
     merge_power_prefix(power_pattern, rest)
   end
 
-  defp do_iolist(unit, [first], formats, grammatical_case, gender, plural) when is_grammar(first) do
-    get_unit_pattern!(unit, first, formats, grammatical_case, gender, plural)
+  defp do_iolist(unit, [first], options) when is_grammar(first) do
+    get_unit_pattern!(unit, first, options)
   end
 
-  defp do_iolist(_unit, [pattern_list], _formats, _grammatical_case, _gender, _plural) do
+  defp do_iolist(_unit, [pattern_list], _options) do
     pattern_list
   end
 
   # List head is a grammar unit
-  defp do_iolist(unit, [first | rest], formats, grammatical_case, gender, plural) when is_grammar(first) do
+  defp do_iolist(unit, [first | rest], %{formats: formats} = options) when is_grammar(first) do
     times_pattern = get_in(formats, [:times, :compound_unit_pattern])
-
-    unit_pattern_1 = get_unit_pattern!(unit, first, formats, grammatical_case, gender, plural)
+    unit_pattern_1 = get_unit_pattern!(unit, first, options)
 
     unit_pattern_2 =
-      do_iolist(unit, rest, formats, grammatical_case, gender, plural)
+      do_iolist(unit, rest, options)
       |> extract_unit()
 
     Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern)
   end
 
   # List head is a format pattern
-  @dialyzer {:nowarn_function, do_iolist: 6}
+  @dialyzer {:nowarn_function, do_iolist: 3}
 
-  defp do_iolist(unit, [unit_pattern_1 | rest], formats, grammatical_case, gender, plural) do
-    times_pattern = get_in(formats, [:times, :compound_unit_pattern])
+  defp do_iolist(unit, [unit_pattern_1 | rest], options) do
+    times_pattern = get_in(options.formats, [:times, :compound_unit_pattern])
 
     unit_pattern_2 =
-      do_iolist(unit, rest, formats, grammatical_case, gender, plural)
+      do_iolist(unit, rest, options)
       |> extract_unit()
 
     Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern)
@@ -664,9 +678,10 @@ defmodule Cldr.Unit.Format do
   # is applied only if the the unit value is "1". Otherwise
   # use the unit category `:other`.
 
-  defp get_unit_pattern!(%Unit{} = unit, grammar, formats, grammatical_case, gender, plural) do
+  defp get_unit_pattern!(%Unit{} = unit, grammar, options) do
+    %{grammatical_case: grammatical_case, grammatical_gender: gender, plural: plural} = options
     integer = integer_unit_value(unit)
-    integer_pattern = get_unit_pattern(grammar, formats, grammatical_case, gender, integer)
+    integer_pattern = get_unit_pattern(grammar, Map.put(options, :plural, integer))
 
     cond do
       currency = currency_unit?(grammar) ->
@@ -680,32 +695,33 @@ defmodule Cldr.Unit.Format do
       # If the plural range and the integer are aligned, use the plural
       # rule no matter whether it has substitutions
       integer_and_plural_match?(integer, plural) ->
-        get_unit_pattern(grammar, formats, grammatical_case, gender, plural) ||
-        get_unit_pattern(grammar, formats, grammatical_case, gender, @default_plural)
+        get_unit_pattern(grammar, options) ||
+        get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
 
 
       # For these plurals get the template and use it only
       # if it has substitutions. If it doesn't then use the default
       # pattern
       plural in [:zero, :one, :two] ->
-        pattern = get_unit_pattern(grammar, formats, grammatical_case, gender, plural)
+        pattern = get_unit_pattern(grammar, options)
 
         if has_substitutions?(pattern) do
           pattern
         else
-          get_unit_pattern(grammar, formats, grammatical_case, gender, :force_default)
+          get_unit_pattern(grammar, Map.put(options, :plural, :force_default))
         end
 
       # For all other cases return the pattern for the given plural
       # category or the default.
       true ->
-        get_unit_pattern(grammar, formats, grammatical_case, gender, plural) ||
-        get_unit_pattern(grammar, formats, grammatical_case, gender, @default_plural)
+        get_unit_pattern(grammar, options) ||
+        get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
     end
     || raise Cldr.Unit.NoPatternError, {unit, grammatical_case, gender, plural}
   end
 
-  defp get_unit_pattern(grammar, formats, grammatical_case, _gender, plural) when is_integer(plural) do
+  defp get_unit_pattern(grammar, %{plural: plural} = options) when is_integer(plural) do
+    %{formats: formats, grammatical_case: grammatical_case} = options
     {name, {unit_case, _unit_plural}} = grammar
     unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
 
@@ -713,7 +729,9 @@ defmodule Cldr.Unit.Format do
       get_in(formats, [name, @default_case, plural])
   end
 
-  defp get_unit_pattern(grammar, formats, grammatical_case, _gender, :force_default) do
+  defp get_unit_pattern(grammar, %{plural: :force_default} = options) do
+    %{formats: formats, grammatical_case: grammatical_case} = options
+
     {name, {unit_case, _unit_plural}} = grammar
     unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
 
@@ -721,8 +739,10 @@ defmodule Cldr.Unit.Format do
       get_in(formats, [name, @default_case, @default_plural])
   end
 
-  defp get_unit_pattern(grammar, formats, grammatical_case, _gender, plural) do
+  defp get_unit_pattern(grammar, options) do
+    %{formats: formats, grammatical_case: grammatical_case, plural: plural} = options
     {name, {unit_case, unit_plural}} = grammar
+
     unit_case = if unit_case == :compound, do: grammatical_case, else: unit_case
     unit_plural = if unit_plural == :compound, do: plural, else: unit_plural
 
@@ -732,13 +752,16 @@ defmodule Cldr.Unit.Format do
       get_in(formats, [name, @default_case, @default_plural])
   end
 
-  defp get_si_pattern!(formats, si_prefix, grammatical_case, gender, plural) do
-    get_in(formats, [si_prefix, :unit_prefix_pattern]) ||
+  defp get_si_pattern!(si_prefix,options) do
+    %{grammatical_case: grammatical_case, grammatical_gender: gender, plural: plural} = options
+
+    get_in(options.formats, [si_prefix, :unit_prefix_pattern]) ||
       raise(Cldr.Unit.NoPatternError, {si_prefix, grammatical_case, gender, plural})
   end
 
-  defp get_power_pattern!(formats, power_prefix, grammatical_case, gender, plural) do
-    power_formats = get_in(formats, [power_prefix, :compound_unit_pattern])
+  defp get_power_pattern!(power_prefix, options) do
+    %{grammatical_case: grammatical_case, grammatical_gender: gender, plural: plural} = options
+    power_formats = get_in(options.formats, [power_prefix, :compound_unit_pattern])
 
     get_in(power_formats, [gender, plural, grammatical_case]) ||
       get_in(power_formats, [gender, plural]) ||
@@ -780,9 +803,9 @@ defmodule Cldr.Unit.Format do
     other
   end
 
-  defp format_number!(unit, backend, options) do
-    number_format_options = Keyword.merge(unit.format_options, options)
-    Cldr.Number.to_string!(unit.value, backend, number_format_options)
+  defp format_number!(unit, options) do
+    number_format_options = Keyword.merge(unit.format_options, Map.to_list(options))
+    Cldr.Number.to_string!(unit.value, options.backend, number_format_options)
   end
 
   defp substitute_number([place, unit], formatted_number) when is_integer(place) do
@@ -882,21 +905,25 @@ defmodule Cldr.Unit.Format do
 
   @per_plural_default :one
 
-  defp extract_options!(unit, options) do
-    {locale, backend} = Cldr.locale_and_backend_from(options)
-    unit_backend = Module.concat(backend, :Unit)
+  defp extract_options!(unit, %{backend: backend, locale: locale, style: style} = options) do
+    unit_backend = Module.concat(options.backend, :Unit)
+    formats = Cldr.Unit.units_for(locale, style, backend)
+    number_format_options = Map.merge(Map.new(unit.format_options), options)
 
-    format = Keyword.get(options, :style, @default_style)
-    grammatical_case = Keyword.get(options, :grammatical_case, @default_case)
-    gender = Keyword.get(options, :grammatical_gender, unit_backend.default_gender(locale))
-    plural = Cldr.Number.PluralRule.plural_type(unit.value, backend, locale: locale)
+    plural =
+      Cldr.Number.PluralRule.plural_type(unit.value, backend, locale: locale)
 
     per_plural =
       locale
       |> unit_backend.grammatical_features()
       |> get_in([:plural, :per, 1])
+      |> Kernel.||(@per_plural_default)
 
-    {locale, format, grammatical_case, gender, plural, per_plural || @per_plural_default}
+    options
+      |> Map.put(:plural, plural)
+      |> Map.put(:per_plural, per_plural)
+      |> Map.put(:formats, formats)
+      |> Map.put(:number_format_options, number_format_options)
   end
 
   @doc false

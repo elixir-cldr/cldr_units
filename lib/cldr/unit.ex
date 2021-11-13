@@ -468,12 +468,14 @@ defmodule Cldr.Unit do
 
     with {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale) do
       case Cldr.Number.Parser.scan(unit_string, options) do
-        [number, unit] when is_number(number) and is_binary(unit)->
+        [number, unit] when is_number(number) and is_binary(unit) ->
           unit = resolve_unit_alias(unit, strings)
           new(number, unit, options)
+
         [unit, number] when is_number(number) and is_binary(unit) ->
           unit = resolve_unit_alias(unit, strings)
           new(number, unit, options)
+
         _other ->
           {:error, not_parseable_error(unit_string)}
       end
@@ -2391,7 +2393,7 @@ defmodule Cldr.Unit do
   def not_parseable_error(string) do
     {
       Cldr.Unit.NotParseableError,
-      "The string #{inspect string} could not be parsed as a unit and a value"
+      "The string #{inspect(string)} could not be parsed as a unit and a value"
     }
   end
 

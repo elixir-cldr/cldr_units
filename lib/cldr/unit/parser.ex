@@ -93,7 +93,7 @@ defmodule Cldr.Unit.Parser do
     |> Enum.map(&parse_subunit/1)
     |> wrap(:ok)
   rescue
-    e in [Cldr.UnknownUnitError, Cldr.Unit.UnknownBaseUnitError] ->
+    e in [Cldr.UnknownUnitError, Cldr.Unit.UnknownBaseUnitError, Cldr.UnknownCurrencyError] ->
       {:error, {e.__struct__, e.message}}
   end
 
@@ -273,8 +273,13 @@ defmodule Cldr.Unit.Parser do
   end
 
   defp split_into_units(<<"curr_", currency::binary-3, rest::binary>>) do
-    {:ok, currency} = Cldr.validate_currency(currency)
-    [currency | split_into_units(rest)]
+    case Cldr.validate_currency(currency) do
+      {:ok, currency} ->
+        [currency | split_into_units(rest)]
+      _other ->
+        {exception, reason} = Cldr.unknown_currency_error(currency)
+        raise exception, reason
+    end
   end
 
   defp split_into_units(<<"_", rest::binary>>) do
@@ -374,6 +379,10 @@ defmodule Cldr.Unit.Parser do
   @currencies Cldr.known_currencies()
   defp resolve_base_unit(currency) when currency in @currencies do
     {currency, %Cldr.Unit.Conversion{base_unit: [currency], factor: 1, offset: 0}}
+  end
+
+  defp resolve_base_unit(currency) when is_atom(currency) do
+    raise Cldr.UnknownCurrencyError, "The currency #{inspect currency} is unknown"
   end
 
   # Units are sorted in the order present in the base units
