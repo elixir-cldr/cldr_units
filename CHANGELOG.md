@@ -12,7 +12,17 @@ This is the changelog for Cldr_units v3.9.0 released on ______, 2021.  For older
 
 ### Enhancements
 
-* Add support for currency-based units.  This allows for calculations and formatting on units such as "$2 per gallon". For this example, the unit would be created with `Cldr.Unit.new(2, "curr-usd-per-gallon")`.
+* Add support for currency-based units.  This allows for calculations and formatting of units such as "$2 per gallon". For this example, the unit would be created with `Cldr.Unit.new(2, "curr-usd-per-gallon")`. The inverse is also possible, for example:
+
+```elixir
+iex> MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(2, "curr-usd-per-gallon"))
+{:ok, "$2.00 per gallon"}
+
+iex> MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(2, "gallon-per-curr-usd"))
+{:ok, "2 gallons per US dollar"}
+```
+
+* Add support for binary factor prefixed units. These units are factors of 1024 and include "kibi", "mebi", "gibi", "tebi", "pebi", "exbi", "zebi" and "yobi".
 
 ## Cldr_Units v3.8.0
 
