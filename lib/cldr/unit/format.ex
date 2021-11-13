@@ -15,6 +15,7 @@ defmodule Cldr.Unit.Format do
 
   @translatable_units Cldr.Unit.known_units()
   @si_keys Cldr.Unit.Prefix.si_keys()
+  @binary_keys Cldr.Unit.Prefix.binary_keys()
   @power_keys Cldr.Unit.Prefix.power_keys()
   @currencies Cldr.known_currencies()
 
@@ -604,9 +605,16 @@ defmodule Cldr.Unit.Format do
 
   # SI Prefixes
   defp do_iolist(unit, [{si_prefix, _} | rest], options) when si_prefix in @si_keys do
-    si_pattern = get_si_pattern!(si_prefix, options)
+    si_pattern = get_prefix_pattern!(si_prefix, options)
     rest = do_iolist(unit, rest, options)
-    merge_SI_prefix(si_pattern, rest)
+    merge_prefix(si_pattern, rest)
+  end
+
+  # SI Prefixes
+  defp do_iolist(unit, [{binary_prefix, _} | rest], options) when binary_prefix in @binary_keys do
+    binary_pattern = get_prefix_pattern!(binary_prefix, options)
+    rest = do_iolist(unit, rest, options)
+    merge_prefix(binary_pattern, rest)
   end
 
   # Power prefixes
@@ -752,11 +760,11 @@ defmodule Cldr.Unit.Format do
       get_in(formats, [name, @default_case, @default_plural])
   end
 
-  defp get_si_pattern!(si_prefix,options) do
+  defp get_prefix_pattern!(prefix,options) do
     %{grammatical_case: grammatical_case, grammatical_gender: gender, plural: plural} = options
 
-    get_in(options.formats, [si_prefix, :unit_prefix_pattern]) ||
-      raise(Cldr.Unit.NoPatternError, {si_prefix, grammatical_case, gender, plural})
+    get_in(options.formats, [prefix, :unit_prefix_pattern]) ||
+      raise(Cldr.Unit.NoPatternError, {prefix, grammatical_case, gender, plural})
   end
 
   defp get_power_pattern!(power_prefix, options) do
@@ -837,28 +845,28 @@ defmodule Cldr.Unit.Format do
   # underlying data does not convey those rules.
 
   @merge_SI_prefix ~r/([^\s]+)$/u
-  defp merge_SI_prefix([prefix, place], [place, string]) when is_integer(place) do
+  defp merge_prefix([prefix, place], [place, string]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
     [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
   end
 
-  defp merge_SI_prefix([prefix, place], [string, place]) when is_integer(place) do
+  defp merge_prefix([prefix, place], [string, place]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
     [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
   end
 
-  defp merge_SI_prefix([place, prefix], [place, string]) when is_integer(place) do
+  defp merge_prefix([place, prefix], [place, string]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
     [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
   end
 
-  defp merge_SI_prefix([place, prefix], [string, place]) when is_integer(place) do
+  defp merge_prefix([place, prefix], [string, place]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
     [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
   end
 
-  defp merge_SI_prefix(prefix_pattern, [unit_pattern | rest]) do
-    [merge_SI_prefix(prefix_pattern, unit_pattern) | rest]
+  defp merge_prefix(prefix_pattern, [unit_pattern | rest]) do
+    [merge_prefix(prefix_pattern, unit_pattern) | rest]
   end
 
   @merge_power_prefix ~r/([^\s]+)/u
@@ -1095,6 +1103,7 @@ defmodule Cldr.Unit.Format do
   end
 
   @si_prefix Cldr.Unit.Prefix.si_power_prefixes()
+  @binary_prefix Cldr.Unit.Prefix.binary_prefixes()
   @power Cldr.Unit.Prefix.power_units() |> Map.new()
 
   # String decomposition
@@ -1108,6 +1117,17 @@ defmodule Cldr.Unit.Format do
 
   for {prefix, exp} <- @si_prefix do
     prefix_unit = String.to_atom("10p#{exp}" |> String.replace("-", "_"))
+
+    defp do_traverse(unquote(prefix) <> unit, fun) do
+      fun.(
+        {:prefix,
+         {fun.({:unit, unquote(prefix_unit)}), fun.({:unit, String.to_existing_atom(unit)})}}
+      )
+    end
+  end
+
+  for {prefix, exp} <- @binary_prefix do
+    prefix_unit = String.to_atom("1024p#{exp}" |> String.replace("-", "_"))
 
     defp do_traverse(unquote(prefix) <> unit, fun) do
       fun.(

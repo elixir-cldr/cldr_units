@@ -156,6 +156,11 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.Format.to_string(unit) == {:ok, "3 square millimeters per cubic fathom"}
   end
 
+  test "to_string a binary prefixed unit" do
+    unit = Cldr.Unit.new!("gibibyte", 2)
+    assert Cldr.Unit.Format.to_string(unit) == {:ok, "2 gibibytes"}
+  end
+
   test "to_string a per compound unit" do
     unit = Cldr.Unit.new!("meter_per_square_kilogram", 1)
     assert Cldr.Unit.Format.to_string(unit) == {:ok, "1 meter per square kilogram"}

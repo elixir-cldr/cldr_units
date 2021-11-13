@@ -112,6 +112,17 @@ defmodule Cldr.Unit.Prefix do
     @binary_keys
   end
 
+  @binary_prefixes @binary_factors
+                     |> Enum.map(fn
+                       {prefix, factor} when is_integer(factor) ->
+                         {prefix, trunc(:math.log2(factor)) - 9}
+                     end)
+                     |> Map.new()
+
+  def binary_prefixes do
+    @binary_prefixes
+  end
+
   @binary_sort_order @binary_factors
                  |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
                  |> Enum.map(&elem(&1, 0))
