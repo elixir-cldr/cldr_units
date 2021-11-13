@@ -42,11 +42,6 @@ defmodule Cldr.Unit.Prefix do
     @si_power_prefixes
   end
 
-  @power_units [{"square", 2}, {"cubic", 3}]
-  def power_units do
-    @power_units
-  end
-
   @si_sort_order @si_factors
                  |> Enum.map(fn
                    {k, v} when is_integer(v) -> {k, v / 1.0}
@@ -60,11 +55,6 @@ defmodule Cldr.Unit.Prefix do
     @si_sort_order
   end
 
-  @prefixes Map.keys(@si_factors) ++ Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
-  def prefixes do
-    @prefixes
-  end
-
   @si_keys @si_power_prefixes
            |> Enum.map(fn {_name, exp} ->
              String.replace("10p#{exp}", "-", "_") |> String.to_atom()
@@ -72,6 +62,16 @@ defmodule Cldr.Unit.Prefix do
 
   def si_keys do
     @si_keys
+  end
+
+  ##
+  ## Power prefixes
+  ##
+
+  @power_units [{"square", 2}, {"cubic", 3}]
+
+  def power_units do
+    @power_units
   end
 
   @power_keys @power_units
@@ -82,4 +82,55 @@ defmodule Cldr.Unit.Prefix do
   def power_keys do
     @power_keys
   end
+
+  ##
+  ## Binary prefixes, 1024 ^ x where 1 <= x <= 8
+  ##
+
+  @binary_factors %{
+    "kibi" => 1_024,
+    "mebi" => 2_048,
+    "gibi" => 4_096,
+    "tebi" => 8_192,
+    "pebi" => 16_384,
+    "exbi" => 32_768,
+    "zebi" => 65_536,
+    "yobi" => 131_072
+  }
+
+  def binary_factors do
+    @binary_factors
+  end
+
+  @binary_keys @binary_factors
+              |> Enum.map(fn {_name, exp} ->
+                exp = trunc(:math.log2(exp)) - 9
+                String.to_atom("1024p#{exp}")
+              end)
+
+  def binary_keys do
+    @binary_keys
+  end
+
+  @binary_sort_order @binary_factors
+                 |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
+                 |> Enum.map(&elem(&1, 0))
+                 |> Enum.with_index()
+
+  def binary_sort_order do
+    @binary_sort_order
+  end
+
+  ##
+  ## Overall prefixes
+  ##
+
+  @prefixes Map.keys(@si_factors) ++
+    Map.keys(@binary_factors) ++
+    Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
+
+  def prefixes do
+    @prefixes
+  end
+
 end

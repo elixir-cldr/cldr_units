@@ -272,6 +272,13 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  for {prefix, _scale} <- Prefix.binary_factors() do
+    defp split_into_units(<<unquote(prefix), rest::binary>>) do
+      [head | rest] = split_into_units(rest)
+      [unquote(prefix) <> head | rest]
+    end
+  end
+
   defp split_into_units(<<"curr_", currency::binary-3, rest::binary>>) do
     case Cldr.validate_currency(currency) do
       {:ok, currency} ->
@@ -356,6 +363,17 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  for {prefix, scale} <- Prefix.binary_factors() do
+    defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
+      with {_, conversion} <- resolve_base_unit(base_unit) do
+        factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
+        {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
+      else
+        {:error, {exception, reason}} -> raise(exception, reason)
+      end
+    end
+  end
+
   for {prefix, power} <- Prefix.power_units() do
     defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
@@ -409,6 +427,12 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, order} <- Prefix.si_sort_order() do
+    defp unit_sort_key({<<unquote(prefix), unit::binary>>, conversion}) do
+      {unit_sort_key({unit, conversion}), unquote(order)}
+    end
+  end
+
+  for {prefix, order} <- Prefix.binary_sort_order() do
     defp unit_sort_key({<<unquote(prefix), unit::binary>>, conversion}) do
       {unit_sort_key({unit, conversion}), unquote(order)}
     end
