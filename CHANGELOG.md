@@ -2,7 +2,7 @@
 
 ## Cldr_Units v3.9.0
 
-This is the changelog for Cldr_units v3.9.0 released on ______, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.9.0 released on November 14th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -22,7 +22,19 @@ iex> MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(2, "gallon-per-curr-usd"))
 {:ok, "2 gallons per US dollar"}
 ```
 
-* Add support for binary factor prefixed units. These units are factors of 1024 and include "kibi", "mebi", "gibi", "tebi", "pebi", "exbi", "zebi" and "yobi".
+* Add support for binary factor prefixed units. These units are factors of 1024 and include "kibi", "mebi", "gibi", "tebi", "pebi", "exbi", "zebi" and "yobi". For example:
+
+```elixir
+iex(1)> MyApp.Cldr.Unit.to_string Cldr.Unit.new!(3, :gibibyte)
+{:ok, "3 gibibytes"}
+```
+
+* Add support for integer prefixes for units. This is useful for units like "liters per 100 kilometers" or "25 calories per 100 grams".  For example:
+
+```
+iex> MyApp.Cldr.Unit.to_string Cldr.Unit.new!(25, "calorie_per_100-gram")
+{:ok, "25 calories per 100 grams"}
+```
 
 ## Cldr_Units v3.8.0
 

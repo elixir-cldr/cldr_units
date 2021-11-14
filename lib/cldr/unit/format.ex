@@ -603,6 +603,14 @@ defmodule Cldr.Unit.Format do
     [formatted | do_iolist(unit, rest, options)]
   end
 
+  # Numeric prefixes
+  defp do_iolist(unit, [{integer, _} | rest], options) when is_integer(integer) do
+    options = Map.put(options, :plural, plural(integer, options))
+    formatted = Cldr.Number.to_string!(integer, options.backend, Map.to_list(options))
+    rest = do_iolist(unit, rest, options)
+    merge_numeric_prefix([formatted, 0], rest)
+  end
+
   # SI Prefixes
   defp do_iolist(unit, [{si_prefix, _} | rest], options) when si_prefix in @si_keys do
     si_pattern = get_prefix_pattern!(si_prefix, options)
@@ -610,7 +618,7 @@ defmodule Cldr.Unit.Format do
     merge_prefix(si_pattern, rest)
   end
 
-  # SI Prefixes
+  # Binary Prefixes
   defp do_iolist(unit, [{binary_prefix, _} | rest], options) when binary_prefix in @binary_keys do
     binary_pattern = get_prefix_pattern!(binary_prefix, options)
     rest = do_iolist(unit, rest, options)
@@ -657,6 +665,10 @@ defmodule Cldr.Unit.Format do
     Cldr.Substitution.substitute([unit_pattern_1, unit_pattern_2], times_pattern)
   end
 
+  defp do_iolist(unit, grammar, _options) do
+    raise "Unmatched grammar: #{inspect grammar} for unit #{inspect unit}"
+  end
+
   # Get the appropriate unit pattern. An important part of
   # this is the following from TR35:
 
@@ -692,6 +704,9 @@ defmodule Cldr.Unit.Format do
     integer_pattern = get_unit_pattern(grammar, Map.put(options, :plural, integer))
 
     cond do
+      integer = integer_unit?(grammar) ->
+        integer
+
       currency = currency_unit?(grammar) ->
         currency
 
@@ -787,6 +802,14 @@ defmodule Cldr.Unit.Format do
     nil
   end
 
+  defp integer_unit?({integer, _}) when is_integer(integer) do
+    integer
+  end
+
+  defp integer_unit?(_other) do
+    nil
+  end
+
   defp integer_and_plural_match?(0, :zero), do: true
   defp integer_and_plural_match?(1, :one), do: true
   defp integer_and_plural_match?(2, :two), do: true
@@ -828,7 +851,7 @@ defmodule Cldr.Unit.Format do
     [currency_string]
   end
 
-  defp substitute_number([currency_string | rest], _formatted_nunber) when is_binary(currency_string) do
+  defp substitute_number([currency_string | rest], _formatted) when is_binary(currency_string) do
     case rest do
       [placeholder, string] when is_integer(placeholder) ->
         [currency_string, string]
@@ -843,6 +866,10 @@ defmodule Cldr.Unit.Format do
 
   # Merging power and SI prefixes into a pattern is a heuristic since the
   # underlying data does not convey those rules.
+
+  ##
+  ## Merge SI prefixes
+  ##
 
   @merge_SI_prefix ~r/([^\s]+)$/u
   defp merge_prefix([prefix, place], [place, string]) when is_integer(place) do
@@ -868,6 +895,10 @@ defmodule Cldr.Unit.Format do
   defp merge_prefix(prefix_pattern, [unit_pattern | rest]) do
     [merge_prefix(prefix_pattern, unit_pattern) | rest]
   end
+
+  ##
+  ## Merge power prefixes (square, cube)
+  ##
 
   @merge_power_prefix ~r/([^\s]+)/u
   defp merge_power_prefix([prefix, place], [place, string]) when is_integer(place) do
@@ -897,6 +928,38 @@ defmodule Cldr.Unit.Format do
 
   defp merge_power_prefix([prefix, place], string) when is_integer(place) and is_binary(string) do
     string = maybe_downcase(prefix, string)
+    [prefix, string]
+  end
+
+  ##
+  ## Merge numeric prefixes
+  ##
+
+  defp merge_numeric_prefix([prefix, place], [place, string]) when is_integer(place) do
+    [place, prefix <> string]
+  end
+
+  defp merge_numeric_prefix([prefix, place], [string, place]) when is_integer(place) do
+    [prefix <> string, place]
+  end
+
+  defp merge_numeric_prefix([place, prefix], [place, string]) when is_integer(place) do
+    [place, prefix <> string]
+  end
+
+  defp merge_numeric_prefix([place, prefix], [string, place]) when is_integer(place) do
+    [prefix <> string, place]
+  end
+
+  defp merge_numeric_prefix([place, prefix], list) when is_integer(place) and is_list(list) do
+    [list, prefix]
+  end
+
+  defp merge_numeric_prefix([prefix, place], [string | rest]) when is_integer(place) do
+    [prefix, [string | rest]]
+  end
+
+  defp merge_numeric_prefix([prefix, place], string) when is_integer(place) and is_binary(string) do
     [prefix, string]
   end
 
@@ -1138,7 +1201,13 @@ defmodule Cldr.Unit.Format do
   end
 
   defp do_traverse(unit, fun) when is_binary(unit) do
-    fun.({:unit, String.to_existing_atom(unit)})
+    case Integer.parse(unit) do
+      {integer, unit} when is_integer(integer) ->
+        unit = String.trim_leading(unit, "_")
+        [{integer, {:nominative, :one}} | maybe_wrap(do_traverse(unit, fun))]
+      _other ->
+        fun.({:unit, String.to_existing_atom(unit)})
+    end
   end
 
   defp do_traverse(unit, fun) when is_atom(unit) do
@@ -1165,4 +1234,11 @@ defmodule Cldr.Unit.Format do
     |> Unit.to_float_unit()
     |> integer_unit_value()
   end
+
+  defp plural(integer, options) do
+    Cldr.Number.PluralRule.plural_type(integer, options.backend, locale: options.locale)
+  end
+
+  defp maybe_wrap(list) when is_list(list), do: list
+  defp maybe_wrap(elem), do: [elem]
 end

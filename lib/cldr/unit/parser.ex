@@ -294,7 +294,13 @@ defmodule Cldr.Unit.Parser do
   end
 
   defp split_into_units(other) do
-    raise Cldr.UnknownUnitError, "Unknown unit was detected at #{inspect(other)}"
+    case Integer.parse(other) do
+      {integer, rest} when is_integer(integer) ->
+        [head | rest] = split_into_units(rest)
+        [{integer, head} | rest]
+      _other ->
+        raise Cldr.UnknownUnitError, "Unknown unit was detected at #{inspect(other)}"
+    end
   end
 
   # In order to correctly identify the units with their
@@ -397,6 +403,15 @@ defmodule Cldr.Unit.Parser do
   @currencies Cldr.known_currencies()
   defp resolve_base_unit(currency) when currency in @currencies do
     {currency, %Cldr.Unit.Conversion{base_unit: [currency], factor: 1, offset: 0}}
+  end
+
+  # Integer-prefixed units like "300-gram". We process
+  # them like power units (unit with a prefix)
+  defp resolve_base_unit({integer, unit}) do
+    {name, unit} = resolve_base_unit(unit)
+    name = "#{integer}_#{name}"
+    factor = Ratio.mult(unit.factor, integer)
+    {name, %{unit | factor: factor}}
   end
 
   defp resolve_base_unit(currency) when is_atom(currency) do
