@@ -25,13 +25,13 @@ iex> MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(2, "gallon-per-curr-usd"))
 * Add support for binary factor prefixed units. These units are factors of 1024 and include "kibi", "mebi", "gibi", "tebi", "pebi", "exbi", "zebi" and "yobi". For example:
 
 ```elixir
-iex(1)> MyApp.Cldr.Unit.to_string Cldr.Unit.new!(3, :gibibyte)
+iex> MyApp.Cldr.Unit.to_string Cldr.Unit.new!(3, :gibibyte)
 {:ok, "3 gibibytes"}
 ```
 
 * Add support for integer prefixes for units. This is useful for units like "liters per 100 kilometers" or "25 calories per 100 grams".  For example:
 
-```
+```elixir
 iex> MyApp.Cldr.Unit.to_string Cldr.Unit.new!(25, "calorie_per_100-gram")
 {:ok, "25 calories per 100 grams"}
 ```
