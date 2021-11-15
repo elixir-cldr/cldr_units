@@ -2068,20 +2068,20 @@ defmodule Cldr.Unit do
   def validate_unit(unit_name) when unit_name in @aliases do
     unit_name
     |> Alias.alias()
-    |> validate_unit
+    |> validate_unit()
   end
 
   def validate_unit(unit_name) when is_atom(unit_name) do
     unit_name
     |> Atom.to_string()
-    |> validate_unit
+    |> validate_unit()
   end
 
   def validate_unit(unit_name) when is_binary(unit_name) do
     unit_name
-    |> normalize_unit_name
-    |> maybe_translatable_unit
-    |> return_unit
+    |> normalize_unit_name()
+    |> maybe_translatable_unit()
+    |> return_parsed_unit()
   end
 
   def validate_unit(%Unit{unit: unit_name, base_conversion: base_conversion}) do
@@ -2092,11 +2092,11 @@ defmodule Cldr.Unit do
     {:error, unit_error(unknown_unit)}
   end
 
-  defp return_unit(unit_name) when is_atom(unit_name) do
+  defp return_parsed_unit(unit_name) when is_atom(unit_name) do
     validate_unit(unit_name)
   end
 
-  defp return_unit(unit_name) do
+  defp return_parsed_unit(unit_name) do
     with {:ok, parsed} <- Parser.parse_unit(unit_name) do
       name =
         parsed

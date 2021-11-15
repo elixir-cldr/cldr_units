@@ -20,15 +20,22 @@ defmodule Cldr.Unit.Parser do
   @doc false
   defdelegate base_units_in_order, to: Cldr.Unit.BaseUnit
 
+  @currencies Cldr.known_currencies()
+
   @doc false
   @per "_per_"
   def per do
     @per
   end
 
+  @doc false
+  @currency_base "curr_"
+  def currency_base do
+    @currency_base
+  end
+
   @doc """
-  Parses a unit name expressed as a
-  string and returns the parsed
+  Parses a unit name expressed as a string and returns the parsed
   name or an error.
 
   ## Arguments
@@ -81,6 +88,7 @@ defmodule Cldr.Unit.Parser do
         ]}}
 
   """
+
   @spec parse_unit(String.t()) ::
           {:ok, [Unit.base_conversion()]}
           | {:ok, {[Unit.base_conversion()], [Unit.base_conversion()]}}
@@ -152,10 +160,6 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  def canonical_unit_name({:currency, currency}) do
-    to_string(currency)
-  end
-
   def canonical_unit_name({numerator, denominator}) do
     to_string(canonical_subunit_name(numerator)) <>
       @per <>
@@ -195,6 +199,12 @@ defmodule Cldr.Unit.Parser do
       iex> Cldr.Unit.Parser.canonical_unit_name! "meter kilogram"
       "kilogram_meter"
 
+      iex> Cldr.Unit.Parser.canonical_unit_name "curr-usd"
+      {:ok, "curr_usd"}
+
+      iex> Cldr.Unit.Parser.canonical_unit_name "curr-usd-per-kilogram"
+      {:ok, "curr_usd_per_kilogram"}
+
       => Cldr.Unit.Parser.canonical_unit_name! "meter kilogram per fluxom"
       ** (CaseClauseError) no case clause matching: {:error,
           {Cldr.UnknownUnitError, "Unknown unit was detected at \"fluxom\""}}
@@ -207,12 +217,23 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  defp canonical_subunit_name([{unit_name, _}]) do
-    unit_name
+  defp canonical_subunit_name([subunit]) do
+    canonical_subunit_name(subunit)
   end
 
-  defp canonical_subunit_name([{first, _}, {second, _} | rest]) do
-    canonical_subunit_name([{to_string(first) <> "_" <> to_string(second), nil} | rest])
+  defp canonical_subunit_name(subunits) when is_list(subunits) do
+    subunits
+    |> Enum.map(&canonical_subunit_name/1)
+    |> Enum.map(&to_string/1)
+    |> Enum.join("_")
+  end
+
+  defp canonical_subunit_name({currency, _}) when is_atom(currency) and currency in @currencies do
+    String.downcase(@currency_base <> Atom.to_string(currency))
+  end
+
+  defp canonical_subunit_name({unit_name, _}) do
+    unit_name
   end
 
   @unit_strings Conversions.conversions()
@@ -279,7 +300,7 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  defp split_into_units(<<"curr_", currency::binary-3, rest::binary>>) do
+  defp split_into_units(<<@currency_base, currency::binary-3, rest::binary>>) do
     case Cldr.validate_currency(currency) do
       {:ok, currency} ->
         [currency | split_into_units(rest)]

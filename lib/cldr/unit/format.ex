@@ -18,6 +18,7 @@ defmodule Cldr.Unit.Format do
   @binary_keys Cldr.Unit.Prefix.binary_keys()
   @power_keys Cldr.Unit.Prefix.power_keys()
   @currencies Cldr.known_currencies()
+  @currency_base Cldr.Unit.Parser.currency_base()
 
   @default_case :nominative
   @default_style :long
@@ -409,8 +410,7 @@ defmodule Cldr.Unit.Format do
     to_iolist(list_or_unit, backend, options)
   end
 
-  # Direct formatting of the unit since
-  # it is translatable directly
+  # Direct formatting of the unit since it is translatable directly
   def to_iolist(%Cldr.Unit{unit: name} = unit, backend, options) when name in @translatable_units do
     with {:ok, options} <- normalize_options(backend, options) do
       options = extract_options!(unit, options)
@@ -424,8 +424,11 @@ defmodule Cldr.Unit.Format do
     end
   end
 
-  def to_iolist(%Cldr.Unit{unit: currency} = unit, backend, options) when currency in @currencies do
+  # The unit is a standalone currency
+  def to_iolist(%Cldr.Unit{unit: <<@currency_base, _curr::binary-3>>} = unit, backend, options) do
     with {:ok, options} <- normalize_options(backend, options) do
+      [{currency, _}] = unit.base_conversion
+
       options =
         options
         |> Map.put(:currency, currency)
@@ -435,6 +438,7 @@ defmodule Cldr.Unit.Format do
     end
   end
 
+  # Its a compound unit
   def to_iolist(%Cldr.Unit{} = unit, backend, options) do
     with {:ok, options} <- normalize_options(backend, options) do
       options = extract_options!(unit, options)
@@ -446,6 +450,7 @@ defmodule Cldr.Unit.Format do
     end
   end
 
+  # It's a number, which we convert to a unit and then process
   def to_iolist(number, backend, options) when is_number(number) do
     {unit, options} = Keyword.pop(options, :unit)
 
@@ -454,6 +459,7 @@ defmodule Cldr.Unit.Format do
     end
   end
 
+  # It's a decimal, which we convert to a unit and then process
   def to_iolist(%Decimal{} = number, backend, options) do
     {unit, options} = Keyword.pop(options, :unit)
 
@@ -565,10 +571,9 @@ defmodule Cldr.Unit.Format do
   end
 
   # For compound "per" units
-  defp to_iolist(unit, grammar, formatted_number, options) do
-    {numerator, denominator} = grammar
-
-    per_pattern = get_in(options.formats, [:per, :compound_unit_pattern])
+  defp to_iolist(unit, {numerator, denominator}, formatted_number, options) do
+    per_pattern =
+      get_in(options.formats, [:per, :compound_unit_pattern])
 
     numerator_pattern =
       to_iolist(unit, numerator, formatted_number, options)

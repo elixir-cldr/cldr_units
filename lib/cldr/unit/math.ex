@@ -39,16 +39,13 @@ defmodule Cldr.Unit.Math do
   """
   @spec add(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def add(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
+  def add(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: value_2})
       when is_number(value_1) and is_number(value_2) do
-    Unit.new!(unit, value_1 + value_2)
+    %{unit_1 | value: value_1 + value_2}
   end
 
-  def add(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
-        unit: unit,
-        value: %Decimal{} = value_2
-      }) do
-    Unit.new!(unit, Decimal.add(value_1, value_2))
+  def add(%Unit{unit: unit, value: %Decimal{}} = u1, %Unit{unit: unit, value: %Decimal{}} = u2) do
+     %{u1 | value: Decimal.add(u1.value, u2.value)}
   end
 
   def add(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})

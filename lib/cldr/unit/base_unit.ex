@@ -13,6 +13,8 @@ defmodule Cldr.Unit.BaseUnit do
   alias Cldr.Unit
 
   @per "_per_"
+  @currency_base Cldr.Unit.Parser.currency_base()
+  @currencies Cldr.known_currencies()
 
   @doc """
   Returns the canonical base unit name
@@ -82,6 +84,10 @@ defmodule Cldr.Unit.BaseUnit do
     |> resolve_unit_names()
     |> sort_base_units()
     |> reduce_powers()
+  end
+
+  defp canonical_base_subunit({currency, _conversion}) when currency in @currencies do
+    [String.downcase(@currency_base <> to_string(currency))]
   end
 
   defp canonical_base_subunit({_unit_name, %Conversion{base_unit: base_units}}) do
@@ -181,7 +187,11 @@ defmodule Cldr.Unit.BaseUnit do
   end
 
   # Relies on base units only ever being a single unit
-  # or a list with two elements being a prefix and a unit
+  # or a list with two elements being a prefix and a unit except
+  # for a currency unit in which case it will be a binary of the
+  # form `curr-usd` by the time we get here.  And currency forms
+  # always sort at the head of the list.
+
   defp base_unit_sorter(unit_a, unit_b) when is_atom(unit_a) and is_atom(unit_b) do
     Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
   end
@@ -196,6 +206,14 @@ defmodule Cldr.Unit.BaseUnit do
 
   defp base_unit_sorter([_prefix_a, unit_a], [_prefix_b, unit_b]) do
     Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
+  end
+
+  defp base_unit_sorter(@currency_base <> _currency, _) do
+    true
+  end
+
+  defp base_unit_sorter(_, @currency_base <> _currency) do
+    false
   end
 
   # Reduce powers to square and cubic

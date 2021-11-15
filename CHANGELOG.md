@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.9.1
+
+This is the changelog for Cldr_units v3.9.1 released on November ____, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix canonical unit name for currency units. This also fixes unit math with currency units.
+
 ## Cldr_Units v3.9.0
 
 This is the changelog for Cldr_units v3.9.0 released on November 14th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
