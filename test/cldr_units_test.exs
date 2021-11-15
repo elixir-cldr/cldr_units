@@ -1,6 +1,17 @@
 defmodule Cldr.UnitsTest do
   use ExUnit.Case, async: true
 
+  test "new unit with multiple 'per' clauses" do
+    assert Cldr.Unit.new!(2, "curr-usd-per-meter-per-second").unit ==
+      "curr_usd_per_meter_per_second"
+
+    assert Cldr.Unit.new!(2, "curr-usd-per-mile-per-gallon").unit ==
+      "curr_usd_per_gallon_mile"
+
+    assert Cldr.Unit.new!(2, "curr-usd-per-mile-per-gallon").unit ==
+      "curr_usd_per_gallon_mile"
+  end
+
   test "that centimetre conversion is correct" do
     assert Cldr.Unit.convert(Cldr.Unit.new!(:millimeter, 300), :centimeter) ==
              Cldr.Unit.new(:centimeter, 30.0)

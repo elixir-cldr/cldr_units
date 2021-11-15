@@ -98,7 +98,7 @@ defmodule Cldr.Unit.Parser do
     unit_string
     |> Cldr.Unit.normalize_unit_name()
     |> String.split(@per, parts: 2)
-    |> Enum.map(&parse_subunit/1)
+    |> parse_subunits()
     |> wrap(:ok)
   rescue
     e in [Cldr.UnknownUnitError, Cldr.Unit.UnknownBaseUnitError, Cldr.UnknownCurrencyError] ->
@@ -112,6 +112,22 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  defp parse_subunits([numerator]) do
+    [parse_subunit(numerator)]
+  end
+
+  defp parse_subunits([numerator, denominator]) do
+    numerator =
+      parse_subunit(numerator)
+
+    denominator =
+      denominator
+      |> Cldr.Unit.validate_unit()
+      |> reduce_subunits()
+
+    [numerator, denominator]
+  end
+
   defp parse_subunit(unit_string) when is_binary(unit_string) do
     unit_string
     |> split_into_units
@@ -119,6 +135,29 @@ defmodule Cldr.Unit.Parser do
     |> combine_power_instances()
     |> Enum.map(&resolve_base_unit/1)
     |> Enum.sort(&unit_sorter/2)
+  end
+
+  # Per TR35: https://unicode.org/reports/tr35/tr35-general.html#Unit_Identifiers
+
+  # Multiplication binds more tightly than division, so kilogram-meter-per-second-ampere is
+  # interpreted as (kg ⋅ m) / (s ⋅ a).
+
+  # Thus if -per- occurs multiple times, each occurrence after the first is equivalent to
+  # a multiplication:
+
+  # kilogram-meter-per-second-ampere ⩧ kilogram-meter-per-second-per-ampere.
+
+  defp reduce_subunits({:ok, name, {numerator, denominator}}) do
+    (numerator ++ reduce_subunits({:ok, name, denominator}))
+    |> Enum.sort(&unit_sorter/2)
+  end
+
+  defp reduce_subunits({:ok, _name, numerator}) do
+    numerator
+  end
+
+  defp reduce_subunits({:error, {exception, reason}}) do
+    raise exception, reason
   end
 
   @doc """

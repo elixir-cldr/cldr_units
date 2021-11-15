@@ -16,4 +16,9 @@ defmodule Cldr.Unit.Math.Test do
     assert Cldr.Unit.new!(2, "curr-usd-per-ampere-light-year") == Cldr.Unit.sub(u1, u2)
   end
 
+  test "Add for numeric prefix units" do
+    u1 = u2 = Cldr.Unit.new!(2, "curr-usd-per-100-mile-per-gallon")
+    assert Cldr.Unit.add(u1, u2) == Cldr.Unit.new!(4, "curr-usd-per-100-mile-per-gallon")
+  end
+
 end
