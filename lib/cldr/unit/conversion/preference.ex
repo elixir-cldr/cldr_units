@@ -98,6 +98,9 @@ defmodule Cldr.Unit.Preference do
       [Cldr.Unit.new!(:inch, Ratio.new(216172782113783808, 5490788665690109))]
 
   """
+  @spec preferred_units(Cldr.Unit.t(), Cldr.backend() | Keyword.t(), Keyword.t() | Options.t()) ::
+    {:ok, [atom(), ...], Keyword.t()} | {:error, {module, binary}}
+
   def preferred_units(unit, backend, options \\ [])
 
   def preferred_units(%Unit{} = unit, options, []) when is_list(options) do
@@ -125,62 +128,6 @@ defmodule Cldr.Unit.Preference do
       geq = Unit.value(base_unit) |> to_float()
       preferred_units(category, usage, territory_chain, geq)
     end
-  end
-
-  # Rounding matches the number we used
-  # to generate the function clauses
-
-  @rounding Cldr.Unit.rounding()
-
-  defp to_float(%Ratio{} = value) do
-    Ratio.to_float(value)
-    |> Cldr.Math.round(@rounding)
-  end
-
-  defp to_float(%Decimal{} = value) do
-    Decimal.to_float(value)
-    |> Cldr.Math.round(@rounding)
-  end
-
-  defp to_float(other) do
-    other
-  end
-
-  defp usage_chain(usage) when is_atom(usage) do
-    usage_chain()
-    |> Map.fetch!(usage)
-  end
-
-  # TR35 says that for a given usage, if it
-  # can't be found, split it at the last
-  # "_", take the head of the split and try
-  # again. Repeat until the usage is found or
-  # there is nothing more to try.
-  #
-  # The following precomputes these "usage chains"
-  # by taking each known usage and breaking it
-  # down as required by TR36.
-
-  @usage_chain Cldr.Unit.unit_category_usage()
-               |> Enum.map(fn {_category, usage} ->
-                 Enum.map(usage, fn use ->
-                   chain =
-                     use
-                     |> Atom.to_string()
-                     |> String.split("_")
-                     |> Cldr.Enum.combine_list()
-                     |> Enum.map(&String.to_atom/1)
-                     |> List.insert_at(0, :default)
-                     |> Enum.reverse()
-
-                   {use, chain}
-                 end)
-               end)
-               |> List.flatten()
-               |> Map.new()
-
-  defp usage_chain do
-    @usage_chain
   end
 
   @doc """
@@ -245,11 +192,70 @@ defmodule Cldr.Unit.Preference do
       [:meter]
 
   """
+  @spec preferred_units!(Cldr.Unit.t(), Cldr.backend() | Keyword.t(), Keyword.t() | Options.t()) ::
+    [atom(), ...] | no_return()
+
   def preferred_units!(unit, backend, options \\ []) do
     case preferred_units(unit, backend, options) do
       {:ok, preferred_units, _} -> preferred_units
       {:error, {exception, reason}} -> raise exception, reason
     end
+  end
+
+  # Rounding matches the number we used
+  # to generate the function clauses
+
+  @rounding Cldr.Unit.rounding()
+
+  defp to_float(%Ratio{} = value) do
+    Ratio.to_float(value)
+    |> Cldr.Math.round(@rounding)
+  end
+
+  defp to_float(%Decimal{} = value) do
+    Decimal.to_float(value)
+    |> Cldr.Math.round(@rounding)
+  end
+
+  defp to_float(other) do
+    other
+  end
+
+  defp usage_chain(usage) when is_atom(usage) do
+    usage_chain()
+    |> Map.fetch!(usage)
+  end
+
+  # TR35 says that for a given usage, if it
+  # can't be found, split it at the last
+  # "_", take the head of the split and try
+  # again. Repeat until the usage is found or
+  # there is nothing more to try.
+  #
+  # The following precomputes these "usage chains"
+  # by taking each known usage and breaking it
+  # down as required by TR36.
+
+  @usage_chain Cldr.Unit.unit_category_usage()
+               |> Enum.map(fn {_category, usage} ->
+                 Enum.map(usage, fn use ->
+                   chain =
+                     use
+                     |> Atom.to_string()
+                     |> String.split("_")
+                     |> Cldr.Enum.combine_list()
+                     |> Enum.map(&String.to_atom/1)
+                     |> List.insert_at(0, :default)
+                     |> Enum.reverse()
+
+                   {use, chain}
+                 end)
+               end)
+               |> List.flatten()
+               |> Map.new()
+
+  defp usage_chain do
+    @usage_chain
   end
 
   defp validate_preference_options(backend, options) when is_list(options) do

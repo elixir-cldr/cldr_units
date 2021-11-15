@@ -6,9 +6,11 @@ This is the changelog for Cldr_units v3.9.1 released on November ____, 2021.  Fo
 
 ### Bug Fixes
 
-* Support parsing units with multiple "per" clauses like
+* Support parsing units with multiple "per" clauses like "gallon per feet per second".
+
 * Fix canonical unit name for currency units. This also fixes unit math with currency units.
 
+* Add `display_name/2` to backend modules.
 
 ## Cldr_Units v3.9.0
 

@@ -379,6 +379,50 @@ defmodule Cldr.Unit.Backend do
         end
 
         @doc """
+        Returns the localized display name
+        for a unit.
+
+        The returned text is generally suitable
+        for including in UI elements such as
+        selection boxes.
+
+        ## Arguments
+
+        * `unit` is any `t:Cldr.Unit` or any
+          unit name returned by `Cldr.Unit.known_units/0`.
+
+        * `options` is a keyword list of options.
+
+        ## Options
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
+
+        * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+          The current styles are `:long`, `:short` and `:narrow`.
+          The default is `style: :long`.
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.display_name :liter
+            "liters"
+
+            iex> #{inspect(__MODULE__)}.display_name :liter, locale: "fr"
+            "litres"
+
+            iex> #{inspect(__MODULE__)}.display_name :liter, locale: "fr", style: :short
+            "l"
+
+        """
+        @spec display_name(Cldr.Unit.value() | Cldr.Unit.t(), Keyword.t) ::
+          String.t() | {:error, {module, binary}}
+
+        def display_name(unit, options \\ []) do
+          options = Keyword.put(options, :backend, unquote(backend))
+          Cldr.Unit.display_name(unit, options)
+        end
+
+        @doc """
         Returns a list of the preferred units for a given
         unit, locale, use case and scope.
 
@@ -447,6 +491,9 @@ defmodule Cldr.Unit.Backend do
             {:ok, [:meter], [round_nearest: 1]}
 
         """
+        @spec preferred_units(Cldr.Unit.t(), Keyword.t) ::
+          {:ok, String.t()} | {:error, {module, binary}}
+
         def preferred_units(unit, options \\ []) do
           Cldr.Unit.Preference.preferred_units(unit, unquote(backend), options)
         end
