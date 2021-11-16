@@ -2118,12 +2118,8 @@ defmodule Cldr.Unit do
   @doc false
   def maybe_translatable_unit(name) do
     atom_name = String.to_existing_atom(name)
+    if atom_name in known_units(), do: atom_name, else: name
 
-    if atom_name in known_units() do
-      atom_name
-    else
-      name
-    end
   rescue
     ArgumentError ->
       name
