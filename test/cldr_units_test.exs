@@ -238,6 +238,10 @@ defmodule Cldr.UnitsTest do
               {Cldr.Unit.UnknownUnitCategoryError, "The unit category :invalid is not known."}}
   end
 
+  test "unit category for" do
+    assert Cldr.Unit.unit_category(:year) == {:ok, :duration}
+  end
+
   test "display names" do
     assert Cldr.Unit.display_name(:liter) == "liters"
     assert Cldr.Unit.display_name(:liter, locale: "fr") == "litres"

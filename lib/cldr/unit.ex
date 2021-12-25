@@ -1696,6 +1696,9 @@ defmodule Cldr.Unit do
         "The category for \\"kilowatt hour\\" is not known."}}
 
   """
+
+  @unit_category_inverse_map Cldr.Map.invert(@units_by_category) |> Cldr.Map.stringify_keys()
+
   @spec unit_category(Unit.t() | String.t() | atom()) ::
           {:ok, category()} | {:error, {module(), String.t()}}
 
@@ -1708,7 +1711,7 @@ defmodule Cldr.Unit do
   @doc false
   def unit_category(unit, conversion) do
     with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion),
-         {:ok, category} <- Map.fetch(base_unit_category_map(), Kernel.to_string(base_unit)) do
+         {:ok, category} <- Map.fetch(@unit_category_inverse_map, Kernel.to_string(base_unit)) do
       {:ok, category}
     else
       :error -> {:error, unknown_category_error(unit)}
@@ -1765,6 +1768,7 @@ defmodule Cldr.Unit do
 
   @base_unit_category_map Cldr.Config.units()
                           |> Map.get(:base_units)
+                          # |> Kernel.++(Cldr.Unit.Additional.base_units())
                           |> Enum.map(fn {k, v} -> {to_string(v), k} end)
                           |> Map.new()
 

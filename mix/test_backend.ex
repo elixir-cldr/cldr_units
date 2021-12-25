@@ -55,6 +55,57 @@ defmodule MyApp.Cldr do
     },
     display_name: "v"
   )
+
+  # Unit Quarter
+
+  unit_localization(:quarter, "en", :long,
+    nominative: %{
+      one: "{0} quarter",
+      other: "{0} quarters"
+    },
+    display_name: "quarters"
+  )
+
+  unit_localization(:quarter, "en", :short,
+    nominative: %{
+      one: "{0} qtr",
+      other: "{0} qtrs"
+    },
+    display_name: "quarters"
+  )
+
+  unit_localization(:quarter, "en", :narrow,
+    nominative: %{
+      one: "{0} q",
+      other: "{0} q"
+    },
+    display_name: "q"
+  )
+
+
+  unit_localization(:quarter, "fr", :long,
+    nominative: %{
+      one: "{0} quartier",
+      other: "{0} quartiers"
+    },
+    display_name: "quartiers"
+  )
+
+  unit_localization(:quarter, "fr", :short,
+    nominative: %{
+      one: "{0} qtr",
+      other: "{0} qtrs"
+    },
+    display_name: "quartiers"
+  )
+
+  unit_localization(:quarter, "fr", :narrow,
+    nominative: %{
+      one: "{0} q",
+      other: "{0} q"
+    },
+    display_name: "q"
+  )
 end
 
 defmodule NoDocs.Cldr do

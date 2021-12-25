@@ -120,13 +120,35 @@ defmodule Cldr.Unit.Preference do
   def preferred_units(%Unit{} = unit, _backend, %Options{} = options) do
     %{usage: usage, territory: territory} = options
     {:ok, territory_chain} = Cldr.territory_chain(territory)
-    {:ok, category} = Unit.unit_category(unit)
+    {:ok, category} = unit_preference_category(unit)
     {:ok, base_unit} = Conversion.convert_to_base_unit(unit)
 
     with {:ok, usage} <- validate_usage(category, usage) do
       usage = usage_chain(usage)
       geq = Unit.value(base_unit) |> to_float()
       preferred_units(category, usage, territory_chain, geq)
+    end
+  end
+
+  @doc false
+
+  @spec unit_preference_category(Unit.t() | String.t() | atom()) ::
+          {:ok, Unit.category()} | {:error, {module(), String.t()}}
+
+  def unit_preference_category(unit) do
+    with {:ok, _unit, conversion} <- Unit.validate_unit(unit) do
+      unit_preference_category(unit, conversion)
+    end
+  end
+
+  @doc false
+  def unit_preference_category(unit, conversion) do
+    with {:ok, base_unit} <- Unit.BaseUnit.canonical_base_unit(conversion),
+         {:ok, category} <- Map.fetch(Unit.base_unit_category_map(), Kernel.to_string(base_unit)) do
+      {:ok, category}
+    else
+      :error -> {:error, Unit.unknown_category_error(unit)}
+      other -> other
     end
   end
 
