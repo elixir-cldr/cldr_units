@@ -30,6 +30,7 @@ defmodule Cldr.Unit do
     by a list of smaller units.
 
   """
+  import Kernel, except: [to_string: 1]
 
   alias Cldr.Unit
   alias Cldr.{Locale, LanguageTag}
@@ -469,18 +470,84 @@ defmodule Cldr.Unit do
     with {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale) do
       case Cldr.Number.Parser.scan(unit_string, options) do
         [number, unit] when is_number(number) and is_binary(unit) ->
-          unit = resolve_unit_alias(unit, strings)
-          new(number, unit, options)
+          units = resolve_unit_alias(unit, strings)
+          new_unit(number, unit, units, options)
 
         [unit, number] when is_number(number) and is_binary(unit) ->
-          unit = resolve_unit_alias(unit, strings)
-          new(number, unit, options)
+          units = resolve_unit_alias(unit, strings)
+          new_unit(number, unit, units, options)
 
         _other ->
           {:error, not_parseable_error(unit_string)}
       end
     end
   end
+
+  defp new_unit(number, unit, units, options) do
+    with {:ok, {only, except, options}} <- get_filter_options(options),
+         {:ok, unit} <- unit_matching_filter(unit, units, only, except) do
+      new(number, unit, options)
+    end
+  end
+
+  defp get_filter_options(options) do
+    {only, options} = Keyword.pop(options, :only, []) |> maybe_list_wrap()
+    {except, options} = Keyword.pop(options, :except, []) |> maybe_list_wrap()
+
+    with {:ok, only} <- validate_categories(only),
+         {:ok, except} <- validate_categories(except) do
+      {:ok, {only, except, options}}
+    end
+  end
+
+  # If there are no options to filter then
+  # use the original implementation which is to pick
+  # the shortest match (lexically shortest)
+
+  defp unit_matching_filter(_unit, unit, [] = _only, [] = _except) when is_binary(unit) do
+    {:ok, unit}
+  end
+
+  defp unit_matching_filter(_unit, units, [] = _only, [] = _except) do
+    units
+    |> Enum.map(&Kernel.to_string/1)
+    |> Enum.sort(&(String.length(&1) <= String.length(&2)))
+    |> hd
+    |> wrap(:ok)
+  end
+
+  # If there is an :only and/or :except option then
+  # filter for a match. If there is no match its an
+  # error. And error could be because the result is
+  # ambigous (multiple results) or because no category
+  # could be derived for a unit
+
+  defp unit_matching_filter(unit, units, only, except) do
+    case filter_units(units, only, except) do
+      [unit] -> {:ok, unit}
+      [] -> {:error, category_unit_match_error(units, only, except)}
+      units -> {:error, ambiguous_unit_error(unit, units)}
+    end
+  end
+
+  defp filter_units(units, only, except) do
+    Enum.filter(units, fn unit ->
+      case unit_category(unit) do
+        {:ok, category} -> category_match?(category, only, except)
+        _other -> false
+      end
+    end)
+  end
+
+  defp category_match?(_category, [], []), do: true
+  defp category_match?(category, only, []), do: category in only
+  defp category_match?(category, [], except), do: category not in except
+  defp category_match?(category, only, except), do: category in only and category not in except
+
+  defp wrap(term, atom), do: {atom, term}
+
+  defp maybe_list_wrap({list, options}) when is_list(list), do: {list, options}
+  defp maybe_list_wrap({other, options}), do: {[other], options}
 
   @doc """
   Parse a string to create a new unit or
@@ -604,6 +671,15 @@ defmodule Cldr.Unit do
       {:error, unknown_usage_error(category, usage)}
   end
 
+  defp validate_categories(categories) do
+    invalid_categories = Enum.filter(categories, &(&1 not in @unit_categories))
+
+    if invalid_categories == [] do
+      {:ok, categories}
+    else
+      {:error, unit_categories_error(invalid_categories)}
+    end
+  end
   @doc """
   Returns a new `Unit.t` struct or raises on error.
 
@@ -1668,6 +1744,13 @@ defmodule Cldr.Unit do
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
   defdelegate unit_categories(), to: __MODULE__, as: :known_unit_categories
 
+  @unit_category_inverse_map Cldr.Map.invert(@units_by_category) |> Cldr.Map.stringify_keys()
+
+  @doc false
+  def unit_category_inverse_map do
+    @unit_category_inverse_map
+  end
+
   @doc """
   Returns the units category for a given unit
 
@@ -1690,21 +1773,36 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.unit_category :stone
       {:ok, :mass}
 
+      iex> Cldr.Unit.unit_category :watt
+      {:ok, :power}
+
       iex> Cldr.Unit.unit_category "kilowatt hour"
+      {:ok, :energy}
+
+      iex> Cldr.Unit.unit_category "watt hour per light year"
       {:error,
        {Cldr.Unit.UnknownCategoryError,
-        "The category for \\"kilowatt hour\\" is not known."}}
+        "The category for \\"watt hour per light year\\" is not known."}}
 
   """
-
-  @unit_category_inverse_map Cldr.Map.invert(@units_by_category) |> Cldr.Map.stringify_keys()
 
   @spec unit_category(Unit.t() | String.t() | atom()) ::
           {:ok, category()} | {:error, {module(), String.t()}}
 
+  def unit_category(unit) when unit in @translatable_units do
+    case Map.fetch(@unit_category_inverse_map, Kernel.to_string(unit)) do
+      {:ok, category} -> {:ok, category}
+      :error -> {:error, unknown_category_error(unit)}
+    end
+  end
+
   def unit_category(unit) do
-    with {:ok, _unit, conversion} <- validate_unit(unit) do
-      unit_category(unit, conversion)
+    with {:ok, resolved_unit, conversion} <- validate_unit(unit) do
+      if resolved_unit in @translatable_units do
+        unit_category(resolved_unit)
+      else
+        unit_category(unit, conversion)
+      end
     end
   end
 
@@ -1769,7 +1867,7 @@ defmodule Cldr.Unit do
   @base_unit_category_map Cldr.Config.units()
                           |> Map.get(:base_units)
                           # |> Kernel.++(Cldr.Unit.Additional.base_units())
-                          |> Enum.map(fn {k, v} -> {to_string(v), k} end)
+                          |> Enum.map(fn {k, v} -> {Kernel.to_string(v), k} end)
                           |> Map.new()
 
   @doc """
@@ -2290,6 +2388,16 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  def unit_categories_error([category]) do
+    unit_category_error(category)
+  end
+
+  @doc false
+  def unit_categories_error(categories) do
+    {Cldr.Unit.UnknownUnitCategoryError, "The unit categories #{inspect(categories)} are not known."}
+  end
+
+  @doc false
   def unknown_category_error(unit) do
     {Cldr.Unit.UnknownCategoryError, "The category for #{inspect(unit)} is not known."}
   end
@@ -2385,6 +2493,7 @@ defmodule Cldr.Unit do
     }
   end
 
+  @doc false
   def not_invertable_error(unit) do
     {
       Cldr.Unit.NotInvertableError,
@@ -2393,10 +2502,28 @@ defmodule Cldr.Unit do
     }
   end
 
+  @doc false
   def not_parseable_error(string) do
     {
       Cldr.Unit.NotParseableError,
       "The string #{inspect(string)} could not be parsed as a unit and a value"
+    }
+  end
+
+  @doc false
+  def ambiguous_unit_error(unit, units) do
+    {
+      Cldr.Unit.AmbiguousUnitError,
+      "The string #{inspect unit} ambiguously resolves to #{inspect units}"
+    }
+  end
+
+  @doc false
+  defp category_unit_match_error(unit, only, except) do
+    {
+      Cldr.Unit.CategoryMatchError,
+      "None of the units #{inspect unit} belong to a unit category matching " <>
+      "only: #{inspect only} except: #{inspect except}"
     }
   end
 

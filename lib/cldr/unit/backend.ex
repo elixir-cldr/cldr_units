@@ -730,7 +730,7 @@ defmodule Cldr.Unit.Backend do
               units =
                 units_for_style.(additional_units, style)
                 |> Cldr.Map.prune(fn
-                   {k, _v} when k in [:per_unit_pattern, :per, :times] ->
+                   {k, _v} when k in [:per_unit_pattern, :per, :times, :unit] ->
                      true
                    {k, _v} ->
                      if String.starts_with?(Atom.to_string(k), "10"), do: true, else: false
@@ -744,7 +744,7 @@ defmodule Cldr.Unit.Backend do
             |> Enum.map(fn {k, v} -> {k, Enum.map(v, &String.downcase/1)} end)
             |> Enum.map(fn {k, v} -> {k, Enum.uniq(v)} end)
             |> Map.new
-            |> Cldr.Map.invert(duplicates: :shortest)
+            |> Cldr.Map.invert(duplicates: :keep)
 
             def unit_strings_for(unquote(locale_name)) do
               {:ok, unquote(Macro.escape(unit_strings))}

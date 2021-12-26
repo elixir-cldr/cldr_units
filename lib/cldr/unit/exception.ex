@@ -141,3 +141,23 @@ defmodule Cldr.Unit.NotParseableError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.Unit.AmbiguousUnitError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
+defmodule Cldr.Unit.CategoryMatchError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
+
+
