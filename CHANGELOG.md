@@ -1,5 +1,17 @@
 # Changelog
 
+## Cldr_Units v3.10.0
+
+This is the changelog for Cldr_units v3.10.0 released on December 27th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Further refinement to `Cldr.Unit.unit_category/1` to return a result in a broader range of cases.
+
+### Enhancements
+
+* Adds `:only` and `:except` options to `Cldr.Unit.parse/2`. These options provide a mechanism to disambiguate the unit when a unit string could refer to more than one unit. For example, "2w" could refer to either "2 weeks" or "2 watts". If neither option is provided then the result is the same as in prior releases: the unit with the lexically shorter and alphabetically earlier unit is returned.
+
 ## Cldr_Units v3.9.2
 
 This is the changelog for Cldr_units v3.9.2 released on December 26th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

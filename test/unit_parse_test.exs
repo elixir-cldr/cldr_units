@@ -1,0 +1,53 @@
+defmodule Cldr.Unit.Parse.Test do
+  use ExUnit.Case, async: true
+
+  test "Parse a simple unit" do
+    assert MyApp.Cldr.Unit.parse("1 week") == Cldr.Unit.new(1, :week)
+    assert MyApp.Cldr.Unit.parse("2 weeks") == Cldr.Unit.new(2, :week)
+  end
+
+  test "Parse an ambiguous unit with no filter" do
+    assert MyApp.Cldr.Unit.parse("2 w") == Cldr.Unit.new(2, :watt)
+  end
+
+  test "Parse an ambiguous unit with :only filter" do
+    assert MyApp.Cldr.Unit.parse("2 w", only: :duration) == Cldr.Unit.new(2, :week)
+    assert MyApp.Cldr.Unit.parse("2 w", only: [:duration, :length]) == Cldr.Unit.new(2, :week)
+    assert MyApp.Cldr.Unit.parse("2 w", only: :power) == Cldr.Unit.new(2, :watt)
+  end
+
+  test "Parse an ambiguous unit with :except filter" do
+    assert MyApp.Cldr.Unit.parse("2 w", except: :duration) == Cldr.Unit.new(2, :watt)
+    assert MyApp.Cldr.Unit.parse("2 w", except: :power) == Cldr.Unit.new(2, :week)
+  end
+
+  test "Parse with a filter that doesn't match" do
+    assert MyApp.Cldr.Unit.parse("2 w", only: :energy) ==
+      {:error,
+        {Cldr.Unit.CategoryMatchError,
+          "None of the units [:watt, :week] belong to a unit category matching only: [:energy]"}}
+  end
+
+  test "Parse with an invalid :only or :except" do
+    assert MyApp.Cldr.Unit.parse("2w", only: :invalid) ==
+      {:error,
+       {Cldr.Unit.UnknownUnitCategoryError,
+        "The unit category :invalid is not known."}}
+
+    assert MyApp.Cldr.Unit.parse("2w", only: [:invalid, :also_invalid]) ==
+      {:error,
+       {Cldr.Unit.UnknownUnitCategoryError,
+        "The unit categories [:invalid, :also_invalid] are not known."}}
+
+    assert MyApp.Cldr.Unit.parse("2w", except: :invalid) ==
+      {:error,
+       {Cldr.Unit.UnknownUnitCategoryError,
+        "The unit category :invalid is not known."}}
+
+    assert MyApp.Cldr.Unit.parse("2w", except: [:invalid, :also_invalid]) ==
+      {:error,
+       {Cldr.Unit.UnknownUnitCategoryError,
+        "The unit categories [:invalid, :also_invalid] are not known."}}
+  end
+
+end

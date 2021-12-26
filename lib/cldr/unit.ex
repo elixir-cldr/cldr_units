@@ -440,16 +440,37 @@ defmodule Cldr.Unit do
   * `:backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
 
+  * `:only` is a unit category or list of unit categories. The parsed
+    unit must match one of the categories in order to be valid. This is
+    helpful when disambiguating parsed units. For example, parsing "2w"
+    could be either "2 watts" or "2 weeks". Specifying `only: :duration`
+    would return "2 weeks". Specifiying `only: :power` would return
+    "2 watts"
+
+  * `:except` is the oppostte of `:only`. The parsed unit must *not*
+    match the specified unit category or unit categories.
+
   ## Returns
 
   * `{:ok, unit}` or
 
   * `{:error, {exception, reason}}`
 
+  ## Notes
+
+  When both `:only` and `:except` options are passed, both
+  conditions must be true in order to return a parsed result.
+
   ## Examples
 
       iex> Cldr.Unit.parse "1kg"
       Cldr.Unit.new(1, :kilogram)
+
+      iex> Cldr.Unit.parse "1w"
+      Cldr.Unit.new(1, :watt)
+
+      iex> Cldr.Unit.parse "1w", only: :duration
+      Cldr.Unit.new(1, :week)
 
       iex> Cldr.Unit.parse "1 tages", locale: "de"
       Cldr.Unit.new(1, :day)
@@ -511,7 +532,7 @@ defmodule Cldr.Unit do
   defp unit_matching_filter(_unit, units, [] = _only, [] = _except) do
     units
     |> Enum.map(&Kernel.to_string/1)
-    |> Enum.sort(&(String.length(&1) <= String.length(&2)))
+    |> Enum.sort(&(String.length(&1) <= String.length(&2) && &1 < &2))
     |> hd
     |> wrap(:ok)
   end
@@ -2519,10 +2540,26 @@ defmodule Cldr.Unit do
   end
 
   @doc false
+  defp category_unit_match_error(unit, only, []) do
+    {
+      Cldr.Unit.CategoryMatchError,
+      "None of the units #{inspect Enum.sort(unit)} belong to a unit category matching " <>
+      "only: #{inspect only}"
+    }
+  end
+
+  defp category_unit_match_error(unit, [], except) do
+    {
+      Cldr.Unit.CategoryMatchError,
+      "None of the units #{inspect Enum.sort(unit)} belong to a unit category matching " <>
+      "except: #{inspect except}"
+    }
+  end
+
   defp category_unit_match_error(unit, only, except) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect unit} belong to a unit category matching " <>
+      "None of the units #{inspect Enum.sort(unit)} belong to a unit category matching " <>
       "only: #{inspect only} except: #{inspect except}"
     }
   end
