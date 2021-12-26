@@ -423,6 +423,119 @@ defmodule Cldr.Unit.Backend do
         end
 
         @doc """
+        Parse a string to create a new unit.
+
+        This function attempts to parse a string
+        into a `number` and `unit type`. If successful
+        it attempts to create a new unit using
+        `Cldr.Unit.new/3`.
+
+        The parsed `unit type` is aliased against all the
+        known unit names for a give locale (or the current
+        locale if no locale is specified). The known
+        aliases for unit types can be returned with
+        `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+        is the name of a backend module.
+
+        ## Arguments
+
+        * `unit string` is any string to be parsed and if
+          possible used to create a new `t:Cldr.Unit`
+
+        * `options` is a keyword list of options
+
+        ## Options
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+        ## Returns
+
+        * `{:ok, unit}` or
+
+        * `{:error, {exception, reason}}`
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.parse "1kg"
+            Cldr.Unit.new(1, :kilogram)
+
+            iex> #{inspect(__MODULE__)}.parse "1 tages", locale: "de"
+            Cldr.Unit.new(1, :day)
+
+            iex> #{inspect(__MODULE__)}.parse "1 tag", locale: "de"
+            Cldr.Unit.new(1, :day)
+
+            iex> #{inspect(__MODULE__)}.parse("42 millispangels")
+            {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"spangels\\""}}
+
+        """
+        @spec parse(binary) :: {:ok, Cldr.Unit.t()} | {:error, {module(), binary()}}
+
+        @doc since: "3.10.0"
+        def parse(unit_string, options \\ []) do
+          options = Keyword.put(options, :backend, unquote(backend))
+          Cldr.Unit.parse(unit_string, options)
+        end
+
+        @doc """
+        Parse a string to create a new unit or
+        raises an exception.
+
+        This function attempts to parse a string
+        into a `number` and `unit type`. If successful
+        it attempts to create a new unit using
+        `Cldr.Unit.new/3`.
+
+        The parsed `unit type` is un-aliased against all the
+        known unit names for a give locale (or the current
+        locale if no locale is specified). The known
+        aliases for unit types can be returned with
+        `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+        is the name of a backend module.
+
+        ## Arguments
+
+        * `unit string` is any string to be parsed and if
+          possible used to create a new `t:Cldr.Unit`
+
+        * `options` is a keyword list of options
+
+        ## Options
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+
+        ## Returns
+
+        * `unit` or
+
+        * raises an exception
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.parse! "1kg"
+            Cldr.Unit.new!(1, :kilogram)
+
+            iex> #{inspect(__MODULE__)}.parse! "1 tages", locale: "de"
+            Cldr.Unit.new!(1, :day)
+
+            iex> #{inspect(__MODULE__)}.parse!("42 candela per lux")
+            Cldr.Unit.new!(42, "candela per lux")
+
+            iex> #{inspect(__MODULE__)}.parse!("42 millispangels")
+            ** (Cldr.UnknownUnitError) Unknown unit was detected at "spangels"
+
+        """
+        @spec parse!(binary) :: Cldr.Unit.t() | no_return()
+
+        @doc since: "3.10.0"
+        def parse!(unit_string, options \\ []) do
+          options = Keyword.put(options, :backend, unquote(backend))
+          Cldr.Unit.parse!(unit_string, options)
+        end
+
+        @doc """
         Returns a list of the preferred units for a given
         unit, locale, use case and scope.
 
