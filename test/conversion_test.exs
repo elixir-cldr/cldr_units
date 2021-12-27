@@ -69,4 +69,9 @@ defmodule Cldr.Unit.Conversion.Test do
       MyApp.Cldr.Unit.convert!(MyApp.Cldr.Unit.new!(:foot, 3), :liter)
     end
   end
+
+  test "base unit conversion for a 'per per` unit" do
+    assert Cldr.Unit.BaseUnit.canonical_base_unit("candela per lux") ==
+      {:ok, "candela_square_meter_per_candela"}
+  end
 end

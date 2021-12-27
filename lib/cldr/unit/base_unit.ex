@@ -147,7 +147,7 @@ defmodule Cldr.Unit.BaseUnit do
   end
 
   # Take two list elements and merge them noting that either
-  # element might be a "per tuple" represnted by a tuple
+  # element might be a "per tuple" represented by a tuple
   defp merge_unit_names({numerator_a, denominator_a}, {numerator_b, denominator_b}) do
     {merge_unit_names(numerator_a, numerator_b), merge_unit_names(denominator_a, denominator_b)}
   end
@@ -171,6 +171,10 @@ defmodule Cldr.Unit.BaseUnit do
 
   defp merge_unit_names({{numerator_a, denominator_a}, numerator_b}) do
     {numerator_a, merge_unit_names(numerator_b, denominator_a)}
+  end
+
+  defp merge_unit_names({numerator_a, {numerator_b, denominator_b}}) do
+    {merge_unit_names(numerator_a, denominator_b), numerator_b}
   end
 
   defp merge_unit_names(other) do
