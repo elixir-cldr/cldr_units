@@ -19,7 +19,7 @@ defmodule Cldr.Unit.Parse.Test do
     assert MyApp.Cldr.Unit.parse("2 m", only: :minute) == Cldr.Unit.new(2, :minute)
     assert MyApp.Cldr.Unit.parse("2 m", only: [:year, :month, :day]) == Cldr.Unit.new(2, :month)
     assert MyApp.Cldr.Unit.parse("2 m", only: :duration) ==
-      {:error, {Cldr.Unit.AmbiguousUnitError, "The string \"m\" ambiguously resolves to [:month, :minute]"}}
+      {:error, {Cldr.Unit.AmbiguousUnitError, "The string \"m\" ambiguously resolves to [:minute, :month]"}}
   end
 
   test "Parse an ambiguous unit with :except filter" do
@@ -41,7 +41,7 @@ defmodule Cldr.Unit.Parse.Test do
 
     assert MyApp.Cldr.Unit.parse("2w", only: [:invalid, :also_invalid]) ==
       {:error,
-        {Cldr.UnknownUnitError, "The units [:invalid, :also_invalid] are not known."}}
+        {Cldr.UnknownUnitError, "The units [:also_invalid, :invalid] are not known."}}
 
     assert MyApp.Cldr.Unit.parse("2w", except: :invalid) ==
       {:error,
@@ -49,7 +49,7 @@ defmodule Cldr.Unit.Parse.Test do
 
     assert MyApp.Cldr.Unit.parse("2w", except: [:invalid, :also_invalid]) ==
       {:error,
-        {Cldr.UnknownUnitError, "The units [:invalid, :also_invalid] are not known."}}
+        {Cldr.UnknownUnitError, "The units [:also_invalid, :invalid] are not known."}}
   end
 
 end

@@ -2434,6 +2434,7 @@ defmodule Cldr.Unit do
   end
 
   def unit_error(units) when is_list(units) do
+    units = Enum.sort(units)
     {Cldr.UnknownUnitError, "The units #{inspect(units)} are not known."}
   end
 
@@ -2571,6 +2572,8 @@ defmodule Cldr.Unit do
 
   @doc false
   def ambiguous_unit_error(unit, units) do
+    units = Enum.sort(units)
+
     {
       Cldr.Unit.AmbiguousUnitError,
       "The string #{inspect String.trim(unit)} ambiguously resolves to #{inspect units}"
