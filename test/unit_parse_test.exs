@@ -14,6 +14,12 @@ defmodule Cldr.Unit.Parse.Test do
     assert MyApp.Cldr.Unit.parse("2 w", only: :duration) == Cldr.Unit.new(2, :week)
     assert MyApp.Cldr.Unit.parse("2 w", only: [:duration, :length]) == Cldr.Unit.new(2, :week)
     assert MyApp.Cldr.Unit.parse("2 w", only: :power) == Cldr.Unit.new(2, :watt)
+    assert MyApp.Cldr.Unit.parse("2 w", only: :watt) == Cldr.Unit.new(2, :watt)
+    assert MyApp.Cldr.Unit.parse("2 w", except: :watt) == Cldr.Unit.new(2, :week)
+    assert MyApp.Cldr.Unit.parse("2 m", only: :minute) == Cldr.Unit.new(2, :minute)
+    assert MyApp.Cldr.Unit.parse("2 m", only: [:year, :month, :day]) == Cldr.Unit.new(2, :month)
+    assert MyApp.Cldr.Unit.parse("2 m", only: :duration) ==
+      {:error, {Cldr.Unit.AmbiguousUnitError, "The string \"m\" ambiguously resolves to [:month, :minute]"}}
   end
 
   test "Parse an ambiguous unit with :except filter" do
@@ -25,29 +31,25 @@ defmodule Cldr.Unit.Parse.Test do
     assert MyApp.Cldr.Unit.parse("2 w", only: :energy) ==
       {:error,
         {Cldr.Unit.CategoryMatchError,
-          "None of the units [:watt, :week] belong to a unit category matching only: [:energy]"}}
+          "None of the units [:watt, :week] belong to a unit or category matching only: [:energy]"}}
   end
 
   test "Parse with an invalid :only or :except" do
     assert MyApp.Cldr.Unit.parse("2w", only: :invalid) ==
       {:error,
-       {Cldr.Unit.UnknownUnitCategoryError,
-        "The unit category :invalid is not known."}}
+       {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
 
     assert MyApp.Cldr.Unit.parse("2w", only: [:invalid, :also_invalid]) ==
       {:error,
-       {Cldr.Unit.UnknownUnitCategoryError,
-        "The unit categories [:invalid, :also_invalid] are not known."}}
+        {Cldr.UnknownUnitError, "The units [:invalid, :also_invalid] are not known."}}
 
     assert MyApp.Cldr.Unit.parse("2w", except: :invalid) ==
       {:error,
-       {Cldr.Unit.UnknownUnitCategoryError,
-        "The unit category :invalid is not known."}}
+       {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
 
     assert MyApp.Cldr.Unit.parse("2w", except: [:invalid, :also_invalid]) ==
       {:error,
-       {Cldr.Unit.UnknownUnitCategoryError,
-        "The unit categories [:invalid, :also_invalid] are not known."}}
+        {Cldr.UnknownUnitError, "The units [:invalid, :also_invalid] are not known."}}
   end
 
 end

@@ -440,15 +440,15 @@ defmodule Cldr.Unit do
   * `:backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
 
-  * `:only` is a unit category or list of unit categories. The parsed
-    unit must match one of the categories in order to be valid. This is
-    helpful when disambiguating parsed units. For example, parsing "2w"
-    could be either "2 watts" or "2 weeks". Specifying `only: :duration`
+  * `:only` is a unit category or unit, or a list of unit categories and units.
+    The parsed unit must match one of the categories or units in order to
+    be valid. This is helpful when disambiguating parsed units. For example,
+    parsing "2w" could be either "2 watts" or "2 weeks". Specifying `only: :duration`
     would return "2 weeks". Specifiying `only: :power` would return
     "2 watts"
 
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
-    match the specified unit category or unit categories.
+    match the specified unit or category, or unit categories and units.
 
   ## Returns
 
@@ -458,8 +458,11 @@ defmodule Cldr.Unit do
 
   ## Notes
 
-  When both `:only` and `:except` options are passed, both
-  conditions must be true in order to return a parsed result.
+  * When both `:only` and `:except` options are passed, both
+    conditions must be true in order to return a parsed result.
+
+  * Only units returned by `Cldr.Unit.known_units/0` can be
+    used in the `:only` and `:except` filters.
 
   ## Examples
 
@@ -471,6 +474,9 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.parse "1w", only: :duration
       Cldr.Unit.new(1, :week)
+
+      iex> Cldr.Unit.parse "1m", only: [:year, :month, :day]
+      Cldr.Unit.new(1, :month)
 
       iex> Cldr.Unit.parse "1 tages", locale: "de"
       Cldr.Unit.new(1, :day)
@@ -515,8 +521,8 @@ defmodule Cldr.Unit do
     {only, options} = Keyword.pop(options, :only, []) |> maybe_list_wrap()
     {except, options} = Keyword.pop(options, :except, []) |> maybe_list_wrap()
 
-    with {:ok, only} <- validate_categories(only),
-         {:ok, except} <- validate_categories(except) do
+    with {:ok, only} <- validate_categories_or_units(only),
+         {:ok, except} <- validate_categories_or_units(except) do
       {:ok, {only, except, options}}
     end
   end
@@ -525,11 +531,11 @@ defmodule Cldr.Unit do
   # use the original implementation which is to pick
   # the shortest match (lexically shortest)
 
-  defp unit_matching_filter(_unit, unit, [] = _only, [] = _except) when is_binary(unit) do
+  defp unit_matching_filter(_unit, unit, {[],[]} = _only, {[],[]} = _except) when is_binary(unit) do
     {:ok, unit}
   end
 
-  defp unit_matching_filter(_unit, units, [] = _only, [] = _except) do
+  defp unit_matching_filter(_unit, units, {[],[]} = _only, {[],[]} = _except) do
     units
     |> Enum.map(&Kernel.to_string/1)
     |> Enum.sort(&(String.length(&1) <= String.length(&2) && &1 < &2))
@@ -554,16 +560,21 @@ defmodule Cldr.Unit do
   defp filter_units(units, only, except) do
     Enum.filter(units, fn unit ->
       case unit_category(unit) do
-        {:ok, category} -> category_match?(category, only, except)
+        {:ok, category} -> category_match?(category, only, except) && unit_match?(unit, only, except)
         _other -> false
       end
     end)
   end
 
-  defp category_match?(_category, [], []), do: true
-  defp category_match?(category, only, []), do: category in only
-  defp category_match?(category, [], except), do: category not in except
-  defp category_match?(category, only, except), do: category in only and category not in except
+  defp category_match?(_category, {[], _}, {[], _}), do: true
+  defp category_match?(category, {only, _}, {[], _}), do: category in only
+  defp category_match?(category, {[], _}, {except, _}), do: category not in except
+  defp category_match?(category, {only, _}, {except, _}), do: category in only and category not in except
+
+  defp unit_match?(_unit, {_, []}, {_, []}), do: true
+  defp unit_match?(unit, {_, only}, {_, []}), do: unit in only
+  defp unit_match?(unit, {_, []}, {_, except}), do: unit not in except
+  defp unit_match?(unit, {_, only}, {_, except}), do: unit in only and unit not in except
 
   defp wrap(term, atom), do: {atom, term}
 
@@ -600,6 +611,24 @@ defmodule Cldr.Unit do
 
   * `:backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  * `:only` is a unit category or unit, or a list of unit categories and units.
+    The parsed unit must match one of the categories or units in order to
+    be valid. This is helpful when disambiguating parsed units. For example,
+    parsing "2w" could be either "2 watts" or "2 weeks". Specifying `only: :duration`
+    would return "2 weeks". Specifiying `only: :power` would return
+    "2 watts"
+
+  * `:except` is the oppostte of `:only`. The parsed unit must *not*
+    match the specified unit or category, or unit categories and units.
+
+  ## Notes
+
+  * When both `:only` and `:except` options are passed, both
+    conditions must be true in order to return a parsed result.
+
+  * Only units returned by `Cldr.Unit.known_units/0` can be
+    used in the `:only` and `:except` filters.
 
   ## Returns
 
@@ -692,13 +721,14 @@ defmodule Cldr.Unit do
       {:error, unknown_usage_error(category, usage)}
   end
 
-  defp validate_categories(categories) do
-    invalid_categories = Enum.filter(categories, &(&1 not in @unit_categories))
+  defp validate_categories_or_units(units_or_categories) do
+    {categories, units} = Enum.split_with(units_or_categories, &(&1 in known_unit_categories()))
+    invalid_units = Enum.filter(units, &(&1 not in known_units()))
 
-    if invalid_categories == [] do
-      {:ok, categories}
+    if invalid_units == [] do
+      {:ok, {categories, units}}
     else
-      {:error, unit_categories_error(invalid_categories)}
+      {:error, unit_error(invalid_units)}
     end
   end
   @doc """
@@ -2399,6 +2429,14 @@ defmodule Cldr.Unit do
     }
   end
 
+  def unit_error([unit]) do
+    {Cldr.UnknownUnitError, "The unit #{inspect(unit)} is not known."}
+  end
+
+  def unit_error(units) when is_list(units) do
+    {Cldr.UnknownUnitError, "The units #{inspect(units)} are not known."}
+  end
+
   def unit_error(unit) do
     {Cldr.UnknownUnitError, "The unit #{inspect(unit)} is not known."}
   end
@@ -2535,33 +2573,39 @@ defmodule Cldr.Unit do
   def ambiguous_unit_error(unit, units) do
     {
       Cldr.Unit.AmbiguousUnitError,
-      "The string #{inspect unit} ambiguously resolves to #{inspect units}"
+      "The string #{inspect String.trim(unit)} ambiguously resolves to #{inspect units}"
     }
   end
 
   @doc false
-  defp category_unit_match_error(unit, only, []) do
+  defp category_unit_match_error(unit, only, {[], []}) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect Enum.sort(unit)} belong to a unit category matching " <>
-      "only: #{inspect only}"
+      "None of the units #{inspect Enum.sort(unit)} belong to a unit or category matching " <>
+      "only: #{inspect flatten(only)}"
     }
   end
 
-  defp category_unit_match_error(unit, [], except) do
+  defp category_unit_match_error(unit, {[], []}, except) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect Enum.sort(unit)} belong to a unit category matching " <>
-      "except: #{inspect except}"
+      "None of the units #{inspect Enum.sort(unit)} belong to a unit or category matching " <>
+      "except: #{inspect flatten(except)}"
     }
   end
 
   defp category_unit_match_error(unit, only, except) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect Enum.sort(unit)} belong to a unit category matching " <>
-      "only: #{inspect only} except: #{inspect except}"
+      "None of the units #{inspect Enum.sort(unit)} belong to a unit or category matching " <>
+      "only: #{inspect flatten(only)} except: #{inspect flatten(except)}"
     }
+  end
+
+  defp flatten(tuple) when is_tuple(tuple) do
+    tuple
+    |> Tuple.to_list()
+    |> List.flatten()
   end
 
   defp int_rem(unit) do

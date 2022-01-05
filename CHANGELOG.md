@@ -1,5 +1,17 @@
 # Changelog
 
+## Cldr_Units v3.10.1
+
+This is the changelog for Cldr_units v3.10.1 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix canonical base unit calculation when the unit is a `per per` form like `candela per lux`.
+
+### Enhancements
+
+* Add unit filters for `Cldr.Unit.parse/2`.  This means that the options `:only` and `:except` can comprise both unit categories and unit names as part of the filter.
+
 ## Cldr_Units v3.10.0
 
 This is the changelog for Cldr_units v3.10.0 released on December 27th, 2021.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
