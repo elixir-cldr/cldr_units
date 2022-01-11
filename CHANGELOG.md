@@ -1,8 +1,16 @@
 # Changelog
 
+## Cldr_Units v3.11.1
+
+This is the changelog for Cldr_units v3.11.1 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix `Cldr.Unit.measurement_system_from_locale/2` to allow the second parameter to be either a backend or a measurement system key.
+
 ## Cldr_Units v3.11.0
 
-This is the changelog for Cldr_units v3.11.0 released on January 6th.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.11.0 released on January 6th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 

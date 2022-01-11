@@ -49,12 +49,20 @@ defmodule Cldr.Unit do
 
   # See https://unicode.org/reports/tr35/tr35-general.html#Case
   @grammatical_case [
+    :abessive,
     :ablative,
     :accusative,
+    :adessive,
+    :allative,
+    :causal,
     :comitative,
     :dative,
+    :delative,
+    :elative,
     :ergative,
     :genitive,
+    :illative,
+    :inessive,
     :instrumental,
     :locative,
     :localtivecopulative,
@@ -63,6 +71,10 @@ defmodule Cldr.Unit do
     :partitive,
     :prepositional,
     :sociative,
+    :sublative,
+    :superessive,
+    :terminative,
+    :translative,
     :vocative
   ]
 
@@ -286,14 +298,22 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.known_grammatical_cases
+      iex> Cldr.Unit.known_grammatical_cases()
       [
+        :abessive,
         :ablative,
         :accusative,
+        :adessive,
+        :allative,
+        :causal,
         :comitative,
         :dative,
+        :delative,
+        :elative,
         :ergative,
         :genitive,
+        :illative,
+        :inessive,
         :instrumental,
         :locative,
         :localtivecopulative,
@@ -302,6 +322,10 @@ defmodule Cldr.Unit do
         :partitive,
         :prepositional,
         :sociative,
+        :sublative,
+        :superessive,
+        :terminative,
+        :translative,
         :vocative
       ]
 
@@ -1676,15 +1700,23 @@ defmodule Cldr.Unit do
   @doc since: "3.4.0"
   @spec measurement_system_from_locale(
           Cldr.LanguageTag.t() | Cldr.Locale.locale_name(),
-          measurement_system_key()
+          measurement_system_key() | Cldr.backend()
         ) ::
           measurement_system() | {:error, {module(), String.t()}}
 
   def measurement_system_from_locale(locale \\ Cldr.get_locale(), key \\ :default)
 
-  def measurement_system_from_locale(locale, key) when is_binary(locale) do
-    with {:ok, locale} <- Cldr.validate_locale(locale) do
-      measurement_system_from_locale(locale, key)
+  def measurement_system_from_locale(locale, backend_or_key) when is_binary(locale) do
+    case Cldr.validate_backend(backend_or_key) do
+      {:ok, backend} ->
+        with {:ok, locale} <- Cldr.validate_locale(locale, backend) do
+          measurement_system_from_locale(locale)
+        end
+
+      {:error, _} ->
+        with {:ok, locale} <- Cldr.validate_locale(locale) do
+          measurement_system_from_locale(locale, backend_or_key)
+        end
     end
   end
 
@@ -1701,6 +1733,14 @@ defmodule Cldr.Unit do
     territory = Cldr.Locale.territory_from_locale(locale)
     measurement_system_for_territory(territory, key)
   end
+
+  @doc since: "3.4.0"
+  @spec measurement_system_from_locale(
+          Cldr.Locale.locale_name(),
+          Cldr.backend(),
+          measurement_system_key()
+        ) ::
+          measurement_system() | {:error, {module(), String.t()}}
 
   def measurement_system_from_locale(locale, backend, key) when is_binary(locale) do
     with {:ok, locale} <- Cldr.validate_locale(locale, backend) do
