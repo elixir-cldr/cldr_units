@@ -365,8 +365,8 @@ defmodule Cldr.Unit.Additional do
       raise ArgumentError, "Style must be one of :short, :long or :narrow. Found #{inspect(style)}"
     end
 
-    unless is_binary(locale) do
-      raise ArgumentError, "Locale name must be a string. Found #{inspect(locale)}"
+    unless is_binary(locale) or is_atom(locale) do
+      raise ArgumentError, "Locale name must be a string or an atom. Found #{inspect(locale)}"
     end
 
     unless Keyword.keyword?(localizations) do
@@ -385,8 +385,11 @@ defmodule Cldr.Unit.Additional do
       raise ArgumentError, "Localizations must have a :display_name key"
     end
 
-    %{unit: unit, locale: locale, style: style, localizations: localizations}
+    %{unit: unit, locale: atomize(locale), style: style, localizations: localizations}
   end
+
+  defp atomize(locale) when is_atom(locale), do: locale
+  defp atomize(locale) when is_binary(locale), do: String.to_atom(locale)
 
   @doc false
   @default_systems [:metric, :uksystem, :ussystem]

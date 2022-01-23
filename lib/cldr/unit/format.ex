@@ -145,7 +145,7 @@ defmodule Cldr.Unit.Format do
       iex> Cldr.Unit.Format.to_string 123, MyApp.Cldr, unit: :megabyte, locale: "en",
       ...> grammatical_gender: :feminine
       {:error, {Cldr.UnknownGrammaticalGenderError,
-        "The locale \\"en\\" does not define a grammatical gender :feminine. The valid genders are [:masculine]"
+        "The locale :en does not define a grammatical gender :feminine. The valid genders are [:masculine]"
       }}
 
   """
@@ -161,8 +161,8 @@ defmodule Cldr.Unit.Format do
 
   # Options but no backend
   def to_string(list_or_unit, options, []) when is_list(options) do
-    locale = Cldr.get_locale()
-    to_string(list_or_unit, locale.backend, options)
+    {_locale, backend} = Cldr.locale_and_backend_from(options)
+    to_string(list_or_unit, backend, options)
   end
 
   # It's a list of units so we format each of them

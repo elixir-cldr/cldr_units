@@ -518,7 +518,8 @@ defmodule Cldr.Unit do
   def parse(unit_string, options \\ []) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
 
-    with {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale) do
+    with {:ok, locale} <- Cldr.validate_locale(locale, backend),
+         {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale) do
       case Cldr.Number.Parser.scan(unit_string, options) do
         [number, unit] when is_number(number) and is_binary(unit) ->
           units = resolve_unit_alias(unit, strings)

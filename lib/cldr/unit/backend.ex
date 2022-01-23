@@ -751,40 +751,40 @@ defmodule Cldr.Unit.Backend do
             end
         end
 
-        def unit_strings_for(locale) when is_binary(locale) do
-          {:error, Cldr.Locale.locale_error(locale)}
-        end
-
         def unit_strings_for(%LanguageTag{cldr_locale_name: cldr_locale_name}) do
           unit_strings_for(cldr_locale_name)
+        end
+
+        def unit_strings_for(locale) do
+          {:error, Cldr.Locale.locale_error(locale)}
         end
 
         def units_for(%LanguageTag{cldr_locale_name: cldr_locale_name}, style) do
           units_for(cldr_locale_name, style)
         end
 
-        def grammatical_features(%LanguageTag{language: language}) do
-          grammatical_features(language)
+        def grammatical_features(%LanguageTag{cldr_locale_name: locale_name}) do
+          grammatical_features(locale_name)
         end
 
-        def grammatical_features(language) do
-          {:error, Cldr.Locale.locale_error(language)}
+        def grammatical_features(locale_name) do
+          {:error, Cldr.Locale.locale_error(locale_name)}
         end
 
-        def grammatical_gender(%LanguageTag{language: language}) do
-          grammatical_gender(language)
+        def grammatical_gender(%LanguageTag{cldr_locale_name: locale_name}) do
+          grammatical_gender(locale_name)
         end
 
-        def grammatical_gender(language) do
-          {:error, Cldr.Locale.locale_error(language)}
+        def grammatical_gender(locale_name) do
+          {:error, Cldr.Locale.locale_error(locale_name)}
         end
 
-        def default_gender(%LanguageTag{language: language}) do
-          default_gender(language)
+        def default_gender(%LanguageTag{cldr_locale_name: locale_name}) do
+          default_gender(locale_name)
         end
 
-        def default_gender(language) do
-          {:error, Cldr.Locale.locale_error(language)}
+        def default_gender(locale_name) do
+          {:error, Cldr.Locale.locale_error(locale_name)}
         end
       end
     end
