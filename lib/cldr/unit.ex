@@ -125,7 +125,7 @@ defmodule Cldr.Unit do
           value: value(),
           base_conversion: conversion(),
           usage: usage(),
-          format_options: []
+          format_options: Keyword.t()
         }
 
   @default_style :long
@@ -134,7 +134,7 @@ defmodule Cldr.Unit do
   @data_dir [:code.priv_dir(@app_name), "/cldr/locales"] |> :erlang.iolist_to_binary()
   @config %{data_dir: @data_dir, locales: ["en"], default_locale: "en"}
 
-  @unit_tree "en"
+  @unit_tree :en
              |> Cldr.Locale.Loader.get_locale(@config)
              |> Map.fetch!(:units)
              |> Map.fetch!(:long)
@@ -1737,13 +1737,13 @@ defmodule Cldr.Unit do
 
   @doc since: "3.4.0"
   @spec measurement_system_from_locale(
-          Cldr.Locale.locale_name(),
+          Locale.locale_reference(),
           Cldr.backend(),
           measurement_system_key()
         ) ::
           measurement_system() | {:error, {module(), String.t()}}
 
-  def measurement_system_from_locale(locale, backend, key) when is_binary(locale) do
+  def measurement_system_from_locale(locale, backend, key) do
     with {:ok, locale} <- Cldr.validate_locale(locale, backend) do
       measurement_system_from_locale(locale, key)
     end
@@ -2111,7 +2111,7 @@ defmodule Cldr.Unit do
       }
 
   """
-  @spec measurement_systems_by_territory() :: %{Cldr.Locale.territory() => map()}
+  @spec measurement_systems_by_territory() :: %{Locale.territory_code() => map()}
   def measurement_systems_by_territory do
     @systems_by_territory
   end
