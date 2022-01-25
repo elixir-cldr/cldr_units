@@ -7,7 +7,7 @@ defmodule Cldr.Unit.Conversion.Options do
 
   @type t :: %__MODULE__{
     usage: atom(),
-    locale: Cldr.LanguageTag.t(),
+    locale: LanguageTag.t(),
     backend: Cldr.backend(),
     territory: Locale.territory_code()
   }
