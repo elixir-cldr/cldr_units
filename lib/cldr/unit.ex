@@ -435,6 +435,64 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Returns a new `Unit.t` struct from a map.
+
+  A map representation of a unit may be generated
+  from json or other external format data.
+
+  The map provided must have the keys `unit` and
+  `value` in either `String.t` or `atom` (both keys
+  must be of the same type).
+
+  `value` must be either an integer, a float or a map
+  representation of a rational number. A rational number
+  map has the keys `numerator` and `denominator` in either
+  `String.t` or `atom` format (both keys must be of
+  the same type).
+
+  ## Arguments
+
+  * `map` is a map with the keys `unit` and `value`
+
+  ## Returns
+
+  * `{:ok, unit}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Examples
+
+      Cldr.Unit.from_map %{value: 1, unit: "kilogram"}
+      => {:ok, #Cldr.Unit<:kilogram, 1>}
+
+      Cldr.Unit.from_map %{value: %{numerator: 3, denominator: 4}, unit: "kilogram"}
+      => {:ok, #Cldr.Unit<:kilogram, 3 <|> 4>}
+
+      Cldr.Unit.from_map %{"value" => 1, "unit" => "kilogram"}
+      => {:ok, #Cldr.Unit<:kilogram, 1>}
+
+  """
+  def from_map(%{"unit" => unit, "value" => value}) when is_number(value) do
+    new(unit, value)
+  end
+
+  def from_map(%{"unit" => unit, "value" => %{"numerator" => numerator, "denominator" => denominator}}) do
+    new(unit, Ratio.new(numerator, denominator))
+  end
+
+  def from_map(%{unit: unit, value: value}) when is_number(value) do
+    new(unit, value)
+  end
+
+  def from_map(%{unit: unit, value: %{numerator: numerator, denominator: denominator}}) do
+    new(unit, Ratio.new(numerator, denominator))
+  end
+
+  def from_map(other) do
+    {:error, unit_error(other)}
+  end
+
+  @doc """
   Parse a string to create a new unit.
 
   This function attempts to parse a string
@@ -2673,5 +2731,15 @@ defmodule Cldr.Unit do
     def display_name(unit, options) do
       Cldr.Unit.display_name(unit, options)
     end
+  end
+
+  @doc false
+  def exclude_protocol_implementation(module) do
+    exclusions =
+      :ex_unit
+      |> Application.get_env(:exclude_protocol_implementations, [])
+      |> List.wrap()
+
+    if module in exclusions, do: true, else: false
   end
 end

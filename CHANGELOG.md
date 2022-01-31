@@ -1,12 +1,16 @@
 # Changelog
 
-## Cldr_Units v3.11.1
+## Cldr_Units v3.12.0
 
-This is the changelog for Cldr_units v3.11.1 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.12.0 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
 * Fix `Cldr.Unit.measurement_system_from_locale/2` to allow the second parameter to be either a backend or a measurement system key.
+
+### Enhancements
+
+* Add `Cldr.Unit.from_map/1` to create a unit from a map. This can be used to consume the results of serializing a unit to JSON. The input parameter is designed to mirror the output of the custom Jason encoder.
 
 ## Cldr_Units v3.11.0
 

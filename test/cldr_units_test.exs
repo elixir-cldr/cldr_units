@@ -284,4 +284,15 @@ defmodule Cldr.UnitsTest do
       {:docs_v1, _, :elixir, "text/markdown", %{"en" => _}, %{}, _} = Code.fetch_docs(MyApp.Cldr)
     end
   end
+
+  test "Cldr.Unit.from_map/1" do
+    assert Cldr.Unit.from_map %{value: 1, unit: "kilogram"} == Cldr.Unit.new(:kilogram, 1)
+    assert Cldr.Unit.from_map %{"value" => 1, "unit" => "kilogram"} == Cldr.Unit.new(:kilogram, 1)
+    assert Cldr.Unit.from_map %{value: %{numerator: 3, denominator: 4}, unit: "kilogram"} == Cldr.Unit.new(:kilogram, Ratio.new(3,4))
+
+    assert Cldr.Unit.from_map %{"value" => 1, unit: "kilogram"} ==
+      {:error,
+       {Cldr.UnknownUnitError,
+        "The unit %{:unit => \"kilogram\", \"value\" => 1} is not known."}}
+  end
 end
