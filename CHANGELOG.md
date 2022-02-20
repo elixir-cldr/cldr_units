@@ -2,7 +2,7 @@
 
 ## Cldr_Units v3.12.0
 
-This is the changelog for Cldr_units v3.12.0 released on ______.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.12.0 released on February 21st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -11,6 +11,8 @@ This is the changelog for Cldr_units v3.12.0 released on ______.  For older chan
 ### Enhancements
 
 * Add `Cldr.Unit.from_map/1` to create a unit from a map. This can be used to consume the results of serializing a unit to JSON. The input parameter is designed to mirror the output of the custom Jason encoder.
+
+* Updates to [ex_cldr version 2.26.0](https://hex.pm/packages/ex_cldr/2.26.0) and [ex_cldr_numbers version 2.25.0](https://hex.pm/packages/ex_cldr_numbers/2.25.0) which use atoms for locale names and rbnf locale names. This is consistent with other elements of `t:Cldr.LanguageTag` where atoms are used when the cardinality of the data is fixed and relatively small and strings where the data is free format.
 
 ## Cldr_Units v3.11.0
 
