@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.12.1
+
+This is the changelog for Cldr_units v3.12.1 released on February 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Remove compilation warning for `Phoenix.HTML.Safe` that was emitted since the `:phoenix_html` library is not a dependency. Thanks for @maennchen for the report. Fixes #26.
+
 ## Cldr_Units v3.12.0
 
 This is the changelog for Cldr_units v3.12.0 released on February 21st, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
