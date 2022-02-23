@@ -352,6 +352,7 @@ iex> system = Cldr.Unit.measurement_system_from_locale "en-AU-u-ms-uksystem"
 iex> Enum.filter(units, &Cldr.Unit.measurement_system?(&1, system))
 [:quart_imperial, :cubic_foot, :cubic_inch, :dessert_spoon_imperial,
  :cubic_yard, :cubic_mile, :fluid_ounce_imperial, :acre_foot, :gallon_imperial]
+```
 
 ## Additional units (custom units)
 
@@ -464,7 +465,7 @@ The key `:display_name` is used by the function `Cldr.Unit.display_name/1` which
 ### Sorting Units
 
 From Elixir 1.10, `Enum.sort/2` supports module-based comparisons to provide a simpler API for sorting structs. `ex_cldr_units` supports Elixir 1.10 as the following example shows:
-```
+```elixir
 iex> alias Cldr.Unit
 Cldr.Unit
 
