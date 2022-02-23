@@ -63,6 +63,7 @@ defmodule Cldr.Unit.BaseUnit do
       |> merge_unit_names()
       |> sort_base_units()
       |> reduce_powers()
+      |> reduce_factors()
       |> flatten_and_stringify()
       |> Unit.maybe_translatable_unit()
       |> wrap(:ok)
@@ -84,6 +85,7 @@ defmodule Cldr.Unit.BaseUnit do
     |> resolve_unit_names()
     |> sort_base_units()
     |> reduce_powers()
+    |> reduce_factors()
   end
 
   defp canonical_base_subunit({currency, _conversion}) when currency in @currencies do
@@ -220,6 +222,61 @@ defmodule Cldr.Unit.BaseUnit do
     false
   end
 
+  # Reduce factors. When its a "per" unit then
+  # we reduce the common factors.
+  # This is important to ensure that base unit
+  # comparisons work correctly across different units
+  # of the same type.
+  defp reduce_factors({[], denominator}) do
+    {[], denominator}
+  end
+
+  defp reduce_factors({numerator, []}) do
+    {numerator, []}
+  end
+
+  # Numerator and denominator cancel each other
+  defp reduce_factors({[unit | rest_1], [unit | rest_2]}) do
+    reduce_factors({rest_1, rest_2}) #|> IO.inspect(label: "1")
+  end
+
+  defp reduce_factors({[[:square, unit] | rest_1], [unit | rest_2]}) do
+    reduce_factors({[unit | rest_1], rest_2}) #|> IO.inspect(label: "2")
+  end
+
+  defp reduce_factors({[unit | rest_1], [[:square, unit] | rest_2]}) do
+    reduce_factors({rest_1, [unit | rest_2]}) #|> IO.inspect(label: "3")
+  end
+
+  defp reduce_factors({[unit | rest_1], [[:cubic, unit] | rest_2]}) do
+    reduce_factors({rest_1, [[:square, unit] | rest_2]}) #|> IO.inspect(label: "4")
+  end
+
+  defp reduce_factors({[[:square, unit] | rest_1], [[:square, unit] | rest_2]}) do
+    reduce_factors({rest_1, rest_2}) #|> IO.inspect(label: "5")
+  end
+
+  defp reduce_factors({[[:cubic, unit] | rest_1], [[:cubic, unit] | rest_2]}) do
+    reduce_factors({rest_1, rest_2}) #|> IO.inspect(label: "6")
+  end
+
+  defp reduce_factors({[[:cubic, unit] | rest_1], [[:square, unit] | rest_2]}) do
+    reduce_factors({[unit | rest_1], rest_2}) #|> IO.inspect(label: "7")
+  end
+
+  defp reduce_factors({[[:cubic, unit] | rest_1], [unit | rest_2]}) do
+    reduce_factors({[[:square, unit] | rest_1], rest_2}) #|> IO.inspect(label: "8")
+  end
+
+  defp reduce_factors({[unit_1 | rest_1], rest_2}) do
+    {numerator, denominator} = reduce_factors({rest_1, rest_2})
+    {[unit_1 | numerator], denominator} #|> IO.inspect(label: "9")
+  end
+
+  defp reduce_factors(other) do
+    other #|> IO.inspect(label: "Other")
+  end
+
   # Reduce powers to square and cubic
   defp reduce_powers({numerator, denominator}) do
     {reduce_powers(numerator), reduce_powers(denominator)}
@@ -246,6 +303,10 @@ defmodule Cldr.Unit.BaseUnit do
   end
 
   # Flaten the list and turn it into a string
+  defp flatten_and_stringify({numerator, []}) do
+    flatten_and_stringify(numerator)
+  end
+
   defp flatten_and_stringify({numerator, denominator}) do
     flatten_and_stringify(numerator) <> @per <> flatten_and_stringify(denominator)
   end
