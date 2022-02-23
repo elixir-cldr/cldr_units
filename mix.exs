@@ -15,6 +15,7 @@ defmodule Cldr.Units.Mixfile do
       docs: docs(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      xref: [exclude: [Phoenix.HTML.Safe]],
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
