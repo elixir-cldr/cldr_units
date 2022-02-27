@@ -74,4 +74,8 @@ defmodule Cldr.Unit.Conversion.Test do
     assert Cldr.Unit.BaseUnit.canonical_base_unit("candela per lux") ==
       {:ok, "candela_square_meter_per_candela"}
   end
+
+  test "conversion where base units don't match but unit categories do" do
+    assert {:ok, _} = Cldr.Unit.convert(Cldr.Unit.new!(:joule, 1), "kilowatt_hour")
+  end
 end

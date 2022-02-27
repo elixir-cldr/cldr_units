@@ -56,9 +56,17 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  # Not invertable so not compatible
-  defp conversion_for(unit_1, unit_2, _base_unit_1, _base_unit_2, _conversion) do
-    {:error, Unit.incompatible_units_error(unit_1, unit_2)}
+  # If the base units don't match, try comparing the unit categories
+  # instead.
+  defp conversion_for(unit_1, unit_2, _base_unit_1, _base_unit_2, conversion_2) do
+    with {:ok, category_1} <- Cldr.Unit.unit_category(unit_1),
+         {:ok, category_2} <- Cldr.Unit.unit_category(unit_2) do
+      if category_1 == category_2 do
+        {:ok, conversion_2, :forward}
+      else
+        {:error, Unit.incompatible_units_error(unit_1, unit_2)}
+      end
+    end
   end
 
   @doc """
