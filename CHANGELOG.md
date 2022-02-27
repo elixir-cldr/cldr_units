@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.12.2
+
+This is the changelog for Cldr_units v3.12.2 released on February 27th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes conversions where the base units don't match (string match) but the units are of the same unit category and therefore are convertible. Thanks to @narrowtux for the report. Fixes #27.
+
 ## Cldr_Units v3.12.1
 
 This is the changelog for Cldr_units v3.12.1 released on February 23rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
