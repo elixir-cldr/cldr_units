@@ -14,10 +14,10 @@ defmodule Cldr.Unit do
     units of compatible type (like length or volume)
 
   * `Cldr.Unit.compare/2` to compare one unit to another unit as long as they
-    are convertable.
+    are convertible.
 
   * `Cldr.Unit.convert/2` to convert one unit to another unit as long as they
-    are convertable.
+    are convertible.
 
   * `Cldr.Unit.localize/3` will convert a unit into the units preferred for a
     given locale and usage
@@ -526,7 +526,7 @@ defmodule Cldr.Unit do
     The parsed unit must match one of the categories or units in order to
     be valid. This is helpful when disambiguating parsed units. For example,
     parsing "2w" could be either "2 watts" or "2 weeks". Specifying `only: :duration`
-    would return "2 weeks". Specifiying `only: :power` would return
+    would return "2 weeks". Specifying `only: :power` would return
     "2 watts"
 
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
@@ -629,7 +629,7 @@ defmodule Cldr.Unit do
   # If there is an :only and/or :except option then
   # filter for a match. If there is no match its an
   # error. And error could be because the result is
-  # ambigous (multiple results) or because no category
+  # ambiguous (multiple results) or because no category
   # could be derived for a unit
 
   defp unit_matching_filter(unit, units, only, except) do
@@ -699,7 +699,7 @@ defmodule Cldr.Unit do
     The parsed unit must match one of the categories or units in order to
     be valid. This is helpful when disambiguating parsed units. For example,
     parsing "2w" could be either "2 watts" or "2 weeks". Specifying `only: :duration`
-    would return "2 weeks". Specifiying `only: :power` would return
+    would return "2 weeks". Specifying `only: :power` would return
     "2 watts"
 
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
@@ -852,7 +852,7 @@ defmodule Cldr.Unit do
   Formats a number into a string according to a unit definition
   for the current process's locale and backend.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
   See `Cldr.Unit.to_string/3` for full details.
@@ -982,7 +982,7 @@ defmodule Cldr.Unit do
   for the current process's locale and backend or raises
   on error.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
   See `Cldr.Unit.to_string!/3` for full details.
@@ -1285,10 +1285,10 @@ defmodule Cldr.Unit do
   Localizes a unit according to the current
   processes locale and backend.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
-  See `Cldr.Unit.localize/3` for futher
+  See `Cldr.Unit.localize/3` for further
   details.
 
   """

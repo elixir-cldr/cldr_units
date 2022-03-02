@@ -207,7 +207,7 @@ This is the changelog for Cldr_units v3.5.1 released on April 11th, 2021.  For o
 
 ### Bug Fixes
 
-* Use `:other` plural category to format units which have a value of 0, 1 or 2 when the natural unit pattern has no substitutions. This corrects the situation in locales such as `he` and `ar` where the unit pattern for plural category `:one` has no substitutions. Previously this would means the formatted string for a unit with a vaue of `1` and `-1` would both output the same string.  Thanks to @jarrodmoldrich for the report and to @voltone for his family's help with hebrew grammar.
+* Use `:other` plural category to format units which have a value of 0, 1 or 2 when the natural unit pattern has no substitutions. This corrects the situation in locales such as `he` and `ar` where the unit pattern for plural category `:one` has no substitutions. Previously this would means the formatted string for a unit with a value of `1` and `-1` would both output the same string.  Thanks to @jarrodmoldrich for the report and to @voltone for his family's help with hebrew grammar.
 
 ## Cldr_Units v3.5.0
 
@@ -215,7 +215,7 @@ This is the changelog for Cldr_units v3.5.0 released on April 8th, 2021.  For ol
 
 ### Overview
 
-In this release the `Cldr.Unit.to_string/{1, 2, 3}` function has been rewritten and the concrete impementation is now in `Cldr.Unit.Format`.  The primary reasons for rewriting are:
+In this release the `Cldr.Unit.to_string/{1, 2, 3}` function has been rewritten and the concrete implementation is now in `Cldr.Unit.Format`.  The primary reasons for rewriting are:
 
 1. Improves performance by 20% over the old implementation.
 2. Supports grammatical case and grammatical gender. These allow for better sentence formation in a localised fashion. Only are few locales have the required data for now (for example, `fr` and `de`) however more locales will have data in upcoming CLDR releases.
@@ -286,7 +286,7 @@ This is the changelog for Cldr_units v3.5.0-rc.1 released on March 21st, 2021.  
 
 ### Overview
 
-In this release the `Cldr.Unit.to_string/{1, 2, 3}` function has been rewritten and the concrete impementation is now in `Cldr.Unit.Format`.  The primary reasons for rewriting are:
+In this release the `Cldr.Unit.to_string/{1, 2, 3}` function has been rewritten and the concrete implementation is now in `Cldr.Unit.Format`.  The primary reasons for rewriting are:
 
 1. Improves performance by 20% over the old implementation.
 2. Supports grammatical case and grammatical gender. These allow for better sentence formation in a localised fashion. Only are few locales have the required data for now (for example, `fr` and `de`) however more locales will have data in upcoming CLDR releases.
@@ -595,7 +595,7 @@ This is the changelog for Cldr_units v2.6.0 released on August 25th, 2019.  For 
   [#Unit<:inch, 71>]
 ```
 
-* Adds a `:per` option to `Cldr.Unit.to_string/3`. This option leverages the `per` formatting style to allow compound units to be printed.  For example, assume want to emit a string which represents "kilograms per second". There is no such unit defined in CLDR (or perhaps anywhere!). But if we define the unit `unit = Cldr.Unit.new(:kilogram, 20)` we can then execute `Cldr.Unit.to_string(unit, per: :second)`.  Each locale defines a specific way to format such a compount unit.  Usually it will return something like `20 kilograms/second`
+* Adds a `:per` option to `Cldr.Unit.to_string/3`. This option leverages the `per` formatting style to allow compound units to be printed.  For example, assume want to emit a string which represents "kilograms per second". There is no such unit defined in CLDR (or perhaps anywhere!). But if we define the unit `unit = Cldr.Unit.new(:kilogram, 20)` we can then execute `Cldr.Unit.to_string(unit, per: :second)`.  Each locale defines a specific way to format such a compound unit.  Usually it will return something like `20 kilograms/second`
 
 * Adds `Cldr.Unit.unit_preferences/0` to map units into a territory preference alternative unit
 
@@ -657,7 +657,7 @@ This is the changelog for Cldr_units v2.3.2 released on March 23rd, 2019.  For o
 
 ### Bug Fixes
 
-* Include `priv` directory in the hex package (thats where the conversion json exists)
+* Include `priv` directory in the hex package (that's where the conversion json exists)
 
 ## Cldr_Units v2.3.2
 

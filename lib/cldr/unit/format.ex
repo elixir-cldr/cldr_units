@@ -30,7 +30,7 @@ defmodule Cldr.Unit.Format do
   Formats a number into a string according to a unit definition
   for the current process's locale and backend.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
   See `Cldr.Unit.to_string/3` for full details.
@@ -219,7 +219,7 @@ defmodule Cldr.Unit.Format do
   for the current process's locale and backend or raises
   on error.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
   See `Cldr.Unit.to_string!/3` for full details.
@@ -331,7 +331,7 @@ defmodule Cldr.Unit.Format do
   Formats a number into an iolist according to a unit definition
   for the current process's locale and backend.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
   See `Cldr.Unit.Format.to_iolist/3` for full details.
@@ -472,7 +472,7 @@ defmodule Cldr.Unit.Format do
   Formats a number into an iolist according to a unit definition
   for the current process's locale and backend.
 
-  The curent process's locale is set with
+  The current process's locale is set with
   `Cldr.put_locale/1`.
 
   See `Cldr.Unit.Format.to_iolist!/3` for full details.
