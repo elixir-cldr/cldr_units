@@ -40,7 +40,7 @@ defmodule Cldr.Unit.Conversion do
     {:ok, conversion_2, :forward}
   end
 
-  # Its invertable so see if thats convertible. Note that
+  # Its invertable so see if that's convertible. Note that
   # there is no difference in the conversion for an inverted
   # conversion. Its only a hint so that in convert_from_base/2
   # we know to divide, not multiple the value.

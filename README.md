@@ -179,7 +179,7 @@ iex> Cldr.Unit.to_string 1234, MyApp.Cldr, unit: "foot_per_second"
 ```
 ### Unit decomposition
 
-Sometimes its a requirement to decompose a unit into one or more subunits.  For example, if someone is 6.3 feet heigh we would normally say "6 feet, 4 inches".  This can be achieved with `Cldr.Unit.decompose/2`. Using our example:
+Sometimes its a requirement to decompose a unit into one or more subunits.  For example, if someone is 6.3 feet height we would normally say "6 feet, 4 inches".  This can be achieved with `Cldr.Unit.decompose/2`. Using our example:
 
 ```elixir
 iex> height = Cldr.Unit.new(:foot, 6.3)
@@ -440,7 +440,7 @@ One invocation of `Cldr.Unit.Additional.unit_localization/4` should made for eac
 
 * `unit` is the name of the additional unit as an `atom`.
 
-* `locale` is the locale name for this localization. It should be one of the locale configured in this backend although this cannot currently be confirmed at compile tiem.
+* `locale` is the locale name for this localization. It should be one of the locale configured in this backend although this cannot currently be confirmed at compile time.
 
 * `style` is one of `:long`, `:short`, or `:narrow`.
 
@@ -460,7 +460,7 @@ six keys:
 
 Only the `:other` key is required. For english, providing keys for `:one` and `:other` is enough. Other languages have different grammatical requirements.
 
-The key `:display_name` is used by the function `Cldr.Unit.display_name/1` which is primarly used to support UI applications.
+The key `:display_name` is used by the function `Cldr.Unit.display_name/1` which is primarily used to support UI applications.
 
 ### Sorting Units
 

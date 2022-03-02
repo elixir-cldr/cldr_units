@@ -155,7 +155,7 @@ defmodule Cldr.Unit.Additional do
   * `locale` is the locale name for this
     localization. It should be one of the locale
     configured in this backend although this
-    cannot currently be confirmed at compile tiem.
+    cannot currently be confirmed at compile time.
 
   * `style` is one of `:long`, `:short`, or
     `:narrow`.
@@ -186,7 +186,7 @@ defmodule Cldr.Unit.Additional do
   languages have different grammatical requirements.
 
   The key `:display_name` is used by the function
-  `Cldr.Unit.display_name/1` which is primarly used
+  `Cldr.Unit.display_name/1` which is primarily used
   to support UI applications.
 
   """
