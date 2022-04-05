@@ -364,7 +364,7 @@ defmodule Cldr.Unit.BaseUnit do
   def canonical_base_unit!(unit_string) when is_binary(unit_string) do
     case canonical_base_unit(unit_string) do
       {:ok, unit_name} -> unit_name
-      {:eror, {exception, reason}} -> raise exception, reason
+      {:error, {exception, reason}} -> raise exception, reason
     end
   end
 

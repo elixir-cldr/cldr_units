@@ -252,7 +252,7 @@ defmodule Cldr.Unit.Parser do
   def canonical_unit_name!(unit_string) when is_binary(unit_string) do
     case canonical_unit_name(unit_string) do
       {:ok, unit_name} -> unit_name
-      {:eror, {exception, reason}} -> raise exception, reason
+      {:error, {exception, reason}} -> raise exception, reason
     end
   end
 
