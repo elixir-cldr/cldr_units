@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.13.0
+
+This is the changelog for Cldr_units v3.13.0 released on April 6th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Update [CLDR](https://cldr.unicode.org) to [release 41](https://cldr.unicode.org/index/downloads/cldr-41) in [ex_cldr version 2.28.0](https://hex.pm/packages/ex_cldr/2.28.0) and [ex_cldr_numbers 2.26.0](https://hex.pm/packages/ex_cldr_numbers/2.26.0).
+
 ## Cldr_Units v3.12.2
 
 This is the changelog for Cldr_units v3.12.2 released on February 27th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
