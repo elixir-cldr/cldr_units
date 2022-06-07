@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.13.2
+
+This is the changelog for Cldr_units v3.13.2 released on June 7th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix `MyApp.Cldr.Unit.localize/2` which was previously delegating incorrectly to `Cldr.Unit`.
+
 ## Cldr_Units v3.13.1
 
 This is the changelog for Cldr_units v3.13.1 released on June 7th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

@@ -52,7 +52,6 @@ defmodule Cldr.Unit.Backend do
         defdelegate zero(unit), to: Cldr.Unit
         defdelegate zero?(unit), to: Cldr.Unit
         defdelegate decompose(unit, list), to: Cldr.Unit
-        defdelegate localize(unit, usage, options), to: Cldr.Unit
 
         defdelegate measurement_system_from_locale(locale), to: Cldr.Unit
         defdelegate measurement_system_from_locale(locale, category), to: Cldr.Unit
@@ -420,6 +419,69 @@ defmodule Cldr.Unit.Backend do
         def display_name(unit, options \\ []) do
           options = Keyword.put(options, :backend, unquote(backend))
           Cldr.Unit.display_name(unit, options)
+        end
+
+        @doc """
+        Localizes a unit according to the current
+        processes locale and backend.
+
+        The current process's locale is set with
+        `Cldr.put_locale/1`.
+
+        See `Cldr.Unit.localize/3` for further
+        details.
+
+        """
+        @spec localize(Cldr.Unit.t()) :: [Cldr.Unit.t(), ...]
+        def localize(%Cldr.Unit{} = unit) do
+          Cldr.Unit.localize(unit)
+        end
+
+        @doc """
+        Localizes a unit according to a territory
+
+        A territory can be derived from a `t:Cldr.Locale.locale_name`
+        or `t:Cldr.LangaugeTag`.
+
+        Use this function if you have a unit which
+        should be presented in a user interface using
+        units relevant to the audience. For example, a
+        unit `#Cldr.Unit100, :meter>` might be better
+        presented to a US audience as `#Cldr.Unit<328, :foot>`.
+
+        ## Arguments
+
+        * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+        * `options` is a keyword list of options
+
+        ## Options
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`
+
+        * `:territory` is any valid territory code returned by
+          `Cldr.known_territories/0`. The default is the territory defined
+          as part of the `:locale`. The option `:territory` has a precedence
+          over the territory in a locale.
+
+        * `:usage` is the way in which the unit is intended
+          to be used.  The available `usage` varyies according
+          to the unit category.  See `Cldr.Unit.preferred_units/3`.
+
+        ## Examples
+
+            iex> unit = Cldr.Unit.new!(1.83, :meter)
+            iex> #{inspect __MODULE__}.localize(unit, usage: :person_height, territory: :US)
+            [
+              Cldr.Unit.new!(:foot, 6, usage: :person_height),
+              Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725), usage: :person_height)
+            ]
+
+        """
+        @spec localize(Cldr.Unit.t(), Keyword.t()) :: [Cldr.Unit.t(), ...]
+        def localize(unit, options \\ []) do
+          Cldr.Unit.localize(unit, unquote(backend), options)
         end
 
         @doc """

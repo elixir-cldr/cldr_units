@@ -1292,6 +1292,7 @@ defmodule Cldr.Unit do
   details.
 
   """
+  @spec localize(t()) :: [t(), ...]
   def localize(%Unit{} = unit) do
     locale = Cldr.get_locale()
     backend = locale.backend
@@ -1308,7 +1309,7 @@ defmodule Cldr.Unit do
   should be presented in a user interface using
   units relevant to the audience. For example, a
   unit `#Cldr.Unit100, :meter>` might be better
-  presented to a US audience as `#Cldr.Unit328, :foot>`.
+  presented to a US audience as `#Cldr.Unit<328, :foot>`.
 
   ## Arguments
 
@@ -1322,7 +1323,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`.
 
   * `:territory` is any valid territory code returned by
     `Cldr.known_territories/0`. The default is the territory defined
@@ -1343,7 +1344,7 @@ defmodule Cldr.Unit do
       ]
 
   """
-
+  @spec localize(t(), Cldr.backend(), Keyword.t()) :: [t(), ...]
   def localize(unit, backend, options \\ [])
 
   def localize(%Unit{} = unit, options, []) when is_list(options) do
