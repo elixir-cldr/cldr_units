@@ -45,27 +45,27 @@ defmodule Cldr.Unit.Math do
   end
 
   def add(%Unit{unit: unit, value: %Decimal{}} = u1, %Unit{unit: unit, value: %Decimal{}} = u2) do
-     %{u1 | value: Decimal.add(u1.value, u2.value)}
+    %{u1 | value: Decimal.add(u1.value, u2.value)}
   end
 
-  def add(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
+  def add(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2} = unit_2)
       when is_number(value_2) do
-    add(unit_1, Unit.new!(unit, Decimal.new(value_2)))
+    add(unit_1, %{unit_2 | value: Decimal.new(value_2)})
   end
 
-  def add(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
-      when is_number(value_2) do
-    add(unit_1, Unit.new!(unit, Decimal.new(value_2)))
+  def add(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: %Decimal{}} = unit_2)
+      when is_number(value_1) do
+    add(%{unit_1 | value: Decimal.new(value_1)}, unit_2)
   end
 
-  def add(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+  def add(%Unit{unit: unit, value: %Ratio{} = value_1} = unit_1, %Unit{unit: unit, value: value_2})
       when is_number(value_2) do
-    Unit.new!(unit, Ratio.add(value_1, value_2))
+    %{unit_1 | value: Ratio.add(value_1, value_2)}
   end
 
-  def add(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
+  def add(%Unit{unit: unit, value: value_2} = unit_1, %Unit{unit: unit, value: %Ratio{} = value_1})
       when is_number(value_2) do
-    Unit.new!(unit, Ratio.add(value_1, value_2))
+    %{unit_1 | value: Ratio.add(value_1, value_2)}
   end
 
   def add(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -122,10 +122,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Cldr.Unit<:kilogram, -81900798833369519 <|> 18014398509481984>
+      #Cldr.Unit<:kilogram, 81900798833369519 <|> 18014398509481984>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, -36794683014431043834033898368027039378825884348261 <|> 12746616238742849396626455585282990375683527307233>
+      #Cldr.Unit<:pint, 36794683014431043834033898368027039378825884348261 <|> 12746616238742849396626455585282990375683527307233>
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       #Cldr.Unit<:pint, 4>
@@ -138,11 +138,11 @@ defmodule Cldr.Unit.Math do
     Unit.new!(unit, value_1 - value_2)
   end
 
-  def sub(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
+  def sub(%Unit{unit: unit, value: %Decimal{} = value_1} = unit_1, %Unit{
         unit: unit,
         value: %Decimal{} = value_2
       }) do
-    Unit.new!(unit, Decimal.sub(value_1, value_2))
+    %{unit_1 | value: Decimal.sub(value_1, value_2)}
   end
 
   def sub(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
@@ -155,14 +155,14 @@ defmodule Cldr.Unit.Math do
     sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def sub(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+  def sub(%Unit{unit: unit, value: %Ratio{} = value_1} = unit_1, %Unit{unit: unit, value: value_2})
       when is_number(value_2) do
-    Unit.new!(unit, Ratio.sub(value_1, value_2))
+    %{unit_1 | value: Ratio.sub(value_1, value_2)}
   end
 
-  def sub(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
-      when is_number(value_2) do
-    Unit.new!(unit, Ratio.sub(value_1, value_2))
+  def sub(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: %Ratio{} = value_2})
+      when is_number(value_1) do
+    %{unit_1 | value: Ratio.sub(value_1, value_2)}
   end
 
   def sub(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -235,11 +235,11 @@ defmodule Cldr.Unit.Math do
     Unit.new!(unit, value_1 * value_2)
   end
 
-  def mult(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
+  def mult(%Unit{unit: unit, value: %Decimal{} = value_1} = unit_1, %Unit{
         unit: unit,
         value: %Decimal{} = value_2
       }) do
-    Unit.new!(unit, Decimal.mult(value_1, value_2))
+    %{unit_1 | value: Decimal.mult(value_1, value_2)}
   end
 
   def mult(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
@@ -252,14 +252,14 @@ defmodule Cldr.Unit.Math do
     mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
   end
 
-  def mult(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
+  def mult(%Unit{unit: unit, value: %Ratio{} = value_1} = unit_1, %Unit{unit: unit, value: value_2})
       when is_number(value_2) do
-    Unit.new!(unit, Ratio.mult(value_1, value_2))
+    %{unit_1 | value: Ratio.mult(value_1, value_2)}
   end
 
-  def mult(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
-      when is_number(value_2) do
-    Unit.new!(unit, Ratio.mult(value_1, value_2))
+  def mult(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: %Ratio{} = value_2})
+      when is_number(value_1) do
+    %{unit_1 | value: Ratio.mult(value_1, value_2)}
   end
 
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -461,9 +461,9 @@ defmodule Cldr.Unit.Math do
     round(%{unit | value: value}, places, mode)
   end
 
-  def round(%Unit{unit: unit, value: value}, places, mode) do
+  def round(%Unit{value: value} = unit_1, places, mode) do
     rounded_value = Cldr.Math.round(value, places, mode)
-    Unit.new!(unit, rounded_value)
+    %{unit_1 | value: rounded_value}
   end
 
   @doc """

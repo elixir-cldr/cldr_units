@@ -1337,7 +1337,10 @@ defmodule Cldr.Unit do
 
       iex> unit = Cldr.Unit.new!(1.83, :meter)
       iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
-      [Cldr.Unit.new!(:foot, 6), Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725))]
+      [
+        Cldr.Unit.new!(:foot, 6, usage: :person_height),
+        Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725), usage: :person_height)
+      ]
 
   """
 
@@ -1351,6 +1354,7 @@ defmodule Cldr.Unit do
 
   def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
     with {:ok, unit_list, format_options} <- Preference.preferred_units(unit, backend, options) do
+      unit = %{unit | usage: (options[:usage] || unit.usage)}
       decompose(unit, unit_list, format_options)
     end
   end

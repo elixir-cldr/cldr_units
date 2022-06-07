@@ -83,13 +83,13 @@ defmodule Cldr.UnitsTest do
     unit = Cldr.Unit.new!(100, :meter)
 
     assert Cldr.Unit.localize(unit, usage: :person, territory: :US) ==
-             [Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109))]
+      [Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109), usage: :person)]
 
     assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US) ==
-             [
-               Cldr.Unit.new!(:foot, 328),
-               Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109))
-             ]
+       [
+         Cldr.Unit.new!(:foot, 328, usage: :person_height),
+         Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109), usage: :person_height)
+       ]
 
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
              {:error,

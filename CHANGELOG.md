@@ -1,5 +1,15 @@
 # Changelog
 
+## Cldr_Units v3.13.1
+
+This is the changelog for Cldr_units v3.13.1 released on June 7th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix `Cldr.Unit.Math.*` to respect unit `:usage` of the input parameters
+
+* Fix `Cldr.Math.localize/2` to respect unit `:usage` of the options parameter if provided
+
 ## Cldr_Units v3.13.0
 
 This is the changelog for Cldr_units v3.13.0 released on April 6th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
