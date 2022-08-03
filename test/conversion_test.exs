@@ -62,6 +62,12 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
+  test "compare/2 for [Decimal] units that are built from string" do
+    s_unit = Cldr.Unit.new!(Decimal.new("300.0"), "gram")
+    t_unit = Cldr.Unit.new!(Decimal.new("60.0"), "kilogram")
+    assert Cldr.Unit.compare(s_unit, t_unit) == :lt
+  end
+
   test "convert!/2" do
     assert MyApp.Cldr.Unit.convert!(MyApp.Cldr.Unit.new!(:foot, 3), :meter)
 
