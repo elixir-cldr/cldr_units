@@ -518,11 +518,7 @@ defmodule Cldr.Unit.Math do
   end
 
   def compare(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
-    cond do
-      unit_1.value == unit_2.value -> :eq
-      unit_1.value > unit_2.value -> :gt
-      unit_1.value < unit_2.value -> :lt
-    end
+    Ratio.compare(Ratio.new(unit_1.value), Ratio.new(unit_2.value))
   end
 
   def compare(%Unit{} = unit_1, %Unit{} = unit_2) do
