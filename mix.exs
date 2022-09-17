@@ -1,7 +1,7 @@
 defmodule Cldr.Units.Mixfile do
   use Mix.Project
 
-  @version "3.13.3"
+  @version "3.14.0"
 
   def project do
     [
@@ -39,7 +39,11 @@ defmodule Cldr.Units.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr_numbers, "~> 2.26"},
+      # {:ex_cldr_numbers, "~> 2.26"},
+
+      {:ex_cldr, path: "../cldr", override: true},
+      {:ex_cldr_numbers, path: "../cldr_numbers", override: true},
+
       {:ex_cldr_lists, "~> 2.10"},
 
       {:ratio, "~> 2.4"},

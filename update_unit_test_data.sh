@@ -8,5 +8,5 @@ export EX_CLDR_UNIT="${EX_CLDR:=$HOME/Development/cldr_units}"
 export CLDR_REPO="${CLDR_REPO:=$HOME/Development/cldr_repo}"
 [ ! -d $CLDR_REPO ] && { echo "Unicode CLDR repository $CLDR_REPO was not found."; exit 1; }
 
-cp $CLDR_REPO/common/testData/units/unitPreferencesTest.txt $EX_CLDR_UNIT/test/support/data/preference_test_data.txt
-cp $CLDR_REPO/common/testData/units/unitsTest.txt $EX_CLDR_UNIT/test/support/data/conversion_test_data.txt
+cp $CLDR_REPO/common/testData/units/unitPreferencesTest.txt $EX_CLDR_UNIT/test/data/preference_test_data.txt
+cp $CLDR_REPO/common/testData/units/unitsTest.txt $EX_CLDR_UNIT/test/data/conversion_test_data.txt
