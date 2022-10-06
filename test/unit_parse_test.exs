@@ -51,5 +51,9 @@ defmodule Cldr.Unit.Parse.Test do
       {:error,
         {Cldr.UnknownUnitError, "The units [:also_invalid, :invalid] are not known."}}
   end
-
+  
+  test "Parse a simple unit name" do
+    assert MyApp.Cldr.Unit.parse_unit_name("week") == {:ok, :week}
+    assert MyApp.Cldr.Unit.parse_unit_name("weeks") == {:ok, :week}
+  end
 end

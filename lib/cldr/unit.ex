@@ -593,6 +593,93 @@ defmodule Cldr.Unit do
     end
   end
 
+  @doc since: "3.13.4"
+  @doc """
+  Parse a string to find a matching unit-atom.
+
+  This function attempts to parse a string and
+  extract the `unit type`.
+
+  The parsed `unit type` is aliased against all the
+  known unit names for a give locale (or the current
+  locale if no locale is specified). The known
+  aliases for unit types can be returned with
+  `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+  is the name of a backend module.
+
+  ## Arguments
+
+  * `unit_name_string` is any string to be parsed and converted into a `unit type`
+
+  * `options` is a keyword list of options
+
+  ## Options
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `t:Cldr.LanguageTag` struct. The default is `Cldr.get_locale/0`
+
+  * `:backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  * `:only` is a unit category or unit, or a list of unit categories and units.
+    The parsed unit must match one of the categories or units in order to
+    be valid. This is helpful when disambiguating parsed units. For example,
+    parsing "w" could be either `:watt` or `:weeks`. Specifying `only: :duration`
+    would return `:weeks`. Specifying `only: :power` would return `:watt`
+
+  * `:except` is the oppostte of `:only`. The parsed unit must *not*
+    match the specified unit or category, or unit categories and units.
+
+  ## Returns
+
+  * `{:ok, unit_name}` or
+
+  * `{:error, {exception, reason}}`
+
+  ## Notes
+
+  * When both `:only` and `:except` options are passed, both
+    conditions must be true in order to return a parsed result.
+
+  * Only units returned by `Cldr.Unit.known_units/0` can be
+    used in the `:only` and `:except` filters.
+
+  ## Examples
+
+      iex> Cldr.Unit.parse_unit_name "kg"
+      {:ok, :kilogram}
+
+      iex> Cldr.Unit.parse "w"
+      {:ok, :watt}
+
+      iex> Cldr.Unit.parse "w", only: :duration
+      {:ok, :week}
+
+      iex> Cldr.Unit.parse "m", only: [:year, :month, :day]
+      {:ok, :month}
+
+      iex> Cldr.Unit.parse "tages", locale: "de"
+      {:ok, :day}
+
+      iex> Cldr.Unit.parse "tag", locale: "de"
+      {:ok, :day}
+
+      iex> Cldr.Unit.parse("millispangels")
+      {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"spangels\\""}}
+
+  """
+  @spec parse_unit_name(binary, Keyword.t()) :: {:ok, atom} | {:error, {module(), binary()}}
+  def parse_unit_name(unit_name_string, options \\ []) do
+    {locale, backend} = Cldr.locale_and_backend_from(options)
+
+    with {:ok, locale} <- Cldr.validate_locale(locale, backend),
+         {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale),
+         units = resolve_unit_alias(unit_name_string, strings),
+         {:ok, {only, except, _}} <- get_filter_options(options) do
+      unit_matching_filter(unit_name_string, units, only, except)
+    end
+  end
+
   defp new_unit(number, unit, units, options) do
     with {:ok, {only, except, options}} <- get_filter_options(options),
          {:ok, unit} <- unit_matching_filter(unit, units, only, except) do
@@ -743,6 +830,90 @@ defmodule Cldr.Unit do
       {:error, {exception, message}} -> raise exception, message
     end
   end
+  
+  @doc since: "3.13.4"
+  @doc """
+  Parse a string to find a matching unit-atom.
+
+  This function attempts to parse a string and
+  extract the `unit type`.
+
+  The parsed `unit type` is aliased against all the
+  known unit names for a give locale (or the current
+  locale if no locale is specified). The known
+  aliases for unit types can be returned with
+  `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+  is the name of a backend module.
+
+  ## Arguments
+
+  * `unit_name_string` is any string to be parsed and converted into a `unit type`
+
+  * `options` is a keyword list of options
+
+  ## Options
+
+  * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+    or a `t:Cldr.LanguageTag` struct. The default is `Cldr.get_locale/0`
+
+  * `:backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+  * `:only` is a unit category or unit, or a list of unit categories and units.
+    The parsed unit must match one of the categories or units in order to
+    be valid. This is helpful when disambiguating parsed units. For example,
+    parsing "w" could be either `watts` or `:week`. Specifying `only: :duration`
+    would return `:week`. Specifying `only: :power` would return `:watts`
+
+  * `:except` is the oppostte of `:only`. The parsed unit must *not*
+    match the specified unit or category, or unit categories and units.
+
+  ## Returns
+
+  * `unit_name` or
+
+  * raises an exception
+
+  ## Notes
+
+  * When both `:only` and `:except` options are passed, both
+    conditions must be true in order to return a parsed result.
+
+  * Only units returned by `Cldr.Unit.known_units/0` can be
+    used in the `:only` and `:except` filters.
+
+  ## Examples
+
+      iex> Cldr.Unit.parse_unit_name "kg"
+      :kilogram
+
+      iex> Cldr.Unit.parse "w"
+      :watt
+
+      iex> Cldr.Unit.parse "w", only: :duration
+      :week}
+
+      iex> Cldr.Unit.parse "m", only: [:year, :month, :day]
+      :month}
+
+      iex> Cldr.Unit.parse "tages", locale: "de"
+      :day}
+
+      iex> Cldr.Unit.parse "tag", locale: "de"
+      :day
+
+      iex> Cldr.Unit.parse("millispangels")
+      ** (Cldr.UnknownUnitError) Unknown unit was detected at "spangels"
+
+  """
+  @spec parse_unit_name!(binary) :: atom() | no_return()
+  def parse_unit_name!(unit_name_string, options \\ []) do
+    case parse_unit_name(unit_name_string, options) do
+      {:ok, unit} -> unit
+      {:error, {exception, message}} -> raise exception, message
+    end
+  end
+
 
   defp resolve_unit_alias(unit, strings) do
     unit = String.trim(unit)
