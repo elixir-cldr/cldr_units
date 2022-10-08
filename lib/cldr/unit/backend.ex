@@ -132,7 +132,7 @@ defmodule Cldr.Unit.Backend do
         * `:gender` indicates that a localisation for the given
           locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
+          define all genders. The default gender is `#{inspect(__MODULE__)}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -220,7 +220,7 @@ defmodule Cldr.Unit.Backend do
         * `:gender` indicates that a localisation for the given
           locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
+          define all genders. The default gender is `#{inspect(__MODULE__)}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -287,7 +287,7 @@ defmodule Cldr.Unit.Backend do
         * `:gender` indicates that a localisation for the given
           locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
+          define all genders. The default gender is `#{inspect(__MODULE__)}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -348,7 +348,7 @@ defmodule Cldr.Unit.Backend do
         * `:gender` indicates that a localisation for the given
           locale and given grammatical gender should be used. See `Cldr.Unit.known_grammatical_genders/0`
           for the list of known grammatical genders. Note that not all locales
-          define all genders. The default gender is `#{inspect __MODULE__}.default_gender/1`
+          define all genders. The default gender is `#{inspect(__MODULE__)}.default_gender/1`
           for the given locale.
 
         * `:list_options` is a keyword list of options for formatting a list
@@ -413,8 +413,8 @@ defmodule Cldr.Unit.Backend do
             "l"
 
         """
-        @spec display_name(Cldr.Unit.value() | Cldr.Unit.t(), Keyword.t) ::
-          String.t() | {:error, {module, binary}}
+        @spec display_name(Cldr.Unit.value() | Cldr.Unit.t(), Keyword.t()) ::
+                String.t() | {:error, {module, binary}}
 
         def display_name(unit, options \\ []) do
           options = Keyword.put(options, :backend, unquote(backend))
@@ -472,7 +472,7 @@ defmodule Cldr.Unit.Backend do
         ## Examples
 
             iex> unit = Cldr.Unit.new!(1.83, :meter)
-            iex> #{inspect __MODULE__}.localize(unit, usage: :person_height, territory: :US)
+            iex> #{inspect(__MODULE__)}.localize(unit, usage: :person_height, territory: :US)
             [
               Cldr.Unit.new!(:foot, 6, usage: :person_height),
               Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725), usage: :person_height)
@@ -540,6 +540,87 @@ defmodule Cldr.Unit.Backend do
           Cldr.Unit.parse(unit_string, options)
         end
 
+        @doc since: "3.13.4"
+        @doc """
+        Parse a string to find a matching unit-atom.
+
+        This function attempts to parse a string and
+        extract the `unit type`.
+
+        The parsed `unit type` is aliased against all the
+        known unit names for a give locale (or the current
+        locale if no locale is specified). The known
+        aliases for unit types can be returned with
+        `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+        is the name of a backend module.
+
+        ## Arguments
+
+        * `unit_name_string` is any string to be parsed and converted into a `unit type`
+
+        * `options` is a keyword list of options
+
+        ## Options
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `t:Cldr.LanguageTag` struct. The default is `Cldr.get_locale/0`
+
+        * `:backend` is any module that includes `use Cldr` and therefore
+          is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+        * `:only` is a unit category or unit, or a list of unit categories and units.
+          The parsed unit must match one of the categories or units in order to
+          be valid. This is helpful when disambiguating parsed units. For example,
+          parsing "w" could be either `:watt` or `:weeks`. Specifying `only: :duration`
+          would return `:weeks`. Specifying `only: :power` would return `:watt`
+
+        * `:except` is the oppostte of `:only`. The parsed unit must *not*
+          match the specified unit or category, or unit categories and units.
+
+        ## Returns
+
+        * `{:ok, unit_name}` or
+
+        * `{:error, {exception, reason}}`
+
+        ## Notes
+
+        * When both `:only` and `:except` options are passed, both
+          conditions must be true in order to return a parsed result.
+
+        * Only units returned by `Cldr.Unit.known_units/0` can be
+          used in the `:only` and `:except` filters.
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.parse_unit_name "kg"
+            {:ok, :kilogram}
+
+            iex> #{inspect(__MODULE__)}.parse "w"
+            {:ok, :watt}
+
+            iex> #{inspect(__MODULE__)}.parse "w", only: :duration
+            {:ok, :week}
+
+            iex> #{inspect(__MODULE__)}.parse "m", only: [:year, :month, :day]
+            {:ok, :month}
+
+            iex> #{inspect(__MODULE__)}.parse "tages", locale: "de"
+            {:ok, :day}
+
+            iex> #{inspect(__MODULE__)}.parse "tag", locale: "de"
+            {:ok, :day}
+
+            iex> #{inspect(__MODULE__)}.parse("millispangels")
+            {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"spangels\\""}}
+
+        """
+        @spec parse_unit_name(binary, Keyword.t()) :: {:ok, atom} | {:error, {module(), binary()}}
+        def parse_unit_name(unit_name_string, options \\ []) do
+          options = Keyword.put(options, :backend, unquote(backend))
+          Cldr.Unit.parse_unit_name(unit_name_string, options)
+        end
+
         @doc """
         Parse a string to create a new unit or
         raises an exception.
@@ -595,6 +676,87 @@ defmodule Cldr.Unit.Backend do
         def parse!(unit_string, options \\ []) do
           options = Keyword.put(options, :backend, unquote(backend))
           Cldr.Unit.parse!(unit_string, options)
+        end
+
+        @doc since: "3.13.4"
+        @doc """
+        Parse a string to find a matching unit-atom.
+
+        This function attempts to parse a string and
+        extract the `unit type`.
+
+        The parsed `unit type` is aliased against all the
+        known unit names for a give locale (or the current
+        locale if no locale is specified). The known
+        aliases for unit types can be returned with
+        `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
+        is the name of a backend module.
+
+        ## Arguments
+
+        * `unit_name_string` is any string to be parsed and converted into a `unit type`
+
+        * `options` is a keyword list of options
+
+        ## Options
+
+        * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
+          or a `t:Cldr.LanguageTag` struct. The default is `Cldr.get_locale/0`
+
+        * `:backend` is any module that includes `use Cldr` and therefore
+          is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
+
+        * `:only` is a unit category or unit, or a list of unit categories and units.
+          The parsed unit must match one of the categories or units in order to
+          be valid. This is helpful when disambiguating parsed units. For example,
+          parsing "w" could be either `watts` or `:week`. Specifying `only: :duration`
+          would return `:week`. Specifying `only: :power` would return `:watts`
+
+        * `:except` is the oppostte of `:only`. The parsed unit must *not*
+          match the specified unit or category, or unit categories and units.
+
+        ## Returns
+
+        * `unit_name` or
+
+        * raises an exception
+
+        ## Notes
+
+        * When both `:only` and `:except` options are passed, both
+          conditions must be true in order to return a parsed result.
+
+        * Only units returned by `Cldr.Unit.known_units/0` can be
+          used in the `:only` and `:except` filters.
+
+        ## Examples
+
+            iex> #{inspect(__MODULE__)}.parse_unit_name "kg"
+            :kilogram
+
+            iex> #{inspect(__MODULE__)}.parse "w"
+            :watt
+
+            iex> #{inspect(__MODULE__)}.parse "w", only: :duration
+            :week}
+
+            iex> #{inspect(__MODULE__)}.parse "m", only: [:year, :month, :day]
+            :month}
+
+            iex> #{inspect(__MODULE__)}.parse "tages", locale: "de"
+            :day}
+
+            iex> #{inspect(__MODULE__)}.parse "tag", locale: "de"
+            :day
+
+            iex> #{inspect(__MODULE__)}.parse("millispangels")
+            ** (Cldr.UnknownUnitError) Unknown unit was detected at "spangels"
+
+        """
+        @spec parse_unit_name!(binary) :: atom() | no_return()
+        def parse_unit_name!(unit_name_string, options \\ []) do
+          options = Keyword.put(options, :backend, unquote(backend))
+          Cldr.Unit.parse_unit_name!(unit_name_string, options)
         end
 
         @doc """
@@ -666,8 +828,8 @@ defmodule Cldr.Unit.Backend do
             {:ok, [:meter], [round_nearest: 1]}
 
         """
-        @spec preferred_units(Cldr.Unit.t(), Keyword.t) ::
-          {:ok, String.t()} | {:error, {module, binary}}
+        @spec preferred_units(Cldr.Unit.t(), Keyword.t()) ::
+                {:ok, String.t()} | {:error, {module, binary}}
 
         def preferred_units(unit, options \\ []) do
           Cldr.Unit.Preference.preferred_units(unit, unquote(backend), options)
@@ -748,13 +910,13 @@ defmodule Cldr.Unit.Backend do
             |> Cldr.Locale.Loader.get_locale(config)
             |> Map.get(:units)
 
-            units_for_style = fn additional_units, style ->
-              Map.get(locale_data, style)
-              |> Enum.map(&elem(&1, 1))
-              |> Cldr.Map.merge_map_list()
-              |> Map.merge(additional_units)
-              |> Map.new()
-            end
+          units_for_style = fn additional_units, style ->
+            Map.get(locale_data, style)
+            |> Enum.map(&elem(&1, 1))
+            |> Cldr.Map.merge_map_list()
+            |> Map.merge(additional_units)
+            |> Map.new()
+          end
 
           for style <- @styles do
             additional_units = additional_units.units_for(locale_name, style)
@@ -786,17 +948,19 @@ defmodule Cldr.Unit.Backend do
 
           unit_strings =
             for style <- @styles do
-              additional_units =
-                additional_units.units_for(locale_name, style)
+              additional_units = additional_units.units_for(locale_name, style)
 
               units =
                 units_for_style.(additional_units, style)
                 |> Cldr.Map.prune(fn
-                   {k, _v} when k in [:per_unit_pattern, :per, :times, :unit] ->
-                     true
-                   {k, _v} ->
-                     if String.starts_with?(Atom.to_string(k), "10"), do: true, else: false
-                   _other -> false
+                  {k, _v} when k in [:per_unit_pattern, :per, :times, :unit] ->
+                    true
+
+                  {k, _v} ->
+                    if String.starts_with?(Atom.to_string(k), "10"), do: true, else: false
+
+                  _other ->
+                    false
                 end)
                 |> Enum.map(fn {k, v} -> {k, Cldr.Map.extract_strings(v)} end)
                 |> Map.new()
@@ -805,12 +969,12 @@ defmodule Cldr.Unit.Backend do
             |> Enum.map(fn {k, v} -> {k, Enum.map(v, &String.trim/1)} end)
             |> Enum.map(fn {k, v} -> {k, Enum.map(v, &String.downcase/1)} end)
             |> Enum.map(fn {k, v} -> {k, Enum.uniq(v)} end)
-            |> Map.new
+            |> Map.new()
             |> Cldr.Map.invert(duplicates: :keep)
 
-            def unit_strings_for(unquote(locale_name)) do
-              {:ok, unquote(Macro.escape(unit_strings))}
-            end
+          def unit_strings_for(unquote(locale_name)) do
+            {:ok, unquote(Macro.escape(unit_strings))}
+          end
         end
 
         def unit_strings_for(%LanguageTag{cldr_locale_name: cldr_locale_name}) do
