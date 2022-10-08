@@ -593,7 +593,6 @@ defmodule Cldr.Unit do
     end
   end
 
-  @doc since: "3.13.4"
   @doc """
   Parse a string to find a matching unit-atom.
 
@@ -649,25 +648,27 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.parse_unit_name "kg"
       {:ok, :kilogram}
 
-      iex> Cldr.Unit.parse "w"
+      iex> Cldr.Unit.parse_unit_name "w"
       {:ok, :watt}
 
-      iex> Cldr.Unit.parse "w", only: :duration
+      iex> Cldr.Unit.parse_unit_name "w", only: :duration
       {:ok, :week}
 
-      iex> Cldr.Unit.parse "m", only: [:year, :month, :day]
+      iex> Cldr.Unit.parse_unit_name "m", only: [:year, :month, :day]
       {:ok, :month}
 
-      iex> Cldr.Unit.parse "tages", locale: "de"
+      iex> Cldr.Unit.parse_unit_name "tages", locale: "de"
       {:ok, :day}
 
-      iex> Cldr.Unit.parse "tag", locale: "de"
+      iex> Cldr.Unit.parse_unit_name "tag", locale: "de"
       {:ok, :day}
 
-      iex> Cldr.Unit.parse("millispangels")
+      iex> Cldr.Unit.parse_unit_name("millispangels")
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"spangels\\""}}
 
   """
+  @doc since: "3.14.0"
+
   @spec parse_unit_name(binary, Keyword.t()) :: {:ok, atom} | {:error, {module(), binary()}}
   def parse_unit_name(unit_name_string, options \\ []) do
     {locale, backend} = Cldr.locale_and_backend_from(options)
@@ -675,8 +676,10 @@ defmodule Cldr.Unit do
     with {:ok, locale} <- Cldr.validate_locale(locale, backend),
          {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale),
          units = resolve_unit_alias(unit_name_string, strings),
-         {:ok, {only, except, _}} <- get_filter_options(options) do
-      unit_matching_filter(unit_name_string, units, only, except)
+         {:ok, {only, except, _}} <- get_filter_options(options),
+         {:ok, unit} = unit_matching_filter(unit_name_string, units, only, except),
+         {:ok, unit, _base_conversion} <- validate_unit(unit) do
+      {:ok, unit}
     end
   end
 
@@ -830,8 +833,7 @@ defmodule Cldr.Unit do
       {:error, {exception, message}} -> raise exception, message
     end
   end
-  
-  @doc since: "3.13.4"
+
   @doc """
   Parse a string to find a matching unit-atom.
 
@@ -884,28 +886,30 @@ defmodule Cldr.Unit do
 
   ## Examples
 
-      iex> Cldr.Unit.parse_unit_name "kg"
+      iex> Cldr.Unit.parse_unit_name! "kg"
       :kilogram
 
-      iex> Cldr.Unit.parse "w"
+      iex> Cldr.Unit.parse_unit_name! "w"
       :watt
 
-      iex> Cldr.Unit.parse "w", only: :duration
-      :week}
+      iex> Cldr.Unit.parse_unit_name! "w", only: :duration
+      :week
 
-      iex> Cldr.Unit.parse "m", only: [:year, :month, :day]
-      :month}
+      iex> Cldr.Unit.parse_unit_name! "m", only: [:year, :month, :day]
+      :month
 
-      iex> Cldr.Unit.parse "tages", locale: "de"
-      :day}
-
-      iex> Cldr.Unit.parse "tag", locale: "de"
+      iex> Cldr.Unit.parse_unit_name! "tages", locale: "de"
       :day
 
-      iex> Cldr.Unit.parse("millispangels")
+      iex> Cldr.Unit.parse_unit_name! "tag", locale: "de"
+      :day
+
+      iex> Cldr.Unit.parse_unit_name!("millispangels")
       ** (Cldr.UnknownUnitError) Unknown unit was detected at "spangels"
 
   """
+  @doc since: "3.14.0"
+
   @spec parse_unit_name!(binary) :: atom() | no_return()
   def parse_unit_name!(unit_name_string, options \\ []) do
     case parse_unit_name(unit_name_string, options) do
@@ -913,7 +917,6 @@ defmodule Cldr.Unit do
       {:error, {exception, message}} -> raise exception, message
     end
   end
-
 
   defp resolve_unit_alias(unit, strings) do
     unit = String.trim(unit)

@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.14.0
+
+This is the changelog for Cldr_units v3.14.0 released on October 8th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Add `Cldr.Unit.parse_unit_name/2` to parse a string as unit name. Also adds `MyApp.Cldr.parse_unit_name/2` as well as the `!` versions of these functions.  Thanks to @Awlexus for the PR. Closes #31.
+
 ## Cldr_Units v3.13.3
 
 This is the changelog for Cldr_units v3.13.3 released on August 3rd, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

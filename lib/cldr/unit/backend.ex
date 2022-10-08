@@ -596,22 +596,22 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.parse_unit_name "kg"
             {:ok, :kilogram}
 
-            iex> #{inspect(__MODULE__)}.parse "w"
+            iex> #{inspect(__MODULE__)}.parse_unit_name "w"
             {:ok, :watt}
 
-            iex> #{inspect(__MODULE__)}.parse "w", only: :duration
+            iex> #{inspect(__MODULE__)}.parse_unit_name "w", only: :duration
             {:ok, :week}
 
-            iex> #{inspect(__MODULE__)}.parse "m", only: [:year, :month, :day]
+            iex> #{inspect(__MODULE__)}.parse_unit_name "m", only: [:year, :month, :day]
             {:ok, :month}
 
-            iex> #{inspect(__MODULE__)}.parse "tages", locale: "de"
+            iex> #{inspect(__MODULE__)}.parse_unit_name "tages", locale: "de"
             {:ok, :day}
 
-            iex> #{inspect(__MODULE__)}.parse "tag", locale: "de"
+            iex> #{inspect(__MODULE__)}.parse_unit_name "tag", locale: "de"
             {:ok, :day}
 
-            iex> #{inspect(__MODULE__)}.parse("millispangels")
+            iex> #{inspect(__MODULE__)}.parse_unit_name("millispangels")
             {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"spangels\\""}}
 
         """
@@ -731,25 +731,25 @@ defmodule Cldr.Unit.Backend do
 
         ## Examples
 
-            iex> #{inspect(__MODULE__)}.parse_unit_name "kg"
+            iex> #{inspect(__MODULE__)}.parse_unit_name! "kg"
             :kilogram
 
-            iex> #{inspect(__MODULE__)}.parse "w"
+            iex> #{inspect(__MODULE__)}.parse_unit_name! "w"
             :watt
 
-            iex> #{inspect(__MODULE__)}.parse "w", only: :duration
-            :week}
+            iex> #{inspect(__MODULE__)}.parse_unit_name! "w", only: :duration
+            :week
 
-            iex> #{inspect(__MODULE__)}.parse "m", only: [:year, :month, :day]
-            :month}
+            iex> #{inspect(__MODULE__)}.parse_unit_name! "m", only: [:year, :month, :day]
+            :month
 
-            iex> #{inspect(__MODULE__)}.parse "tages", locale: "de"
-            :day}
-
-            iex> #{inspect(__MODULE__)}.parse "tag", locale: "de"
+            iex> #{inspect(__MODULE__)}.parse_unit_name! "tages", locale: "de"
             :day
 
-            iex> #{inspect(__MODULE__)}.parse("millispangels")
+            iex> #{inspect(__MODULE__)}.parse_unit_name! "tag", locale: "de"
+            :day
+
+            iex> #{inspect(__MODULE__)}.parse_unit_name!("millispangels")
             ** (Cldr.UnknownUnitError) Unknown unit was detected at "spangels"
 
         """
