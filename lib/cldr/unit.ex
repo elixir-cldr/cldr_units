@@ -593,6 +593,15 @@ defmodule Cldr.Unit do
     end
   end
 
+  def parse_unit_name(unit_string, options \\ []) when is_binary(unit_string) do
+    {locale, backend} = Cldr.locale_and_backend_from(options)
+
+    with {:ok, locale} <- Cldr.validate_locale(locale, backend),
+         {:ok, strings} <- Module.concat([backend, :Unit]).unit_strings_for(locale) do
+      resolve_unit_alias(unit_string, strings)
+    end
+  end
+
   defp new_unit(number, unit, units, options) do
     with {:ok, {only, except, options}} <- get_filter_options(options),
          {:ok, unit} <- unit_matching_filter(unit, units, only, except) do
