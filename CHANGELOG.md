@@ -6,7 +6,9 @@ This is the changelog for Cldr_units v3.15.0 released on October 24th, 2022.  Fo
 
 ### Enhancements
 
-* Updates to [CLDR 42](https://cldr.unicode.org/index/downloads/cldr-42).
+* Updates to [CLDR 42](https://cldr.unicode.org/index/downloads/cldr-42). There are two changes to the unit data:
+  * The length of a light-year has been adjusted to the IAU value (which uses a Julian year of 365.25 days).
+  * The unit ID for metric-tonne has been deprecated in favor of tonne.
 
 ## Cldr_Units v3.14.0
 
