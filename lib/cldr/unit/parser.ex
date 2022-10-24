@@ -82,7 +82,7 @@ defmodule Cldr.Unit.Parser do
           {:light_year,
            %Cldr.Unit.Conversion{
              base_unit: [:meter],
-             factor: 9460730000000000,
+             factor: 9460730472580800,
              offset: 0
            }}
         ]}}

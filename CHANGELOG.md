@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.15.0
+
+This is the changelog for Cldr_units v3.15.0 released on October 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Updates to [CLDR 42](https://cldr.unicode.org/index/downloads/cldr-42).
+
 ## Cldr_Units v3.14.0
 
 This is the changelog for Cldr_units v3.14.0 released on October 8th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
@@ -14,7 +22,7 @@ This is the changelog for Cldr_units v3.13.3 released on August 3rd, 2022.  For 
 
 ### Bug Fixes
 
-* Fix unit comparison for unit values built from decimal strings. THanks to @seantanly for the report. Closes #29.
+* Fix unit comparison for unit values built from decimal strings. Thanks to @seantanly for the report. Closes #29.
 
 ## Cldr_Units v3.13.2
 
