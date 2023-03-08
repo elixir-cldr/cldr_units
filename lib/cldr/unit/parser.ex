@@ -74,7 +74,7 @@ defmodule Cldr.Unit.Parser do
           {:kilogram,
            %Cldr.Unit.Conversion{
              base_unit: [:kilogram],
-             factor: Ratio.new(144115188075855875, 144115188075855872),
+             factor: 1,
              offset: 0
            }}
         ],
@@ -112,18 +112,23 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  # When it's a simple unit
   defp parse_subunits([numerator]) do
     [parse_subunit(numerator)]
   end
 
+  # When it's a "per" unit
   defp parse_subunits([numerator, denominator]) do
     numerator =
-      parse_subunit(numerator)
+      numerator
+      |> parse_subunit()
+      |> reduce_scaled_units()
 
     denominator =
       denominator
       |> Cldr.Unit.validate_unit()
-      |> reduce_subunits()
+      |> combine_subunits()
+      |> reduce_scaled_units()
 
     [numerator, denominator]
   end
@@ -137,26 +142,33 @@ defmodule Cldr.Unit.Parser do
     |> Enum.sort(&unit_sorter/2)
   end
 
-  # Per TR35: https://unicode.org/reports/tr35/tr35-general.html#Unit_Identifiers
-
-  # Multiplication binds more tightly than division, so kilogram-meter-per-second-ampere is
-  # interpreted as (kg ⋅ m) / (s ⋅ a).
-
-  # Thus if -per- occurs multiple times, each occurrence after the first is equivalent to
-  # a multiplication:
-
-  # kilogram-meter-per-second-ampere ⩧ kilogram-meter-per-second-per-ampere.
-
-  defp reduce_subunits({:ok, name, {numerator, denominator}}) do
-    (numerator ++ reduce_subunits({:ok, name, denominator}))
-    |> Enum.sort(&unit_sorter/2)
+  # We might end up with something like "millimeter-meter"
+  # which should be reduced to square-millimeter by
+  # convering the larger unit to the smaller and applying
+  # the power conversion (square, cubed). We don't support
+  # powers beyond cubed.
+  defp reduce_scaled_units(sub_units) do
+    sub_units
   end
 
-  defp reduce_subunits({:ok, _name, numerator}) do
+  # Per TR35: https://unicode.org/reports/tr35/tr35-general.html#Unit_Identifiers
+  # Multiplication binds more tightly than division, so kilogram-meter-per-second-ampere is
+  # interpreted as (kg ⋅ m) / (s ⋅ a).
+  #
+  # Thus if -per- occurs multiple times, each occurrence after the first is equivalent to
+  # a multiplication:
+  #
+  # Therefore "ilogram-meter-per-second-per-ampere." becomes "kilogram-meter-per-second-ampere".
+
+  defp combine_subunits({:ok, _name, {numerator, denominator}}) do
+    Enum.sort(numerator ++ denominator, &unit_sorter/2)
+  end
+
+  defp combine_subunits({:ok, _name, numerator}) do
     numerator
   end
 
-  defp reduce_subunits({:error, {exception, reason}}) do
+  defp combine_subunits({:error, {exception, reason}}) do
     raise exception, reason
   end
 
@@ -417,6 +429,13 @@ defmodule Cldr.Unit.Parser do
   # look up the base unit. Afterwards take a note of any
   # scale or power that need to be abplied to the base unit
   # to reflect the power and/or SI unit.
+
+  # kilogram is special since its the base unit for mass
+  # but also has an SI prefix. We want to keep the original
+  # conversion - not calculate it.
+  defp resolve_base_unit("kilogram" = unit) do
+    hd(Conversions.conversion_for!(unit))
+  end
 
   for {prefix, scale} <- Prefix.si_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do

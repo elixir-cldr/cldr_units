@@ -542,6 +542,10 @@ defmodule Cldr.Unit.Conversion do
   end
 
   @doc false
+  def new(numerator, numerator) do
+    1
+  end
+
   def new(0, _denominator) do
     0
   end

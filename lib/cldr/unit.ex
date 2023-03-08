@@ -435,6 +435,40 @@ defmodule Cldr.Unit do
   end
 
   @doc """
+  Returns a new `Unit.t` struct or raises on error.
+
+  ## Arguments
+
+  * `value` is any float, integer or `Decimal`
+
+  * `unit` is any unit returned by `Cldr.Unit.known_units/0`
+
+  ## Returns
+
+  * `unit` or
+
+  * raises an exception
+
+  ## Examples
+
+      iex> Cldr.Unit.new! 23, :gallon
+      Cldr.Unit.new!(:gallon, 23)
+
+      Cldr.Unit.new! 14, :gadzoots
+      ** (Cldr.UnknownUnitError) The unit :gadzoots is not known.
+          (ex_cldr_units) lib/cldr/unit.ex:57: Cldr.Unit.new!/2
+
+  """
+  @spec new!(unit() | value(), value() | unit()) :: t() | no_return()
+
+  def new!(unit, value, options \\ []) do
+    case new(unit, value, options) do
+      {:ok, unit} -> unit
+      {:error, {exception, message}} -> raise exception, message
+    end
+  end
+
+  @doc """
   Returns a new `Unit.t` struct from a map.
 
   A map representation of a unit may be generated
@@ -986,39 +1020,6 @@ defmodule Cldr.Unit do
       {:ok, {categories, units}}
     else
       {:error, unit_error(invalid_units)}
-    end
-  end
-  @doc """
-  Returns a new `Unit.t` struct or raises on error.
-
-  ## Arguments
-
-  * `value` is any float, integer or `Decimal`
-
-  * `unit` is any unit returned by `Cldr.Unit.known_units/0`
-
-  ## Returns
-
-  * `unit` or
-
-  * raises an exception
-
-  ## Examples
-
-      iex> Cldr.Unit.new! 23, :gallon
-      Cldr.Unit.new!(:gallon, 23)
-
-      Cldr.Unit.new! 14, :gadzoots
-      ** (Cldr.UnknownUnitError) The unit :gadzoots is not known.
-          (ex_cldr_units) lib/cldr/unit.ex:57: Cldr.Unit.new!/2
-
-  """
-  @spec new!(unit() | value(), value() | unit()) :: t() | no_return()
-
-  def new!(unit, value, options \\ []) do
-    case new(unit, value, options) do
-      {:ok, unit} -> unit
-      {:error, {exception, message}} -> raise exception, message
     end
   end
 
