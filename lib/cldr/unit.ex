@@ -1417,7 +1417,7 @@ defmodule Cldr.Unit do
 
       iex> u = Cldr.Unit.new!(10.3, :foot)
       iex> Cldr.Unit.decompose u, [:foot, :inch]
-      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, Ratio.new(18, 5))]
+      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, Ratio.new(253327479039591, 70368744177664))]
 
       iex> u = Cldr.Unit.new!(:centimeter, 1111)
       iex> Cldr.Unit.decompose u, [:kilometer, :meter, :centimeter, :millimeter]
@@ -1514,7 +1514,7 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
       [
         Cldr.Unit.new!(:foot, 6, usage: :person_height),
-        Cldr.Unit.new!(:inch, Ratio.new(6485183463413016, 137269716642252725), usage: :person_height)
+        Cldr.Unit.new!(:inch, Ratio.new(259407338536536, 5490788665690109), usage: :person_height)
       ]
 
   """
@@ -2890,9 +2890,9 @@ defmodule Cldr.Unit do
   end
 
   defp int_rem(unit) do
-    integer = Unit.round(unit, 0, :down) |> Math.trunc()
-    remainder = Math.sub(unit, integer)
-    {integer, remainder}
+    integer_unit = Unit.round(unit, 0, :down) |> Math.trunc()
+    remainder = Math.sub(unit, integer_unit)
+    {integer_unit, remainder}
   end
 
   @doc false

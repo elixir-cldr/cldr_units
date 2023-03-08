@@ -421,7 +421,7 @@ defmodule Cldr.Unit.Parser do
   for {prefix, scale} <- Prefix.si_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
-        factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
+        factor = Conversion.mult(conversion.factor, unquote(Macro.escape(scale)))
         {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
@@ -432,7 +432,7 @@ defmodule Cldr.Unit.Parser do
   for {prefix, scale} <- Prefix.binary_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
-        factor = Ratio.mult(conversion.factor, unquote(Macro.escape(scale)))
+        factor = Conversion.mult(conversion.factor, unquote(Macro.escape(scale)))
         {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
@@ -443,7 +443,7 @@ defmodule Cldr.Unit.Parser do
   for {prefix, power} <- Prefix.power_units() do
     defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
-        factor = Ratio.pow(conversion.factor, unquote(power))
+        factor = Conversion.pow(conversion.factor, unquote(power))
         base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
         {Unit.maybe_translatable_unit(unit), %{conversion | base_unit: base_unit, factor: factor}}
       else
@@ -470,7 +470,7 @@ defmodule Cldr.Unit.Parser do
   defp resolve_base_unit({integer, unit}) do
     {name, unit} = resolve_base_unit(unit)
     name = "#{integer}_#{name}"
-    factor = Ratio.mult(unit.factor, integer)
+    factor = Conversion.mult(unit.factor, integer)
     {name, %{unit | factor: factor}}
   end
 

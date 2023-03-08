@@ -372,25 +372,26 @@ defmodule Cldr.Unit.Preference do
     {:error, unknown_preferences_error(category, usage, region, value)}
   end
 
-  # defp debug(category, usage, region, value) do
-  #   IO.inspect(
-  #     """
-  #     Category: #{inspect(category)} with usage #{inspect(usage)} for
-  #     region #{inspect(region)} and value #{inspect(value)}
-  #     """
-  #     |> String.replace("\n", " ")
-  #   )
-  # end
-  #
-  # defp debug(category, usage, region, value, geq) do
-  #   IO.inspect(
-  #     """
-  #     Preference: #{inspect(category)} with usage #{inspect(usage)} for
-  #     region #{inspect(region)} and value #{inspect(value)} with >= #{inspect(geq)}
-  #     """
-  #     |> String.replace("\n", " ")
-  #   )
-  # end
+  @doc false
+  def debug(category, usage, region, value) do
+    IO.inspect(
+      """
+      Category: #{inspect(category)} with usage #{inspect(usage)} for
+      region #{inspect(region)} and value #{inspect(value)}
+      """
+      |> String.replace("\n", " ")
+    )
+  end
+
+  def debug(category, usage, region, value, geq) do
+    IO.inspect(
+      """
+      Preference: #{inspect(category)} with usage #{inspect(usage)} for
+      region #{inspect(region)} and value #{inspect(value)} with >= #{inspect(geq)}
+      """
+      |> String.replace("\n", " ")
+    )
+  end
 
   def unknown_preferences_error(category, usage, regions, value) do
     {

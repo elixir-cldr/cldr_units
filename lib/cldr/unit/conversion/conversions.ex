@@ -14,14 +14,14 @@ defmodule Cldr.Unit.Conversions do
                    {unit, conversion}
 
                  {unit, %{factor: factor} = conversion} ->
-                   {unit, %{conversion | factor: Ratio.new(factor.numerator, factor.denominator)}}
+                   {unit, %{conversion | factor: Conversion.new(factor.numerator, factor.denominator)}}
                end)
                |> Enum.map(fn
                  {unit, %{offset: offset} = conversion} when is_number(offset) ->
                    {unit, conversion}
 
                  {unit, %{offset: offset} = conversion} ->
-                   {unit, %{conversion | offset: Ratio.new(offset.numerator, offset.denominator)}}
+                   {unit, %{conversion | offset: Conversion.new(offset.numerator, offset.denominator)}}
                end)
                |> Enum.map(fn
                  {unit, %{base_unit: base_unit} = conversion} ->

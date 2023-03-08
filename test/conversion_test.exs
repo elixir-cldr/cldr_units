@@ -11,12 +11,14 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  # Of the ~180 tests, 3 fail because of rounding
+  # Of the ~180 tests, 3 fail [35, 36, 186] because of rounding
   # precision for round significant digits. The errors are
   # in the 6th decimal place or further
   # so for now we omit these three tests.
 
-  for t <- ConversionData.conversions(), t.line not in [35, 36, 186] do
+  @just_outside_tolerance [35, 36, 186]
+
+  for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance do
     test "##{t.line} [Float] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
       unit = Cldr.Unit.new!(unquote(t.from), 1000)
       {expected_result, round_digits, round_significant} = unquote(Macro.escape(t.result))
@@ -35,15 +37,10 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  # For the Decimal test, test #186 fails. The difference is in the
-  # 6th place.The difference probably comes from the float conversion
-  # TODO fix at some point
-  #
-  # expected: 1.136522,
-  # result: #Cldr.Unit<:cubic_meter, #Decimal<1.136523>>]
+  @just_outside_tolerance_decimal [186]
 
   @one_thousand Decimal.new(1000)
-  for t <- ConversionData.conversions(), t.line not in [186] do
+  for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance_decimal do
     test "##{t.line} [Decimal] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
       unit = Cldr.Unit.new!(unquote(t.from), @one_thousand)
       {expected_result, round_digits, round_significant} = unquote(Macro.escape(t.result))

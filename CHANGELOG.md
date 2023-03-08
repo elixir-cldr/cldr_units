@@ -8,6 +8,8 @@ This is the changelog for Cldr_units v3.16.0 released on ______, 2022.  For olde
 
 * Adjust the inspect protocol implementation to emit executable code strings.
 
+* Support [ratio](https://hex.pm/packages/ratio) versions `2.x`, `3.x` and `4.x`.
+
 ## Cldr_Units v3.15.0
 
 This is the changelog for Cldr_units v3.15.0 released on October 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

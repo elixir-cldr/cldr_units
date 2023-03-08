@@ -9,7 +9,7 @@ defmodule Cldr.Unit.Math do
   import Unit, only: [incompatible_units_error: 2]
 
   @doc """
-  Adds two compatible `%Unit{}` types
+  Adds two compatible `t:Cldr.Unit.t/0` types
 
   ## Options
 
@@ -18,11 +18,11 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the sum of `unit_1` and the potentially converted
     `unit_2` or
 
-  * `{:error, {IncompatibleUnitError, message}}`
+  * `{:error, {IncompatibleUnitError, message}}`.
 
   ## Examples
 
@@ -39,33 +39,8 @@ defmodule Cldr.Unit.Math do
   """
   @spec add(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def add(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_1) and is_number(value_2) do
-    %{unit_1 | value: value_1 + value_2}
-  end
-
-  def add(%Unit{unit: unit, value: %Decimal{}} = u1, %Unit{unit: unit, value: %Decimal{}} = u2) do
-    %{u1 | value: Decimal.add(u1.value, u2.value)}
-  end
-
-  def add(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2} = unit_2)
-      when is_number(value_2) do
-    add(unit_1, %{unit_2 | value: Decimal.new(value_2)})
-  end
-
-  def add(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: %Decimal{}} = unit_2)
-      when is_number(value_1) do
-    add(%{unit_1 | value: Decimal.new(value_1)}, unit_2)
-  end
-
-  def add(%Unit{unit: unit, value: %Ratio{} = value_1} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    %{unit_1 | value: Ratio.add(value_1, value_2)}
-  end
-
-  def add(%Unit{unit: unit, value: value_2} = unit_1, %Unit{unit: unit, value: %Ratio{} = value_1})
-      when is_number(value_2) do
-    %{unit_1 | value: Ratio.add(value_1, value_2)}
+  def add(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: value_2}) do
+    %{unit_1 | value: Conversion.add(value_1, value_2)}
   end
 
   def add(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -77,8 +52,8 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Adds two compatible `%Unit{}` types
-  and raises on error
+  Adds two compatible `t:Cldr.Unit.t/0` types
+  and raises on error.
 
   ## Options
 
@@ -87,11 +62,11 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the sum of `unit_1` and the potentially converted
     `unit_2` or
 
-  * Raises an exception
+  * Raises an exception.
 
   """
   @spec add!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
@@ -104,20 +79,20 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Subtracts two compatible `%Unit{}` types
+  Subtracts two compatible `t:Cldr.Unit.t/0` types.
 
   ## Options
 
   * `unit_1` and `unit_2` are compatible Units
-    returned by `Cldr.Unit.new/2`
+    returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
-    converted `unit_2`
+    converted `unit_2`.
 
-  * `{:error, {IncompatibleUnitError, message}}`
+  * `{:error, {IncompatibleUnitError, message}}`.
 
   ## Examples
 
@@ -133,36 +108,8 @@ defmodule Cldr.Unit.Math do
   """
   @spec sub(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def sub(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-      when is_number(value_1) and is_number(value_2) do
-    Unit.new!(unit, value_1 - value_2)
-  end
-
-  def sub(%Unit{unit: unit, value: %Decimal{} = value_1} = unit_1, %Unit{
-        unit: unit,
-        value: %Decimal{} = value_2
-      }) do
-    %{unit_1 | value: Decimal.sub(value_1, value_2)}
-  end
-
-  def sub(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
-  end
-
-  def sub(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
-      when is_number(value_2) do
-    sub(unit_1, Unit.new!(unit, Decimal.new(value_2)))
-  end
-
-  def sub(%Unit{unit: unit, value: %Ratio{} = value_1} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    %{unit_1 | value: Ratio.sub(value_1, value_2)}
-  end
-
-  def sub(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: %Ratio{} = value_2})
-      when is_number(value_1) do
-    %{unit_1 | value: Ratio.sub(value_1, value_2)}
+  def sub(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: value_2}) do
+    %{unit_1 | value: Conversion.sub(value_1, value_2)}
   end
 
   def sub(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -174,21 +121,21 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Subtracts two compatible `%Unit{}` types
-  and raises on error
+  Subtracts two compatible `t:Cldr.Unit.t/0` types
+  and raises on error.
 
   ## Options
 
   * `unit_1` and `unit_2` are compatible Units
-    returned by `Cldr.Unit.new/2`
+    returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
-    converted `unit_2`
+    converted `unit_2` or
 
-  * Raises an exception
+  * Raises an exception.
 
   """
   @spec sub!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
@@ -201,7 +148,7 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Multiplies two compatible `%Unit{}` types
+  Multiplies two compatible `t:Cldr.Unit.t/0` types
 
   ## Options
 
@@ -210,7 +157,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the product of `unit_1` and the potentially
     converted `unit_2`
 
@@ -230,36 +177,8 @@ defmodule Cldr.Unit.Math do
   """
   @spec mult(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-      when is_number(value_1) and is_number(value_2) do
-    Unit.new!(unit, value_1 * value_2)
-  end
-
-  def mult(%Unit{unit: unit, value: %Decimal{} = value_1} = unit_1, %Unit{
-        unit: unit,
-        value: %Decimal{} = value_2
-      }) do
-    %{unit_1 | value: Decimal.mult(value_1, value_2)}
-  end
-
-  def mult(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
-  end
-
-  def mult(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
-      when is_number(value_2) do
-    mult(unit_1, Unit.new!(unit, Decimal.new(value_2)))
-  end
-
-  def mult(%Unit{unit: unit, value: %Ratio{} = value_1} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    %{unit_1 | value: Ratio.mult(value_1, value_2)}
-  end
-
-  def mult(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: %Ratio{} = value_2})
-      when is_number(value_1) do
-    %{unit_1 | value: Ratio.mult(value_1, value_2)}
+  def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
+    Unit.new!(unit, Conversion.mult(value_1, value_2))
   end
 
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -272,7 +191,7 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Multiplies two compatible `%Unit{}` types
+  Multiplies two compatible `t:Cldr.Unit.t/0` types
   and raises on error
 
   ## Options
@@ -282,11 +201,11 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the product of `unit_1` and the potentially
-    converted `unit_2`
+    converted `unit_2` or
 
-  * Raises an exception
+  * Raises an exception.
 
   """
   @spec mult!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
@@ -308,7 +227,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
     converted `unit_2`
 
@@ -316,48 +235,20 @@ defmodule Cldr.Unit.Math do
 
   ## Examples
 
-      iex> Cldr.Unit.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      Cldr.Unit.new!(:kilogram, Ratio.new(8171193714040401, 90071992547409920))
+      iex> Cldr.Unit.Math.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      Cldr.Unit.new!(:kilogram, Ratio.new(90071992547409920, 8171193714040401))
 
-      iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:pint, Ratio.new(26938398179283203149098379558387912499591752187904, 63733081193714246983132277926414951878417636536165))
+      iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      Cldr.Unit.new!(:pint, Ratio.new(63733081193714246983132277926414951878417636536165, 26938398179283203149098379558387912499591752187904))
 
-      iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-      Cldr.Unit.new!(:pint, 5.0)
+      iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      Cldr.Unit.new!(:pint, 5)
 
   """
   @spec div(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
-  def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
-      when is_number(value_1) and is_number(value_2) do
-    Unit.new!(unit, value_1 / value_2)
-  end
-
-  def div(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{
-        unit: unit,
-        value: %Decimal{} = value_2
-      }) do
-    Unit.new!(unit, Decimal.div(value_1, value_2))
-  end
-
-  def div(%Unit{unit: unit, value: %Decimal{}} = unit_1, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    div(unit_1, Unit.new!(unit, Decimal.new(value_2)))
-  end
-
-  def div(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Decimal{}} = unit_1)
-      when is_number(value_2) do
-    div(unit_1, Unit.new!(unit, Decimal.new(value_2)))
-  end
-
-  def div(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2})
-      when is_number(value_2) do
-    Unit.new!(unit, Ratio.div(value_1, value_2))
-  end
-
-  def div(%Unit{unit: unit, value: value_2}, %Unit{unit: unit, value: %Ratio{} = value_1})
-      when is_number(value_2) do
-    Unit.new!(unit, Ratio.div(value_1, value_2))
+  def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
+    Unit.new!(unit, Conversion.div(value_1, value_2))
   end
 
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -369,7 +260,7 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Divides one compatible `%Unit{}` type by another
+  Divides one compatible `t:Cldr.Unit.t/0` type by another
   and raises on error
 
   ## Options
@@ -379,7 +270,7 @@ defmodule Cldr.Unit.Math do
 
   ## Returns
 
-  * A `%Unit{}` of the same type as `unit_1` with a value
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
     converted `unit_2`
 
@@ -512,13 +403,34 @@ defmodule Cldr.Unit.Math do
     Cldr.Decimal.compare(unit_1.value, unit_2.value)
   end
 
+  def compare(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2})
+      when is_number(value_1) and is_number(value_2) do
+    cond do
+      value_1 == value_2 -> :eq
+      value_1 > value_2 -> :gt
+      value_1 < value_2 -> :lt
+    end
+  end
+
+  def compare(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2}) do
+    Ratio.compare(value_1, Ratio.new(value_2))
+  end
+
+  def compare(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: %Ratio{} = value_2}) do
+    Ratio.compare(Ratio.new(value_1), value_2)
+  end
+
+  def compare(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{unit: unit, value: value_2}) do
+    Decimal.compare(value_1, Decimal.new(value_2))
+  end
+
+  def compare(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: %Decimal{} = value_2}) do
+    Decimal.compare(Decimal.new(value_1), value_2)
+  end
+
   def compare(%Unit{value: %Decimal{}} = unit_1, %Unit{value: %Decimal{}} = unit_2) do
     unit_2 = Unit.Conversion.convert!(unit_2, unit_1.unit)
     compare(unit_1, unit_2)
-  end
-
-  def compare(%Unit{unit: unit} = unit_1, %Unit{unit: unit} = unit_2) do
-    Ratio.compare(Ratio.new(unit_1.value), Ratio.new(unit_2.value))
   end
 
   def compare(%Unit{} = unit_1, %Unit{} = unit_2) do

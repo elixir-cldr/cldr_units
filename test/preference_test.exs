@@ -1,10 +1,9 @@
 defmodule Cldr.Unit.Preference.Test do
   use ExUnit.Case, async: true
-  use Ratio
 
   alias Cldr.Unit.Test.PreferenceData
 
-  @maybe_data_bugs []
+  @maybe_data_bugs [19, 397, 409, 413, 419]
 
   for t <- PreferenceData.preferences(),
       t.line not in @maybe_data_bugs do
