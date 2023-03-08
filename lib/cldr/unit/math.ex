@@ -27,10 +27,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1)
-      #Cldr.Unit<:foot, 2>
+      Cldr.Unit.new!(:foot, 2)
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
-      #Cldr.Unit<:foot, 5281>
+      Cldr.Unit.new!(:foot, 5281)
 
       iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
       {:error, {Cldr.Unit.IncompatibleUnitsError,
@@ -122,13 +122,13 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Cldr.Unit<:kilogram, 81900798833369519 <|> 18014398509481984>
+      Cldr.Unit.new!(:kilogram, Ratio.new(81900798833369519, 18014398509481984))
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, 36794683014431043834033898368027039378825884348261 <|> 12746616238742849396626455585282990375683527307233>
+      Cldr.Unit.new!(:pint, Ratio.new(36794683014431043834033898368027039378825884348261, 12746616238742849396626455585282990375683527307233))
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-      #Cldr.Unit<:pint, 4>
+      Cldr.Unit.new!(:pint, 4)
 
   """
   @spec sub(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
@@ -219,13 +219,13 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Cldr.Unit<:kilogram, 40855968570202005 <|> 18014398509481984>
+      Cldr.Unit.new!(:kilogram, Ratio.new(40855968570202005, 18014398509481984))
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, 134691990896416015745491897791939562497958760939520 <|> 12746616238742849396626455585282990375683527307233>
+      Cldr.Unit.new!(:pint, Ratio.new(134691990896416015745491897791939562497958760939520, 12746616238742849396626455585282990375683527307233))
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-      #Cldr.Unit<:pint, 5>
+      Cldr.Unit.new!(:pint, 5)
 
   """
   @spec mult(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
@@ -317,13 +317,13 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      #Cldr.Unit<:kilogram, 8171193714040401 <|> 90071992547409920>
+      Cldr.Unit.new!(:kilogram, Ratio.new(8171193714040401, 90071992547409920))
 
       iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      #Cldr.Unit<:pint, 26938398179283203149098379558387912499591752187904 <|> 63733081193714246983132277926414951878417636536165>
+      Cldr.Unit.new!(:pint, Ratio.new(26938398179283203149098379558387912499591752187904, 63733081193714246983132277926414951878417636536165))
 
       iex> Cldr.Unit.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-      #Cldr.Unit<:pint, 5.0>
+      Cldr.Unit.new!(:pint, 5.0)
 
   """
   @spec div(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
@@ -439,13 +439,13 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1
-      #Cldr.Unit<:yard, 1031.6>
+      Cldr.Unit.new!(:yard, 1031.6)
 
       iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 2
-      #Cldr.Unit<:yard, 1031.61>
+      Cldr.Unit.new!(:yard, 1031.61)
 
       iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1, :up
-      #Cldr.Unit<:yard, 1031.7>
+      Cldr.Unit.new!(:yard, 1031.7)
 
   """
   @spec round(

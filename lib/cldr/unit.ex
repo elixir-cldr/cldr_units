@@ -1006,7 +1006,7 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.new! 23, :gallon
-      #Cldr.Unit<:gallon, 23>
+      Cldr.Unit.new!(:gallon, 23)
 
       Cldr.Unit.new! 14, :gadzoots
       ** (Cldr.UnknownUnitError) The unit :gadzoots is not known.
@@ -1610,9 +1610,9 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> u = Cldr.Unit.new!(:foot, 23.3)
-      #Cldr.Unit<:foot, 23.3>
+      Cldr.Unit.new!(:foot, 23.3)
       iex> Cldr.Unit.zero(u)
-      #Cldr.Unit<:foot, 0.0>
+      Cldr.Unit.new!(:foot, 0.0)
 
   """
   def zero(%Unit{value: value} = unit) when is_integer(value) do
@@ -1638,12 +1638,12 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> u = Cldr.Unit.new!(:foot, 23.3)
-      #Cldr.Unit<:foot, 23.3>
+      Cldr.Unit.new!(:foot, 23.3)
       iex> Cldr.Unit.zero?(u)
       false
 
       iex> u = Cldr.Unit.new!(:foot, 0)
-      #Cldr.Unit<:foot, 0>
+      Cldr.Unit.new!(:foot, 0)
       iex> Cldr.Unit.zero?(u)
       true
 

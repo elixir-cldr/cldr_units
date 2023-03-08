@@ -244,11 +244,11 @@ defmodule Cldr.Unit.Conversion do
 
       iex> Cldr.Unit.Conversion.convert!(Cldr.Unit.new!(:celsius, 0), :fahrenheit)
       ...> |> Cldr.Unit.round
-      #Cldr.Unit<:fahrenheit, 32.0>
+      Cldr.Unit.new!(:fahrenheit, 32.0)
 
       iex> Cldr.Unit.Conversion.convert!(Cldr.Unit.new!(:fahrenheit, 32), :celsius)
       ...> |> Cldr.Unit.round
-      #Cldr.Unit<:celsius, 0.0>
+      Cldr.Unit.new!(:celsius, 0.0)
 
       Cldr.Unit.Conversion.convert Cldr.Unit.new!(:mile, 1), :gallon
       ** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units of the same type. Received :mile and :gallon
@@ -327,7 +327,7 @@ defmodule Cldr.Unit.Conversion do
 
       iex> unit = Cldr.Unit.new!(:kilometer, 10)
       iex> Cldr.Unit.Conversion.convert_to_base_unit! unit
-      #Cldr.Unit<:meter, 10000>
+      Cldr.Unit.new!(:meter, 10000)
 
   """
   def convert_to_base_unit!(%Unit{} = unit) do

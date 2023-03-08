@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.16.0
+
+This is the changelog for Cldr_units v3.16.0 released on ______, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Adjust the inspect protocol implementation to emit executable code strings.
+
 ## Cldr_Units v3.15.0
 
 This is the changelog for Cldr_units v3.15.0 released on October 24th, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

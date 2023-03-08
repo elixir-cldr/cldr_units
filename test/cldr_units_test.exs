@@ -120,13 +120,13 @@ defmodule Cldr.UnitsTest do
   end
 
   test "inspection when non-default usage or non-default format options" do
-    assert inspect(Cldr.Unit.new!(:meter, 1)) == "#Cldr.Unit<:meter, 1>"
+    assert inspect(Cldr.Unit.new!(:meter, 1)) == "Cldr.Unit.new!(:meter, 1)"
 
     assert inspect(Cldr.Unit.new!(:meter, 1, usage: :road)) ==
-             "#Cldr.Unit<:meter, 1, usage: :road, format_options: []>"
+             "Cldr.Unit.new!(:meter, 1, usage: :road)"
 
     assert inspect(Cldr.Unit.new!(:meter, 1, format_options: [round_nearest: 50])) ==
-             "#Cldr.Unit<:meter, 1, usage: :default, format_options: [round_nearest: 50]>"
+             "Cldr.Unit.new!(:meter, 1, format_options: [round_nearest: 50])"
   end
 
   test "that unit skeletons are used for formatting" do
