@@ -504,7 +504,8 @@ defmodule Cldr.Unit.Parser do
   # integer ranking for the unit and an integer ranking for
   # the SI prefix.
 
-  defp unit_sorter(a, b) do
+  @doc false
+  def unit_sorter(a, b) do
     case {unit_sort_key(a), unit_sort_key(b)} do
       {{key, order_1}, {key, order_2}} -> order_1 < order_2
       {{key_1, _order_1}, key_2} when is_integer(key_2) -> key_1 < key_2

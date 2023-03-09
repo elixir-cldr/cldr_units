@@ -3,6 +3,7 @@ defmodule Cldr.Unit.Math do
   Simple arithmetic functions for the `Unit.t` type
   """
   alias Cldr.Unit
+  alias Cldr.Unit.Parser
   alias Cldr.Unit.Conversion
 
   import Kernel, except: [div: 2, round: 1, trunc: 1]
@@ -20,7 +21,7 @@ defmodule Cldr.Unit.Math do
 
   * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the sum of `unit_1` and the potentially converted
-    `unit_2` or
+    `unit_2`, or
 
   * `{:error, {IncompatibleUnitError, message}}`.
 
@@ -90,7 +91,7 @@ defmodule Cldr.Unit.Math do
 
   * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the difference between `unit_1` and the potentially
-    converted `unit_2`.
+    converted `unit_2`, or
 
   * `{:error, {IncompatibleUnitError, message}}`.
 
@@ -148,20 +149,20 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Multiplies two compatible `t:Cldr.Unit.t/0` types
+  Multiplies two `t:Cldr.Unit.t/0` types. Any two
+  units can be multiplied together.
 
   ## Options
 
-  * `unit_1` and `unit_2` are compatible Units
+  * `unit_1` and `unit_2` are Units
     returned by `Cldr.Unit.new/2`
 
   ## Returns
 
-  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
-    that is the product of `unit_1` and the potentially
-    converted `unit_2`
-
-  * `{:error, {IncompatibleUnitError, message}}`
+  * A `t:Cldr.Unit.t/0` of a type that is the product
+    of `unit_1` and `unit_2` with a value
+    that is the product of `unit_1` and `unit_2`'s
+    values.
 
   ## Examples
 
@@ -175,7 +176,7 @@ defmodule Cldr.Unit.Math do
       Cldr.Unit.new!(:pint, 5)
 
   """
-  @spec mult(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
+  @spec mult(Unit.t(), Unit.t()) :: Unit.t()
 
   def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.mult(value_1, value_2))
@@ -183,10 +184,10 @@ defmodule Cldr.Unit.Math do
 
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      {:ok, conversion} = Conversion.convert(unit_2, unit_category_1)
-      mult(unit_1, conversion)
+      {:ok, converted} = Conversion.convert(unit_2, unit_category_1)
+      mult(unit_1, converted)
     else
-      {:error, incompatible_units_error(unit_1, unit_2)}
+      product(unit_1, unit_2)
     end
   end
 
@@ -218,20 +219,20 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Divides one compatible `%Unit{}` type by another
+  Divides one `t:Cldr.Unit.t/0` type into another.
+  Any unit can be divided by another.
 
   ## Options
 
-  * `unit_1` and `unit_2` are compatible Units
+  * `unit_1` and `unit_2` are Units
     returned by `Cldr.Unit.new/2`
 
   ## Returns
 
-  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
-    that is the dividend of `unit_1` and the potentially
-    converted `unit_2`
-
-  * `{:error, {IncompatibleUnitError, message}}`
+  * A `t:Cldr.Unit.t/0` of a type that is the dividend
+    of `unit_1` and `unit_2` with a value
+    that is the dividend of `unit_1` and `unit_2`'s
+    values.
 
   ## Examples
 
@@ -245,7 +246,7 @@ defmodule Cldr.Unit.Math do
       Cldr.Unit.new!(:pint, 5)
 
   """
-  @spec div(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
+  @spec div(Unit.t(), Unit.t()) :: Unit.t()
 
   def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.div(value_1, value_2))
@@ -255,7 +256,7 @@ defmodule Cldr.Unit.Math do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       div(unit_1, Conversion.convert!(unit_2, unit_category_1))
     else
-      {:error, incompatible_units_error(unit_1, unit_2)}
+      product(unit_1, invert(unit_2))
     end
   end
 
@@ -449,5 +450,112 @@ defmodule Cldr.Unit.Math do
   @deprecated "Please use Cldr.Unit.Math.compare/2"
   def cmp(unit_1, unit_2) do
     compare(unit_1, unit_2)
+  end
+
+  ### Helpers
+
+  defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
+      when is_tuple(conv_1) and tuple_size(conv_1) == 2 and is_tuple(conv_2) and tuple_size(conv_2) == 2 do
+    {numerator_1, denominator_1} = conv_1
+    {numerator_2, denominator_2} = conv_2
+
+    new_numerator = Enum.sort(numerator_1 ++ numerator_2, &Parser.unit_sorter/2)
+    new_denominator = Enum.sort(denominator_1 ++ denominator_2, &Parser.unit_sorter/2)
+
+    new_conversion = combine_power_instances({new_numerator, new_denominator})
+    new_value = Conversion.mult(unit_1.value, unit_2.value)
+
+    unit_name =
+      new_conversion
+      |> Parser.canonical_unit_name()
+      |> Unit.maybe_translatable_unit()
+
+      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+  end
+
+  defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
+      when is_tuple(conv_1) and tuple_size(conv_1) == 2 and is_list(conv_2) do
+    {numerator_1, denominator_1} = conv_1
+
+    new_numerator = Enum.sort(numerator_1 ++ conv_2, &Parser.unit_sorter/2)
+    new_denominator = denominator_1
+
+    new_conversion = combine_power_instances({new_numerator, new_denominator})
+    new_value = Conversion.mult(unit_1.value, unit_2.value)
+
+    unit_name =
+      new_conversion
+      |> Parser.canonical_unit_name()
+      |> Unit.maybe_translatable_unit()
+
+      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+  end
+
+  defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
+      when is_list(conv_1) and is_tuple(conv_2) and tuple_size(conv_2) == 2 do
+    {numerator_2, denominator_2} = conv_2
+
+    new_numerator = Enum.sort(conv_1 ++ numerator_2, &Parser.unit_sorter/2)
+    new_denominator = denominator_2
+
+    new_conversion = combine_power_instances({new_numerator, new_denominator})
+    new_value = Conversion.mult(unit_1.value, unit_2.value)
+
+    unit_name =
+      new_conversion
+      |> Parser.canonical_unit_name()
+      |> Unit.maybe_translatable_unit()
+
+      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+  end
+
+  defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
+      when is_list(conv_1) and is_list(conv_2) do
+    new_conversion =
+      (conv_1 ++ conv_2)
+      |> Enum.sort(&Parser.unit_sorter/2)
+      |> combine_power_instances()
+
+    new_value = Conversion.mult(unit_1.value, unit_2.value)
+
+    unit_name =
+      new_conversion
+      |> Parser.canonical_unit_name()
+      |> Unit.maybe_translatable_unit()
+      |> combine_power_instances()
+
+      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+  end
+
+  defp invert(unit) do
+    unit
+  end
+
+  defp combine_power_instances({numerator, denominator}) do
+    {combine_power_instances(numerator), combine_power_instances(denominator)}
+  end
+
+  defp combine_power_instances([{name, conversion} = first, first, first | rest]) do
+    conversion_factor = Conversion.pow(conversion.factor, 3)
+    conversion_base_unit = [:cubic | conversion.base_unit]
+    new_conversion = %{conversion | factor: conversion_factor, base_unit: conversion_base_unit}
+    new_name = Unit.maybe_translatable_unit("cubic_#{name}")
+    combine_power_instances([{new_name, new_conversion} | rest])
+  end
+
+  defp combine_power_instances([{name, conversion} = first, first | rest]) do
+    conversion_factor = Conversion.mult(conversion.factor, conversion.factor)
+    conversion_base_unit = [:square | conversion.base_unit]
+    new_conversion = %{conversion | factor: conversion_factor, base_unit: conversion_base_unit}
+    new_name = Unit.maybe_translatable_unit("square_#{name}")
+    combine_power_instances([{new_name, new_conversion} | rest])
+  end
+
+  defp combine_power_instances([first | rest]) do
+    [first | combine_power_instances(rest)]
+  end
+
+  defp combine_power_instances([]) do
+    []
   end
 end
