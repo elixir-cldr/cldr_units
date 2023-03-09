@@ -209,13 +209,10 @@ defmodule Cldr.Unit.Math do
   * Raises an exception.
 
   """
-  @spec mult!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
+  @spec mult!(Unit.t(), Unit.t()) :: Unit.t()
 
   def mult!(unit_1, unit_2) do
-    case mult(unit_1, unit_2) do
-      {:error, {exception, reason}} -> raise exception, reason
-      unit -> unit
-    end
+    mult(unit_1, unit_2)
   end
 
   @doc """
@@ -278,13 +275,10 @@ defmodule Cldr.Unit.Math do
   * Raises an exception
 
   """
-  @spec div!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
+  @spec div!(Unit.t(), Unit.t()) :: Unit.t()
 
   def div!(unit_1, unit_2) do
-    case div(unit_1, unit_2) do
-      {:error, {exception, reason}} -> raise exception, reason
-      unit -> unit
-    end
+    div(unit_1, unit_2)
   end
 
   @doc """
@@ -456,6 +450,7 @@ defmodule Cldr.Unit.Math do
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
       when is_tuple(conv_1) and tuple_size(conv_1) == 2 and is_tuple(conv_2) and tuple_size(conv_2) == 2 do
+        IO.inspect {unit_1, unit_2}, label: "Product 1"
     {numerator_1, denominator_1} = conv_1
     {numerator_2, denominator_2} = conv_2
 
@@ -475,6 +470,7 @@ defmodule Cldr.Unit.Math do
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
       when is_tuple(conv_1) and tuple_size(conv_1) == 2 and is_list(conv_2) do
+    IO.inspect {unit_1, unit_2}, label: "Product 2"
     {numerator_1, denominator_1} = conv_1
 
     new_numerator = Enum.sort(numerator_1 ++ conv_2, &Parser.unit_sorter/2)
@@ -493,6 +489,7 @@ defmodule Cldr.Unit.Math do
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
       when is_list(conv_1) and is_tuple(conv_2) and tuple_size(conv_2) == 2 do
+    IO.inspect {unit_1, unit_2}, label: "Product 3"
     {numerator_2, denominator_2} = conv_2
 
     new_numerator = Enum.sort(conv_1 ++ numerator_2, &Parser.unit_sorter/2)
@@ -511,6 +508,7 @@ defmodule Cldr.Unit.Math do
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
       when is_list(conv_1) and is_list(conv_2) do
+    IO.inspect {unit_1, unit_2}, label: "Product 4"
     new_conversion =
       (conv_1 ++ conv_2)
       |> Enum.sort(&Parser.unit_sorter/2)
@@ -527,10 +525,23 @@ defmodule Cldr.Unit.Math do
       %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
   end
 
-  defp invert(unit) do
-    unit
+  # Invert a unit. This is used to convert a division
+  # into a multiplication.
+
+  @doc false
+  def invert({numerator, denominator}) do
+    {denominator, numerator}
   end
 
+  def invert(numerator) do
+    Map.put(null_unit(), :base_conversion, {[], numerator.base_conversion})
+  end
+
+  defp null_unit do
+    %Cldr.Unit{unit: nil, value: 1, usage: :default, format_options: [], base_conversion: []}
+  end
+
+  # Combine consecutive identifical units into square or cubic units
   defp combine_power_instances({numerator, denominator}) do
     {combine_power_instances(numerator), combine_power_instances(denominator)}
   end
@@ -557,5 +568,9 @@ defmodule Cldr.Unit.Math do
 
   defp combine_power_instances([]) do
     []
+  end
+
+  defp combine_power_instances(other) do
+    other
   end
 end

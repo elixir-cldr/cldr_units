@@ -6,6 +6,8 @@ This is the changelog for Cldr_units v3.16.0 released on ______, 2022.  For olde
 
 ### Enhancements
 
+* Add support for multiplication and division of arbitrary units. Thanks to @maennchen for the report (and patience). Closes #32.
+
 * Adjust the inspect protocol implementation to emit executable code strings.
 
 * Support [ratio](https://hex.pm/packages/ratio) versions `2.x`, `3.x` and `4.x`.
