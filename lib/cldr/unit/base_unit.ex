@@ -85,6 +85,7 @@ defmodule Cldr.Unit.BaseUnit do
     |> resolve_unit_names()
     |> sort_base_units()
     |> reduce_powers()
+
     # |> reduce_factors()
   end
 
@@ -243,44 +244,54 @@ defmodule Cldr.Unit.BaseUnit do
 
   # Numerator and denominator cancel each other
   def reduce_factors({[unit | rest_1], [unit | rest_2]}) do
-    reduce_factors({rest_1, rest_2}) #|> IO.inspect(label: "1")
+    # |> IO.inspect(label: "1")
+    reduce_factors({rest_1, rest_2})
   end
 
   def reduce_factors({[[:square, unit] | rest_1], [unit | rest_2]}) do
-    reduce_factors({[unit | rest_1], rest_2}) #|> IO.inspect(label: "2")
+    # |> IO.inspect(label: "2")
+    reduce_factors({[unit | rest_1], rest_2})
   end
 
   def reduce_factors({[unit | rest_1], [[:square, unit] | rest_2]}) do
-    reduce_factors({rest_1, [unit | rest_2]}) #|> IO.inspect(label: "3")
+    # |> IO.inspect(label: "3")
+    reduce_factors({rest_1, [unit | rest_2]})
   end
 
   def reduce_factors({[unit | rest_1], [[:cubic, unit] | rest_2]}) do
-    reduce_factors({rest_1, [[:square, unit] | rest_2]}) #|> IO.inspect(label: "4")
+    # |> IO.inspect(label: "4")
+    reduce_factors({rest_1, [[:square, unit] | rest_2]})
   end
 
   def reduce_factors({[[:square, unit] | rest_1], [[:square, unit] | rest_2]}) do
-    reduce_factors({rest_1, rest_2}) #|> IO.inspect(label: "5")
+    # |> IO.inspect(label: "5")
+    reduce_factors({rest_1, rest_2})
   end
 
   def reduce_factors({[[:cubic, unit] | rest_1], [[:cubic, unit] | rest_2]}) do
-    reduce_factors({rest_1, rest_2}) #|> IO.inspect(label: "6")
+    # |> IO.inspect(label: "6")
+    reduce_factors({rest_1, rest_2})
   end
 
   def reduce_factors({[[:cubic, unit] | rest_1], [[:square, unit] | rest_2]}) do
-    reduce_factors({[unit | rest_1], rest_2}) #|> IO.inspect(label: "7")
+    # |> IO.inspect(label: "7")
+    reduce_factors({[unit | rest_1], rest_2})
   end
 
   def reduce_factors({[[:cubic, unit] | rest_1], [unit | rest_2]}) do
-    reduce_factors({[[:square, unit] | rest_1], rest_2}) #|> IO.inspect(label: "8")
+    # |> IO.inspect(label: "8")
+    reduce_factors({[[:square, unit] | rest_1], rest_2})
   end
 
   def reduce_factors({[unit_1 | rest_1], rest_2}) do
     {numerator, denominator} = reduce_factors({rest_1, rest_2})
-    {[unit_1 | numerator], denominator} #|> IO.inspect(label: "9")
+    # |> IO.inspect(label: "9")
+    {[unit_1 | numerator], denominator}
   end
 
   def reduce_factors(other) do
-    other #|> IO.inspect(label: "Other")
+    # |> IO.inspect(label: "Other")
+    other
   end
 
   # Reduce powers to square and cubic

@@ -416,9 +416,7 @@ defmodule Cldr.Unit.Additional do
         {unit, new_config}
       else
         raise ArgumentError,
-              "Additional unit configuration for #{inspect(unit)} must be a keyword list. Found #{
-                inspect(config)
-              }"
+              "Additional unit configuration for #{inspect(unit)} must be a keyword list. Found #{inspect(config)}"
       end
     end)
   end

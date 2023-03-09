@@ -159,5 +159,3 @@ defmodule Cldr.Unit.CategoryMatchError do
     %__MODULE__{message: message}
   end
 end
-
-

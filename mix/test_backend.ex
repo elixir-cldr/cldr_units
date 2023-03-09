@@ -82,7 +82,6 @@ defmodule MyApp.Cldr do
     display_name: "q"
   )
 
-
   unit_localization(:quarter, "fr", :long,
     nominative: %{
       one: "{0} quartier",

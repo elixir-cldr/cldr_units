@@ -153,7 +153,7 @@ defmodule Cldr.Unit.AdditionalUnitTest do
         end)
 
       assert warnings =~
-        ~r/.*The locales \[:\"en-001\", :fr\] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend2 do not have localizations defined.*/
+               ~r/.*The locales \[:\"en-001\", :fr\] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend2 do not have localizations defined.*/
     end
 
     test "backend with localization missing the :other key" do
@@ -198,6 +198,8 @@ defmodule Cldr.Unit.AdditionalUnitTest do
   test "additional unit quarter" do
     assert MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(:quarter, 1)) == {:ok, "1 quarter"}
     assert MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(:quarter, 2)) == {:ok, "2 quarters"}
-    assert MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(:quarter, 2), locale: "fr") == {:ok, "2 quartiers"}
+
+    assert MyApp.Cldr.Unit.to_string(Cldr.Unit.new!(:quarter, 2), locale: "fr") ==
+             {:ok, "2 quartiers"}
   end
 end

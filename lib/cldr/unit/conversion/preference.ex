@@ -99,7 +99,7 @@ defmodule Cldr.Unit.Preference do
 
   """
   @spec preferred_units(Cldr.Unit.t(), Cldr.backend() | Keyword.t(), Keyword.t() | Options.t()) ::
-    {:ok, [atom(), ...], Keyword.t()} | {:error, {module, binary}}
+          {:ok, [atom(), ...], Keyword.t()} | {:error, {module, binary}}
 
   def preferred_units(unit, backend, options \\ [])
 
@@ -215,7 +215,7 @@ defmodule Cldr.Unit.Preference do
 
   """
   @spec preferred_units!(Cldr.Unit.t(), Cldr.backend() | Keyword.t(), Keyword.t() | Options.t()) ::
-    [atom(), ...] | no_return()
+          [atom(), ...] | no_return()
 
   def preferred_units!(unit, backend, options \\ []) do
     case preferred_units(unit, backend, options) do

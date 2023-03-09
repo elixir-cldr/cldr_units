@@ -1,6 +1,7 @@
 defmodule Cldr.Unit.Math do
   @moduledoc """
-  Simple arithmetic functions for the `Unit.t` type
+  Simple arithmetic functions for the `t.Cldr.Unit.t/0` type.
+
   """
   alias Cldr.Unit
   alias Cldr.Unit.Parser
@@ -9,13 +10,20 @@ defmodule Cldr.Unit.Math do
   import Kernel, except: [div: 2, round: 1, trunc: 1]
   import Unit, only: [incompatible_units_error: 2]
 
+  @doc false
+  defguard is_per_unit(base_conversion) when is_tuple(base_conversion) and
+    tuple_size(base_conversion) == 2
+
+  @doc false
+  defguard is_simple_unit(base_conversion) when is_list(base_conversion)
+
   @doc """
   Adds two compatible `t:Cldr.Unit.t/0` types
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are compatible Units
-    returned by `Cldr.Unit.new/2`
+    returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
@@ -56,10 +64,10 @@ defmodule Cldr.Unit.Math do
   Adds two compatible `t:Cldr.Unit.t/0` types
   and raises on error.
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are compatible Units
-    returned by `Cldr.Unit.new/2`
+    returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
@@ -82,7 +90,7 @@ defmodule Cldr.Unit.Math do
   @doc """
   Subtracts two compatible `t:Cldr.Unit.t/0` types.
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are compatible Units
     returned by `Cldr.Unit.new/2`.
@@ -125,7 +133,7 @@ defmodule Cldr.Unit.Math do
   Subtracts two compatible `t:Cldr.Unit.t/0` types
   and raises on error.
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are compatible Units
     returned by `Cldr.Unit.new/2`.
@@ -152,10 +160,10 @@ defmodule Cldr.Unit.Math do
   Multiplies two `t:Cldr.Unit.t/0` types. Any two
   units can be multiplied together.
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are Units
-    returned by `Cldr.Unit.new/2`
+    returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
@@ -193,12 +201,12 @@ defmodule Cldr.Unit.Math do
 
   @doc """
   Multiplies two compatible `t:Cldr.Unit.t/0` types
-  and raises on error
+  and raises on error.
 
   ## Options
 
   * `unit_1` and `unit_2` are compatible Units
-    returned by `Cldr.Unit.new/2`
+    returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
@@ -258,10 +266,10 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Divides one compatible `t:Cldr.Unit.t/0` type by another
-  and raises on error
+  Divides one `t:Cldr.Unit.t/0` type into another.
+  Any unit can be divided by another.
 
-  ## Options
+  ## Arguments
 
   * `unit_1` and `unit_2` are compatible Units
     returned by `Cldr.Unit.new/2`
@@ -270,9 +278,9 @@ defmodule Cldr.Unit.Math do
 
   * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
     that is the dividend of `unit_1` and the potentially
-    converted `unit_2`
+    converted `unit_2` or
 
-  * Raises an exception
+  * Raises an exception.
 
   """
   @spec div!(Unit.t(), Unit.t()) :: Unit.t()
@@ -284,18 +292,20 @@ defmodule Cldr.Unit.Math do
   @doc """
   Rounds the value of a unit.
 
-  ## Options
+  ## Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  * `places` is the number of decimal places to round to.  The default is `0`.
+  * `places` is the number of decimal places to round to.
+    The default is `0`.
 
-  * `mode` is the rounding mode to be applied.  The default is `:half_up`.
+  * `mode` is the rounding mode to be applied.  The default
+    is `:half_up`.
 
   ## Returns
 
   * A `%Unit{}` of the same type as `unit` with a value
-    that is rounded to the specified number of decimal places
+    that is rounded to the specified number of decimal places.
 
   ## Rounding modes
 
@@ -353,7 +363,7 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Truncates a unit's value
+  Truncates a unit's value.
 
   """
   def trunc(%Unit{value: %Ratio{} = value} = unit) do
@@ -391,6 +401,8 @@ defmodule Cldr.Unit.Math do
       :eq
 
   """
+  @spec compare(unit_1 :: Unit.t(), unit_2 :: Unit.t()) :: :eq | :lt | :gt
+
   def compare(
         %Unit{unit: unit, value: %Decimal{}} = unit_1,
         %Unit{unit: unit, value: %Decimal{}} = unit_2
@@ -449,8 +461,7 @@ defmodule Cldr.Unit.Math do
   ### Helpers
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
-      when is_tuple(conv_1) and tuple_size(conv_1) == 2 and is_tuple(conv_2) and tuple_size(conv_2) == 2 do
-        IO.inspect {unit_1, unit_2}, label: "Product 1"
+       when is_per_unit(conv_1) and is_per_unit(conv_2) do
     {numerator_1, denominator_1} = conv_1
     {numerator_2, denominator_2} = conv_2
 
@@ -465,12 +476,11 @@ defmodule Cldr.Unit.Math do
       |> Parser.canonical_unit_name()
       |> Unit.maybe_translatable_unit()
 
-      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+    %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
   end
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
-      when is_tuple(conv_1) and tuple_size(conv_1) == 2 and is_list(conv_2) do
-    IO.inspect {unit_1, unit_2}, label: "Product 2"
+       when is_per_unit(conv_1) and is_simple_unit(conv_2) do
     {numerator_1, denominator_1} = conv_1
 
     new_numerator = Enum.sort(numerator_1 ++ conv_2, &Parser.unit_sorter/2)
@@ -484,12 +494,11 @@ defmodule Cldr.Unit.Math do
       |> Parser.canonical_unit_name()
       |> Unit.maybe_translatable_unit()
 
-      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+    %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
   end
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
-      when is_list(conv_1) and is_tuple(conv_2) and tuple_size(conv_2) == 2 do
-    IO.inspect {unit_1, unit_2}, label: "Product 3"
+       when is_simple_unit(conv_1) and is_per_unit(conv_2) do
     {numerator_2, denominator_2} = conv_2
 
     new_numerator = Enum.sort(conv_1 ++ numerator_2, &Parser.unit_sorter/2)
@@ -503,12 +512,11 @@ defmodule Cldr.Unit.Math do
       |> Parser.canonical_unit_name()
       |> Unit.maybe_translatable_unit()
 
-      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+    %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
   end
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
-      when is_list(conv_1) and is_list(conv_2) do
-    IO.inspect {unit_1, unit_2}, label: "Product 4"
+       when is_simple_unit(conv_1) and is_simple_unit(conv_2) do
     new_conversion =
       (conv_1 ++ conv_2)
       |> Enum.sort(&Parser.unit_sorter/2)
@@ -520,13 +528,13 @@ defmodule Cldr.Unit.Math do
       new_conversion
       |> Parser.canonical_unit_name()
       |> Unit.maybe_translatable_unit()
-      |> combine_power_instances()
 
-      %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
+    %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
   end
 
   # Invert a unit. This is used to convert a division
-  # into a multiplication.
+  # into a multiplication. Its not a valid standalone
+  # unit.
 
   @doc false
   def invert({numerator, denominator}) do
@@ -537,11 +545,14 @@ defmodule Cldr.Unit.Math do
     Map.put(null_unit(), :base_conversion, {[], numerator.base_conversion})
   end
 
-  defp null_unit do
+  @doc false
+  def null_unit do
     %Cldr.Unit{unit: nil, value: 1, usage: :default, format_options: [], base_conversion: []}
   end
 
-  # Combine consecutive identifical units into square or cubic units
+  # Combine consecutive identical units into square or cubic units.
+  # Assumes the units are ordered using `Parser.unit_sorter/2`.
+
   defp combine_power_instances({numerator, denominator}) do
     {combine_power_instances(numerator), combine_power_instances(denominator)}
   end

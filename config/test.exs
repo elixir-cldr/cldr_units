@@ -24,5 +24,5 @@ config :ex_cldr_units, :additional_units,
     base_unit: :year,
     factor: %{numerator: 1, denominator: 4},
     offset: 0,
-    sort_before: :all,
+    sort_before: :all
   ]

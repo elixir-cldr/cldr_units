@@ -3,13 +3,13 @@ defmodule Cldr.UnitsTest do
 
   test "new unit with multiple 'per' clauses" do
     assert Cldr.Unit.new!(2, "curr-usd-per-meter-per-second").unit ==
-      "curr_usd_per_meter_per_second"
+             "curr_usd_per_meter_per_second"
 
     assert Cldr.Unit.new!(2, "curr-usd-per-mile-per-gallon").unit ==
-      "curr_usd_per_gallon_mile"
+             "curr_usd_per_gallon_mile"
 
     assert Cldr.Unit.new!(2, "curr-usd-per-mile-per-gallon").unit ==
-      "curr_usd_per_gallon_mile"
+             "curr_usd_per_gallon_mile"
   end
 
   test "that centimetre conversion is correct" do
@@ -83,13 +83,19 @@ defmodule Cldr.UnitsTest do
     unit = Cldr.Unit.new!(100, :meter)
 
     assert Cldr.Unit.localize(unit, usage: :person, territory: :US) ==
-      [Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109), usage: :person)]
+             [
+               Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109),
+                 usage: :person
+               )
+             ]
 
     assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US) ==
-       [
-         Cldr.Unit.new!(:foot, 328, usage: :person_height),
-         Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109), usage: :person_height)
-       ]
+             [
+               Cldr.Unit.new!(:foot, 328, usage: :person_height),
+               Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109),
+                 usage: :person_height
+               )
+             ]
 
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
              {:error,
@@ -255,6 +261,9 @@ defmodule Cldr.UnitsTest do
 
     assert Cldr.Unit.display_name(:invalid, locale: "fr", style: :short) ==
              {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
+
+    assert Cldr.Unit.display_name("milliliter", locale: "fr", style: :short) ==
+             {:error, {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
   end
 
   test "Unit of 1 retrieves a default pattern is plural category pattern does not exist" do
@@ -286,13 +295,19 @@ defmodule Cldr.UnitsTest do
   end
 
   test "Cldr.Unit.from_map/1" do
-    assert Cldr.Unit.from_map %{value: 1, unit: "kilogram"} == Cldr.Unit.new(:kilogram, 1)
-    assert Cldr.Unit.from_map %{"value" => 1, "unit" => "kilogram"} == Cldr.Unit.new(:kilogram, 1)
-    assert Cldr.Unit.from_map %{value: %{numerator: 3, denominator: 4}, unit: "kilogram"} == Cldr.Unit.new(:kilogram, Ratio.new(3,4))
+    assert Cldr.Unit.from_map(%{value: 1, unit: "kilogram"} == Cldr.Unit.new(:kilogram, 1))
+    assert Cldr.Unit.from_map(%{"value" => 1, "unit" => "kilogram"} == Cldr.Unit.new(:kilogram, 1))
 
-    assert Cldr.Unit.from_map %{"value" => 1, unit: "kilogram"} ==
-      {:error,
-       {Cldr.UnknownUnitError,
-        "The unit %{:unit => \"kilogram\", \"value\" => 1} is not known."}}
+    assert Cldr.Unit.from_map(
+             %{value: %{numerator: 3, denominator: 4}, unit: "kilogram"} ==
+               Cldr.Unit.new(:kilogram, Ratio.new(3, 4))
+           )
+
+    assert Cldr.Unit.from_map(
+             %{"value" => 1, unit: "kilogram"} ==
+               {:error,
+                {Cldr.UnknownUnitError,
+                 "The unit %{:unit => \"kilogram\", \"value\" => 1} is not known."}}
+           )
   end
 end

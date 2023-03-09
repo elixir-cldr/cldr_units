@@ -6,12 +6,11 @@ defmodule Cldr.Unit.Conversion.Options do
   alias Cldr.{Locale, LanguageTag}
 
   @type t :: %__MODULE__{
-    usage: atom(),
-    locale: LanguageTag.t(),
-    backend: Cldr.backend(),
-    territory: Locale.territory_code()
-  }
+          usage: atom(),
+          locale: LanguageTag.t(),
+          backend: Cldr.backend(),
+          territory: Locale.territory_code()
+        }
 
   defstruct usage: nil, locale: nil, backend: nil, territory: nil
-
 end

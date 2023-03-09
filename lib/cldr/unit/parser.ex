@@ -355,6 +355,7 @@ defmodule Cldr.Unit.Parser do
     case Cldr.validate_currency(currency) do
       {:ok, currency} ->
         [currency | split_into_units(rest)]
+
       _other ->
         {exception, reason} = Cldr.unknown_currency_error(currency)
         raise exception, reason
@@ -370,6 +371,7 @@ defmodule Cldr.Unit.Parser do
       {integer, rest} when is_integer(integer) ->
         [head | rest] = split_into_units(rest)
         [{integer, head} | rest]
+
       _other ->
         raise Cldr.UnknownUnitError, "Unknown unit was detected at #{inspect(other)}"
     end
@@ -494,7 +496,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   defp resolve_base_unit(currency) when is_atom(currency) do
-    raise Cldr.UnknownCurrencyError, "The currency #{inspect currency} is unknown"
+    raise Cldr.UnknownCurrencyError, "The currency #{inspect(currency)} is unknown"
   end
 
   # Units are sorted in the order present in the base units
@@ -534,7 +536,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   defp unit_sort_key({currency, %Conversion{base_unit: [_base_unit]}})
-      when currency in @currencies do
+       when currency in @currencies do
     -1
   end
 
@@ -545,5 +547,4 @@ defmodule Cldr.Unit.Parser do
   defp unit_sort_key({_unit, %Conversion{base_unit: [_prefix, base_unit]}}) do
     Map.fetch!(base_units_in_order(), base_unit)
   end
-
 end

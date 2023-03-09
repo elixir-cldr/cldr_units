@@ -2,6 +2,8 @@ defmodule Cldr.Unit.Prefix do
   @moduledoc false
 
   @si_factors %{
+    "quecto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000_000_000),
+    "ronto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000_000),
     "yokto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000),
     "zepto" => Ratio.new(1, 1_000_000_000_000_000_000_000),
     "atto" => Ratio.new(1, 1_000_000_000_000_000_000),
@@ -21,7 +23,9 @@ defmodule Cldr.Unit.Prefix do
     "peta" => 1_000_000_000_000_000,
     "exa" => 1_000_000_000_000_000_000,
     "zetta" => 1_000_000_000_000_000_000_000,
-    "yotta" => 1_000_000_000_000_000_000_000_000
+    "yotta" => 1_000_000_000_000_000_000_000_000,
+    "ronna" => 1_000_000_000_000_000_000_000_000_000,
+    "quetta" => 1_000_000_000_000_000_000_000_000_000_000
   }
 
   def si_factors do
@@ -68,7 +72,7 @@ defmodule Cldr.Unit.Prefix do
   ## Power prefixes
   ##
 
-  @power_units [{"square", 2}, {"cubic", 3}]
+  @power_units [{"square", 2}, {"cubic", 3}, {"pow4", 4}]
 
   def power_units do
     @power_units
@@ -103,30 +107,30 @@ defmodule Cldr.Unit.Prefix do
   end
 
   @binary_keys @binary_factors
-              |> Enum.map(fn {_name, exp} ->
-                exp = trunc(:math.log2(exp)) - 9
-                String.to_atom("1024p#{exp}")
-              end)
+               |> Enum.map(fn {_name, exp} ->
+                 exp = trunc(:math.log2(exp)) - 9
+                 String.to_atom("1024p#{exp}")
+               end)
 
   def binary_keys do
     @binary_keys
   end
 
   @binary_prefixes @binary_factors
-                     |> Enum.map(fn
-                       {prefix, factor} when is_integer(factor) ->
-                         {prefix, trunc(:math.log2(factor)) - 9}
-                     end)
-                     |> Map.new()
+                   |> Enum.map(fn
+                     {prefix, factor} when is_integer(factor) ->
+                       {prefix, trunc(:math.log2(factor)) - 9}
+                   end)
+                   |> Map.new()
 
   def binary_prefixes do
     @binary_prefixes
   end
 
   @binary_sort_order @binary_factors
-                 |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
-                 |> Enum.map(&elem(&1, 0))
-                 |> Enum.with_index()
+                     |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
+                     |> Enum.map(&elem(&1, 0))
+                     |> Enum.with_index()
 
   def binary_sort_order do
     @binary_sort_order
@@ -137,11 +141,10 @@ defmodule Cldr.Unit.Prefix do
   ##
 
   @prefixes Map.keys(@si_factors) ++
-    Map.keys(@binary_factors) ++
-    Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
+              Map.keys(@binary_factors) ++
+              Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
 
   def prefixes do
     @prefixes
   end
-
 end

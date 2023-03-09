@@ -510,7 +510,10 @@ defmodule Cldr.Unit do
     new(unit, value)
   end
 
-  def from_map(%{"unit" => unit, "value" => %{"numerator" => numerator, "denominator" => denominator}}) do
+  def from_map(%{
+        "unit" => unit,
+        "value" => %{"numerator" => numerator, "denominator" => denominator}
+      }) do
     new(unit, Ratio.new(numerator, denominator))
   end
 
@@ -738,11 +741,12 @@ defmodule Cldr.Unit do
   # use the original implementation which is to pick
   # the shortest match (lexically shortest)
 
-  defp unit_matching_filter(_unit, unit, {[],[]} = _only, {[],[]} = _except) when is_binary(unit) do
+  defp unit_matching_filter(_unit, unit, {[], []} = _only, {[], []} = _except)
+       when is_binary(unit) do
     {:ok, unit}
   end
 
-  defp unit_matching_filter(_unit, units, {[],[]} = _only, {[],[]} = _except) do
+  defp unit_matching_filter(_unit, units, {[], []} = _only, {[], []} = _except) do
     units
     |> Enum.map(&Kernel.to_string/1)
     |> Enum.sort(&(String.length(&1) <= String.length(&2) && &1 < &2))
@@ -767,8 +771,11 @@ defmodule Cldr.Unit do
   defp filter_units(units, only, except) do
     Enum.filter(units, fn unit ->
       case unit_category(unit) do
-        {:ok, category} -> category_match?(category, only, except) && unit_match?(unit, only, except)
-        _other -> false
+        {:ok, category} ->
+          category_match?(category, only, except) && unit_match?(unit, only, except)
+
+        _other ->
+          false
       end
     end)
   end
@@ -776,7 +783,9 @@ defmodule Cldr.Unit do
   defp category_match?(_category, {[], _}, {[], _}), do: true
   defp category_match?(category, {only, _}, {[], _}), do: category in only
   defp category_match?(category, {[], _}, {except, _}), do: category not in except
-  defp category_match?(category, {only, _}, {except, _}), do: category in only and category not in except
+
+  defp category_match?(category, {only, _}, {except, _}),
+    do: category in only and category not in except
 
   defp unit_match?(_unit, {_, []}, {_, []}), do: true
   defp unit_match?(unit, {_, only}, {_, []}), do: unit in only
@@ -1530,7 +1539,7 @@ defmodule Cldr.Unit do
 
   def localize(%Unit{} = unit, backend, options) when is_atom(backend) do
     with {:ok, unit_list, format_options} <- Preference.preferred_units(unit, backend, options) do
-      unit = %{unit | usage: (options[:usage] || unit.usage)}
+      unit = %{unit | usage: options[:usage] || unit.usage}
       decompose(unit, unit_list, format_options)
     end
   end
@@ -1574,8 +1583,8 @@ defmodule Cldr.Unit do
       "l"
 
   """
-  @spec display_name(Cldr.Unit.value() | Cldr.Unit.t(), Keyword.t) ::
-    String.t() | {:error, {module, binary}}
+  @spec display_name(Cldr.Unit.value() | Cldr.Unit.t(), Keyword.t()) ::
+          String.t() | {:error, {module, binary}}
 
   def display_name(unit, options \\ [])
 
@@ -1597,7 +1606,11 @@ defmodule Cldr.Unit do
   end
 
   def display_name(unit, _options) do
-    {:error, unit_error(unit)}
+    if match?({:ok, _unit, _conversion}, validate_unit(unit)) do
+      {:error, unit_not_translatable_error(unit)}
+    else
+      {:error, unit_error(unit)}
+    end
   end
 
   @doc """
@@ -2551,7 +2564,6 @@ defmodule Cldr.Unit do
   def maybe_translatable_unit(name) do
     atom_name = String.to_existing_atom(name)
     if atom_name in known_units(), do: atom_name, else: name
-
   rescue
     ArgumentError ->
       name
@@ -2733,7 +2745,8 @@ defmodule Cldr.Unit do
 
   @doc false
   def unit_categories_error(categories) do
-    {Cldr.Unit.UnknownUnitCategoryError, "The unit categories #{inspect(categories)} are not known."}
+    {Cldr.Unit.UnknownUnitCategoryError,
+     "The unit categories #{inspect(categories)} are not known."}
   end
 
   @doc false
@@ -2855,7 +2868,7 @@ defmodule Cldr.Unit do
 
     {
       Cldr.Unit.AmbiguousUnitError,
-      "The string #{inspect String.trim(unit)} ambiguously resolves to #{inspect units}"
+      "The string #{inspect(String.trim(unit))} ambiguously resolves to #{inspect(units)}"
     }
   end
 
@@ -2863,24 +2876,24 @@ defmodule Cldr.Unit do
   defp category_unit_match_error(unit, only, {[], []}) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect Enum.sort(unit)} belong to a unit or category matching " <>
-      "only: #{inspect flatten(only)}"
+      "None of the units #{inspect(Enum.sort(unit))} belong to a unit or category matching " <>
+        "only: #{inspect(flatten(only))}"
     }
   end
 
   defp category_unit_match_error(unit, {[], []}, except) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect Enum.sort(unit)} belong to a unit or category matching " <>
-      "except: #{inspect flatten(except)}"
+      "None of the units #{inspect(Enum.sort(unit))} belong to a unit or category matching " <>
+        "except: #{inspect(flatten(except))}"
     }
   end
 
   defp category_unit_match_error(unit, only, except) do
     {
       Cldr.Unit.CategoryMatchError,
-      "None of the units #{inspect Enum.sort(unit)} belong to a unit or category matching " <>
-      "only: #{inspect flatten(only)} except: #{inspect flatten(except)}"
+      "None of the units #{inspect(Enum.sort(unit))} belong to a unit or category matching " <>
+        "only: #{inspect(flatten(only))} except: #{inspect(flatten(except))}"
     }
   end
 

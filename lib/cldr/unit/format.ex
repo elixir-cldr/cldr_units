@@ -445,6 +445,7 @@ defmodule Cldr.Unit.Format do
       grammar = grammar(unit, locale: options.locale, backend: options.backend)
 
       formatted_number = format_number!(unit, options)
+
       to_iolist(unit, grammar, formatted_number, options)
       |> wrap(:ok)
     end
@@ -572,11 +573,9 @@ defmodule Cldr.Unit.Format do
 
   # For compound "per" units
   defp to_iolist(unit, {numerator, denominator}, formatted_number, options) do
-    per_pattern =
-      get_in(options.formats, [:per, :compound_unit_pattern])
+    per_pattern = get_in(options.formats, [:per, :compound_unit_pattern])
 
-    numerator_pattern =
-      to_iolist(unit, numerator, formatted_number, options)
+    numerator_pattern = to_iolist(unit, numerator, formatted_number, options)
 
     denominator_pattern =
       unit
@@ -595,7 +594,7 @@ defmodule Cldr.Unit.Format do
 
   # Currency units
   defp do_iolist(%{_denominator: true} = unit, [{currency, _} | rest], options)
-      when currency in @currencies do
+       when currency in @currencies do
     {:ok, currency} =
       Cldr.Currency.currency_for_code(currency, options.backend, locale: options.locale)
 
@@ -671,7 +670,7 @@ defmodule Cldr.Unit.Format do
   end
 
   defp do_iolist(unit, grammar, _options) do
-    raise "Unmatched grammar: #{inspect grammar} for unit #{inspect unit}"
+    raise "Unmatched grammar: #{inspect(grammar)} for unit #{inspect(unit)}"
   end
 
   # Get the appropriate unit pattern. An important part of
@@ -718,14 +717,14 @@ defmodule Cldr.Unit.Format do
       # If the pattern for an integer is found, use it
       integer_pattern ->
         integer_pattern
-        # |> IO.inspect(label: "Integer pattern")
+
+      # |> IO.inspect(label: "Integer pattern")
 
       # If the plural range and the integer are aligned, use the plural
       # rule no matter whether it has substitutions
       integer_and_plural_match?(integer, plural) ->
         get_unit_pattern(grammar, options) ||
-        get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
-
+          get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
 
       # For these plurals get the template and use it only
       # if it has substitutions. If it doesn't then use the default
@@ -743,9 +742,9 @@ defmodule Cldr.Unit.Format do
       # category or the default.
       true ->
         get_unit_pattern(grammar, options) ||
-        get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
-    end
-    || raise Cldr.Unit.NoPatternError, {unit, grammatical_case, gender, plural}
+          get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
+    end ||
+      raise Cldr.Unit.NoPatternError, {unit, grammatical_case, gender, plural}
   end
 
   defp get_unit_pattern(grammar, %{plural: plural} = options) when is_integer(plural) do
@@ -780,7 +779,7 @@ defmodule Cldr.Unit.Format do
       get_in(formats, [name, @default_case, @default_plural])
   end
 
-  defp get_prefix_pattern!(prefix,options) do
+  defp get_prefix_pattern!(prefix, options) do
     %{grammatical_case: grammatical_case, grammatical_gender: gender, plural: plural} = options
 
     get_in(options.formats, [prefix, :unit_prefix_pattern]) ||
@@ -860,6 +859,7 @@ defmodule Cldr.Unit.Format do
     case rest do
       [placeholder, string] when is_integer(placeholder) ->
         [currency_string, string]
+
       [[placeholder, string] | rest] when is_integer(placeholder) ->
         [currency_string | [string | rest]]
     end
@@ -986,8 +986,7 @@ defmodule Cldr.Unit.Format do
     formats = Cldr.Unit.units_for(locale, style, backend)
     number_format_options = Map.merge(Map.new(unit.format_options), options)
 
-    plural =
-      Cldr.Number.PluralRule.plural_type(unit.value, backend, locale: locale)
+    plural = Cldr.Number.PluralRule.plural_type(unit.value, backend, locale: locale)
 
     per_plural =
       locale
@@ -996,10 +995,10 @@ defmodule Cldr.Unit.Format do
       |> Kernel.||(@per_plural_default)
 
     options
-      |> Map.put(:plural, plural)
-      |> Map.put(:per_plural, per_plural)
-      |> Map.put(:formats, formats)
-      |> Map.put(:number_format_options, number_format_options)
+    |> Map.put(:plural, plural)
+    |> Map.put(:per_plural, per_plural)
+    |> Map.put(:formats, formats)
+    |> Map.put(:number_format_options, number_format_options)
   end
 
   @doc false
@@ -1210,6 +1209,7 @@ defmodule Cldr.Unit.Format do
       {integer, unit} when is_integer(integer) ->
         unit = String.trim_leading(unit, "_")
         [{integer, {:nominative, :one}} | maybe_wrap(do_traverse(unit, fun))]
+
       _other ->
         fun.({:unit, String.to_existing_atom(unit)})
     end
