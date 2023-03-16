@@ -2011,9 +2011,9 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.unit_category_usage
+      iex> Cldr.Unit.unit_category_usage()
       %{
-        area: [:default, :geograph, :land],
+        area: [:default, :floor, :geograph, :land],
         concentration: [:blood_glucose, :default],
         consumption: [:default, :vehicle_fuel],
         duration: [:default, :media],
@@ -2024,7 +2024,7 @@ defmodule Cldr.Unit do
         mass_density: [:default],
         power: [:default, :engine],
         pressure: [:baromtrc, :default],
-        speed: [:default, :wind],
+        speed: [:default, :rainfall, :snowfall, :wind],
         temperature: [:default, :weather],
         volume: [:default, :fluid, :oil, :vehicle],
         year_duration: [:default, :person_age]
