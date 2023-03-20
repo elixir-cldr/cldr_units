@@ -396,7 +396,6 @@ This example defines  two additional units: `:vehicle` and  `:person`.
 
 Although defining a unit in `config.exs` is enough to create, operate on and serialize an additional unit, it cannot be localised without defining localizations in an `ex_cldr` backend module.  For example:
 
-
 ```elixir
 defmodule MyApp.Cldr do
   # Note that this line should come before the `use Cldr` line
