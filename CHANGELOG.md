@@ -10,6 +10,8 @@ This is the changelog for Cldr_units v3.16.0 released on ______, 2022.  For olde
 
 * Add a `Cldr.Unit.Range` type to allow creating, enumerating and formatting unit ranges. Thanks to @ribanez7 for the collaboration. Closes #33.
 
+* Support string-formatted decimals in `Cldr.Unit.new/3`. This allows the creation of units like `Cldr.Unit.new(:foot, "3.39")`
+
 * Add support for multiplication and division of arbitrary units. Thanks to @maennchen for the report (and patience). Closes #32.
 
 * Adjust the inspect protocol implementation to emit executable code strings.

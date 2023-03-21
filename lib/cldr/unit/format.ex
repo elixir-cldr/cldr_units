@@ -195,10 +195,6 @@ defmodule Cldr.Unit.Format do
 
   # Now we have a unit, a backend and some options but ratio
   # values need to be converted to decimals
-  def to_string(%Unit{value: %Ratio{}} = unit, backend, options) do
-    unit = Cldr.Unit.to_decimal_unit(unit)
-    to_string(unit, backend, options)
-  end
 
   def to_string(%Unit{} = unit, backend, options) when is_list(options) do
     with {:ok, options} <- normalize_options(backend, options) do
@@ -1226,12 +1222,6 @@ defmodule Cldr.Unit.Format do
   defp integer_unit_value(%Unit{value: value}) when is_float(value) do
     int_value = trunc(value)
     if int_value == value, do: int_value, else: nil
-  end
-
-  defp integer_unit_value(%Unit{value: %Ratio{}} = value) do
-    value
-    |> Unit.to_float_unit()
-    |> integer_unit_value()
   end
 
   defp integer_unit_value(%Unit{value: %Decimal{}} = value) do

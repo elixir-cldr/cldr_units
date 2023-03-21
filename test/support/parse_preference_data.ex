@@ -99,7 +99,7 @@ defmodule Cldr.Unit.Test.PreferenceData do
       |> Enum.map(&String.to_integer/1)
 
     case rational do
-      [numerator, denominator] -> Ratio.new(numerator, denominator)
+      [numerator, denominator] -> Decimal.div(numerator, denominator)
       [integer] -> integer
       _other -> raise ArgumentError, "Can't convert #{inspect(string)} to a rational"
     end

@@ -43,7 +43,6 @@ defmodule Cldr.Units.Mixfile do
 
       {:ex_cldr_numbers, "~> 2.28"},
       {:ex_cldr_lists, "~> 2.10"},
-      {:ratio, "~> 2.4 or ~> 3.0 or ~> 4.0 or ~> 4.0-rc"},
       {:decimal, "~> 1.6 or ~> 2.0"},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.18", optional: true, runtime: false},

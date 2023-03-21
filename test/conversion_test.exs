@@ -16,7 +16,7 @@ defmodule Cldr.Unit.Conversion.Test do
   # in the 6th decimal place or further
   # so for now we omit these three tests.
 
-  @just_outside_tolerance [35, 36, 186]
+  @just_outside_tolerance [187]
 
   for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance do
     test "##{t.line} [Float] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
@@ -37,7 +37,7 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  @just_outside_tolerance_decimal [186]
+  @just_outside_tolerance_decimal [187]
 
   @one_thousand Decimal.new(1000)
   for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance_decimal do

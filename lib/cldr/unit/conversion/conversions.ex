@@ -13,17 +13,24 @@ defmodule Cldr.Unit.Conversions do
                  {unit, %{factor: factor} = conversion} when is_number(factor) ->
                    {unit, conversion}
 
+                 {unit, %{factor: factor} = conversion} when is_binary(factor) ->
+                   {unit,
+                    %{conversion | factor: Decimal.new(factor)}}
+
                  {unit, %{factor: factor} = conversion} ->
                    {unit,
-                    %{conversion | factor: Conversion.new(factor.numerator, factor.denominator)}}
+                    %{conversion | factor: Decimal.div(factor.numerator, factor.denominator)}}
                end)
                |> Enum.map(fn
                  {unit, %{offset: offset} = conversion} when is_number(offset) ->
                    {unit, conversion}
 
+                 {unit, %{offset: offset} = conversion} when is_binary(offset) ->
+                   {unit, %{conversion | offset: Decimal.new(offset)}}
+
                  {unit, %{offset: offset} = conversion} ->
                    {unit,
-                    %{conversion | offset: Conversion.new(offset.numerator, offset.denominator)}}
+                    %{conversion | offset: Decimal.div(offset.numerator, offset.denominator)}}
                end)
                |> Enum.map(fn
                  {unit, %{base_unit: base_unit} = conversion} ->

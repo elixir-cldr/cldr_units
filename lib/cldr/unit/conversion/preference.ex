@@ -95,7 +95,7 @@ defmodule Cldr.Unit.Preference do
       iex> with {:ok, preferred_units, _} <- preferred_units do
       ...>   Cldr.Unit.decompose(meter, preferred_units)
       ...> end
-      [Cldr.Unit.new!(:inch, Ratio.new(216172782113783808, 5490788665690109))]
+      [Cldr.Unit.new!(:inch, "39.37007874015748031496062992")]
 
   """
   @spec preferred_units(Cldr.Unit.t(), Cldr.backend() | Keyword.t(), Keyword.t() | Options.t()) ::
@@ -125,7 +125,7 @@ defmodule Cldr.Unit.Preference do
 
     with {:ok, usage} <- validate_usage(category, usage) do
       usage = usage_chain(usage)
-      geq = Unit.value(base_unit) |> to_float()
+      geq = Unit.value(base_unit) |> Cldr.Unit.to_float()
       preferred_units(category, usage, territory_chain, geq)
     end
   end
@@ -222,25 +222,6 @@ defmodule Cldr.Unit.Preference do
       {:ok, preferred_units, _} -> preferred_units
       {:error, {exception, reason}} -> raise exception, reason
     end
-  end
-
-  # Rounding matches the number we used
-  # to generate the function clauses
-
-  @rounding Cldr.Unit.rounding()
-
-  defp to_float(%Ratio{} = value) do
-    Ratio.to_float(value)
-    |> Cldr.Math.round(@rounding)
-  end
-
-  defp to_float(%Decimal{} = value) do
-    Decimal.to_float(value)
-    |> Cldr.Math.round(@rounding)
-  end
-
-  defp to_float(other) do
-    other
   end
 
   defp usage_chain(usage) when is_atom(usage) do
