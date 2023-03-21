@@ -407,21 +407,11 @@ defmodule MyApp.Cldr do
     providers: [Cldr.Number, Cldr.Unit, Cldr.List]
 
   unit_localization(:person, "en", :long,
-    one: "{0} person",
-    other: "{0} people",
+    nominative: %{
+      one: "{0} person",
+      other: "{0} people"
+    },
     display_name: "people"
-  )
-
-  unit_localization(:person, "en", :short,
-    one: "{0} per",
-    other: "{0} pers",
-    display_name: "people"
-  )
-
-  unit_localization(:person, "en", :narrow,
-    one: "{0} p",
-    other: "{0} p",
-    display_name: "p"
   )
 end
 ```
@@ -433,6 +423,8 @@ Note the additions to a typical `ex_cldr` backend module:
 * use of the `Cldr.Unit.Additional.unit_localization/4` macro in order to define a localization.
 
 * The use templates for the localization. Templates are a string with both a placeholder (for units it is always `{0}`) and some fixed text that reflects the grammatical requirements of the particular locale.
+
+* Not all locales support more than the nominative case. The nominative case is the default and mandatory one. Any configured "Additional Units" in a backend module will need to put the localisations into a map with the key `:nominative`.
 
 One invocation of `Cldr.Unit.Additional.unit_localization/4` should made for each combination of unit, locale and style.
 
@@ -449,7 +441,7 @@ One invocation of `Cldr.Unit.Additional.unit_localization/4` should made for eac
 #### Localisation definition
 
 Localization keyword list defines localizations that match the plural rules for a given locale. Plural rules for a given number in a given locale resolve to one of
-six keys:
+six keys, and they must be placed under the proper declension to be used:
 
 * `:zero`
 * `:one` (singular)
@@ -458,7 +450,7 @@ six keys:
 * `:many` (also used for fractions if they have a separate class)
 * `:other` (required — general plural form. Also used if the language only has a single form)
 
-Only the `:other` key is required. For english, providing keys for `:one` and `:other` is enough. Other languages have different grammatical requirements.
+Only the `:nominative` key is required, and at minimum, it has to provide the `:other` key. For english, providing keys for `:one` and `:other` is enough. Other languages have different grammatical requirements.
 
 The key `:display_name` is used by the function `Cldr.Unit.display_name/1` which is primarily used to support UI applications.
 
