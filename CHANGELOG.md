@@ -6,7 +6,9 @@ This is the changelog for Cldr_units v3.16.0 released on ______, 2022.  For olde
 
 ### Enhancements
 
-* Add a `Cldr.Unit.Range` type to allow creating, enumerating and formatting unit ranges.
+* Updates to [CLDR 43](https://cldr.unicode.org/index/downloads/cldr-43) data.
+
+* Add a `Cldr.Unit.Range` type to allow creating, enumerating and formatting unit ranges. Thanks to @ribanez7 for the collaboration. Closes #33.
 
 * Add support for multiplication and division of arbitrary units. Thanks to @maennchen for the report (and patience). Closes #32.
 
