@@ -24,6 +24,9 @@ defmodule Cldr.Unit.Conversion do
 
   import Kernel, except: [div: 2]
 
+  @decimal_1 Decimal.new(1)
+  @decimal_0 Decimal.new(0)
+
   @doc """
   Returns the conversion that calculates
   the base unit into another unit or
@@ -177,8 +180,8 @@ defmodule Cldr.Unit.Conversion do
   # A per module is a 2-tuple of the numerator and
   # denominator. Both are lists of conversion tuples.
   defp convert_to_base(value, {numerator, denominator}) do
-    convert_to_base(1.0, numerator)
-    |> div(convert_to_base(1.0, denominator))
+    convert_to_base(@decimal_1, numerator)
+    |> div(convert_to_base(@decimal_1, denominator))
     |> mult(value)
   end
 
@@ -207,8 +210,8 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert_from_base(value, {numerator, denominator}) do
-    convert_from_base(1.0, numerator)
-    |> div(convert_from_base(1.0, denominator))
+    convert_from_base(@decimal_1, numerator)
+    |> div(convert_from_base(@decimal_1, denominator))
     |> mult(value)
   end
 
@@ -345,13 +348,8 @@ defmodule Cldr.Unit.Conversion do
     maybe_integer(any)
   end
 
-  def add(any, 0.0) do
+  def add(any, @decimal_0) do
     maybe_integer(any)
-  end
-
-  def add(%Decimal{} = a, b) when is_float(b) do
-    Decimal.add(a, Decimal.from_float(b))
-    |> maybe_integer()
   end
 
   def add(%Decimal{} = a, b) do
@@ -377,11 +375,6 @@ defmodule Cldr.Unit.Conversion do
     maybe_integer(any)
   end
 
-  def sub(%Decimal{} = a, b) when is_float(b) do
-    Decimal.sub(a, Decimal.from_float(b))
-    |> maybe_integer()
-  end
-
   def sub(a, %Decimal{} =  b) do
     Decimal.sub(a, b)
     |> maybe_integer()
@@ -401,7 +394,7 @@ defmodule Cldr.Unit.Conversion do
     any
   end
 
-  def mult(any, 1.0) do
+  def mult(any, @decimal_1) do
     any
   end
 
@@ -409,26 +402,13 @@ defmodule Cldr.Unit.Conversion do
     maybe_integer(b)
   end
 
-  def mult(1.0, b) do
-    maybe_integer(b)
-  end
 
   def mult(_any, 0) do
     0
   end
 
-  def mult(_any, 0.0) do
+  def mult(_any, @decimal_0) do
     0
-  end
-
-  def mult(%Decimal{} = a, b) when is_float(b) do
-    Decimal.mult(a, Decimal.from_float(b))
-    |> maybe_integer()
-  end
-
-  def mult(a, %Decimal{} = b) when is_float(a) do
-    Decimal.mult(Decimal.from_float(a), b)
-    |> maybe_integer()
   end
 
   def mult(%Decimal{} = a, b) do
@@ -446,22 +426,20 @@ defmodule Cldr.Unit.Conversion do
     |> maybe_integer()
   end
 
+  def div(_any, 0) do
+    0
+  end
+
+  def div(_any, @decimal_0) do
+    0
+  end
+
   def div(any, 1) do
     maybe_integer(any)
   end
 
-  def div(any, 1.0) do
+  def div(any, @decimal_1) do
     maybe_integer(any)
-  end
-
-  def div(%Decimal{} = a, b) when is_float(b) do
-    Decimal.div(a, Decimal.from_float(b))
-    |> maybe_integer()
-  end
-
-  def div(a, %Decimal{} = b) when is_float(a) do
-    Decimal.div(Decimal.from_float(a), b)
-    |> maybe_integer()
   end
 
   def div(%Decimal{} = a, b) do
@@ -484,13 +462,8 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  def div(a, b) when is_float(a) do
-    Decimal.div(Decimal.from_float(a), b)
-    |> maybe_integer()
-  end
-
   @doc false
-  def pow(_any, 0) do
+  def pow(_any, @decimal_0) do
     1
   end
 
@@ -507,16 +480,6 @@ defmodule Cldr.Unit.Conversion do
     Decimal.to_integer(a)
   rescue FunctionClauseError ->
     a
-  end
-
-  def maybe_integer(a) when is_float(a) do
-    truncated = trunc(a)
-
-    if truncated == a do
-      truncated
-    else
-      a
-    end
   end
 
   def maybe_integer(a) when is_integer(a) do
