@@ -105,6 +105,8 @@ defmodule Cldr.Unit.Range do
   """
   @doc since: "3.16.0"
 
+  @dialyzer {:nowarn_function, {:new!, 2}}
+
   @spec new!(Cldr.Unit.t(), Cldr.Unit.t()) :: t() | no_return()
 
   def new!(%Cldr.Unit{} = first, %Cldr.Unit{} = last) do
