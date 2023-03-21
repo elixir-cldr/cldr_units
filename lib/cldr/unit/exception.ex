@@ -159,3 +159,12 @@ defmodule Cldr.Unit.CategoryMatchError do
     %__MODULE__{message: message}
   end
 end
+
+defmodule Cldr.Unit.InvalidRangeError do
+  @moduledoc false
+  defexception [:message]
+
+  def exception(message) do
+    %__MODULE__{message: message}
+  end
+end
