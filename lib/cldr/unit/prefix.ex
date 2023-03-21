@@ -35,10 +35,10 @@ defmodule Cldr.Unit.Prefix do
   @si_power_prefixes @si_factors
                      |> Enum.map(fn
                        {prefix, factor} when is_integer(factor) ->
-                         {prefix, Cldr.Math.log10(factor)}
+                         {prefix, Cldr.Math.log10(factor) |> round()}
 
                        {prefix, %Decimal{} = factor} ->
-                         {prefix, Decimal.to_integer(Cldr.Math.log10(factor))}
+                         {prefix, Decimal.to_integer(Cldr.Math.log10(factor)) |> Decimal.round()}
                      end)
                      |> Map.new()
 
