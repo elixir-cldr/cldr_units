@@ -221,6 +221,8 @@ defmodule Cldr.Unit do
                       |> List.flatten()
                       |> List.delete(:generic)
                       |> Kernel.++(Cldr.Unit.Additional.additional_units())
+                      # Beaufort not fully supported yet
+                      |> Kernel.--([:beaufort])
 
   @spec known_units :: [translatable_unit(), ...]
   def known_units do

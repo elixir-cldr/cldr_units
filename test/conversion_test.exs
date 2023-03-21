@@ -11,12 +11,11 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  # Of the ~180 tests, 3 fail [35, 36, 186] because of rounding
-  # precision for round significant digits. The errors are
-  # in the 6th decimal place or further
-  # so for now we omit these three tests.
 
-  @just_outside_tolerance [187]
+  # Test #187 is reduced in rounding by one digit
+  # in order for the match to work.
+
+  @just_outside_tolerance []
 
   for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance do
     test "##{t.line} [Float] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
@@ -37,7 +36,7 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  @just_outside_tolerance_decimal [187]
+  @just_outside_tolerance_decimal []
 
   @one_thousand Decimal.new(1000)
   for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance_decimal do

@@ -184,7 +184,7 @@ volume	;	pint	;	cubic-meter	;	0.000473176473 * x	;	0.4731765
 volume	;	pint-metric	;	cubic-meter	;	0.0005 * x	;	0.5
 volume	;	quart	;	cubic-meter	;	0.000946352946 * x	;	0.9463529
 volume	;	liter	;	cubic-meter	;	0.001 * x	;	1.0
-volume	;	quart-imperial	;	cubic-meter	;	0.0011365225 * x	;	1.136522
+volume	;	quart-imperial	;	cubic-meter	;	0.0011365225 * x	;	1.13652
 volume	;	gallon	;	cubic-meter	;	0.003785411784 * x	;	3.785412
 volume	;	gallon-imperial	;	cubic-meter	;	0.00454609 * x	;	4.54609
 volume	;	cubic-foot	;	cubic-meter	;	0.028316846592 * x	;	28.31685
