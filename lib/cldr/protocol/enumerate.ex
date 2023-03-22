@@ -1,5 +1,4 @@
 defimpl Enumerable, for: Cldr.Unit.Range do
-
   @impl Enumerable
   def count(%{first: first, last: last}) do
     count =
@@ -22,6 +21,7 @@ defimpl Enumerable, for: Cldr.Unit.Range do
     case Cldr.Unit.convert(unit, range.first.unit) do
       {:ok, converted} ->
         {:ok, converted.value >= range.first.value and converted.value <= range.last.value}
+
       _other ->
         {:ok, false}
     end

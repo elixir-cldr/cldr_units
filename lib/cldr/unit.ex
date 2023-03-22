@@ -444,8 +444,11 @@ defmodule Cldr.Unit do
 
   def maybe_new(a, b, options) do
     new(a, Decimal.new(b), options)
-  rescue Decimal.Error ->
-    {:error, {Cldr.InvalidUnit, "Could not resolve a new unit from Cldr.Unit.new(#{inspect b}, #{inspect a})"}}
+  rescue
+    Decimal.Error ->
+      {:error,
+       {Cldr.InvalidUnit,
+        "Could not resolve a new unit from Cldr.Unit.new(#{inspect(b)}, #{inspect(a)})"}}
   end
 
   @doc """

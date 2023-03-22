@@ -11,8 +11,9 @@ defmodule Cldr.Unit.Math do
   import Unit, only: [incompatible_units_error: 2]
 
   @doc false
-  defguard is_per_unit(base_conversion) when is_tuple(base_conversion) and
-    tuple_size(base_conversion) == 2
+  defguard is_per_unit(base_conversion)
+           when is_tuple(base_conversion) and
+                  tuple_size(base_conversion) == 2
 
   @doc false
   defguard is_simple_unit(base_conversion) when is_list(base_conversion)
@@ -370,6 +371,7 @@ defmodule Cldr.Unit.Math do
   Truncates a unit's value.
 
   """
+
   # def trunc(%Unit{value: %Ratio{} = value} = unit) do
   #   value = Ratio.to_float(value)
   #   trunc(%{unit | value: value})

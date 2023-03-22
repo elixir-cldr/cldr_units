@@ -1,4 +1,11 @@
 defmodule Cldr.Unit.Format do
+  @moduledoc """
+  Functions for formatting a unit or unit range into
+  an iolist or a string.
+
+  """
+
+  alias Cldr.Number
   alias Cldr.Unit
 
   defmacrop is_grammar(unit) do
@@ -28,10 +35,7 @@ defmodule Cldr.Unit.Format do
 
   @doc """
   Formats a number into a string according to a unit definition
-  for the current process's locale and backend.
-
-  The current process's locale is set with
-  `Cldr.put_locale/1`.
+  using the current process's locale and backend.
 
   See `Cldr.Unit.to_string/3` for full details.
 
@@ -46,15 +50,17 @@ defmodule Cldr.Unit.Format do
   end
 
   @doc """
-  Formats a number into a string according to a unit definition for a locale.
+  Formats a unit or unit range or a number into a string according to a unit
+  definition for a locale.
 
-  During processing any `:format_options` of a `Unit.t()` are merged with
-  `options` with `options` taking precedence.
+  During processing any `:format_options` of a `t:Cldr.Unit.t/0` are merged
+  into the `options` argument.
 
   ## Arguments
 
-  * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+  * `list_or_unit` is any number (integer, float or Decimal) or a
+    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs or a
+    `t:Cldr.Unit.Range.t/0` struct.
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -64,14 +70,14 @@ defmodule Cldr.Unit.Format do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct.
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
 
   * `style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
+    The default is `style: :long`.
 
   * `:grammatical_case` indicates that a localisation for the given
     locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
@@ -90,7 +96,7 @@ defmodule Cldr.Unit.Format do
     applicable when formatting a list of units.
 
   * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
+    which is used to format the `number`.
 
   ## Returns
 
@@ -124,6 +130,10 @@ defmodule Cldr.Unit.Format do
       iex> Cldr.Unit.Format.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
       {:ok, "1,234MHz"}
 
+      iex> {:ok, range} = Cldr.Unit.Range.new(Cldr.Unit.new!(:gram, 1), Cldr.Unit.new!(:gram, 5))
+      iex> Cldr.Unit.to_string(range, locale: :ja)
+      {:ok, "1～5 グラム"}
+
       iex> Cldr.Unit.Format.to_string Cldr.Unit.new!(123, :foot), MyApp.Cldr
       {:ok, "123 feet"}
 
@@ -151,7 +161,7 @@ defmodule Cldr.Unit.Format do
   """
 
   @spec to_string(
-          Unit.value() | Unit.t() | list(Unit.t()),
+          Unit.value() | Unit.t() | Unit.Range.t() | list(Unit.t()),
           Cldr.backend() | Keyword.t(),
           Keyword.t() | map()
         ) ::
@@ -163,6 +173,13 @@ defmodule Cldr.Unit.Format do
   def to_string(list_or_unit, options, []) when is_list(options) do
     {_locale, backend} = Cldr.locale_and_backend_from(options)
     to_string(list_or_unit, backend, options)
+  end
+
+  # Backend but no options
+  def to_string(list_or_unit, backend, options) when is_atom(backend) and is_list(options) do
+    with {:ok, options} <- normalize_options(backend, options) do
+      to_string(list_or_unit, backend, options)
+    end
   end
 
   # It's a list of units so we format each of them
@@ -180,7 +197,23 @@ defmodule Cldr.Unit.Format do
     end
   end
 
-  # It's a number, not a unit struct
+  def to_string(%Unit{} = unit, backend, options) when is_map(options) do
+    with {:ok, list} <- to_iolist(unit, backend, options) do
+      list
+      |> :erlang.iolist_to_binary()
+      |> wrap(:ok)
+    end
+  end
+
+  def to_string(%Unit.Range{} = range, backend, options) when is_map(options) do
+    with {:ok, list} <- to_iolist(range, backend, options) do
+      list
+      |> :erlang.iolist_to_binary()
+      |> wrap(:ok)
+    end
+  end
+
+  # It's a number, not a unit or range struct
   def to_string(number, backend, options) when is_number(number) do
     with {:ok, unit} <- Cldr.Unit.new(options[:unit], number) do
       to_string(unit, backend, options)
@@ -193,30 +226,14 @@ defmodule Cldr.Unit.Format do
     end
   end
 
-  # Now we have a unit, a backend and some options but ratio
-  # values need to be converted to decimals
-
-  def to_string(%Unit{} = unit, backend, options) when is_list(options) do
-    with {:ok, options} <- normalize_options(backend, options) do
-      to_string(unit, backend, options)
-    end
-  end
-
-  def to_string(%Unit{} = unit, backend, options) when is_map(options) do
-    with {:ok, list} <- to_iolist(unit, backend, options) do
-      list
-      |> :erlang.iolist_to_binary()
-      |> wrap(:ok)
-    end
-  end
-
   @doc """
-  Formats a number into a string according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
+  Formats a unit or unit range or a number into a string according to a unit
+  definition for the current locale.
 
-  The current process's locale is set with
-  `Cldr.put_locale/1`.
+  During processing any `:format_options` of a `t:Cldr.Unit.t/0` are merged
+  into the `options` argument.
+
+  The current process's locale is set with `Cldr.put_locale/1`.
 
   See `Cldr.Unit.to_string!/3` for full details.
 
@@ -231,37 +248,40 @@ defmodule Cldr.Unit.Format do
   end
 
   @doc """
-  Formats a number into a string according to a unit definition
-  for the current process's locale and backend or raises
-  on error.
+  Formats a unit or unit range or a number into a string according to a unit
+  definition for a locale. Raises on error.
 
-  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
+  During processing any `:format_options` of a `t:Cldr.Unit.t/0` are merged
+  into the `options` argument.
+
+  During processing any `:format_options` of a `t:Cldr.Unit.t/0` are merged with
   `options` with `options` taking precedence.
 
   ## Arguments
 
-  * `number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct
+  * `number_or_unit` is any number (integer, float or Decimal) or a
+    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs or a
+    `t:Cldr.Unit.Range.t/0` struct.
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
 
-  * `options` is a keyword list
+  * `options` is a keyword list.
 
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct.
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
 
   * `:style` is one of those returned by `Cldr.Unit.available_styles`.
     The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
+    The default is `style: :long`.
 
   * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
+    which is used to format the `number`.
 
   ## Returns
 
@@ -280,9 +300,13 @@ defmodule Cldr.Unit.Format do
       iex> Cldr.Unit.Format.to_string! Cldr.Unit.new!(:gallon, 1), MyApp.Cldr, locale: "af"
       "1 gelling"
 
+      iex> {:ok, range} = Cldr.Unit.Range.new(Cldr.Unit.new!(:gram, 1), Cldr.Unit.new!(:gram, 5))
+      iex> Cldr.Unit.to_string!(range, locale: :ja)
+      "1～5 グラム"
+
   """
   @spec to_string!(
-          Unit.value() | Unit.t() | list(Unit.t()),
+          Unit.value() | Unit.t() | Unit.Range.t() | list(Unit.t()),
           Cldr.backend() | Keyword.t(),
           Keyword.t() | map()
         ) ::
@@ -327,9 +351,6 @@ defmodule Cldr.Unit.Format do
   Formats a number into an iolist according to a unit definition
   for the current process's locale and backend.
 
-  The current process's locale is set with
-  `Cldr.put_locale/1`.
-
   See `Cldr.Unit.Format.to_iolist/3` for full details.
 
   """
@@ -348,15 +369,16 @@ defmodule Cldr.Unit.Format do
 
   ## Arguments
 
-  * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+  * `list_or_unit` is any number (integer, float or Decimal) or a
+    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs or a
+    `t:Cldr.Unit.Range.t/0` struct.
 
   * `options` is a keyword list
 
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -395,7 +417,10 @@ defmodule Cldr.Unit.Format do
       {:ok, ["123", " gallons"]}
 
   """
-  @spec to_iolist(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t() | map()) ::
+  @spec to_iolist(
+          Cldr.Unit.value() | Cldr.Unit.t() | Cldr.Unit.Range.t() | [Cldr.Unit.t(), ...],
+          Keyword.t() | map()
+        ) ::
           {:ok, list()} | {:error, {atom, binary}}
 
   def to_iolist(unit, backend, options \\ [])
@@ -465,12 +490,48 @@ defmodule Cldr.Unit.Format do
     end
   end
 
+  # It's a Cldr.Unit.Range when the values are the same so
+  # format as a single unit.
+  def to_iolist(%{first: %{value: v}, last: %{value: v} = last}, backend, options) do
+    to_iolist(last, backend, options)
+  end
+
+  # It's a Cldr.Unit.Range for a basic unit
+  def to_iolist(%{first: %{value: v1}, last: %{unit: name, value: v2} = last}, backend, options)
+      when name in @translatable_units do
+    with {:ok, options} <- normalize_options(backend, options) do
+      options = extract_options!(last, options)
+      unit_grammar = {name, {options.grammatical_case, options.plural}}
+      unit_pattern = get_unit_pattern!(last, unit_grammar, options)
+
+      range = %Range{first: v1, last: v2, step: 1}
+      number_options = Map.to_list(options)
+      {:ok, formatted_range} = Number.to_range_string(range, options.backend, number_options)
+
+      formatted_range
+      |> Cldr.Substitution.substitute(unit_pattern)
+      |> wrap(:ok)
+    end
+  end
+
+  # It's a Cldr.Unit.Range for a compound unit
+  def to_iolist(%{first: first, last: last}, backend, options) do
+    with {:ok, options} <- normalize_options(backend, options) do
+      options = extract_options!(last, options)
+      grammar = grammar(last, locale: options.locale, backend: options.backend)
+
+      range = %Range{first: first.value, last: last.value, step: 1}
+      number_options = Map.to_list(options)
+      {:ok, formatted_range} = Number.to_range_string(range, options.backend, number_options)
+
+      to_iolist(last, grammar, formatted_range, options)
+      |> wrap(:ok)
+    end
+  end
+
   @doc """
   Formats a number into an iolist according to a unit definition
   for the current process's locale and backend.
-
-  The current process's locale is set with
-  `Cldr.put_locale/1`.
 
   See `Cldr.Unit.Format.to_iolist!/3` for full details.
 
@@ -490,15 +551,16 @@ defmodule Cldr.Unit.Format do
 
   ## Arguments
 
-  * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+  * `number` is any number (integer, float or Decimal) or a
+    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs or a
+    `t:Cldr.Unit.Range.t/0` struct.
 
   * `options` is a keyword list
 
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -537,7 +599,10 @@ defmodule Cldr.Unit.Format do
       ["123", " gallons"]
 
   """
-  @spec to_iolist!(Cldr.Unit.value() | Cldr.Unit.t() | [Cldr.Unit.t(), ...], Keyword.t() | map()) ::
+  @spec to_iolist!(
+          Cldr.Unit.value() | Cldr.Unit.t() | Cldr.Unit.Range.t() | [Cldr.Unit.t(), ...],
+          Keyword.t() | map()
+        ) ::
           list() | no_return()
 
   def to_iolist!(number, backend, options \\ [])
@@ -1015,7 +1080,7 @@ defmodule Cldr.Unit.Format do
 
   ## Arguments
 
-  * `unit` is a `t:Cldr.Unit` or a binary
+  * `unit` is a `t:Cldr.Unit.t/0` or a binary
     unit string
 
   ## Options

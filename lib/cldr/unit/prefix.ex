@@ -2,18 +2,18 @@ defmodule Cldr.Unit.Prefix do
   @moduledoc false
 
   @si_factors %{
-    "quecto" =>Decimal.div(1, 1_000_000_000_000_000_000_000_000_000_000),
+    "quecto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000_000_000),
     "ronto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000_000),
     "yokto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000),
     "zepto" => Decimal.div(1, 1_000_000_000_000_000_000_000),
-    "atto" =>  Decimal.div(1, 1_000_000_000_000_000_000),
+    "atto" => Decimal.div(1, 1_000_000_000_000_000_000),
     "femto" => Decimal.div(1, 1_000_000_000_000_000),
-    "pico" =>  Decimal.div(1, 1_000_000_000_000),
-    "nano" =>  Decimal.div(1, 1_000_000_000),
+    "pico" => Decimal.div(1, 1_000_000_000_000),
+    "nano" => Decimal.div(1, 1_000_000_000),
     "micro" => Decimal.div(1, 1_000_000),
     "milli" => Decimal.div(1, 1_000),
     "centi" => Decimal.div(1, 100),
-    "deci" =>  Decimal.div(1, 10),
+    "deci" => Decimal.div(1, 10),
     "deka" => 10,
     "hecto" => 100,
     "kilo" => 1_000,

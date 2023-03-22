@@ -62,7 +62,7 @@ defmodule Cldr.Unit.Range do
   @doc since: "3.16.0"
 
   @spec new(Cldr.Unit.t(), Cldr.Unit.t()) ::
-    {:ok, t()} | {:error, {module(), String.t()}}
+          {:ok, t()} | {:error, {module(), String.t()}}
 
   def new(%Cldr.Unit{} = first, %Cldr.Unit{} = last) do
     case Cldr.Unit.convert(last, first.unit) do
@@ -70,13 +70,15 @@ defmodule Cldr.Unit.Range do
         if first.value <= last.value do
           {:ok, %__MODULE__{first: first, last: last}}
         else
-          {:error, {Cldr.Unit.InvalidRangeError,
-            "Unit ranges require that the first unit be less than or equal to the last. Found #{inspect first} and #{inspect last}"}}
+          {:error,
+           {Cldr.Unit.InvalidRangeError,
+            "Unit ranges require that the first unit be less than or equal to the last. Found #{inspect(first)} and #{inspect(last)}"}}
         end
 
       {:error, _} ->
-        {:error, {Cldr.Unit.InvalidRangeError,
-          "Unit ranges require that the last unit can be converted to the first unit. Found #{inspect first} and #{inspect last}"}}
+        {:error,
+         {Cldr.Unit.InvalidRangeError,
+          "Unit ranges require that the last unit can be converted to the first unit. Found #{inspect(first)} and #{inspect(last)}"}}
     end
   end
 
@@ -116,4 +118,11 @@ defmodule Cldr.Unit.Range do
     end
   end
 
+  defdelegate to_iolist(range), to: Cldr.Unit.Format
+  defdelegate to_iolist(range, options), to: Cldr.Unit.Format
+  defdelegate to_iolist(range, backend, options), to: Cldr.Unit.Format
+
+  defdelegate to_string(range), to: Cldr.Unit.Format
+  defdelegate to_string(range, options), to: Cldr.Unit.Format
+  defdelegate to_string(range, backend, options), to: Cldr.Unit.Format
 end

@@ -11,7 +11,6 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-
   # Test #187 is reduced in rounding by one digit
   # in order for the match to work.
 

@@ -86,8 +86,10 @@ defmodule Cldr.UnitsTest do
              [Cldr.Unit.new!(:inch, "3937.007874015748031496062992", usage: :person)]
 
     assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US) ==
-             [Cldr.Unit.new!(:foot, 328, usage: :person_height),
-               Cldr.Unit.new!(:inch, "1.0078740157480314960629916", usage: :person_height)]
+             [
+               Cldr.Unit.new!(:foot, 328, usage: :person_height),
+               Cldr.Unit.new!(:inch, "1.0078740157480314960629916", usage: :person_height)
+             ]
 
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
              {:error,
@@ -245,7 +247,8 @@ defmodule Cldr.UnitsTest do
              {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
 
     assert Cldr.Unit.display_name("milliliter", locale: "fr", style: :short) ==
-             {:error, {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
+             {:error,
+              {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
   end
 
   test "Unit of 1 retrieves a default pattern is plural category pattern does not exist" do
@@ -281,7 +284,7 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.from_map(%{"value" => 1, "unit" => "kilogram"} == Cldr.Unit.new(:kilogram, 1))
 
     assert Cldr.Unit.from_map(%{value: %{numerator: 3, denominator: 4}, unit: "kilogram"}) ==
-               {:ok, Cldr.Unit.new!(:kilogram, "0.75")}
+             {:ok, Cldr.Unit.new!(:kilogram, "0.75")}
 
     assert Cldr.Unit.from_map(
              %{"value" => 1, unit: "kilogram"} ==

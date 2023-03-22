@@ -375,7 +375,7 @@ defmodule Cldr.Unit.Conversion do
     maybe_integer(any)
   end
 
-  def sub(a, %Decimal{} =  b) do
+  def sub(a, %Decimal{} = b) do
     Decimal.sub(a, b)
     |> maybe_integer()
   end
@@ -401,7 +401,6 @@ defmodule Cldr.Unit.Conversion do
   def mult(1, b) do
     maybe_integer(b)
   end
-
 
   def mult(_any, 0) do
     0
@@ -478,8 +477,9 @@ defmodule Cldr.Unit.Conversion do
 
   def maybe_integer(%Decimal{} = a) do
     Decimal.to_integer(a)
-  rescue FunctionClauseError ->
-    a
+  rescue
+    FunctionClauseError ->
+      a
   end
 
   def maybe_integer(a) when is_integer(a) do
