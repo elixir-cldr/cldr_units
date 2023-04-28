@@ -2,18 +2,18 @@ defmodule Cldr.Unit.Prefix do
   @moduledoc false
 
   @si_factors %{
-    "quecto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000_000_000),
-    "ronto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000_000),
-    "yokto" => Ratio.new(1, 1_000_000_000_000_000_000_000_000),
-    "zepto" => Ratio.new(1, 1_000_000_000_000_000_000_000),
-    "atto" => Ratio.new(1, 1_000_000_000_000_000_000),
-    "femto" => Ratio.new(1, 1_000_000_000_000_000),
-    "pico" => Ratio.new(1, 1_000_000_000_000),
-    "nano" => Ratio.new(1, 1_000_000_000),
-    "micro" => Ratio.new(1, 1_000_000),
-    "milli" => Ratio.new(1, 1_000),
-    "centi" => Ratio.new(1, 100),
-    "deci" => Ratio.new(1, 10),
+    "quecto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000_000_000),
+    "ronto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000_000),
+    "yokto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000),
+    "zepto" => Decimal.div(1, 1_000_000_000_000_000_000_000),
+    "atto" => Decimal.div(1, 1_000_000_000_000_000_000),
+    "femto" => Decimal.div(1, 1_000_000_000_000_000),
+    "pico" => Decimal.div(1, 1_000_000_000_000),
+    "nano" => Decimal.div(1, 1_000_000_000),
+    "micro" => Decimal.div(1, 1_000_000),
+    "milli" => Decimal.div(1, 1_000),
+    "centi" => Decimal.div(1, 100),
+    "deci" => Decimal.div(1, 10),
     "deka" => 10,
     "hecto" => 100,
     "kilo" => 1_000,
@@ -35,10 +35,10 @@ defmodule Cldr.Unit.Prefix do
   @si_power_prefixes @si_factors
                      |> Enum.map(fn
                        {prefix, factor} when is_integer(factor) ->
-                         {prefix, trunc(:math.log10(factor))}
+                         {prefix, Cldr.Math.log10(factor) |> round()}
 
-                       {prefix, %Ratio{denominator: factor}} ->
-                         {prefix, -trunc(:math.log10(factor))}
+                       {prefix, %Decimal{} = factor} ->
+                         {prefix, Decimal.to_integer(Cldr.Math.log10(factor)) |> Decimal.round()}
                      end)
                      |> Map.new()
 
@@ -49,7 +49,7 @@ defmodule Cldr.Unit.Prefix do
   @si_sort_order @si_factors
                  |> Enum.map(fn
                    {k, v} when is_integer(v) -> {k, v / 1.0}
-                   {k, v} -> {k, Ratio.to_float(v)}
+                   {k, v} -> {k, Decimal.to_float(v)}
                  end)
                  |> Enum.sort(fn {_k1, v1}, {_k2, v2} -> v1 > v2 end)
                  |> Enum.map(&elem(&1, 0))

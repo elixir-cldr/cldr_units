@@ -2,15 +2,25 @@
 
 ## Cldr_Units v3.16.0
 
-This is the changelog for Cldr_units v3.16.0 released on ______, 2022.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.16.0 released on April 28th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Support Decimal version 2.1 and later which raise a different exception that older releases when calling `Decimal.to_integer/1` when the value isn't convertible.
 
 ### Enhancements
+
+* Updates to [CLDR 43](https://cldr.unicode.org/index/downloads/cldr-43) data. The unit `:beaufort` is introduced but only in some locales.
+
+* Remove the dependency on `ratio`. All unit values are now decimals.
+
+* Support string-formatted decimals in `Cldr.Unit.new/3`. This allows the creation of units like `Cldr.Unit.new(:foot, "3.39")` which will also be produced now by the `Inspect` protocol. Apart from the inherent consistency this also improves accuracy will all tests for conversion and preference from CLDR test data now passing.
+
+* Add a `Cldr.Unit.Range` type to allow creating, enumerating and formatting unit ranges. Thanks to @ribanez7 for the collaboration. Closes #33.
 
 * Add support for multiplication and division of arbitrary units. Thanks to @maennchen for the report (and patience). Closes #32.
 
 * Adjust the inspect protocol implementation to emit executable code strings.
-
-* Support [ratio](https://hex.pm/packages/ratio) versions `2.x`, `3.x` and `4.x`.
 
 ## Cldr_Units v3.15.0
 

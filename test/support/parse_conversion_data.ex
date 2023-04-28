@@ -126,12 +126,6 @@ defmodule Cldr.Unit.Test.ConversionData do
     to_number(factor)
   end
 
-  def resolve_factor([numerator, denominator]) do
-    numerator = to_number(numerator)
-    denominator = to_number(denominator)
-    Ratio.new(numerator, denominator)
-  end
-
   def resolve_factor(other) do
     other
   end
@@ -201,10 +195,6 @@ defmodule Cldr.Unit.Test.ConversionData do
 
   # Just for testing support. It does not touch
   # integer units.
-  def to_float_unit(%Cldr.Unit{value: %Ratio{} = value} = unit) do
-    value = Ratio.to_float(value)
-    %{unit | value: value}
-  end
 
   def to_float_unit(%Cldr.Unit{value: %Decimal{} = value} = unit) do
     value = Decimal.to_float(value)

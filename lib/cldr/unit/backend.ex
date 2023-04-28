@@ -475,7 +475,7 @@ defmodule Cldr.Unit.Backend do
             iex> #{inspect(__MODULE__)}.localize(unit, usage: :person_height, territory: :US)
             [
               Cldr.Unit.new!(:foot, 6, usage: :person_height),
-              Cldr.Unit.new!(:inch, Ratio.new(259407338536536, 5490788665690109), usage: :person_height)
+              Cldr.Unit.new!(:inch, "0.04724409448818897637795275598", usage: :person_height)
             ]
 
         """

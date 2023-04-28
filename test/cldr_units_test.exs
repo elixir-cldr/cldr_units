@@ -14,7 +14,7 @@ defmodule Cldr.UnitsTest do
 
   test "that centimetre conversion is correct" do
     assert Cldr.Unit.convert(Cldr.Unit.new!(:millimeter, 300), :centimeter) ==
-             Cldr.Unit.new(:centimeter, 30.0)
+             Cldr.Unit.new(:centimeter, 30)
   end
 
   test "that pluralization in non-en locales works" do
@@ -83,18 +83,12 @@ defmodule Cldr.UnitsTest do
     unit = Cldr.Unit.new!(100, :meter)
 
     assert Cldr.Unit.localize(unit, usage: :person, territory: :US) ==
-             [
-               Cldr.Unit.new!(:inch, Ratio.new(21_617_278_211_378_380_800, 5_490_788_665_690_109),
-                 usage: :person
-               )
-             ]
+             [Cldr.Unit.new!(:inch, "3937.007874015748031496062992", usage: :person)]
 
     assert Cldr.Unit.localize(unit, usage: :person_height, territory: :US) ==
              [
                Cldr.Unit.new!(:foot, 328, usage: :person_height),
-               Cldr.Unit.new!(:inch, Ratio.new(5_534_023_222_111_776, 5_490_788_665_690_109),
-                 usage: :person_height
-               )
+               Cldr.Unit.new!(:inch, "1.0078740157480314960629916", usage: :person_height)
              ]
 
     assert Cldr.Unit.localize(unit, usage: :unknown, territory: :US) ==
@@ -107,22 +101,12 @@ defmodule Cldr.UnitsTest do
     u = Cldr.Unit.new!(Decimal.new(20), :meter)
 
     assert Cldr.Unit.localize(u, territory: :US) ==
-             [Cldr.Unit.new!(:foot, Ratio.new(360_287_970_189_639_680, 5_490_788_665_690_109))]
-  end
-
-  test "localize a ratio unit" do
-    u = Cldr.Unit.new!(:foot, Ratio.new(360_287_970_189_639_680, 5_490_788_665_690_109))
-    assert Cldr.Unit.localize(u, territory: :AU) == [Cldr.Unit.new!(:meter, 20)]
+             [Cldr.Unit.new!(:foot, "65.61679790026246719160104987")]
   end
 
   test "to_string a decimal unit" do
     u = Cldr.Unit.new!(Decimal.new(20), :meter)
     assert Cldr.Unit.Format.to_string(u) == {:ok, "20 meters"}
-  end
-
-  test "to_string a ratio unit" do
-    u = Cldr.Unit.new!(:foot, Ratio.new(360_287_970_189_639_680, 5_490_788_665_690_109))
-    assert Cldr.Unit.Format.to_string(u) == {:ok, "65.617 feet"}
   end
 
   test "inspection when non-default usage or non-default format options" do
@@ -263,7 +247,8 @@ defmodule Cldr.UnitsTest do
              {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
 
     assert Cldr.Unit.display_name("milliliter", locale: "fr", style: :short) ==
-             {:error, {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
+             {:error,
+              {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
   end
 
   test "Unit of 1 retrieves a default pattern is plural category pattern does not exist" do
@@ -298,10 +283,8 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.from_map(%{value: 1, unit: "kilogram"} == Cldr.Unit.new(:kilogram, 1))
     assert Cldr.Unit.from_map(%{"value" => 1, "unit" => "kilogram"} == Cldr.Unit.new(:kilogram, 1))
 
-    assert Cldr.Unit.from_map(
-             %{value: %{numerator: 3, denominator: 4}, unit: "kilogram"} ==
-               Cldr.Unit.new(:kilogram, Ratio.new(3, 4))
-           )
+    assert Cldr.Unit.from_map(%{value: %{numerator: 3, denominator: 4}, unit: "kilogram"}) ==
+             {:ok, Cldr.Unit.new!(:kilogram, "0.75")}
 
     assert Cldr.Unit.from_map(
              %{"value" => 1, unit: "kilogram"} ==

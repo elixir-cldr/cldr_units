@@ -115,7 +115,7 @@ defmodule Cldr.Unit do
   @type measurement_system :: unquote(type.(@system_names))
   @type measurement_system_key :: unquote(type.(@measurement_system_keys))
   @type style :: unquote(type.(@styles))
-  @type value :: Cldr.Math.number_or_decimal() | Ratio.t()
+  @type value :: Cldr.Math.number_or_decimal()
   @type locale :: Locale.locale_name() | LanguageTag.t()
   @type base_conversion :: {translatable_unit, Conversion.t()}
   @type conversion :: [base_conversion()] | {[base_conversion()], [base_conversion()]}
@@ -221,6 +221,8 @@ defmodule Cldr.Unit do
                       |> List.flatten()
                       |> List.delete(:generic)
                       |> Kernel.++(Cldr.Unit.Additional.additional_units())
+                      # Beaufort not fully supported yet
+                      |> Kernel.--([:beaufort])
 
   @spec known_units :: [translatable_unit(), ...]
   def known_units do
@@ -366,7 +368,7 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `value` is any float, integer, `Ratio` or `Decimal`
+  * `value` is any float, integer or `Decimal`
 
   * `unit` is any unit name returned by `Cldr.Unit.known_units/0`
 
@@ -410,12 +412,20 @@ defmodule Cldr.Unit do
 
   def new(value, unit, options \\ [])
 
-  def new(value, unit, options) when is_number(value) do
+  def new(value, unit, options) when is_integer(value) do
     create_unit(value, unit, options)
   end
 
-  def new(unit, value, options) when is_number(value) do
+  def new(unit, value, options) when is_integer(value) do
     new(value, unit, options)
+  end
+
+  def new(value, unit, options) when is_float(value) do
+    create_unit(Decimal.from_float(value), unit, options)
+  end
+
+  def new(unit, value, options) when is_float(value) do
+    new(Decimal.from_float(value), unit, options)
   end
 
   def new(%Decimal{} = value, unit, options) do
@@ -426,12 +436,19 @@ defmodule Cldr.Unit do
     new(value, unit, options)
   end
 
-  def new(%Ratio{} = value, unit, options) do
-    create_unit(value, unit, options)
+  def new(a, b, options) do
+    with {:error, _} <- maybe_new(a, b, options) do
+      maybe_new(b, a, options)
+    end
   end
 
-  def new(unit, %Ratio{} = value, options) do
-    new(value, unit, options)
+  def maybe_new(a, b, options) do
+    new(a, Decimal.new(b), options)
+  rescue
+    Decimal.Error ->
+      {:error,
+       {Cldr.InvalidUnit,
+        "Could not resolve a new unit from Cldr.Unit.new(#{inspect(b)}, #{inspect(a)})"}}
   end
 
   @doc """
@@ -510,11 +527,15 @@ defmodule Cldr.Unit do
     new(unit, value)
   end
 
+  def from_map(%{"unit" => unit, "value" => value}) when is_binary(value) do
+    new(unit, value)
+  end
+
   def from_map(%{
         "unit" => unit,
         "value" => %{"numerator" => numerator, "denominator" => denominator}
       }) do
-    new(unit, Ratio.new(numerator, denominator))
+    new(unit, Decimal.div(numerator, denominator))
   end
 
   def from_map(%{unit: unit, value: value}) when is_number(value) do
@@ -522,7 +543,7 @@ defmodule Cldr.Unit do
   end
 
   def from_map(%{unit: unit, value: %{numerator: numerator, denominator: denominator}}) do
-    new(unit, Ratio.new(numerator, denominator))
+    new(unit, Decimal.div(numerator, denominator))
   end
 
   def from_map(other) do
@@ -1427,7 +1448,7 @@ defmodule Cldr.Unit do
 
       iex> u = Cldr.Unit.new!(10.3, :foot)
       iex> Cldr.Unit.decompose u, [:foot, :inch]
-      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, Ratio.new(253327479039591, 70368744177664))]
+      [Cldr.Unit.new!(:foot, 10), Cldr.Unit.new!(:inch, "3.6")]
 
       iex> u = Cldr.Unit.new!(:centimeter, 1111)
       iex> Cldr.Unit.decompose u, [:kilometer, :meter, :centimeter, :millimeter]
@@ -1524,7 +1545,7 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
       [
         Cldr.Unit.new!(:foot, 6, usage: :person_height),
-        Cldr.Unit.new!(:inch, Ratio.new(259407338536536, 5490788665690109), usage: :person_height)
+        Cldr.Unit.new!(:inch, "0.04724409448818897637795275598", usage: :person_height)
       ]
 
   """
@@ -1624,21 +1645,13 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> u = Cldr.Unit.new!(:foot, 23.3)
-      Cldr.Unit.new!(:foot, 23.3)
+      Cldr.Unit.new!(:foot, "23.3")
       iex> Cldr.Unit.zero(u)
-      Cldr.Unit.new!(:foot, 0.0)
+      Cldr.Unit.new!(:foot, 0)
 
   """
-  def zero(%Unit{value: value} = unit) when is_integer(value) do
+  def zero(%Unit{value: _value} = unit) do
     %Unit{unit | value: 0}
-  end
-
-  def zero(%Unit{value: value} = unit) when is_float(value) do
-    %Unit{unit | value: 0.0}
-  end
-
-  def zero(%Unit{} = unit) do
-    %Unit{unit | value: Decimal.new(0)}
   end
 
   @doc """
@@ -1669,12 +1682,6 @@ defmodule Cldr.Unit do
   @decimal_0 Decimal.new(0)
   def zero?(%Unit{value: %Decimal{} = value}) do
     Cldr.Decimal.compare(value, @decimal_0) == :eq
-  end
-
-  # Ratios that are zero are just integers
-  # so anything that is a %Ratio{} is not zero
-  def zero?(%Unit{value: %Ratio{}}) do
-    false
   end
 
   @system_units @units
@@ -2011,9 +2018,9 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.unit_category_usage
+      iex> Cldr.Unit.unit_category_usage()
       %{
-        area: [:default, :geograph, :land],
+        area: [:default, :floor, :geograph, :land],
         concentration: [:blood_glucose, :default],
         consumption: [:default, :vehicle_fuel],
         duration: [:default, :media],
@@ -2024,7 +2031,7 @@ defmodule Cldr.Unit do
         mass_density: [:default],
         power: [:default, :engine],
         pressure: [:baromtrc, :default],
-        speed: [:default, :wind],
+        speed: [:default, :rainfall, :snowfall, :wind],
         temperature: [:default, :weather],
         volume: [:default, :fluid, :oil, :vehicle],
         year_duration: [:default, :person_age]
@@ -2320,7 +2327,7 @@ defmodule Cldr.Unit do
                   |> Math.round(@rounding)
                   |> Map.get(:value)
 
-                {:cont, acc ++ [%{pref | geq: Ratio.to_float(value)}]}
+                {:cont, acc ++ [%{pref | geq: to_float(value)}]}
 
               pref, _rest, acc ->
                 pref = %{pref | geq: 0}
@@ -2491,20 +2498,18 @@ defmodule Cldr.Unit do
       iex> Cldr.Unit.validate_unit "mile_per_liter"
       {:ok, "mile_per_liter",
        {[
-          mile:
-           %Cldr.Unit.Conversion{
-             base_unit: [:meter],
-             factor: Ratio.new(905980129838867985, 562949953421312),
-             offset: 0
-           }
+          mile: %Cldr.Unit.Conversion{
+            factor: Decimal.new("1609.3440"),
+            offset: 0,
+            base_unit: [:meter]
+          }
         ],
         [
-          liter:
-           %Cldr.Unit.Conversion{
-             base_unit: [:cubic_meter],
-             factor: Ratio.new(1152921504606847, 1152921504606846976),
-             offset: 0
-           }
+          liter: %Cldr.Unit.Conversion{
+            factor: Decimal.new("0.001"),
+            offset: 0,
+            base_unit: [:cubic_meter]
+          }
         ]}}
 
   """
@@ -2659,11 +2664,6 @@ defmodule Cldr.Unit do
   Convert a ratio, Decimal or integer `t:Unit` to a float `t:Unit`
   """
   @doc since: "3.5.0"
-  def to_float_unit(%Unit{value: %Ratio{} = value} = unit) do
-    value = Ratio.to_float(value)
-    %{unit | value: value}
-  end
-
   def to_float_unit(%Unit{value: value} = unit) when is_integer(value) do
     value = 1.0 * value
     %{unit | value: value}
@@ -2685,11 +2685,6 @@ defmodule Cldr.Unit do
   Convert a ratio, float or integer `t:Unit` to a Decimal `t:Unit`
   """
   @doc since: "3.5.0"
-  def to_decimal_unit(%Unit{value: %Ratio{} = value} = unit) do
-    value = Decimal.div(Decimal.new(value.numerator), Decimal.new(value.denominator))
-    %{unit | value: value}
-  end
-
   def to_decimal_unit(%Unit{value: value} = unit) when is_float(value) do
     value = Decimal.from_float(value)
     %{unit | value: value}
@@ -2934,6 +2929,15 @@ defmodule Cldr.Unit do
       |> Application.get_env(:exclude_protocol_implementations, [])
       |> List.wrap()
 
-    if module in exclusions, do: true, else: false
+    module in exclusions
+  end
+
+  def to_float(%Decimal{} = value) do
+    Decimal.to_float(value)
+    |> Cldr.Math.round(@rounding)
+  end
+
+  def to_float(other) do
+    other
   end
 end

@@ -10,7 +10,7 @@ defmodule Cldr.Unit.Conversion do
             offset: 0,
             base_unit: nil
 
-  @type factor :: integer | float | Ratio.t()
+  @type factor :: integer | float
   @type offset :: integer | float
 
   @type t :: %{
@@ -23,6 +23,9 @@ defmodule Cldr.Unit.Conversion do
   alias Cldr.Unit.BaseUnit
 
   import Kernel, except: [div: 2]
+
+  @decimal_1 Decimal.new(1)
+  @decimal_0 Decimal.new(0)
 
   @doc """
   Returns the conversion that calculates
@@ -177,8 +180,8 @@ defmodule Cldr.Unit.Conversion do
   # A per module is a 2-tuple of the numerator and
   # denominator. Both are lists of conversion tuples.
   defp convert_to_base(value, {numerator, denominator}) do
-    convert_to_base(1.0, numerator)
-    |> div(convert_to_base(1.0, denominator))
+    convert_to_base(@decimal_1, numerator)
+    |> div(convert_to_base(@decimal_1, denominator))
     |> mult(value)
   end
 
@@ -207,8 +210,8 @@ defmodule Cldr.Unit.Conversion do
   end
 
   defp convert_from_base(value, {numerator, denominator}) do
-    convert_from_base(1.0, numerator)
-    |> div(convert_from_base(1.0, denominator))
+    convert_from_base(@decimal_1, numerator)
+    |> div(convert_from_base(@decimal_1, denominator))
     |> mult(value)
   end
 
@@ -245,11 +248,11 @@ defmodule Cldr.Unit.Conversion do
 
       iex> Cldr.Unit.Conversion.convert!(Cldr.Unit.new!(:celsius, 0), :fahrenheit)
       ...> |> Cldr.Unit.round
-      Cldr.Unit.new!(:fahrenheit, 32.0)
+      Cldr.Unit.new!(:fahrenheit, 32)
 
       iex> Cldr.Unit.Conversion.convert!(Cldr.Unit.new!(:fahrenheit, 32), :celsius)
       ...> |> Cldr.Unit.round
-      Cldr.Unit.new!(:celsius, 0.0)
+      Cldr.Unit.new!(:celsius, 0)
 
       Cldr.Unit.Conversion.convert Cldr.Unit.new!(:mile, 1), :gallon
       ** (Cldr.Unit.IncompatibleUnitsError) Operations can only be performed between units of the same type. Received :mile and :gallon
@@ -297,7 +300,7 @@ defmodule Cldr.Unit.Conversion do
 
   def convert_to_base_unit(unit) when is_atom(unit) do
     unit
-    |> Unit.new!(1.0)
+    |> Unit.new!("1.0")
     |> convert_to_base_unit()
   end
 
@@ -338,178 +341,128 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  #### Math helpers for Ratio, float, integer
+  #### Math helpers for Decimal and integer
 
   @doc false
   def add(any, 0) do
-    any
+    maybe_integer(any)
   end
 
-  def add(any, 0.0) do
-    any
-  end
-
-  def add(%Ratio{} = a, b) do
-    Ratio.add(a, Ratio.new(b))
-  end
-
-  def add(a, %Ratio{} = b) do
-    Ratio.add(Ratio.new(a), b)
-  end
-
-  def add(%Decimal{} = a, b) when is_float(b) do
-    Decimal.add(a, Decimal.from_float(b))
+  def add(any, @decimal_0) do
+    maybe_integer(any)
   end
 
   def add(%Decimal{} = a, b) do
     Decimal.add(a, b)
+    |> maybe_integer()
+  end
+
+  def add(a, %Decimal{} = b) do
+    Decimal.add(a, b)
+    |> maybe_integer()
   end
 
   def add(a, b) do
-    a + b
+    maybe_integer(a + b)
   end
 
   @doc false
   def sub(any, 0) do
-    any
+    maybe_integer(any)
   end
 
   def sub(any, 0.0) do
-    any
+    maybe_integer(any)
   end
 
-  def sub(%Ratio{} = a, b) do
-    Ratio.sub(a, Ratio.new(b))
-  end
-
-  def sub(a, %Ratio{} = b) do
-    Ratio.sub(Ratio.new(a), b)
-  end
-
-  def sub(%Decimal{} = a, b) when is_float(b) do
-    Decimal.sub(a, Decimal.from_float(b))
+  def sub(a, %Decimal{} = b) do
+    Decimal.sub(a, b)
+    |> maybe_integer()
   end
 
   def sub(%Decimal{} = a, b) do
     Decimal.sub(a, b)
+    |> maybe_integer()
   end
 
   def sub(a, b) do
-    a - b
+    maybe_integer(a - b)
   end
 
   @doc false
-  def mult(_any, 0) do
-    0
-  end
-
   def mult(any, 1) do
     any
   end
 
-  def mult(any, 1.0) do
+  def mult(any, @decimal_1) do
     any
   end
 
   def mult(1, b) do
-    b
+    maybe_integer(b)
   end
 
-  def mult(%Ratio{} = a, b) do
-    case Ratio.mult(a, Ratio.new(b)) do
-      %Ratio{numerator: 0, denominator: _denominator} -> 0
-      %Ratio{numerator: numerator, denominator: 1} -> numerator
-      ratio -> ratio
-    end
+  def mult(_any, 0) do
+    0
   end
 
-  def mult(a, %Ratio{} = b) do
-    case Ratio.mult(Ratio.new(a), b) do
-      %Ratio{numerator: 0, denominator: _denominator} -> 0
-      %Ratio{numerator: numerator, denominator: 1} -> numerator
-      ratio -> ratio
-    end
-  end
-
-  def mult(%Decimal{} = a, b) when is_float(b) do
-    Decimal.mult(a, Decimal.from_float(b))
-  end
-
-  def mult(a, %Decimal{} = b) when is_float(a) do
-    Decimal.mult(Decimal.from_float(a), b)
+  def mult(_any, @decimal_0) do
+    0
   end
 
   def mult(%Decimal{} = a, b) do
     Decimal.mult(a, b)
+    |> maybe_integer()
   end
 
   def mult(a, %Decimal{} = b) do
     Decimal.mult(a, b)
+    |> maybe_integer()
   end
 
   def mult(a, b) do
-    a * b
+    (a * b)
+    |> maybe_integer()
   end
 
-  @doc false
-  def div(%Ratio{numerator: numerator, denominator: 1}, 1) do
-    numerator
+  def div(_any, 0) do
+    0
+  end
+
+  def div(_any, @decimal_0) do
+    0
   end
 
   def div(any, 1) do
-    any
+    maybe_integer(any)
   end
 
-  def div(any, 1.0) do
-    any
-  end
-
-  def div(%Ratio{numerator: numerator, denominator: 1}, b) when is_float(b) do
-    numerator / b
-  end
-
-  def div(%Ratio{numerator: numerator, denominator: 1}, b) when is_integer(b) do
-    Kernel.div(numerator, b)
-  end
-
-  def div(%Ratio{} = a, b) do
-    case Ratio.div(a, Ratio.new(b)) do
-      %Ratio{numerator: 0, denominator: _denominator} -> 0
-      %Ratio{numerator: numerator, denominator: 1} -> numerator
-      ratio -> ratio
-    end
-  end
-
-  def div(a, %Ratio{} = b) do
-    case Ratio.div(Ratio.new(a), b) do
-      %Ratio{numerator: 0, denominator: _denominator} -> 0
-      %Ratio{numerator: numerator, denominator: 1} -> numerator
-      ratio -> ratio
-    end
-  end
-
-  def div(%Decimal{} = a, b) when is_float(b) do
-    Decimal.div(a, Decimal.from_float(b))
-  end
-
-  def div(a, %Decimal{} = b) when is_float(a) do
-    Decimal.div(Decimal.from_float(a), b)
+  def div(any, @decimal_1) do
+    maybe_integer(any)
   end
 
   def div(%Decimal{} = a, b) do
     Decimal.div(a, b)
+    |> maybe_integer()
   end
 
   def div(a, %Decimal{} = b) do
     Decimal.div(a, b)
+    |> maybe_integer()
   end
 
-  def div(a, b) do
-    a / b
+  def div(a, b) when is_integer(a) and is_integer(b) do
+    integer_div = Kernel.div(a, b)
+
+    if integer_div * b == a do
+      integer_div
+    else
+      Decimal.div(Decimal.new(a), Decimal.new(b))
+    end
   end
 
   @doc false
-  def pow(_any, 0) do
+  def pow(_any, @decimal_0) do
     1
   end
 
@@ -517,48 +470,24 @@ defmodule Cldr.Unit.Conversion do
     1
   end
 
-  def pow(_any, %Ratio{numerator: 0, denominator: _denominator}) do
-    1
-  end
-
-  def pow(%Ratio{} = a, %Ratio{numerator: numerator, denominator: 1}) do
-    Ratio.pow(Ratio.new(a), numerator)
-  end
-
-  def pow(%Ratio{} = a, b) when is_integer(b) do
-    case Ratio.pow(a, b) do
-      %Ratio{numerator: 0, denominator: _denominator} -> 0
-      %Ratio{numerator: numerator, denominator: 1} -> numerator
-      ratio -> ratio
-    end
-  end
-
   def pow(a, b) when is_integer(b) do
     Cldr.Math.power(a, b)
+    |> maybe_integer
   end
 
-  def pow(a, b) do
-    :math.pow(a, b)
+  # Decimal.integer? only on 2.x but we support 1.x
+  # so we have to check the hard way
+
+  def maybe_integer(%Decimal{} = a) do
+    Decimal.to_integer(a)
+  rescue
+    FunctionClauseError ->
+      a
+    ArgumentError ->
+      a
   end
 
-  @doc false
-  def new(numerator, numerator) do
-    1
-  end
-
-  def new(0, _denominator) do
-    0
-  end
-
-  def new(_numerator, 0) do
-    0
-  end
-
-  def new(numerator, 1) do
-    numerator
-  end
-
-  def new(numerator, denominator) do
-    Ratio.new(numerator, denominator)
+  def maybe_integer(a) when is_integer(a) do
+    a
   end
 end

@@ -11,8 +11,9 @@ defmodule Cldr.Unit.Math do
   import Unit, only: [incompatible_units_error: 2]
 
   @doc false
-  defguard is_per_unit(base_conversion) when is_tuple(base_conversion) and
-    tuple_size(base_conversion) == 2
+  defguard is_per_unit(base_conversion)
+           when is_tuple(base_conversion) and
+                  tuple_size(base_conversion) == 2
 
   @doc false
   defguard is_simple_unit(base_conversion) when is_list(base_conversion)
@@ -106,10 +107,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      Cldr.Unit.new!(:kilogram, Ratio.new(81900798833369519, 18014398509481984))
+      Cldr.Unit.new!(:kilogram, "4.54640763")
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:pint, Ratio.new(36794683014431043834033898368027039378825884348261, 12746616238742849396626455585282990375683527307233))
+      Cldr.Unit.new!(:pint, "2.886623581134812676960800627")
 
       iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       Cldr.Unit.new!(:pint, 4)
@@ -175,10 +176,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      Cldr.Unit.new!(:kilogram, Ratio.new(40855968570202005, 18014398509481984))
+      Cldr.Unit.new!(:kilogram, "2.26796185")
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:pint, Ratio.new(134691990896416015745491897791939562497958760939520, 12746616238742849396626455585282990375683527307233))
+      Cldr.Unit.new!(:pint, "10.56688209432593661519599687")
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       Cldr.Unit.new!(:pint, 5)
@@ -242,10 +243,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.Math.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      Cldr.Unit.new!(:kilogram, Ratio.new(90071992547409920, 8171193714040401))
+      Cldr.Unit.new!(:kilogram, "11.02311310924387903614869007")
 
       iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:pint, Ratio.new(63733081193714246983132277926414951878417636536165, 26938398179283203149098379558387912499591752187904))
+      Cldr.Unit.new!(:pint, "2.365882365000000000000000000")
 
       iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       Cldr.Unit.new!(:pint, 5)
@@ -335,13 +336,13 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1
-      Cldr.Unit.new!(:yard, 1031.6)
+      Cldr.Unit.new!(:yard, "1031.6")
 
       iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 2
-      Cldr.Unit.new!(:yard, 1031.61)
+      Cldr.Unit.new!(:yard, "1031.61")
 
       iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1, :up
-      Cldr.Unit.new!(:yard, 1031.7)
+      Cldr.Unit.new!(:yard, "1031.7")
 
   """
   @spec round(
@@ -352,13 +353,17 @@ defmodule Cldr.Unit.Math do
 
   def round(unit, places \\ 0, mode \\ :half_up)
 
-  def round(%Unit{value: %Ratio{} = value} = unit, places, mode) do
-    value = Ratio.to_float(value)
-    round(%{unit | value: value}, places, mode)
-  end
+  # def round(%Unit{value: %Ratio{} = value} = unit, places, mode) do
+  #   value = Ratio.to_float(value)
+  #   round(%{unit | value: value}, places, mode)
+  # end
 
   def round(%Unit{value: value} = unit_1, places, mode) do
-    rounded_value = Cldr.Math.round(value, places, mode)
+    rounded_value =
+      value
+      |> Cldr.Math.round(places, mode)
+      |> Conversion.maybe_integer()
+
     %{unit_1 | value: rounded_value}
   end
 
@@ -366,10 +371,11 @@ defmodule Cldr.Unit.Math do
   Truncates a unit's value.
 
   """
-  def trunc(%Unit{value: %Ratio{} = value} = unit) do
-    value = Ratio.to_float(value)
-    trunc(%{unit | value: value})
-  end
+
+  # def trunc(%Unit{value: %Ratio{} = value} = unit) do
+  #   value = Ratio.to_float(value)
+  #   trunc(%{unit | value: value})
+  # end
 
   def trunc(%Unit{value: value} = unit) when is_float(value) do
     %{unit | value: Kernel.trunc(value)}
@@ -380,7 +386,12 @@ defmodule Cldr.Unit.Math do
   end
 
   def trunc(%Unit{value: %Decimal{} = value} = unit) do
-    %{unit | value: Decimal.round(value, 0, :floor)}
+    trunc =
+      value
+      |> Decimal.round(0, :floor)
+      |> Decimal.to_integer()
+
+    %{unit | value: trunc}
   end
 
   @doc """
@@ -419,13 +430,13 @@ defmodule Cldr.Unit.Math do
     end
   end
 
-  def compare(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2}) do
-    Ratio.compare(value_1, Ratio.new(value_2))
-  end
-
-  def compare(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: %Ratio{} = value_2}) do
-    Ratio.compare(Ratio.new(value_1), value_2)
-  end
+  # def compare(%Unit{unit: unit, value: %Ratio{} = value_1}, %Unit{unit: unit, value: value_2}) do
+  #   Ratio.compare(value_1, Ratio.new(value_2))
+  # end
+  #
+  # def compare(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: %Ratio{} = value_2}) do
+  #   Ratio.compare(Ratio.new(value_1), value_2)
+  # end
 
   def compare(%Unit{unit: unit, value: %Decimal{} = value_1}, %Unit{unit: unit, value: value_2}) do
     Decimal.compare(value_1, Decimal.new(value_2))
