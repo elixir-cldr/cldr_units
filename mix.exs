@@ -7,7 +7,7 @@ defmodule Cldr.Units.Mixfile do
     [
       app: :ex_cldr_units,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.11",
       name: "Cldr Units",
       source_url: "https://github.com/elixir-cldr/cldr_units",
       description: description(),
@@ -43,7 +43,7 @@ defmodule Cldr.Units.Mixfile do
 
       {:ex_cldr_lists, "~> 2.10"},
       {:decimal, "~> 1.6 or ~> 2.0"},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.18", optional: true, runtime: false},
       {:jason, "~> 1.0", optional: true},
       {:benchee, "~> 1.0", optional: true, only: :dev}
