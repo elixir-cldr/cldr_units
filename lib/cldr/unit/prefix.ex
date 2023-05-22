@@ -140,8 +140,8 @@ defmodule Cldr.Unit.Prefix do
   ## Overall prefixes
   ##
 
-  @prefixes Map.keys(@si_factors) ++
-              Map.keys(@binary_factors) ++
+  @prefixes Enum.sort(Map.keys(@si_factors)) ++
+              Enum.sort(Map.keys(@binary_factors)) ++
               Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
 
   def prefixes do

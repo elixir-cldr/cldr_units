@@ -240,6 +240,7 @@ defmodule Cldr.Unit.Additional do
       |> Map.values()
       |> hd()
       |> Map.keys()
+      |> Enum.sort()
 
     quote bind_quoted: [
             module: module,
@@ -260,7 +261,7 @@ defmodule Cldr.Unit.Additional do
         end
 
         def known_locale_names do
-          unquote(Map.keys(localizations))
+          unquote(Map.keys(localizations) |> Enum.sort())
         end
 
         def additional_units do
@@ -294,7 +295,7 @@ defmodule Cldr.Unit.Additional do
     for locale <- MapSet.intersection(backend_locales, additional_locales),
         style <- styles do
       with found_units when is_map(found_units) <- additional_module.units_for(locale, style),
-           [] <- additional_units -- Map.keys(found_units) do
+           [] <- additional_units -- Enum.sort(Map.keys(found_units)) do
         :ok
       else
         :error ->

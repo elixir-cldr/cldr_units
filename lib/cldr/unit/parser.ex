@@ -325,6 +325,10 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  # defp split_into_units("fluid_ounce_imperial" <> rest) do
+  #   ["fluid_ounce_imperial" | split_into_units(rest)]
+  # end
+
   for unit <- @unit_strings do
     defp split_into_units(<<unquote(unit), rest::binary>>) do
       [unquote(unit) | split_into_units(rest)]

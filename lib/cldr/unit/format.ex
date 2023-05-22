@@ -804,8 +804,7 @@ defmodule Cldr.Unit.Format do
       true ->
         get_unit_pattern(grammar, options) ||
           get_unit_pattern(grammar, Map.put(options, :plural, @default_plural))
-    end ||
-      raise Cldr.Unit.NoPatternError, {unit, grammatical_case, gender, plural}
+    end || raise(Cldr.Unit.NoPatternError, {unit, grammatical_case, gender, plural})
   end
 
   defp get_unit_pattern(grammar, %{plural: plural} = options) when is_integer(plural) do

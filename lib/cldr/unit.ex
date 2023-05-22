@@ -95,12 +95,12 @@ defmodule Cldr.Unit do
   ]
 
   @measurement_systems Cldr.Config.measurement_systems()
-  @system_names Map.keys(@measurement_systems)
+  @system_names Map.keys(@measurement_systems) |> Enum.sort()
 
   @measurement_system_keys [
     :default,
-    :temperature,
-    :paper_size
+    :paper_size,
+    :temperature
   ]
 
   # Converts a list of atoms into a typespec
@@ -138,7 +138,7 @@ defmodule Cldr.Unit do
              |> Cldr.Locale.Loader.get_locale(@config)
              |> Map.fetch!(:units)
              |> Map.fetch!(:long)
-             |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+             |> Enum.map(fn {k, v} -> {k, Map.keys(v) |> Enum.sort()} end)
              |> Map.new()
 
   @units Cldr.Config.units()
@@ -243,7 +243,7 @@ defmodule Cldr.Unit do
        :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """
-  @unit_categories Map.keys(@units_by_category)
+  @unit_categories Map.keys(@units_by_category) |> Enum.sort()
 
   @spec known_unit_categories :: list(category())
   def known_unit_categories do
@@ -2009,7 +2009,7 @@ defmodule Cldr.Unit do
 
   @category_usage @units
                   |> Map.get(:preferences)
-                  |> Enum.map(fn {k, v} -> {k, Map.keys(v)} end)
+                  |> Enum.map(fn {k, v} -> {k, Map.keys(v) |> Enum.sort()} end)
                   |> Map.new()
 
   @doc """
@@ -2517,7 +2517,7 @@ defmodule Cldr.Unit do
     {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
 
-  @aliases Alias.aliases() |> Map.keys()
+  @aliases Alias.aliases() |> Map.keys() |> Enum.sort()
   def validate_unit(unit_name) when unit_name in @aliases do
     unit_name
     |> Alias.alias()
