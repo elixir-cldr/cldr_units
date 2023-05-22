@@ -285,7 +285,7 @@ defmodule Cldr.Unit.Additional do
 
       other ->
         IO.warn(
-          "The locales #{inspect(other)} configured in " <>
+          "The locales #{inspect(Enum.sort(other))} configured in " <>
             "the CLDR backend #{inspect(env.module)} " <>
             "do not have localizations defined for additional units #{inspect(additional_units)}.",
           []

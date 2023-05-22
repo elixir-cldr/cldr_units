@@ -153,7 +153,7 @@ defmodule Cldr.Unit.AdditionalUnitTest do
         end)
 
       assert warnings =~
-               ~r/.*The locales \[:fr, :\"en-001\"\] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend2 do not have localizations defined.*/
+               ~r/.*The locales \[:\"en-001\", :fr\] configured in the CLDR backend Cldr.Unit.AdditionalUnitTest.Backend2 do not have localizations defined.*/
     end
 
     test "backend with localization missing the :other key" do
