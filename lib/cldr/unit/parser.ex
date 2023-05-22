@@ -315,47 +315,47 @@ defmodule Cldr.Unit.Parser do
   #    then match the remaining string. Reassemble the prefix
   #    to the base unit before returning.
 
-  defp split_into_units("") do
+  def split_into_units("") do
     []
   end
 
   for {unit_alias, unit} <- Alias.aliases() do
-    defp split_into_units(<<unquote(to_string(unit_alias)), rest::binary>>) do
+    def split_into_units(<<unquote(to_string(unit_alias)), rest::binary>>) do
       split_into_units(unquote(to_string(unit)) <> rest)
     end
   end
 
-  # defp split_into_units("fluid_ounce_imperial" <> rest) do
-  #   ["fluid_ounce_imperial" | split_into_units(rest)]
-  # end
-
   for unit <- @unit_strings do
-    defp split_into_units(<<unquote(unit), rest::binary>>) do
+    def split_into_units(unquote(unit)) do
+      [unquote(unit)]
+    end
+
+    def split_into_units(<<unquote(unit), rest::binary>>) do
       [unquote(unit) | split_into_units(rest)]
     end
   end
 
   for {prefix, _power} <- Prefix.power_units() do
-    defp split_into_units(<<unquote(prefix) <> "_", rest::binary>>) do
+    def split_into_units(<<unquote(prefix) <> "_", rest::binary>>) do
       [unquote(prefix) | split_into_units(rest)]
     end
   end
 
   for {prefix, _scale} <- Prefix.si_factors() do
-    defp split_into_units(<<unquote(prefix), rest::binary>>) do
+    def split_into_units(<<unquote(prefix), rest::binary>>) do
       [head | rest] = split_into_units(rest)
       [unquote(prefix) <> head | rest]
     end
   end
 
   for {prefix, _scale} <- Prefix.binary_factors() do
-    defp split_into_units(<<unquote(prefix), rest::binary>>) do
+    def split_into_units(<<unquote(prefix), rest::binary>>) do
       [head | rest] = split_into_units(rest)
       [unquote(prefix) <> head | rest]
     end
   end
 
-  defp split_into_units(<<@currency_base, currency::binary-3, rest::binary>>) do
+  def split_into_units(<<@currency_base, currency::binary-3, rest::binary>>) do
     case Cldr.validate_currency(currency) do
       {:ok, currency} ->
         [currency | split_into_units(rest)]
@@ -366,11 +366,11 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
-  defp split_into_units(<<"_", rest::binary>>) do
+  def split_into_units(<<"_", rest::binary>>) do
     split_into_units(rest)
   end
 
-  defp split_into_units(other) do
+  def split_into_units(other) do
     case Integer.parse(other) do
       {integer, rest} when is_integer(integer) ->
         [head | rest] = split_into_units(rest)

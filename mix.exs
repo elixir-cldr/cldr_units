@@ -46,7 +46,8 @@ defmodule Cldr.Units.Mixfile do
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.18", optional: true, runtime: false},
       {:jason, "~> 1.0", optional: true},
-      {:benchee, "~> 1.0", optional: true, only: :dev}
+      {:benchee, "~> 1.0", optional: true, only: :dev},
+      {:recon, "~> 2.5", only: :dev}
     ]
   end
 
