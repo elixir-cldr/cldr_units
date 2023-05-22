@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.16.1
+
+This is the changelog for Cldr_units v3.16.1 released on ______, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Assert a defined order of map keys in order to operate correctly on OTP 26.
+
 ## Cldr_Units v3.16.0
 
 This is the changelog for Cldr_units v3.16.0 released on April 28th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
