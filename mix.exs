@@ -19,7 +19,7 @@ defmodule Cldr.Units.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(inets jason mix)a
+        plt_add_apps: ~w(inets jason mix castore certifi gettext)a
       ]
     ]
   end
