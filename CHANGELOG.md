@@ -8,7 +8,7 @@ This is the changelog for Cldr_units v3.16.1 released on May 22nd, 2023.  For ol
 
 * Assert a defined order of map keys in order to operate correctly on OTP 26.
 
-* Works around a possible OTP 26 bug when binary pattern matching in function heads.
+* Works around an [OTP 26 bug](https://github.com/erlang/otp/pull/7269) when binary pattern matching in function heads.
 
 * Removes a compiler warning in Elixir 1.15 (which is actually a compile error in Elixir 1.15.0-rc.0)
 
