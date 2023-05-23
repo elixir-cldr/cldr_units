@@ -10,6 +10,8 @@ This is the changelog for Cldr_units v3.16.1 released on May 22nd, 2023.  For ol
 
 * Works around a possible OTP 26 bug when binary pattern matching in function heads.
 
+* Removes a compiler warning in Elixir 1.15 (which is actually a compile error in Elixir 1.15.0-rc.0)
+
 ## Cldr_Units v3.16.0
 
 This is the changelog for Cldr_units v3.16.0 released on April 28th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

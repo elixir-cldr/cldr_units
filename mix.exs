@@ -19,7 +19,7 @@ defmodule Cldr.Units.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(inets jason mix castore certifi gettext)a
+        plt_add_apps: ~w(inets jason mix)a
       ]
     ]
   end
@@ -47,8 +47,7 @@ defmodule Cldr.Units.Mixfile do
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.18", optional: true, runtime: false},
       {:jason, "~> 1.0", optional: true},
-      {:benchee, "~> 1.0", optional: true, only: :dev},
-      {:recon, "~> 2.5", only: :dev}
+      {:benchee, "~> 1.0", optional: true, only: :dev}
     ]
   end
 
