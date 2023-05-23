@@ -504,7 +504,9 @@ defmodule Cldr.Unit.Format do
       unit_grammar = {name, {options.grammatical_case, options.plural}}
       unit_pattern = get_unit_pattern!(last, unit_grammar, options)
 
-      range = %Range{first: v1, last: v2, step: 1}
+      # range = %Range{first: v1, last: v2, step: 1}
+      range = Range.new(v1, v2)
+
       number_options = Map.to_list(options)
       {:ok, formatted_range} = Number.to_range_string(range, options.backend, number_options)
 
@@ -520,7 +522,9 @@ defmodule Cldr.Unit.Format do
       options = extract_options!(last, options)
       grammar = grammar(last, locale: options.locale, backend: options.backend)
 
-      range = %Range{first: first.value, last: last.value, step: 1}
+      # range = %Range{first: first.value, last: last.value, step: 1}
+      range = Range.new(first.value, last.value)
+
       number_options = Map.to_list(options)
       {:ok, formatted_range} = Number.to_range_string(range, options.backend, number_options)
 
