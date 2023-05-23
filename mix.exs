@@ -40,6 +40,7 @@ defmodule Cldr.Units.Mixfile do
   defp deps do
     [
       {:ex_cldr_numbers, "~> 2.31"},
+      {:cldr_utils, "~> 2.24"},
 
       {:ex_cldr_lists, "~> 2.10"},
       {:decimal, "~> 1.6 or ~> 2.0"},
