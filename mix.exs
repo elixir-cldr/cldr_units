@@ -1,7 +1,7 @@
 defmodule Cldr.Units.Mixfile do
   use Mix.Project
 
-  @version "3.16.1"
+  @version "3.16.2"
 
   def project do
     [

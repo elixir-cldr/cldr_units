@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.16.2
+
+This is the changelog for Cldr_units v3.16.2 released on June 15th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix `Cldr.round/1` for float units. Thanks to @doughsay for the report. Closes #38.
+
 ## Cldr_Units v3.16.1
 
 This is the changelog for Cldr_units v3.16.1 released on May 22nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
