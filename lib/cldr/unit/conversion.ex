@@ -487,6 +487,13 @@ defmodule Cldr.Unit.Conversion do
       a
   end
 
+  def maybe_integer(a) when is_float(a) do
+    case trunc(a) do
+      b when a == b -> b
+      _b -> a
+    end
+  end
+
   def maybe_integer(a) when is_integer(a) do
     a
   end
