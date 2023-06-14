@@ -2661,7 +2661,8 @@ defmodule Cldr.Unit do
   end
 
   @doc """
-  Convert a ratio, Decimal or integer `t:Unit` to a float `t:Unit`
+  Convert a Decimal or integer `t:Unit` to a float `t:Unit`.
+
   """
   @doc since: "3.5.0"
   def to_float_unit(%Unit{value: value} = unit) when is_integer(value) do
@@ -2682,7 +2683,8 @@ defmodule Cldr.Unit do
   defdelegate ratio_to_float(unit), to: __MODULE__, as: :to_float_unit
 
   @doc """
-  Convert a ratio, float or integer `t:Unit` to a Decimal `t:Unit`
+  Convert a float or integer `t:Unit` to a Decimal `t:Unit`.
+
   """
   @doc since: "3.5.0"
   def to_decimal_unit(%Unit{value: value} = unit) when is_float(value) do
