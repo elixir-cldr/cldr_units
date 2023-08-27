@@ -26,8 +26,8 @@ defmodule Cldr.Units.Mixfile do
 
   defp description do
     """
-    Unit formatting (volume, area, length, ...), conversion and arithmetic
-    functions based upon the Common Locale Data Repository (CLDR).
+    Functions for the serialization of Cldr.Unit.t types implemented
+    in ex_cldr_units.
     """
   end
 
