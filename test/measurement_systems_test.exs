@@ -24,11 +24,11 @@ defmodule Cldr.Unit.MeasurementSystemTest do
   end
 
   test "Measurement systems for a unit" do
-    assert Cldr.Unit.measurement_systems_for_unit(:hectare) == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit(:liter) == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit("liter") == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit("liter_per_kilometer") == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit("acre_foot") == [:ussystem, :uksystem]
+    assert Cldr.Unit.measurement_systems_for_unit(:hectare) == [:metric, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit(:liter) == [:metric, :prefixable, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit("liter") == [:metric, :prefixable, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit("liter_per_kilometer") == [:metric, :prefixable, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit("acre_foot") == [:uksystem, :ussystem]
 
     assert Cldr.Unit.measurement_systems_for_unit(:litdf) ==
              {:error, {Cldr.UnknownUnitError, "The unit :litdf is not known."}}

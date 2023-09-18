@@ -221,12 +221,11 @@ defmodule Cldr.Unit do
                       |> List.flatten()
                       |> List.delete(:generic)
                       |> Kernel.++(Cldr.Unit.Additional.additional_units())
-                      # Beaufort not fully supported yet
-                      |> Kernel.--([:beaufort])
 
+  @known_units @translatable_units ++ [:kilogram_force]
   @spec known_units :: [translatable_unit(), ...]
   def known_units do
-    @translatable_units
+    @known_units
   end
 
   @deprecated "Use Cldr.Unit.known_units/0"
@@ -1781,7 +1780,7 @@ defmodule Cldr.Unit do
     measurement_system?(unit, systems)
   end
 
-  def measurement_system?(unit, systems) when unit in @translatable_units and is_list(systems) do
+  def measurement_system?(unit, systems) when unit in @known_units and is_list(systems) do
     Enum.any?(measurement_systems_for_unit(unit), &(&1 in systems))
   end
 
@@ -1797,6 +1796,7 @@ defmodule Cldr.Unit do
                     |> Map.get(:conversions)
                     |> Enum.map(fn {unit, conversion} -> {unit, conversion.systems} end)
                     |> Kernel.++(Cldr.Unit.Additional.systems_for_units())
+                    |> Enum.map(fn {unit, systems} -> {unit, Enum.sort(systems)} end)
                     |> Map.new()
 
   @doc """
@@ -1819,10 +1819,10 @@ defmodule Cldr.Unit do
   ## Examples
 
       iex> Cldr.Unit.measurement_systems_for_unit :foot
-      [:ussystem, :uksystem]
+      [:uksystem, :ussystem]
 
       iex> Cldr.Unit.measurement_systems_for_unit :meter
-      [:metric, :si]
+      [:metric, :prefixable, :si]
 
       iex> Cldr.Unit.measurement_systems_for_unit :invalid
       {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
@@ -2513,9 +2513,13 @@ defmodule Cldr.Unit do
         ]}}
 
   """
-  def validate_unit(unit_name) when unit_name in @translatable_units do
+  def validate_unit(unit_name) when unit_name in @known_units do
     {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
+
+  # def validate_unit(unit_name) when unit_name in @convertible_units do
+  #   {:ok, unit_name, Conversions.conversion_for!(unit_name)}
+  # end
 
   @aliases Alias.aliases() |> Map.keys() |> Enum.sort()
   def validate_unit(unit_name) when unit_name in @aliases do

@@ -3,7 +3,7 @@ defmodule Cldr.Unit.Preference.Test do
 
   alias Cldr.Unit.Test.PreferenceData
 
-  @maybe_data_bugs [19, 397, 409, 413, 419]
+  @maybe_data_bugs []
 
   for t <- PreferenceData.preferences(),
       t.line not in @maybe_data_bugs do

@@ -446,6 +446,10 @@ defmodule Cldr.Unit.Parser do
     hd(Conversions.conversion_for!(unit))
   end
 
+  defp resolve_base_unit("kilogram_force" = unit) do
+    hd(Conversions.conversion_for!(unit))
+  end
+
   for {prefix, scale} <- Prefix.si_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
