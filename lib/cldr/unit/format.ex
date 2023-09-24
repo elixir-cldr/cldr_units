@@ -20,7 +20,7 @@ defmodule Cldr.Unit.Format do
 
   @typep grammar_list :: [grammar, ...]
 
-  @translatable_units Cldr.Unit.known_units()
+  @known_units Cldr.Unit.known_units()
   @si_keys Cldr.Unit.Prefix.si_keys()
   @binary_keys Cldr.Unit.Prefix.binary_keys()
   @power_keys Cldr.Unit.Prefix.power_keys()
@@ -128,7 +128,7 @@ defmodule Cldr.Unit.Format do
       {:ok, "1,234 megahertz"}
 
       iex> Cldr.Unit.Format.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
-      {:ok, "1,234MHz"}
+      {:ok, "1,234Mhz"}
 
       iex> {:ok, range} = Cldr.Unit.Range.new(Cldr.Unit.new!(:gram, 1), Cldr.Unit.new!(:gram, 5))
       iex> Cldr.Unit.to_string(range, locale: :ja)
@@ -432,7 +432,7 @@ defmodule Cldr.Unit.Format do
   end
 
   # Direct formatting of the unit since it is translatable directly
-  def to_iolist(%Cldr.Unit{unit: name} = unit, backend, options) when name in @translatable_units do
+  def to_iolist(%Cldr.Unit{unit: name} = unit, backend, options) when name in @known_units do
     with {:ok, options} <- normalize_options(backend, options) do
       options = extract_options!(unit, options)
       unit_grammar = {name, {options.grammatical_case, options.plural}}
@@ -498,7 +498,7 @@ defmodule Cldr.Unit.Format do
 
   # It's a Cldr.Unit.Range for a basic unit
   def to_iolist(%{first: %{value: v1}, last: %{unit: name, value: v2} = last}, backend, options)
-      when name in @translatable_units do
+      when name in @known_units do
     with {:ok, options} <- normalize_options(backend, options) do
       options = extract_options!(last, options)
       unit_grammar = {name, {options.grammatical_case, options.plural}}

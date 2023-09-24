@@ -97,7 +97,9 @@ defmodule Cldr.Unit.Conversion do
       {
         :ok,
         :square_meter,
-        [square_kilometer: %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}]
+        [{
+          "square_kilometer" %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}
+        }]
       }
 
       iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_table

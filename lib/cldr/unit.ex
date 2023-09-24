@@ -45,6 +45,28 @@ defmodule Cldr.Unit do
             format_options: [],
             backend: nil
 
+  defdelegate convert(unit_1, to_unit), to: Conversion
+  defdelegate convert!(unit_1, to_unit), to: Conversion
+
+  defdelegate preferred_units(unit, backend, options), to: Preference
+  defdelegate preferred_units!(unit, backend, options), to: Preference
+
+  defdelegate add(unit_1, unit_2), to: Math
+  defdelegate sub(unit_1, unit_2), to: Math
+  defdelegate mult(unit_1, unit_2), to: Math
+  defdelegate div(unit_1, unit_2), to: Math
+
+  defdelegate add!(unit_1, unit_2), to: Math
+  defdelegate sub!(unit_1, unit_2), to: Math
+  defdelegate mult!(unit_1, unit_2), to: Math
+  defdelegate div!(unit_1, unit_2), to: Math
+
+  defdelegate round(unit, places, mode), to: Math
+  defdelegate round(unit, places), to: Math
+  defdelegate round(unit), to: Math
+
+  defdelegate compare(unit_1, unit_2), to: Math
+
   @root_locale_name Cldr.Config.root_locale_name()
 
   # See https://unicode.org/reports/tr35/tr35-general.html#Case
@@ -143,28 +165,6 @@ defmodule Cldr.Unit do
 
   @units Cldr.Config.units()
 
-  defdelegate convert(unit_1, to_unit), to: Conversion
-  defdelegate convert!(unit_1, to_unit), to: Conversion
-
-  defdelegate preferred_units(unit, backend, options), to: Preference
-  defdelegate preferred_units!(unit, backend, options), to: Preference
-
-  defdelegate add(unit_1, unit_2), to: Math
-  defdelegate sub(unit_1, unit_2), to: Math
-  defdelegate mult(unit_1, unit_2), to: Math
-  defdelegate div(unit_1, unit_2), to: Math
-
-  defdelegate add!(unit_1, unit_2), to: Math
-  defdelegate sub!(unit_1, unit_2), to: Math
-  defdelegate mult!(unit_1, unit_2), to: Math
-  defdelegate div!(unit_1, unit_2), to: Math
-
-  defdelegate round(unit, places, mode), to: Math
-  defdelegate round(unit, places), to: Math
-  defdelegate round(unit), to: Math
-
-  defdelegate compare(unit_1, unit_2), to: Math
-
   @doc """
   Returns the units that are defined for
   a given category (such as :volume, :length)
@@ -216,13 +216,11 @@ defmodule Cldr.Unit do
        :hour, :inch, ...]
 
   """
-  @translatable_units @units_by_category
-                      |> Map.values()
-                      |> List.flatten()
-                      |> List.delete(:generic)
-                      |> Kernel.++(Cldr.Unit.Additional.additional_units())
 
-  @known_units @translatable_units ++ [:kilogram_force]
+  @known_units Cldr.Unit.Conversions.conversions()
+  |> Map.keys()
+  |> Kernel.++(Cldr.Unit.Additional.additional_units())
+
   @spec known_units :: [translatable_unit(), ...]
   def known_units do
     @known_units
@@ -1146,7 +1144,7 @@ defmodule Cldr.Unit do
       {:ok, "1,234 megahertz"}
 
       iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
-      {:ok, "1,234MHz"}
+      {:ok, "1,234Mhz"}
 
       iex> unit = Cldr.Unit.new!(123, :foot)
       iex> Cldr.Unit.to_string unit, MyApp.Cldr
@@ -1612,7 +1610,7 @@ defmodule Cldr.Unit do
     display_name(unit, options)
   end
 
-  def display_name(unit, options) when unit in @translatable_units do
+  def display_name(unit, options) when unit in @known_units do
     style = Keyword.get(options, :style, @default_style)
     {locale, backend} = Cldr.locale_and_backend_from(options)
 
@@ -1836,7 +1834,7 @@ defmodule Cldr.Unit do
     measurement_systems_for_unit(unit)
   end
 
-  def measurement_systems_for_unit(unit) when unit in @translatable_units do
+  def measurement_systems_for_unit(unit) when unit in @known_units do
     case Map.fetch(@systems_for_unit, unit) do
       {:ok, systems} -> systems
       :error -> measurement_systems_for_unit(Kernel.to_string(unit))
@@ -2139,7 +2137,7 @@ defmodule Cldr.Unit do
   @spec unit_category(Unit.t() | String.t() | atom()) ::
           {:ok, category()} | {:error, {module(), String.t()}}
 
-  def unit_category(unit) when unit in @translatable_units do
+  def unit_category(unit) when unit in @known_units do
     case Map.fetch(@unit_category_inverse_map, Kernel.to_string(unit)) do
       {:ok, category} -> {:ok, category}
       :error -> {:error, unknown_category_error(unit)}
@@ -2148,7 +2146,7 @@ defmodule Cldr.Unit do
 
   def unit_category(unit) do
     with {:ok, resolved_unit, conversion} <- validate_unit(unit) do
-      if resolved_unit in @translatable_units do
+      if resolved_unit in @known_units do
         unit_category(resolved_unit)
       else
         unit_category(unit, conversion)
