@@ -216,13 +216,13 @@ defmodule Cldr.Unit do
        :hour, :inch, ...]
 
   """
+  # Beaufort not fully supported yet
   @translatable_units @units_by_category
                       |> Map.values()
                       |> List.flatten()
                       |> List.delete(:generic)
+                      |> List.delete(:beaufort)
                       |> Kernel.++(Cldr.Unit.Additional.additional_units())
-                      # Beaufort not fully supported yet
-                      |> Kernel.--([:beaufort])
 
   @spec known_units :: [translatable_unit(), ...]
   def known_units do
