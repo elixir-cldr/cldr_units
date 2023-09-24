@@ -6,7 +6,7 @@ This is the changelog for Cldr_units v3.16.3 released on September 25th, 2023.  
 
 ### Bug Fixes
 
-* Fix use of user-defined units (known as additional units).
+* Fix use of user-defined units (known as additional units). Closes #40.
 
 ## Cldr_Units v3.16.2
 
