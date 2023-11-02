@@ -371,7 +371,7 @@ defmodule Cldr.Unit.Conversion do
     maybe_integer(any)
   end
 
-  def sub(any, 0.0) do
+  def sub(any, float) when float == 0.0 do
     maybe_integer(any)
   end
 

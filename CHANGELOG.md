@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.16.4
+
+This is the changelog for Cldr_units v3.16.4 released on November 2nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix compiler warnings for Elixir 1.16.
+
 ## Cldr_Units v3.16.3
 
 This is the changelog for Cldr_units v3.16.3 released on September 25th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

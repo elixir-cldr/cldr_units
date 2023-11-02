@@ -327,7 +327,7 @@ defmodule Cldr.Unit.Parser do
 
   for unit <- @unit_strings do
     # See [erlang/otp#7259](https://github.com/erlang/otp/issues/7259)
-    if Cldr.Utils.otp_version == "26.0" do
+    if Cldr.Utils.otp_version() == "26.0" do
       def split_into_units(unquote(unit)) do
         [unquote(unit)]
       end
