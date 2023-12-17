@@ -234,7 +234,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.known_unit_categories
+      iex> Cldr.Unit.known_unit_categories()
       [:acceleration, :angle, :area, :concentr, :consumption, :digital,
        :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
        :power, :pressure, :speed, :temperature, :torque, :volume]
@@ -343,7 +343,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.known_grammatical_genders
+      iex> Cldr.Unit.known_grammatical_genders()
       [
         :animate,
         :inanimate,
@@ -2259,7 +2259,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.known_styles
+      iex> Cldr.Unit.known_styles()
       [:long, :short, :narrow]
 
   """
@@ -2276,7 +2276,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      iex> Cldr.Unit.default_style
+      iex> Cldr.Unit.default_style()
       :long
 
   """

@@ -94,13 +94,15 @@ defmodule Cldr.Unit.Conversion do
   ## Example
 
       iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_kilometer
-      {
-        :ok,
-        :square_meter,
-        [{
-          "square_kilometer" %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}
-        }]
-      }
+      {:ok, :square_meter,
+       [
+         {"square_kilometer",
+          %Cldr.Unit.Conversion{
+            factor: 1000000,
+            offset: 0,
+            base_unit: [:square, :meter]
+          }}
+       ]}
 
       iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_table
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
@@ -373,7 +375,7 @@ defmodule Cldr.Unit.Conversion do
     maybe_integer(any)
   end
 
-  def sub(any, 0.0) do
+  def sub(any, float) when float == 0.0 do
     maybe_integer(any)
   end
 

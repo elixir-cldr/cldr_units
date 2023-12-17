@@ -169,7 +169,7 @@ defmodule Cldr.Unit.Test.ConversionData do
     other
   end
 
-  def round_precision(0.0 = value, _) do
+  def round_precision(value, _) when value == 0.0 do
     value
   end
 

@@ -39,8 +39,7 @@ defmodule Cldr.Units.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr, path: "../cldr", override: true},
-      {:ex_cldr_numbers, "~> 2.31"},
+      {:ex_cldr_numbers, path: "../cldr_numbers", override: true},
       {:cldr_utils, "~> 2.24"},
       {:ex_cldr_lists, "~> 2.10"},
 
