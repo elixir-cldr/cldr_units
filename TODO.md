@@ -12,4 +12,10 @@
 [ ] Support `pown` notation for powers beyond square and cubic
 
 
+# Notes
+
+* https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2981r1.html
+* https://linux.die.net/man/1/units
+
+
 

@@ -221,6 +221,10 @@ defmodule Cldr.Unit do
   |> Map.keys()
   |> Kernel.++(Cldr.Unit.Additional.additional_units())
 
+  @units_by_category @unit_tree
+                     |> Map.delete(:compound)
+                     |> Map.delete(:coordinate)
+
   @spec known_units :: [translatable_unit(), ...]
   def known_units do
     @known_units
@@ -2156,7 +2160,7 @@ defmodule Cldr.Unit do
 
   @doc false
   def unit_category(unit, conversion) do
-    with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion),
+    with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) |> IO.inspect(label: "Canonical base unit"),
          {:ok, category} <- Map.fetch(@unit_category_inverse_map, Kernel.to_string(base_unit)) do
       {:ok, category}
     else

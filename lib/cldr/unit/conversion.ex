@@ -1,7 +1,7 @@
 defmodule Cldr.Unit.Conversion do
   @moduledoc """
   Unit conversion functions for the units defined
-  in `Cldr`.
+  in `CLDR`.
 
   """
 

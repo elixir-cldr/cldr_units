@@ -301,7 +301,7 @@ defmodule Cldr.Unit.Parser do
   #
   # 1. Replace any aliases
   #
-  # 2. Ignore "square" and "cubic" prefixes, they
+  # 2. Ignore "square", "cubic" and "pown" prefixes, they
   #    are just passed through for later use
   #
   # 3. For each known unit, defined as a key on
@@ -408,7 +408,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   # Reassemble the power units by grouping and
-  # combining with a square or cubic prefix
+  # combining with a square, cubic or pown prefix
   # if there is more than one instance
 
   defp combine_power_instances(units) do
@@ -425,11 +425,7 @@ defmodule Cldr.Unit.Parser do
         "cubic_#{k}"
 
       {k, v} ->
-        raise(
-          Cldr.UnknownUnitError,
-          "Unable to parse more than square and cubic powers. The requested unit " <>
-            "would require a base unit of #{inspect(k)} to the power of #{length(v)}"
-        )
+        "pow#{length(v)}_#{k}"
     end)
   end
 
@@ -442,7 +438,12 @@ defmodule Cldr.Unit.Parser do
   # kilogram is special since its the base unit for mass
   # but also has an SI prefix. We want to keep the original
   # conversion - not calculate it.
+
   defp resolve_base_unit("kilogram" = unit) do
+    hd(Conversions.conversion_for!(unit))
+  end
+
+  defp resolve_base_unit("kilowatt_hour" = unit) do
     hd(Conversions.conversion_for!(unit))
   end
 
