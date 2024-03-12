@@ -339,6 +339,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, _power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     def split_into_units(<<unquote(prefix) <> "_", rest::binary>>) do
       [unquote(prefix) | split_into_units(rest)]
     end
@@ -394,6 +396,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     defp expand_power_instances([unquote(prefix), unit | rest]) do
       List.duplicate(unit, unquote(power)) ++ expand_power_instances(rest)
     end
@@ -474,6 +478,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
         factor = Conversion.pow(conversion.factor, unquote(power))
@@ -530,6 +536,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, _power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     defp unit_sort_key({<<unquote(prefix) <> "_", unit::binary>>, conversion}) do
       unit_sort_key({unit, conversion})
     end

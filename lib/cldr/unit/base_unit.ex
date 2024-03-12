@@ -10,11 +10,19 @@ defmodule Cldr.Unit.BaseUnit do
 
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Parser
+  alias Cldr.Unit.Prefix
   alias Cldr.Unit
 
   @per "_per_"
   @currency_base Cldr.Unit.Parser.currency_base()
   @currencies Cldr.known_currencies()
+
+  @inverted_base_units_name Cldr.Config.units()
+              |> Map.get(:base_units)
+              |> Kernel.++(Cldr.Unit.Additional.base_units())
+              |> Enum.uniq()
+              |> Map.new()
+              |> Map.values()
 
   @doc """
   Returns the canonical base unit name
@@ -63,7 +71,7 @@ defmodule Cldr.Unit.BaseUnit do
       |> merge_unit_names()
       |> sort_base_units()
       |> reduce_powers()
-      # |> reduce_factors()
+      |> reduce_factors()
       |> flatten_and_stringify()
       |> Unit.maybe_translatable_unit()
       |> wrap(:ok)
@@ -85,8 +93,7 @@ defmodule Cldr.Unit.BaseUnit do
     |> resolve_unit_names()
     |> sort_base_units()
     |> reduce_powers()
-
-    # |> reduce_factors()
+    |> reduce_factors()
   end
 
   defp canonical_base_subunit({currency, _conversion}) when currency in @currencies do
@@ -224,74 +231,106 @@ defmodule Cldr.Unit.BaseUnit do
     false
   end
 
+  # Compare 2 base unit names and return a comparison :eq, :lt, :gt.
+  # Order is determined by the canonical order of units defined by CLDR
+  # returned by base_units_in_order/0.
+
+  defp compare([_power_1, unit_1], [_power_2, unit_2]) do
+    compare(unit_1, unit_2)
+  end
+
+  defp compare([_power_1, unit_1], unit_2) do
+    compare(unit_1, unit_2)
+  end
+
+  defp compare(unit_1, [_power_2, unit_2]) do
+    compare(unit_1, unit_2)
+  end
+
+  defp compare(unit_1, unit_2) when is_atom(unit_1) and is_atom(unit_2) do
+    order_1 = Map.fetch!(base_units_in_order(), unit_1)
+    order_2 = Map.fetch!(base_units_in_order(), unit_2)
+
+    cond do
+      order_1 > order_2 -> :gt
+      order_1 < order_2 -> :lt
+      order_1 == order_2 -> :eq
+    end
+  end
+
   # Reduce factors. When its a "per" unit then
   # we reduce the common factors.
   # This is important to ensure that base unit
   # comparisons work correctly across different units
   # of the same type.
 
-  # Currently not being used but in the future this
-  # might be required.
-
   @doc false
-  def reduce_factors({[], denominator}) do
+  def reduce_factors(list) when is_list(list) do
+    list
+  end
+
+  def reduce_factors({numerator, denominator}) do
+    str_numerator = flatten_and_stringify(numerator)
+    str_denominator = flatten_and_stringify(denominator)
+
+    if is_base_unit(str_numerator) || is_base_unit(str_denominator) do
+      {numerator, denominator}
+    else
+      do_reduce_factors({numerator, denominator})
+    end
+  end
+
+  def do_reduce_factors({[], denominator}) do
     {[], denominator}
   end
 
-  def reduce_factors({numerator, []}) do
+  def do_reduce_factors({numerator, []}) do
     {numerator, []}
   end
 
   # Numerator and denominator cancel each other
-  def reduce_factors({[unit | rest_1], [unit | rest_2]}) do
-    # |> IO.inspect(label: "1")
-    reduce_factors({rest_1, rest_2})
+  def do_reduce_factors({[unit | rest_1], [unit | rest_2]}) do
+    do_reduce_factors({rest_1, rest_2})
   end
 
-  def reduce_factors({[[:square, unit] | rest_1], [unit | rest_2]}) do
-    # |> IO.inspect(label: "2")
-    reduce_factors({[unit | rest_1], rest_2})
+  # When we have the same unit, but one of them is raised to a
+  # power, we can reduce the power by one. This is true in both directions.
+  def do_reduce_factors({[[power, unit] | rest_1], [unit | rest_2]}) do
+    sub_unit = subtract_power([power, unit], 1)
+    do_reduce_factors({[sub_unit | rest_1], rest_2})
   end
 
-  def reduce_factors({[unit | rest_1], [[:square, unit] | rest_2]}) do
-    # |> IO.inspect(label: "3")
-    reduce_factors({rest_1, [unit | rest_2]})
+  def do_reduce_factors({[unit | rest_1], [[power, unit] | rest_2]}) do
+    sub_unit = subtract_power([power, unit], 1)
+    do_reduce_factors({rest_1, [sub_unit | rest_2]})
   end
 
-  def reduce_factors({[unit | rest_1], [[:cubic, unit] | rest_2]}) do
-    # |> IO.inspect(label: "4")
-    reduce_factors({rest_1, [[:square, unit] | rest_2]})
+  # Both units have powers so we subtract the denominator from the
+  # numerator.
+  def do_reduce_factors({[[power_1, unit] | rest_1], [[power_2, unit] | rest_2]}) do
+    {sub_unit_1, sub_unit_2} = subtract_power([power_1, unit], [power_2, unit])
+    do_reduce_factors({[sub_unit_1 | rest_1], [sub_unit_2 | rest_2]})
   end
 
-  def reduce_factors({[[:square, unit] | rest_1], [[:square, unit] | rest_2]}) do
-    # |> IO.inspect(label: "5")
-    reduce_factors({rest_1, rest_2})
+  # No power units involved so we need to move along.
+  # THe list of units is always in a canonical order.
+  def do_reduce_factors({[unit_1 | rest_1], [unit_2 | rest_2]}) do
+    cond do
+      compare(unit_1, unit_2) == :lt ->
+        {reduced_1, reduced_2} = do_reduce_factors({rest_1, [unit_2 | rest_2]})
+        {[unit_1 | reduced_1], reduced_2}
+
+      compare(unit_1, unit_2) == :gt ->
+        {reduced_1, reduced_2} = do_reduce_factors({[unit_1 | rest_1], rest_2})
+        {reduced_1, [unit_2 | reduced_2]}
+    end
   end
 
-  def reduce_factors({[[:cubic, unit] | rest_1], [[:cubic, unit] | rest_2]}) do
-    # |> IO.inspect(label: "6")
-    reduce_factors({rest_1, rest_2})
-  end
-
-  def reduce_factors({[[:cubic, unit] | rest_1], [[:square, unit] | rest_2]}) do
-    # |> IO.inspect(label: "7")
-    reduce_factors({[unit | rest_1], rest_2})
-  end
-
-  def reduce_factors({[[:cubic, unit] | rest_1], [unit | rest_2]}) do
-    # |> IO.inspect(label: "8")
-    reduce_factors({[[:square, unit] | rest_1], rest_2})
-  end
-
-  def reduce_factors({[unit_1 | rest_1], rest_2}) do
-    {numerator, denominator} = reduce_factors({rest_1, rest_2})
-    # |> IO.inspect(label: "9")
-    {[unit_1 | numerator], denominator}
-  end
-
-  def reduce_factors(other) do
-    # |> IO.inspect(label: "Other")
-    other
+  defp is_base_unit(unit) do
+    maybe_base_unit = String.to_existing_atom(unit)
+    maybe_base_unit in @inverted_base_units_name
+  rescue ArgumentError ->
+    false
   end
 
   # Reduce powers to square and cubic
@@ -319,7 +358,8 @@ defmodule Cldr.Unit.BaseUnit do
     [first | reduce_powers(rest)]
   end
 
-  # Flaten the list and turn it into a string
+  # Flaten the list and turn it into a string.
+
   defp flatten_and_stringify({[], denominator}) do
     flatten_and_stringify(denominator)
   end
@@ -395,8 +435,10 @@ defmodule Cldr.Unit.BaseUnit do
     {tag, other}
   end
 
-  @base_units_in_order Cldr.Config.units()
-                       |> Map.get(:base_units)
+  @units Cldr.Config.units()
+  @base_units @units[:base_units]
+
+  @base_units_in_order @base_units
                        |> Cldr.Unit.Additional.merge_base_units()
                        |> Enum.map(&elem(&1, 1))
                        |> Enum.with_index()
@@ -405,5 +447,26 @@ defmodule Cldr.Unit.BaseUnit do
   @doc false
   def base_units_in_order do
     @base_units_in_order
+  end
+
+  defp subtract_power([power, unit], number) when is_number(number) do
+    exponent = Prefix.power_units()[power] - number
+    power = Prefix.inverse_power_units()[exponent]
+
+    if exponent == 1, do: unit, else: [power, unit]
+  end
+
+  defp subtract_power([pow_1, unit], [pow_2, unit]) do
+    exp_1 = Prefix.power_units()[pow_1]
+    exp_2 = Prefix.power_units()[pow_2]
+    min = min(exp_1, exp_2)
+
+    new_exp_1 = exp_1 - min
+    new_exp_2 = exp_2 - min
+
+    new_unit_1 = if new_exp_1 == 1, do: unit, else: [new_exp_1, unit]
+    new_unit_2 = if new_exp_2 == 1, do: unit, else: [new_exp_2, unit]
+
+    {new_unit_1, new_unit_2}
   end
 end

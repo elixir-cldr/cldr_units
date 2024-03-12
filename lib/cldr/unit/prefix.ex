@@ -73,11 +73,22 @@ defmodule Cldr.Unit.Prefix do
   |> Enum.with_index(2)
   |> Enum.map(fn {k, v} ->
     v = if v > 3, do: v - 2, else: v
-    {to_string(k), v}
+    {String.to_atom(k), v}
   end)
+  |> Map.new()
 
   def power_units do
     @power_units
+  end
+
+  @inverse_power_units @power_units
+  |> Enum.map(fn {k, v} -> {v, k} end)
+  |> Map.new()
+  |> Map.put(2, :square)
+  |> Map.put(3, :cubic)
+
+  def inverse_power_units do
+    @inverse_power_units
   end
 
   @power_keys @power_units
@@ -146,7 +157,7 @@ defmodule Cldr.Unit.Prefix do
 
   @prefixes Enum.sort(Map.keys(@si_factors)) ++
               Enum.sort(Map.keys(@binary_factors)) ++
-              Enum.map(@power_units, fn {factor, _} -> factor <> "_" end)
+              Enum.map(@power_units, fn {factor, _} -> to_string(factor) <> "_" end)
 
   def prefixes do
     @prefixes

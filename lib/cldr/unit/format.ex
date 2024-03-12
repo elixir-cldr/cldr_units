@@ -1231,11 +1231,12 @@ defmodule Cldr.Unit.Format do
 
   @si_prefix Cldr.Unit.Prefix.si_power_prefixes()
   @binary_prefix Cldr.Unit.Prefix.binary_prefixes()
-  @power Cldr.Unit.Prefix.power_units() |> Map.new()
+  @power Cldr.Unit.Prefix.power_units()
 
   # String decomposition
   for {power, exp} <- @power do
     power_unit = String.to_atom("power#{exp}")
+    power = to_string(power)
 
     defp do_traverse(unquote(power) <> "_" <> unit, fun) do
       fun.({:power, {fun.({:unit, unquote(power_unit)}), do_traverse(unit, fun)}})

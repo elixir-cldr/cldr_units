@@ -569,7 +569,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `unit string` is any string to be parsed and if
-    possible used to create a new `t:Cldr.Unit`
+    possible used to create a new `t:Cldr.Unit.t/0`
 
   * `options` is a keyword list of options
 
@@ -838,7 +838,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `unit string` is any string to be parsed and if
-    possible used to create a new `t:Cldr.Unit`
+    possible used to create a new `t:Cldr.Unit.t/0`
 
   * `options` is a keyword list of options
 
@@ -1080,7 +1080,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -1090,7 +1090,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -1206,13 +1206,13 @@ defmodule Cldr.Unit do
   for the current process's locale and backend or raises
   on error.
 
-  During processing any `:format_options` of a `t:Cldr.Unit` are merged with
+  During processing any `:format_options` of a `t:Cldr.Unit.t/0` are merged with
   `options` with `options` taking precedence.
 
   ## Arguments
 
   * `number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit` struct
+    `t:Cldr.Unit.t/0` struct
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -1222,7 +1222,7 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -1576,7 +1576,7 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit` is any `t:Cldr.Unit` or any
+  * `unit` is any `t:Cldr.Unit.t/0` or any
     unit name returned by `Cldr.Unit.known_units/0`.
 
   * `options` is a keyword list of options.
@@ -1807,7 +1807,7 @@ defmodule Cldr.Unit do
 
   ## Arguments
 
-  * `unit` is any `t:Cldr.Unit` or any unit
+  * `unit` is any `t:Cldr.Unit.t/0` or any unit
     returned by `Cldr.Unit.known_units/0` or a
     string unit name.
 
@@ -2064,8 +2064,8 @@ defmodule Cldr.Unit do
 
   ## Argument
 
-  * `unit` is either a `t:Cldr.Unit`, an `atom` or
-    a `t:String`
+  * `unit` is either a `t:Cldr.Unit.t/0`, an `atom` or
+    a `t:String.t/0`
 
   ## Returns
 
@@ -2096,7 +2096,51 @@ defmodule Cldr.Unit do
   @deprecated "Use `Cldr.Unit.known_unit_categories/0"
   defdelegate unit_categories(), to: __MODULE__, as: :known_unit_categories
 
-  @unit_category_inverse_map Cldr.Map.invert(@units_by_category) |> Cldr.Map.stringify_keys()
+  @doc """
+  Returns a mapping of base units to their respective
+  unit categories.
+
+  Base units are a common unit for a given unit
+  category which are used in two scenarios:
+
+  1. When converting between units.  If two units
+    have the same base unit they can be converted
+    to each other. See `Cldr.Unit.Conversion`.
+
+  2. When identifying the preferred units for a given
+    locale or territory, the base unit is used to
+    aid identification of preferences for given use
+    cases. See `Cldr.Unit.Preference`.
+
+  ## Example
+
+      => Cldr.Unit.base_unit_category_map
+      %{
+        "kilogram_square_meter_per_cubic_second_ampere" => :voltage,
+        "kilogram_meter_per_meter_square_second" => :torque,
+        "square_meter" => :area,
+        "kilogram" => :mass,
+        "kilogram_square_meter_per_square_second" => :energy,
+        "revolution" => :angle,
+        "candela_per_square_meter" => :luminance,
+        ...
+      }
+
+  """
+  @base_unit_category_map Cldr.Config.units()
+                          |> Map.get(:base_units)
+                          # |> Kernel.++(Cldr.Unit.Additional.base_units())
+                          |> Enum.map(fn {k, v} -> {Kernel.to_string(v), k} end)
+                          |> Map.new()
+
+  @spec base_unit_category_map :: map()
+  def base_unit_category_map do
+    @base_unit_category_map
+  end
+
+  @unit_category_inverse_map @units_by_category
+  |> Cldr.Map.invert()
+  |> Cldr.Map.stringify_keys()
 
   @doc false
   def unit_category_inverse_map do
@@ -2108,8 +2152,8 @@ defmodule Cldr.Unit do
 
   ## Options
 
-  * `unit` is any unit returned by
-    `Cldr.Unit.new/2`
+  * `unit` is either a `t:Cldr.Unit.t/0`, an `atom` or
+    a `t:String.t/0`
 
   ## Returns
 
@@ -2132,9 +2176,12 @@ defmodule Cldr.Unit do
       {:ok, :energy}
 
       iex> Cldr.Unit.unit_category "watt hour per light year"
+      {:ok, :force}
+
+      iex> Cldr.Unit.unit_category "watt per kilogram"
       {:error,
        {Cldr.Unit.UnknownCategoryError,
-        "The category for \\"watt hour per light year\\" is not known."}}
+        "The category for \\"watt_per_kilogram\\" is not known."}}
 
   """
 
@@ -2153,19 +2200,24 @@ defmodule Cldr.Unit do
       if resolved_unit in @known_units do
         unit_category(resolved_unit)
       else
-        unit_category(unit, conversion)
+        unit_category(resolved_unit, conversion)
       end
     end
   end
 
   @doc false
   def unit_category(unit, conversion) do
-    with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) |> IO.inspect(label: "Canonical base unit"),
-         {:ok, category} <- Map.fetch(@unit_category_inverse_map, Kernel.to_string(base_unit)) do
-      {:ok, category}
-    else
-      :error -> {:error, unknown_category_error(unit)}
-      other -> other
+    with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) do
+      category =
+        Map.get(@unit_category_inverse_map, Kernel.to_string(unit)) ||
+        Map.get(@unit_category_inverse_map, Kernel.to_string(base_unit)) ||
+        Map.get(@base_unit_category_map, Kernel.to_string(base_unit))
+
+      if category do
+        {:ok, category}
+      else
+        {:error, unknown_category_error(unit)}
+      end
     end
   end
 
@@ -2214,48 +2266,6 @@ defmodule Cldr.Unit do
 
   def grammatical_gender(unit, options) when is_binary(unit) do
     grammatical_gender(new!(1, unit), options)
-  end
-
-  @base_unit_category_map Cldr.Config.units()
-                          |> Map.get(:base_units)
-                          # |> Kernel.++(Cldr.Unit.Additional.base_units())
-                          |> Enum.map(fn {k, v} -> {Kernel.to_string(v), k} end)
-                          |> Map.new()
-
-  @doc """
-  Returns a mapping of base units to their respective
-  unit categories.
-
-  Base units are a common unit for a given unit
-  category which are used in two scenarios:
-
-  1. When converting between units.  If two units
-    have the same base unit they can be converted
-    to each other. See `Cldr.Unit.Conversion`.
-
-  2. When identifying the preferred units for a given
-    locale or territory, the base unit is used to
-    aid identification of preferences for given use
-    cases. See `Cldr.Unit.Preference`.
-
-  ## Example
-
-      => Cldr.Unit.base_unit_category_map
-      %{
-        "kilogram_square_meter_per_cubic_second_ampere" => :voltage,
-        "kilogram_meter_per_meter_square_second" => :torque,
-        "square_meter" => :area,
-        "kilogram" => :mass,
-        "kilogram_square_meter_per_square_second" => :energy,
-        "revolution" => :angle,
-        "candela_per_square_meter" => :luminance,
-        ...
-      }
-
-  """
-  @spec base_unit_category_map :: map()
-  def base_unit_category_map do
-    @base_unit_category_map
   end
 
   @doc """
@@ -2450,15 +2460,15 @@ defmodule Cldr.Unit do
   * an `atom()` in which case the unit must be
     localizable in CLDR directly
 
-  * or a `t:String` in which case it is parsed
+  * or a `t:String.t/0` in which case it is parsed
     into a list of composable subunits that
     can be converted but are not guaranteed to
     be output as a localized string.
 
   ## Arguments
 
-  * `unit_name` is an `atom()` or `t:String`, supplied
-    as is or as part of an `t:Cldr.Unit` struct.
+  * `unit_name` is an `atom()` or `t:String.t/0`, supplied
+    as is or as part of an `t:Cldr.Unit.t/0` struct.
 
   ## Returns
 
@@ -2474,7 +2484,7 @@ defmodule Cldr.Unit do
   A returned `unit_name` that is an atom is directly
   localisable (CLDR has translation data for the unit).
 
-  A `unit_name` that is a `t:String` is composed of
+  A `unit_name` that is a `t:String.t/0` is composed of
   one or more unit names that need to be resolved in
   order for the `unit_name` to be localised.
 
