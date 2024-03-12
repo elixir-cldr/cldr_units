@@ -1,32 +1,27 @@
 defmodule Cldr.Unit.Prefix do
   @moduledoc false
 
-  @si_factors %{
-    "quecto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000_000_000),
-    "ronto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000_000),
-    "yokto" => Decimal.div(1, 1_000_000_000_000_000_000_000_000),
-    "zepto" => Decimal.div(1, 1_000_000_000_000_000_000_000),
-    "atto" => Decimal.div(1, 1_000_000_000_000_000_000),
-    "femto" => Decimal.div(1, 1_000_000_000_000_000),
-    "pico" => Decimal.div(1, 1_000_000_000_000),
-    "nano" => Decimal.div(1, 1_000_000_000),
-    "micro" => Decimal.div(1, 1_000_000),
-    "milli" => Decimal.div(1, 1_000),
-    "centi" => Decimal.div(1, 100),
-    "deci" => Decimal.div(1, 10),
-    "deka" => 10,
-    "hecto" => 100,
-    "kilo" => 1_000,
-    "mega" => 1_000_000,
-    "giga" => 1_000_000_000,
-    "tera" => 1_000_000_000_000,
-    "peta" => 1_000_000_000_000_000,
-    "exa" => 1_000_000_000_000_000_000,
-    "zetta" => 1_000_000_000_000_000_000_000,
-    "yotta" => 1_000_000_000_000_000_000_000_000,
-    "ronna" => 1_000_000_000_000_000_000_000_000_000,
-    "quetta" => 1_000_000_000_000_000_000_000_000_000_000
-  }
+  @units Cldr.Config.units()
+
+  ##
+  ## SI prefixes
+  ##
+
+  @si_factors @units
+  |> Map.fetch!(:prefixes)
+  |> Enum.reduce([], fn
+    {prefix, %{base: 10 = base, power: power}}, acc ->
+      abs_factor = Cldr.Math.power(base, abs(power))
+
+      factor =
+        if power < 0, do: Decimal.div(1, abs_factor), else: abs_factor
+
+      [{to_string(prefix), factor} | acc]
+
+    _other, acc ->
+      acc
+  end)
+  |> Map.new()
 
   def si_factors do
     @si_factors
@@ -72,7 +67,14 @@ defmodule Cldr.Unit.Prefix do
   ## Power prefixes
   ##
 
-  @power_units [{"square", 2}, {"cubic", 3}, {"pow4", 4}]
+  @power_units @units
+  |> Map.fetch!(:components)
+  |> Map.fetch!(:power)
+  |> Enum.with_index(2)
+  |> Enum.map(fn {k, v} ->
+    v = if v > 3, do: v - 2, else: v
+    {to_string(k), v}
+  end)
 
   def power_units do
     @power_units
@@ -91,16 +93,18 @@ defmodule Cldr.Unit.Prefix do
   ## Binary prefixes, 1024 ^ x where 1 <= x <= 8
   ##
 
-  @binary_factors %{
-    "kibi" => 1_024,
-    "mebi" => 2_048,
-    "gibi" => 4_096,
-    "tebi" => 8_192,
-    "pebi" => 16_384,
-    "exbi" => 32_768,
-    "zebi" => 65_536,
-    "yobi" => 131_072
-  }
+  @binary_factors @units
+  |> Map.fetch!(:prefixes)
+  |> Enum.reduce([], fn
+    {prefix, %{base: 2 = base, power: power}}, acc ->
+      factor = Cldr.Math.power(base, power)
+
+      [{to_string(prefix), factor} | acc]
+
+    _other, acc ->
+      acc
+  end)
+  |> Map.new()
 
   def binary_factors do
     @binary_factors
@@ -108,7 +112,7 @@ defmodule Cldr.Unit.Prefix do
 
   @binary_keys @binary_factors
                |> Enum.map(fn {_name, exp} ->
-                 exp = trunc(:math.log2(exp)) - 9
+                 exp = trunc(:math.log2(exp) / 10)
                  String.to_atom("1024p#{exp}")
                end)
 
@@ -119,7 +123,7 @@ defmodule Cldr.Unit.Prefix do
   @binary_prefixes @binary_factors
                    |> Enum.map(fn
                      {prefix, factor} when is_integer(factor) ->
-                       {prefix, trunc(:math.log2(factor)) - 9}
+                       {prefix, trunc(:math.log2(factor) / 10)}
                    end)
                    |> Map.new()
 
