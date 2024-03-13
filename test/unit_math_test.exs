@@ -27,7 +27,7 @@ defmodule Cldr.Unit.Math.Test do
   end
 
   test "Mult/2 and div/2 with a scalar" do
-    assert  Cldr.Unit.Math.div(Cldr.Unit.new!(:meter, 10), 2) == Cldr.Unit.new!(:meter, "5.0")
+    assert  Cldr.Unit.Math.div(Cldr.Unit.new!(:meter, 10), 2) == Cldr.Unit.new!(:meter, 5)
     assert  Cldr.Unit.Math.mult(Cldr.Unit.new!(:meter, 10), 2) == Cldr.Unit.new!(:meter, 20)
   end
 end

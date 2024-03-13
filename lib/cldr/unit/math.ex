@@ -10,6 +10,8 @@ defmodule Cldr.Unit.Math do
   import Kernel, except: [div: 2, round: 1, trunc: 1]
   import Unit, only: [incompatible_units_error: 2]
 
+  @type rounding_mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
+
   @doc false
   defguard is_per_unit(base_conversion)
            when is_tuple(base_conversion) and
@@ -196,11 +198,11 @@ defmodule Cldr.Unit.Math do
   end
 
   def mult(%Unit{value: value} = unit, number) when is_number(number) do
-    %{unit | value: Cldr.Math.mult(value, number)}
+    %{unit | value: Conversion.mult(value, number)}
   end
 
   def mult(%Unit{value: value} = unit, %Decimal{} = number) do
-    %{unit | value: Cldr.Math.mult(value, number)}
+    %{unit | value: Conversion.mult(value, number)}
   end
 
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -280,11 +282,11 @@ defmodule Cldr.Unit.Math do
   end
 
   def div(%Unit{value: value} = unit, number) when is_number(number) do
-    %{unit | value: Cldr.Math.div(value, number)}
+    %{unit | value: Conversion.div(value, number)}
   end
 
   def div(%Unit{value: value} = unit, %Decimal{} = number) do
-    %{unit | value: Cldr.Math.div(value, number)}
+    %{unit | value: Conversion.div(value, number)}
   end
 
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
@@ -379,23 +381,31 @@ defmodule Cldr.Unit.Math do
 
   """
   @spec round(
-          unit :: Unit.t(),
+          unit :: Unit.t() | number() | Decimal.t(),
           places :: non_neg_integer,
-          mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
-        ) :: Unit.t()
+          mode :: rounding_mode()
+        ) :: Unit.t() | number() | Decimal.t()
 
   def round(unit, places \\ 0, mode \\ :half_up)
 
-  # def round(%Unit{value: %Ratio{} = value} = unit, places, mode) do
-  #   value = Ratio.to_float(value)
-  #   round(%{unit | value: value}, places, mode)
-  # end
+  def round(value, _places, _mode) when is_integer(value) do
+    value
+  end
+
+  def round(value, places, mode) when is_float(value) do
+    Cldr.Math.round(value, places, mode)
+    |> Cldr.Math.maybe_integer()
+  end
+
+  def round(%Decimal{} = value, places, mode) do
+    Decimal.round(value, places, mode)
+    |> Cldr.Math.maybe_integer()
+  end
 
   def round(%Unit{value: value} = unit_1, places, mode) do
     rounded_value =
       value
-      |> Cldr.Math.round(places, mode)
-      |> Conversion.maybe_integer()
+      |> round(places, mode)
 
     %{unit_1 | value: rounded_value}
   end
@@ -404,11 +414,6 @@ defmodule Cldr.Unit.Math do
   Truncates a unit's value.
 
   """
-
-  # def trunc(%Unit{value: %Ratio{} = value} = unit) do
-  #   value = Ratio.to_float(value)
-  #   trunc(%{unit | value: value})
-  # end
 
   def trunc(%Unit{value: value} = unit) when is_float(value) do
     %{unit | value: Kernel.trunc(value)}
