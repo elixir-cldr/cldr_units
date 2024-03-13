@@ -158,13 +158,17 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Multiplies two `t:Cldr.Unit.t/0` types. Any two
-  units can be multiplied together.
+  Multiplies any two `t:Cldr.Unit.t/0` types or a t:Cldr.Unit.t/0`
+  and a scalar.
 
   ## Arguments
 
-  * `unit_1` and `unit_2` are Units
+  * `unit_1` is a unit
     returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
 
   ## Returns
 
@@ -191,6 +195,14 @@ defmodule Cldr.Unit.Math do
     Unit.new!(unit, Conversion.mult(value_1, value_2))
   end
 
+  def mult(%Unit{value: value} = unit, number) when is_number(number) do
+    %{unit | value: Cldr.Math.mult(value, number)}
+  end
+
+  def mult(%Unit{value: value} = unit, %Decimal{} = number) do
+    %{unit | value: Cldr.Math.mult(value, number)}
+  end
+
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       {:ok, converted} = Conversion.convert(unit_2, unit_category_1)
@@ -200,14 +212,19 @@ defmodule Cldr.Unit.Math do
     end
   end
 
+
   @doc """
   Multiplies two compatible `t:Cldr.Unit.t/0` types
   and raises on error.
 
   ## Options
 
-  * `unit_1` and `unit_2` are compatible Units
+  * `unit_1` is a unit
     returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
 
   ## Returns
 
@@ -225,13 +242,17 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Divides one `t:Cldr.Unit.t/0` type into another.
-  Any unit can be divided by another.
+  Divides any `t:Cldr.Unit.t/0` type into another or a
+  number into a `t:Cldr.Unit.t/0`.
 
   ## Options
 
-  * `unit_1` and `unit_2` are Units
-    returned by `Cldr.Unit.new/2`
+  * `unit_1` is a unit
+    returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
 
   ## Returns
 
@@ -258,6 +279,14 @@ defmodule Cldr.Unit.Math do
     Unit.new!(unit, Conversion.div(value_1, value_2))
   end
 
+  def div(%Unit{value: value} = unit, number) when is_number(number) do
+    %{unit | value: Cldr.Math.div(value, number)}
+  end
+
+  def div(%Unit{value: value} = unit, %Decimal{} = number) do
+    %{unit | value: Cldr.Math.div(value, number)}
+  end
+
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       div(unit_1, Conversion.convert!(unit_2, unit_category_1))
@@ -272,8 +301,12 @@ defmodule Cldr.Unit.Math do
 
   ## Arguments
 
-  * `unit_1` and `unit_2` are compatible Units
-    returned by `Cldr.Unit.new/2`
+  * `unit_1` is a unit
+    returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
 
   ## Returns
 

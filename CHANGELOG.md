@@ -1,5 +1,17 @@
 # Changelog
 
+## Cldr_Units v3.17.0
+
+This is the changelog for Cldr_units v3.17.0 released on _____, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes canonical unit name formation. The effect of which is that more units can be resolved to a base unit and therefore compared and converted with other units. The primary change is to add elimination of common factors in "per" units.
+
+### Enhancements
+
+* `Cldr.Unit.Math.mult/2` and `Cldr.Unit.Math.div/2` now support scalar values as the second argument. Its therefore now possible to say `Cldr.Unit.Math.mult(Cldr.Unit.new!(:meter, 10), 2)`.
+
 ## Cldr_Units v3.16.2
 
 This is the changelog for Cldr_units v3.16.2 released on June 15th, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
