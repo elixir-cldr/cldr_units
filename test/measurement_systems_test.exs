@@ -43,12 +43,21 @@ defmodule Cldr.Unit.MeasurementSystemTest do
              {:error, {Cldr.UnknownUnitError, "The unit :litdf is not known."}}
   end
 
-  # test "All known units resolve measurement systems" do
-  #   errors =
-  #     Cldr.Unit.known_units()
-  #     |> Enum.map(&Cldr.Unit.measurement_systems_for_unit/1)
-  #     |> Enum.filter(fn i -> if is_list(i), do: false, else: true end)
-  #
-  #   assert errors == []
-  # end
+  test "All known units (except :unit) resolve measurement systems" do
+    errors =
+      Cldr.Unit.known_units()
+      |> Kernel.--([:unit])
+      |> Enum.map(fn unit ->
+        Cldr.Unit.measurement_systems_for_unit(unit)
+      end)
+      |> Enum.filter(fn i -> if is_list(i), do: false, else: true end)
+
+    assert errors == []
+  end
+
+   test "That measurement systems for :unit returns an error" do
+     assert Cldr.Unit.measurement_systems_for_unit(:unit) ==
+       {:error, {Cldr.Unit.UnknownMeasurementSystemError, "The measurement systems for \"unit\" are not known"}}
+    end
+
 end

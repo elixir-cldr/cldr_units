@@ -1845,6 +1845,8 @@ defmodule Cldr.Unit do
     end
   end
 
+
+
   # Strip SI and power factors amd try the root
   # unit
   for prefix <- Cldr.Unit.Prefix.prefixes() do
@@ -1862,13 +1864,13 @@ defmodule Cldr.Unit do
   # Decompose the unit recursively until there is a match on
   # a base unit, otherwise return an error
   def measurement_systems_for_unit(unit) when is_binary(unit) do
-    [first | rest] = String.split(unit, "_", parts: 2)
+    [first | _rest] = String.split(unit, "_", parts: 2)
 
     with {:ok, part_unit, _conversion} <- Cldr.Unit.validate_unit(first) do
-      measurement_systems_for_unit(part_unit)
-    else
-      _other ->
-        if rest == [], do: {:error, unit_error(unit)}, else: measurement_systems_for_unit(hd(rest))
+      case Map.fetch(@systems_for_unit, part_unit) do
+        {:ok, systems} -> systems
+        :error -> {:error, no_known_measurement_systems_error(unit)}
+      end
     end
   end
 
@@ -2836,6 +2838,14 @@ defmodule Cldr.Unit do
     {
       Cldr.Unit.UnknownMeasurementSystemError,
       "The measurement system #{inspect(system)} is not known"
+    }
+  end
+
+  @doc false
+  def no_known_measurement_systems_error(unit) do
+    {
+      Cldr.Unit.UnknownMeasurementSystemError,
+      "The measurement systems for #{inspect unit} are not known"
     }
   end
 
