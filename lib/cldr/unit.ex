@@ -116,14 +116,8 @@ defmodule Cldr.Unit do
     :narrow
   ]
 
-  @measurement_systems Cldr.Config.measurement_systems()
-  @system_names Map.keys(@measurement_systems) |> Enum.sort()
-
-  @measurement_system_keys [
-    :default,
-    :paper_size,
-    :temperature
-  ]
+  @system_names  Cldr.Config.measurement_systems()
+  |> Enum.sort()
 
   # Converts a list of atoms into a typespec
   type = &Enum.reduce(&1, fn x, acc -> {:|, [], [x, acc]} end)
@@ -135,7 +129,6 @@ defmodule Cldr.Unit do
   @type grammatical_gender :: unquote(type.(@grammatical_gender))
   @type grammatical_case :: unquote(type.(@grammatical_case))
   @type measurement_system :: unquote(type.(@system_names))
-  @type measurement_system_key :: unquote(type.(@measurement_system_keys))
   @type style :: unquote(type.(@styles))
   @type value :: Cldr.Math.number_or_decimal()
   @type locale :: Locale.locale_name() | LanguageTag.t()
@@ -1884,37 +1877,11 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.known_measurement_systems()
-      %{
-        metric: %{alias: nil, description: "Metric System"},
-        uksystem: %{
-          alias: :imperial,
-          description: "UK System of measurement: feet, pints, etc.; pints are 20oz"
-        },
-        ussystem: %{alias: nil, description: "US System of measurement: feet, pints, etc.; pints are 16oz"},
-        si: %{alias: nil, description: "SI System"}
-      }
+      [:astronomical, :jpsystem, :metric, :metric_adjacent, :person_age, :prefixable, :si, :si_acceptable, :uksystem, :ussystem]
 
   """
-  @spec known_measurement_systems ::
-          %{measurement_system() => %{alias: atom(), description: String.t()}}
-
+  @spec known_measurement_systems() :: list(measurement_system())
   def known_measurement_systems do
-    @measurement_systems
-  end
-
-  @doc """
-  Return a list of known measurement system names.
-
-  ## Example
-
-      iex> Cldr.Unit.known_measurement_system_names()
-      [:metric, :si, :uksystem, :ussystem]
-
-  """
-  @doc since: "3.5.0"
-  @spec known_measurement_system_names :: [measurement_system(), ...]
-
-  def known_measurement_system_names do
     @system_names
   end
 
@@ -1963,7 +1930,7 @@ defmodule Cldr.Unit do
   @doc since: "3.4.0"
   @spec measurement_system_from_locale(
           Cldr.LanguageTag.t() | Cldr.Locale.locale_name(),
-          measurement_system_key() | Cldr.backend()
+          measurement_system() | Cldr.backend()
         ) ::
           measurement_system() | {:error, {module(), String.t()}}
 
@@ -2001,7 +1968,7 @@ defmodule Cldr.Unit do
   @spec measurement_system_from_locale(
           Locale.locale_reference(),
           Cldr.backend(),
-          measurement_system_key()
+          measurement_system()
         ) ::
           measurement_system() | {:error, {module(), String.t()}}
 
