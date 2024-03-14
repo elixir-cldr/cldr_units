@@ -10,6 +10,8 @@ This is the changelog for Cldr_units v3.17.0 released on _____, 2024.  For older
 
 ### Enhancements
 
+* Add conversion support for Beaufort. This conversion is non linear and therefore cannot be expressed using the normal unit conversion method.
+
 * `Cldr.Unit.Math.mult/2` and `Cldr.Unit.Math.div/2` now support scalar values as the second argument. Its therefore now possible to say `Cldr.Unit.Math.mult(Cldr.Unit.new!(:meter, 10), 2)`.
 
 ## Cldr_Units v3.16.2
