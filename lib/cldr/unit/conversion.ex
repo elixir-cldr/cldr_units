@@ -5,10 +5,11 @@ defmodule Cldr.Unit.Conversion do
 
   """
 
-  @enforce_keys [:factor, :offset, :base_unit]
-  defstruct factor: 1,
-            offset: 0,
-            base_unit: nil
+  @enforce_keys [:base_unit]
+  defstruct factor: nil,
+            offset: nil,
+            base_unit: nil,
+            special: nil
 
   @type factor :: integer | float
   @type offset :: integer | float
@@ -16,7 +17,8 @@ defmodule Cldr.Unit.Conversion do
   @type t :: %{
           factor: factor(),
           base_unit: [atom(), ...],
-          offset: offset()
+          offset: offset(),
+          special: atom() | nil
         }
 
   alias Cldr.Unit
@@ -170,6 +172,11 @@ defmodule Cldr.Unit.Conversion do
     value
   end
 
+  # Special handling for Beaufort
+  defp convert_to_base(value, {_, %__MODULE__{special: :beaufort}}) do
+    mult(0.836, pow(value, 1.5))
+  end
+
   # All conversions are ultimately a list of
   # 2-tuples of the unit and conversion struct
   defp convert_to_base(value, {_, %__MODULE__{} = from}) do
@@ -202,6 +209,14 @@ defmodule Cldr.Unit.Conversion do
   # understand then its a raisable error
   defp convert_to_base(_value, conversion) do
     raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
+  end
+
+  # Special handling for Beaufort
+  defp convert_from_base(value, {_, %__MODULE__{special: :beaufort}}) do
+    # B = (S/0.836)^(2/3)
+    divided = div(value, 0.836)
+    pow(divided, 2 / 3)
+    |> Cldr.Math.round(2)
   end
 
   defp convert_from_base(value, {_, %__MODULE__{} = to}) do

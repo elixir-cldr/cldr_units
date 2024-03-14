@@ -79,4 +79,13 @@ defmodule Cldr.Unit.Conversion.Test do
   test "conversion where base units don't match but unit categories do" do
     assert {:ok, _} = Cldr.Unit.convert(Cldr.Unit.new!(:joule, 1), "kilowatt_hour")
   end
+
+  test "converting from/to beaufort" do
+    beaufort = Cldr.Unit.new!(:beaufort, 17)
+    meter_per_second = Cldr.Unit.convert!(beaufort, :meter_per_second) |> Cldr.Unit.Math.round(1)
+    beaufort_2 = Cldr.Unit.convert!(meter_per_second, :beaufort) |> Cldr.Unit.Math.round(0)
+
+    assert meter_per_second == Cldr.Unit.new!(:meter_per_second, "58.6")
+    assert beaufort_2 == Cldr.Unit.new!(:beaufort, 17)
+  end
 end
