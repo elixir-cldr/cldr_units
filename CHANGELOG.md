@@ -6,7 +6,7 @@ This is the changelog for Cldr_units v3.17.0 released on _____, 2024.  For older
 
 ### Bug Fixes
 
-* Fixes canonical unit name formation. The effect of which is that more units can be resolved to a base unit and therefore compared and converted with other units. The primary change is to add elimination of common factors in "per" units.
+* Fixes canonical unit name formation. More units can now be resolved to a base unit and therefore compared and converted with other units. The primary change is to add elimination of common factors in "per" units.
 
 ### Enhancements
 
@@ -20,7 +20,7 @@ This is the changelog for Cldr_units v3.16.2 released on June 15th, 2023.  For o
 
 ### Bug Fixes
 
-* Fix `Cldr.round/1` for float units. Thanks to @doughsay for the report. Closes #38.
+* Fix `Cldr.Unit.round/1` for float units. Thanks to @doughsay for the report. Closes #38.
 
 ## Cldr_Units v3.16.1
 
