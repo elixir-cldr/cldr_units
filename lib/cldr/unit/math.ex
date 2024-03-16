@@ -188,14 +188,10 @@ defmodule Cldr.Unit.Math do
       Cldr.Unit.new!(:pint, "10.56688209432593661519599687")
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-      Cldr.Unit.new!(:pint, 5)
+      Cldr.Unit.new!("square_pint", 5)
 
   """
   @spec mult(Unit.t(), Unit.t()) :: Unit.t()
-
-  def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
-    Unit.new!(unit, Conversion.mult(value_1, value_2))
-  end
 
   def mult(%Unit{value: value} = unit, number) when is_number(number) do
     %{unit | value: Conversion.mult(value, number)}
@@ -208,7 +204,7 @@ defmodule Cldr.Unit.Math do
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       {:ok, converted} = Conversion.convert(unit_2, unit_category_1)
-      mult(unit_1, converted)
+      product(unit_1, converted)
     else
       product(unit_1, unit_2)
     end
@@ -566,12 +562,13 @@ defmodule Cldr.Unit.Math do
 
   defp product(%Unit{base_conversion: conv_1} = unit_1, %Unit{base_conversion: conv_2} = unit_2)
        when is_simple_unit(conv_1) and is_simple_unit(conv_2) do
+    new_value =
+      Conversion.mult(unit_1.value, unit_2.value)
+
     new_conversion =
       (conv_1 ++ conv_2)
       |> Enum.sort(&Parser.unit_sorter/2)
       |> combine_power_instances()
-
-    new_value = Conversion.mult(unit_1.value, unit_2.value)
 
     unit_name =
       new_conversion
@@ -584,6 +581,9 @@ defmodule Cldr.Unit.Math do
   # Invert a unit. This is used to convert a division
   # into a multiplication. Its not a valid standalone
   # unit.
+
+  # TODO FIXME It can be a valid unit if we allow
+  # a scalar in the numerator
 
   @doc false
   def invert({numerator, denominator}) do
@@ -599,7 +599,8 @@ defmodule Cldr.Unit.Math do
     %Cldr.Unit{unit: nil, value: 1, usage: :default, format_options: [], base_conversion: []}
   end
 
-  # Combine consecutive identical units into square or cubic units.
+  # TODO FIXME needs to cater for a wider range of pow exponents
+  # Combine consecutive identical units into power units.
   # Assumes the units are ordered using `Parser.unit_sorter/2`.
 
   defp combine_power_instances({numerator, denominator}) do
