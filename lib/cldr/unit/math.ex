@@ -5,6 +5,8 @@ defmodule Cldr.Unit.Math do
   """
   alias Cldr.Unit
   alias Cldr.Unit.Parser
+  alias Cldr.Unit.Prefix
+  alias Cldr.Unit.BaseUnit
   alias Cldr.Unit.Conversion
 
   import Kernel, except: [div: 2, round: 1, trunc: 1]
@@ -599,7 +601,6 @@ defmodule Cldr.Unit.Math do
     %Cldr.Unit{unit: nil, value: 1, usage: :default, format_options: [], base_conversion: []}
   end
 
-  # TODO FIXME needs to cater for a wider range of pow exponents
   # Combine consecutive identical units into power units.
   # Assumes the units are ordered using `Parser.unit_sorter/2`.
 
@@ -607,20 +608,27 @@ defmodule Cldr.Unit.Math do
     {combine_power_instances(numerator), combine_power_instances(denominator)}
   end
 
-  defp combine_power_instances([{name, conversion} = first, first, first | rest]) do
-    conversion_factor = Conversion.pow(conversion.factor, 3)
-    conversion_base_unit = [:cubic | conversion.base_unit]
-    new_conversion = %{conversion | factor: conversion_factor, base_unit: conversion_base_unit}
-    new_name = Unit.maybe_translatable_unit("cubic_#{name}")
-    combine_power_instances([{new_name, new_conversion} | rest])
-  end
+  defp combine_power_instances([{name_1, conversion_1}, {name_2, conversion_2} | rest]) do
+    if common_unit = same_base_unit(conversion_1, conversion_2) do
+      new_power =
+        Prefix.power(conversion_1) + Prefix.power(conversion_2)
 
-  defp combine_power_instances([{name, conversion} = first, first | rest]) do
-    conversion_factor = Conversion.mult(conversion.factor, conversion.factor)
-    conversion_base_unit = [:square | conversion.base_unit]
-    new_conversion = %{conversion | factor: conversion_factor, base_unit: conversion_base_unit}
-    new_name = Unit.maybe_translatable_unit("square_#{name}")
-    combine_power_instances([{new_name, new_conversion} | rest])
+      new_factor =
+        Prefix.power(conversion_1) * Prefix.power(conversion_2)
+
+      new_base_unit =
+        if new_power == 1, do: [common_unit], else: [Prefix.prefix_from_power(new_power), common_unit]
+
+      new_conversion =
+        %{conversion_1 | factor: new_factor, base_unit: new_base_unit}
+
+      new_name =
+        "#{Prefix.prefix_from_power(new_power)}_#{name_1}"
+
+      combine_power_instances([{new_name, new_conversion} | rest])
+    else
+      [{name_1, conversion_1} | combine_power_instances([{name_2, conversion_2} | rest])]
+    end
   end
 
   defp combine_power_instances([first | rest]) do
@@ -631,7 +639,9 @@ defmodule Cldr.Unit.Math do
     []
   end
 
-  defp combine_power_instances(other) do
-    other
-  end
+  defp same_base_unit(%{base_unit: [_power_1, unit]}, %{base_unit: [_power_2, unit]}), do: unit
+  defp same_base_unit(%{base_unit: [unit]}, %{base_unit: [_power, unit]}), do: unit
+  defp same_base_unit(%{base_unit: [_power, unit]}, %{base_unit: [unit]}), do: unit
+  defp same_base_unit(%{base_unit: [unit]}, %{base_unit: [unit]}), do: unit
+  defp same_base_unit(_conversion_1, _conversion_2), do: nil
 end

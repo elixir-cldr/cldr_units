@@ -87,6 +87,46 @@ defmodule Cldr.Unit.BaseUnit do
     |> wrap(:ok)
   end
 
+  @doc """
+  Returns the canonical base unit name
+  for a unit.
+
+  The base unit is the common unit through which
+  conversions are passed.
+
+  ## Arguments
+
+  * `unit_string` is any string representing
+    a unit such as `light_year_per_week`.
+
+  ## Returns
+
+  * `canonical_base_unit` or
+
+  * raises an exception
+
+  ## Examples
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "meter"
+      :meter
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "meter meter"
+      :square_meter
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "meter per kilogram"
+      "meter_per_kilogram"
+
+      iex> Cldr.Unit.Parser.canonical_base_unit! "yottagram per mile scandinavian"
+      "kilogram_per_meter"
+
+  """
+  def canonical_base_unit!(unit) do
+    case canonical_base_unit(unit) do
+      {:ok, unit_name} -> unit_name
+      {:error, {exception, reason}} -> raise exception, reason
+    end
+  end
+
   def do_canonical_base_unit(numerator) when is_list(numerator) do
     numerator
     |> Enum.map(&canonical_base_subunit/1)
@@ -377,46 +417,6 @@ defmodule Cldr.Unit.BaseUnit do
     |> List.flatten()
     |> Enum.map(&to_string/1)
     |> Enum.join("_")
-  end
-
-  @doc """
-  Returns the canonical base unit name
-  for a unit.
-
-  The base unit is the common unit through which
-  conversions are passed.
-
-  ## Arguments
-
-  * `unit_string` is any string representing
-    a unit such as `light_year_per_week`.
-
-  ## Returns
-
-  * `canonical_base_unit` or
-
-  * raises an exception
-
-  ## Examples
-
-      iex> Cldr.Unit.Parser.canonical_base_unit! "meter"
-      :meter
-
-      iex> Cldr.Unit.Parser.canonical_base_unit! "meter meter"
-      :square_meter
-
-      iex> Cldr.Unit.Parser.canonical_base_unit! "meter per kilogram"
-      "meter_per_kilogram"
-
-      iex> Cldr.Unit.Parser.canonical_base_unit! "yottagram per mile scandinavian"
-      "kilogram_per_meter"
-
-  """
-  def canonical_base_unit!(unit_string) when is_binary(unit_string) do
-    case canonical_base_unit(unit_string) do
-      {:ok, unit_name} -> unit_name
-      {:error, {exception, reason}} -> raise exception, reason
-    end
   end
 
   # We wrap in a tuple since a nested list can

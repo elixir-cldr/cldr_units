@@ -301,7 +301,7 @@ defmodule Cldr.Unit.Parser do
   #
   # 1. Replace any aliases
   #
-  # 2. Ignore "square", "cubic" and "pown" prefixes, they
+  # 2. Ignore "square", "cubic" and "pow" prefixes, they
   #    are just passed through for later use
   #
   # 3. For each known unit, defined as a key on
@@ -387,7 +387,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   # In order to correctly identify the units with their
-  # correct power (square or cubic) any existing power units
+  # correct power (square, cubic, pow_n) any existing power units
   # have to be expanded so that later on we can group
   # them with any single units of the same name.
 
@@ -412,7 +412,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   # Reassemble the power units by grouping and
-  # combining with a square, cubic or pown prefix
+  # combining with a square, cubic or pow prefix
   # if there is more than one instance
 
   defp combine_power_instances(units) do

@@ -3,6 +3,26 @@ defmodule Cldr.Unit.Prefix do
 
   @units Cldr.Config.units()
 
+  @doc """
+  Returns the power (exponent) of the base unit
+  of a conversion.
+  """
+  def power(%{base_unit: [power, _unit]}) do
+    Map.fetch!(power_units(), power)
+  end
+
+  def power(%{base_unit: [_unit]}) do
+    1
+  end
+
+  @doc """
+  Returns the base unit power factor from
+  its numerical representation.
+  """
+  def prefix_from_power(power) when power in 2..15 do
+    Map.fetch!(inverse_power_units(), power)
+  end
+
   ##
   ## SI prefixes
   ##
