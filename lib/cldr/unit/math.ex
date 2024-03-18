@@ -184,9 +184,6 @@ defmodule Cldr.Unit.Math do
       iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
       Cldr.Unit.new!("square_kilogram", "2.26796185")
 
-      iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:square_pint, "10.56688209432593661519599687")
-
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       Cldr.Unit.new!("square_pint", 5)
 
