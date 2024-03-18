@@ -146,6 +146,12 @@ defmodule Cldr.Unit.BaseUnit do
     |> extract_unit_names()
   end
 
+  defp canonical_base_subunit(subunit) do
+    subunit
+    |> parse_base_units()
+    |> extract_unit_names()
+  end
+
   defp parse_base_units([prefix, unit]) do
     [[prefix, parse_base_units([unit])]]
   end
@@ -373,9 +379,16 @@ defmodule Cldr.Unit.BaseUnit do
     false
   end
 
-  # Reduce powers to square and cubic
+  # Reduce powers where possible. For example
+  # :meter and :meter to :square_meter and
+  # :square_meter and :square_meter to [:pow4, :meter]
+
   defp reduce_powers({numerator, denominator}) do
     {reduce_powers(numerator), reduce_powers(denominator)}
+  end
+
+  defp reduce_powers([]) do
+    []
   end
 
   defp reduce_powers([first]) do
@@ -394,8 +407,16 @@ defmodule Cldr.Unit.BaseUnit do
     reduce_powers([[:cubic, first] | rest])
   end
 
-  defp reduce_powers([first | rest]) do
-    [first | reduce_powers(rest)]
+  defp reduce_powers([first, second | rest]) do
+    {base_name_1, power_1} = Conversion.name_and_power(first)
+    {base_name_2, power_2} = Conversion.name_and_power(second)
+
+    if base_name_1 == base_name_2 do
+      power = power_1 + power_2
+      Conversion.base_unit(base_name_1, power)
+    else
+      [first | reduce_powers([second | rest])]
+    end
   end
 
   # Flaten the list and turn it into a string.

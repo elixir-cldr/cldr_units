@@ -5,8 +5,6 @@ defmodule Cldr.Unit.Math do
   """
   alias Cldr.Unit
   alias Cldr.Unit.Parser
-  alias Cldr.Unit.Prefix
-  alias Cldr.Unit.BaseUnit
   alias Cldr.Unit.Conversion
 
   import Kernel, except: [div: 2, round: 1, trunc: 1]
@@ -184,10 +182,10 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      Cldr.Unit.new!(:kilogram, "2.26796185")
+      Cldr.Unit.new!("square_kilogram", "2.26796185")
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:pint, "10.56688209432593661519599687")
+      Cldr.Unit.new!(:square_pint, "10.56688209432593661519599687")
 
       iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       Cldr.Unit.new!("square_pint", 5)
@@ -571,11 +569,10 @@ defmodule Cldr.Unit.Math do
       (conv_1 ++ conv_2)
       |> Enum.sort(&Parser.unit_sorter/2)
       |> combine_power_instances()
+      # |> IO.inspect(label: "New conversion")
 
     unit_name =
-      new_conversion
-      |> Parser.canonical_unit_name()
-      |> Unit.maybe_translatable_unit()
+      Parser.canonical_unit_name(new_conversion)
 
     %{unit_1 | unit: unit_name, value: new_value, base_conversion: new_conversion}
   end
@@ -609,23 +606,9 @@ defmodule Cldr.Unit.Math do
   end
 
   defp combine_power_instances([{name_1, conversion_1}, {name_2, conversion_2} | rest]) do
-    if common_unit = same_base_unit(conversion_1, conversion_2) do
-      new_power =
-        Prefix.power(conversion_1) + Prefix.power(conversion_2)
-
-      new_factor =
-        Prefix.power(conversion_1) * Prefix.power(conversion_2)
-
-      new_base_unit =
-        if new_power == 1, do: [common_unit], else: [Prefix.prefix_from_power(new_power), common_unit]
-
-      new_conversion =
-        %{conversion_1 | factor: new_factor, base_unit: new_base_unit}
-
-      new_name =
-        "#{Prefix.prefix_from_power(new_power)}_#{name_1}"
-
-      combine_power_instances([{new_name, new_conversion} | rest])
+    if Conversion.same_base_unit(conversion_1, conversion_2) do
+      combined_unit = multiply_units({name_1, conversion_1}, {name_2, conversion_2})
+      combine_power_instances([combined_unit | rest])
     else
       [{name_1, conversion_1} | combine_power_instances([{name_2, conversion_2} | rest])]
     end
@@ -639,9 +622,17 @@ defmodule Cldr.Unit.Math do
     []
   end
 
-  defp same_base_unit(%{base_unit: [_power_1, unit]}, %{base_unit: [_power_2, unit]}), do: unit
-  defp same_base_unit(%{base_unit: [unit]}, %{base_unit: [_power, unit]}), do: unit
-  defp same_base_unit(%{base_unit: [_power, unit]}, %{base_unit: [unit]}), do: unit
-  defp same_base_unit(%{base_unit: [unit]}, %{base_unit: [unit]}), do: unit
-  defp same_base_unit(_conversion_1, _conversion_2), do: nil
+  # Multiply two conversions together. The
+  # power factor is additive, the conversion factor
+  # is multiplicative. The factor remains unchanged.
+  # The base units need to be combined separately
+  # from the name.
+
+  defp multiply_units({name_1, conversion_1}, {name_2, conversion_2}) do
+    new_conversion = Conversion.product(conversion_1, conversion_2)
+    new_name = Parser.combine_names(name_1, name_2)
+
+    {new_name, new_conversion}
+  end
+
 end

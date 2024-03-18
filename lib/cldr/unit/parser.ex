@@ -145,8 +145,7 @@ defmodule Cldr.Unit.Parser do
   # We might end up with something like "millimeter-meter"
   # which should be reduced to square-millimeter by
   # convering the larger unit to the smaller and applying
-  # the power conversion (square, cubed). We don't support
-  # powers beyond cubed.
+  # the power conversion (square, cubed).
   defp reduce_scaled_units(sub_units) do
     sub_units
   end
@@ -386,6 +385,13 @@ defmodule Cldr.Unit.Parser do
     end
   end
 
+  # Combine two names taking care to combine powers
+  @doc false
+  def combine_names(name_1, name_2) do
+    [{name, _conversion}] = parse_unit!("#{name_1}_#{name_2}")
+    name
+  end
+
   # In order to correctly identify the units with their
   # correct power (square, cubic, pow_n) any existing power units
   # have to be expanded so that later on we can group
@@ -453,6 +459,12 @@ defmodule Cldr.Unit.Parser do
 
   defp resolve_base_unit("kilogram_force" = unit) do
     hd(Conversions.conversion_for!(unit))
+  end
+
+  for unit <- Prefix.units_with_power_prefixes() do
+    defp resolve_base_unit(unquote(unit)) do
+      hd(Conversions.conversion_for!(unquote(unit)))
+    end
   end
 
   for {prefix, scale} <- Prefix.si_factors() do

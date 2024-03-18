@@ -4,15 +4,21 @@ defmodule Cldr.Unit.Prefix do
   @units Cldr.Config.units()
 
   @doc """
-  Returns the power (exponent) of the base unit
-  of a conversion.
+  For a given unit name, prefix it with
+  the given power.
+
   """
-  def power(%{base_unit: [power, _unit]}) do
-    Map.fetch!(power_units(), power)
+  def add_prefix(name, power) when is_atom(name) do
+    add_prefix(to_string(name), power)
   end
 
-  def power(%{base_unit: [_unit]}) do
-    1
+  def add_prefix(name, 1) when is_binary(name) do
+    name
+  end
+
+  def add_prefix(name, power) when is_binary(name) and is_integer(power) do
+    prefix = Map.fetch!(inverse_power_units(), power)
+    "#{prefix}_#{name}"
   end
 
   @doc """
@@ -118,6 +124,26 @@ defmodule Cldr.Unit.Prefix do
 
   def power_keys do
     @power_keys
+  end
+
+  @base_units @units[:base_units]
+
+  @base_units_in_order @base_units
+                       |> Cldr.Unit.Additional.merge_base_units()
+                       |> Enum.map(&elem(&1, 1))
+                       |> Enum.with_index()
+                       |> Map.new()
+
+  @unit_keys Map.keys(@base_units_in_order) |> Enum.map(&to_string/1)
+  @power_prefixes Map.keys(@power_units) |> Enum.map(&to_string/1)
+  @power_prefix_units for(u <- @unit_keys, p <- @power_prefixes, do:
+    if(String.starts_with?(u, p), do: u, else: nil)
+  )
+  |> Enum.reject(&is_nil/1)
+
+  @doc false
+  def units_with_power_prefixes() do
+    @power_prefix_units
   end
 
   ##

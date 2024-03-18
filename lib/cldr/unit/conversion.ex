@@ -23,6 +23,7 @@ defmodule Cldr.Unit.Conversion do
 
   alias Cldr.Unit
   alias Cldr.Unit.BaseUnit
+  alias Cldr.Unit.Prefix
 
   import Kernel, except: [div: 2]
 
@@ -360,6 +361,117 @@ defmodule Cldr.Unit.Conversion do
   end
 
   # Math Helpers
+
+  # Combines two conversions which are expected to
+  # be the same base unit of potentially different
+  # powers (exponents)
+
+  @doc false
+  def product(conversion_1, conversion_2) do
+    {base_name_1, power_1} = name_and_power(conversion_1)
+    {base_name_2, power_2} = name_and_power(conversion_2)
+
+    new_power = power_1 + power_2
+    new_factor = power_1 * power_2
+
+    new_base_unit =
+      base_unit(base_name_1, base_name_2, new_power)
+
+    %{conversion_1 | factor: new_factor, base_unit: new_base_unit}
+  end
+
+  # Extract the power from a base unit. Some translatable
+  # units have compound names (like :square_meter) so to
+  # preserve translatability we don't deconstruct them.
+
+  @doc false
+  def name_and_power([power, unit_name]) when is_binary(unit_name) do
+    power = Map.fetch!(Prefix.power_units(), power)
+    {base_name, base_power} = extract_power(unit_name)
+    {base_name, base_power + power}
+  end
+
+  def name_and_power([power, unit_name]) when is_atom(unit_name) do
+    power = Map.fetch!(Prefix.power_units(), power)
+    {unit_name, power}
+  end
+
+  def name_and_power([unit]) do
+    extract_power(unit)
+  end
+
+  def name_and_power(unit) when is_binary(unit) or is_atom(unit) do
+    extract_power(unit)
+  end
+
+  def name_and_power(%{base_unit: [unit]}) do
+    name_and_power([unit])
+  end
+
+  def name_and_power(%{base_unit: [power, unit_name]}) do
+    name_and_power([power, unit_name])
+  end
+
+  # Extract the power from a unit name
+
+  @doc false
+  def extract_power(unit_name) when is_atom(unit_name) do
+    unit_name
+    |> to_string()
+    |> extract_power
+  end
+
+  for {power_name, power} <- Prefix.power_units() do
+    power_name = "#{power_name}_"
+
+    def extract_power(unquote(power_name) <> base_name) do
+      {Unit.maybe_translatable_unit(base_name), unquote(power)}
+    end
+  end
+
+  def extract_power(base_name), do: {Unit.maybe_translatable_unit(base_name), 1}
+
+  # Are these the same base units - excluding power prefixes
+  @doc false
+  def same_base_unit(%{base_unit: [_power_1, unit]}, %{base_unit: [_power_2, unit]}), do: unit
+  def same_base_unit(%{base_unit: [unit]}, %{base_unit: [_power, unit]}), do: unit
+  def same_base_unit(%{base_unit: [_power, unit]}, %{base_unit: [unit]}), do: unit
+  def same_base_unit(%{base_unit: [unit]}, %{base_unit: [unit]}), do: unit
+  def same_base_unit(conversion_1, conversion_2) do
+    {base_name_1, _power_1} = name_and_power(conversion_1)
+    {base_name_2, _power_2} = name_and_power(conversion_2)
+
+    if base_name_1 == base_name_2 do
+      Unit.maybe_translatable_unit(base_name_1)
+    else
+      nil
+    end
+  end
+
+  # Creates a unit name from a unit and a
+  # power.
+
+  @doc false
+  def base_unit(unit_name, power) do
+    base_unit(unit_name, unit_name, power)
+  end
+
+  @doc false
+  def base_unit(unit_name, unit_name, 1) do
+    [unit_name]
+  end
+
+  def base_unit(unit_name, unit_name, power) do
+    prefix = Prefix.prefix_from_power(power)
+    canonical_base_unit = BaseUnit.canonical_base_unit!([[prefix, unit_name]])
+
+    if is_atom(canonical_base_unit) do
+      [canonical_base_unit]
+    else
+      [prefix, Unit.maybe_translatable_unit(unit_name)]
+    end
+  end
+
   @doc false
   def add(v1, v2), do: Cldr.Math.add(v1, v2) |> Cldr.Math.maybe_integer()
 
