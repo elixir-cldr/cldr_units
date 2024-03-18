@@ -1,12 +1,5 @@
 defmodule Cldr.Unit.BaseUnit do
-  @moduledoc """
-  Functions to support the base unit calculations
-  for a unit.
-
-  Base unit equality is used to determine whether
-  a one unit can be converted to another
-
-  """
+  @moduledoc false
 
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Parser
@@ -410,32 +403,32 @@ defmodule Cldr.Unit.BaseUnit do
   # Reduce powers where possible. For example
   # :meter and :meter to :square_meter and
   # :square_meter and :square_meter to [:pow4, :meter]
-
-  defp reduce_powers({numerator, denominator}) do
+  @doc false
+  def reduce_powers({numerator, denominator}) do
     {reduce_powers(numerator), reduce_powers(denominator)}
   end
 
-  defp reduce_powers([]) do
+  def reduce_powers([]) do
     []
   end
 
-  defp reduce_powers([first]) do
+  def reduce_powers([first]) do
     [first]
   end
 
-  defp reduce_powers([first, first | rest]) do
+  def reduce_powers([first, first | rest]) do
     reduce_powers([[:square, first] | rest])
   end
 
-  defp reduce_powers([[:square, first], first | rest]) do
+  def reduce_powers([[:square, first], first | rest]) do
     reduce_powers([[:cubic, first] | rest])
   end
 
-  defp reduce_powers([first, [:square, first] | rest]) do
+  def reduce_powers([first, [:square, first] | rest]) do
     reduce_powers([[:cubic, first] | rest])
   end
 
-  defp reduce_powers([first, second | rest]) do
+  def reduce_powers([first, second | rest]) do
     {base_name_1, power_1} = Conversion.name_and_power(first)
     {base_name_2, power_2} = Conversion.name_and_power(second)
 
@@ -447,10 +440,14 @@ defmodule Cldr.Unit.BaseUnit do
     end
   end
 
-  # Flaten the list and turn it into a string.
+  # Flatten the list and turn it into a string.
+
+  defp flatten_and_stringify({[], []}) do
+    "1"
+  end
 
   defp flatten_and_stringify({[], denominator}) do
-    flatten_and_stringify(denominator)
+    "1_per_" <> flatten_and_stringify(denominator)
   end
 
   defp flatten_and_stringify({numerator, []}) do
@@ -472,14 +469,6 @@ defmodule Cldr.Unit.BaseUnit do
   # create ambiguous processing in other places
 
   @doc false
-  def wrap([numerator, denominator], tag) do
-    {tag, {numerator, denominator}}
-  end
-
-  def wrap([numerator], tag) do
-    {tag, numerator}
-  end
-
   def wrap(other, tag) do
     {tag, other}
   end

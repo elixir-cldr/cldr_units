@@ -15,9 +15,6 @@ defmodule Cldr.Unit.Parser do
   alias Cldr.Unit
 
   @doc false
-  defdelegate wrap(term, token), to: Cldr.Unit.BaseUnit
-
-  @doc false
   defdelegate base_units_in_order, to: Cldr.Unit.BaseUnit
 
   @currencies Cldr.known_currencies()
@@ -99,6 +96,7 @@ defmodule Cldr.Unit.Parser do
     |> Cldr.Unit.normalize_unit_name()
     |> String.split(@per, parts: 2)
     |> parse_subunits()
+    |> format_conversion()
     |> wrap(:ok)
   rescue
     e in [Cldr.UnknownUnitError, Cldr.Unit.UnknownBaseUnitError, Cldr.UnknownCurrencyError] ->
@@ -110,6 +108,18 @@ defmodule Cldr.Unit.Parser do
       {:ok, parsed} -> parsed
       {:error, {exception, reason}} -> raise exception, reason
     end
+  end
+
+  defp format_conversion([numerator, denominator]) do
+    {numerator, denominator}
+  end
+
+  defp format_conversion([numerator]) do
+    numerator
+  end
+
+  defp wrap(term, atom) do
+    {atom, term}
   end
 
   # When it's a simple unit
@@ -490,12 +500,13 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, power} <- Prefix.power_units() do
-    prefix = to_string(prefix)
+    string_prefix = to_string(prefix)
 
-    defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
+    defp resolve_base_unit(<<unquote(string_prefix) <> "_", subunit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
         factor = Cldr.Math.pow(conversion.factor, unquote(power))
-        base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
+        base_unit = combine_powers([unquote(prefix) | conversion.base_unit])
+
         {Unit.maybe_translatable_unit(unit), %{conversion | base_unit: base_unit, factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
@@ -527,6 +538,18 @@ defmodule Cldr.Unit.Parser do
 
   defp resolve_base_unit(currency) when is_atom(currency) do
     raise Cldr.UnknownCurrencyError, "The currency #{inspect(currency)} is unknown"
+  end
+
+  defp combine_powers(power_unit) do
+    {name, power} = Conversion.name_and_power(power_unit)
+    base_unit = Conversion.base_unit(name, power)
+
+    maybe_translatable_name =
+      base_unit
+      |> Enum.map_join("_", &to_string/1)
+      |> Unit.maybe_translatable_unit()
+
+    if is_atom(maybe_translatable_name), do: [maybe_translatable_name], else: base_unit
   end
 
   # Units are sorted in the order present in the base units

@@ -102,7 +102,7 @@ defmodule Cldr.Unit.Conversion do
           %Cldr.Unit.Conversion{
             factor: 1000000,
             offset: 0,
-            base_unit: [:square, :meter]
+            base_unit: [:square_meter]
           }}
        ]}
 
@@ -383,21 +383,13 @@ defmodule Cldr.Unit.Conversion do
     %{conversion_1 | factor: new_factor, base_unit: new_base_unit}
   end
 
-  # Extract the power from a base unit. Some translatable
-  # units have compound names (like :square_meter) so to
-  # preserve translatability we don't deconstruct them.
+  # Extract the power from a base unit.
 
   @doc false
-  def name_and_power([power, unit_name]) when is_binary(unit_name) do
-    power = Map.fetch!(Prefix.power_units(), power)
+  def name_and_power([power, unit_name]) do
     {base_name, base_power} = extract_power(unit_name)
-    {base_name, base_power + power}
-  end
-
-  def name_and_power([power, unit_name]) when is_atom(unit_name) do
-    {name, intrinsic_power} = extract_power(unit_name)
     power = Map.fetch!(Prefix.power_units(), power)
-    {name, power + intrinsic_power}
+    {base_name, base_power * power}
   end
 
   def name_and_power([unit]) do
@@ -466,31 +458,42 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def base_unit(unit_name, unit_name, power) do
-    case reduce_power_to_translatable_unit(unit_name, power) do
-      {unit_name, 1} ->
-        [unit_name]
+    prefix = Prefix.prefix_from_power(power)
+    maybe_translatable_name = Unit.maybe_translatable_unit("#{prefix}_#{unit_name}")
 
-      {unit_name, power} ->
-        prefix = Prefix.prefix_from_power(power)
-        [prefix, Unit.maybe_translatable_unit(unit_name)]
+    if is_atom(maybe_translatable_name) do
+      [maybe_translatable_name]
+    else
+      [prefix, Unit.maybe_translatable_unit(unit_name)]
     end
   end
+
+  # def base_unit(unit_name, unit_name, power) do
+  #   case reduce_power_to_translatable_unit(unit_name, power) do
+  #     {new_unit_name, 1} ->
+  #       [unit_name, Unit.maybe_translatable_unit(new_unit_name)]
+  #
+  #     {unit_name, power} ->
+  #       prefix = Prefix.prefix_from_power(power)
+  #       [prefix, Unit.maybe_translatable_unit(unit_name)]
+  #   end
+  # end
 
   # If we end up with something like [:pow4, :meter] then
   # what we really wnat is [:square, :cubic_meter] because
   # we want to preserve the maximal translatable name if possible.
 
-  defp reduce_power_to_translatable_unit(unit_name, power) do
-    Enum.reduce_while(power..2//-1, {unit_name, power}, fn test_power, acc ->
-      test_unit = Prefix.add_prefix(unit_name, test_power)
-
-      if test_unit in Prefix.units_with_power_prefixes() do
-        {:halt, {Unit.maybe_translatable_unit(test_unit), max(power - test_power - 1, 1)}}
-      else
-        {:cont, acc}
-      end
-    end)
-  end
+  # defp reduce_power_to_translatable_unit(unit_name, power) do
+  #   Enum.reduce_while(power..2//-1, {unit_name, power}, fn test_power, acc ->
+  #     test_unit = Prefix.add_prefix(unit_name, test_power)
+  #
+  #     if test_unit in Prefix.units_with_power_prefixes() do
+  #       {:halt, {Unit.maybe_translatable_unit(test_unit), power - test_power}}
+  #     else
+  #       {:cont, acc}
+  #     end
+  #   end)
+  # end
 
   @doc false
   def add(v1, v2), do: Cldr.Math.add(v1, v2) |> Cldr.Math.maybe_integer()

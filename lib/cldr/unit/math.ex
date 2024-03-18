@@ -259,20 +259,16 @@ defmodule Cldr.Unit.Math do
   ## Examples
 
       iex> Cldr.Unit.Math.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
-      Cldr.Unit.new!(:kilogram, "11.02311310924387903614869007")
+      Cldr.Unit.new!("kilogram_per_kilogram", "11.02311310924387903614869007")
 
       iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
-      Cldr.Unit.new!(:pint, "2.365882365000000000000000000")
+      Cldr.Unit.new!("pint_per_pint", "2.365882365000000000000000000")
 
       iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
-      Cldr.Unit.new!(:pint, 5)
+      Cldr.Unit.new!("pint_per_pint", 5)
 
   """
   @spec div(Unit.t(), Unit.t()) :: Unit.t()
-
-  def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
-    Unit.new!(unit, Conversion.div(value_1, value_2))
-  end
 
   def div(%Unit{value: value} = unit, number) when is_number(number) do
     %{unit | value: Conversion.div(value, number)}
@@ -284,7 +280,8 @@ defmodule Cldr.Unit.Math do
 
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
-      div(unit_1, Conversion.convert!(unit_2, unit_category_1))
+      {:ok, converted} = Conversion.convert(unit_2, unit_category_1)
+      product(unit_1, invert(converted))
     else
       product(unit_1, invert(unit_2))
     end
@@ -566,7 +563,6 @@ defmodule Cldr.Unit.Math do
       (conv_1 ++ conv_2)
       |> Enum.sort(&Parser.unit_sorter/2)
       |> combine_power_instances()
-      # |> IO.inspect(label: "New conversion")
 
     unit_name =
       Parser.canonical_unit_name(new_conversion)
@@ -575,19 +571,22 @@ defmodule Cldr.Unit.Math do
   end
 
   # Invert a unit. This is used to convert a division
-  # into a multiplication. Its not a valid standalone
-  # unit.
+  # into a multiplication.
 
   # TODO FIXME It can be a valid unit if we allow
   # a scalar in the numerator
 
   @doc false
-  def invert({numerator, denominator}) do
-    {denominator, numerator}
+  def invert(%Cldr.Unit{base_conversion: {numerator, denominator}} = unit) do
+    unit
+    |> Map.put(:base_conversion, {denominator, numerator})
+    |> Map.put(:value, Cldr.Math.div(1, unit.value))
   end
 
-  def invert(numerator) do
-    Map.put(null_unit(), :base_conversion, {[], numerator.base_conversion})
+  def invert(%Cldr.Unit{} = numerator) do
+    numerator
+    |> Map.put(:base_conversion, {[], numerator.base_conversion})
+    |> Map.put(:value, Cldr.Math.div(1, numerator.value))
   end
 
   @doc false
