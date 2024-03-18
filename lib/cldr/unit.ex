@@ -999,6 +999,9 @@ defmodule Cldr.Unit do
       }
 
       {:ok, unit}
+    else
+      {:error, :identity_unit} -> {:ok, value}
+      other -> other
     end
   end
 
@@ -2541,7 +2544,11 @@ defmodule Cldr.Unit do
         |> Parser.canonical_unit_name()
         |> maybe_translatable_unit()
 
-      {:ok, name, parsed}
+      if Cldr.Unit.BaseUnit.canonical_base_unit!(parsed) do
+        {:ok, name, parsed}
+      else
+        {:error, :identity_unit}
+      end
     end
   end
 

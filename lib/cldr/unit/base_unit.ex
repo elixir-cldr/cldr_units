@@ -286,6 +286,14 @@ defmodule Cldr.Unit.BaseUnit do
     compare(unit_1, unit_2)
   end
 
+  defp compare(@currency_base <> _rest, _any) do
+    :lt
+  end
+
+  defp compare(_any, @currency_base <> _rest) do
+    :gt
+  end
+
   defp compare(unit_1, unit_2) when is_atom(unit_1) and is_atom(unit_2) do
     order_1 = Map.fetch!(base_units_in_order(), unit_1)
     order_2 = Map.fetch!(base_units_in_order(), unit_2)
