@@ -472,8 +472,7 @@ defmodule Cldr.Unit.Conversion do
 
       {unit_name, power} ->
         prefix = Prefix.prefix_from_power(power)
-        canonical_base_unit = BaseUnit.canonical_base_unit!([[prefix, unit_name]])
-        if is_atom(canonical_base_unit), do: [canonical_base_unit], else: [prefix, Unit.maybe_translatable_unit(unit_name)]
+        [prefix, Unit.maybe_translatable_unit(unit_name)]
     end
   end
 
