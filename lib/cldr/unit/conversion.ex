@@ -371,8 +371,11 @@ defmodule Cldr.Unit.Conversion do
     {base_name_1, power_1} = name_and_power(conversion_1)
     {base_name_2, power_2} = name_and_power(conversion_2)
 
-    new_power = power_1 + power_2
-    new_factor = power_1 * power_2
+    new_power =
+      power_1 + power_2
+
+    new_factor =
+      Cldr.Math.mult(conversion_1.factor, conversion_2.factor)
 
     new_base_unit =
       base_unit(base_name_1, base_name_2, new_power)
@@ -392,8 +395,9 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def name_and_power([power, unit_name]) when is_atom(unit_name) do
+    {name, intrinsic_power} = extract_power(unit_name)
     power = Map.fetch!(Prefix.power_units(), power)
-    {unit_name, power}
+    {name, power + intrinsic_power}
   end
 
   def name_and_power([unit]) do
@@ -462,14 +466,31 @@ defmodule Cldr.Unit.Conversion do
   end
 
   def base_unit(unit_name, unit_name, power) do
-    prefix = Prefix.prefix_from_power(power)
-    canonical_base_unit = BaseUnit.canonical_base_unit!([[prefix, unit_name]])
+    case reduce_power_to_translatable_unit(unit_name, power) do
+      {unit_name, 1} ->
+        [unit_name]
 
-    if is_atom(canonical_base_unit) do
-      [canonical_base_unit]
-    else
-      [prefix, Unit.maybe_translatable_unit(unit_name)]
+      {unit_name, power} ->
+        prefix = Prefix.prefix_from_power(power)
+        canonical_base_unit = BaseUnit.canonical_base_unit!([[prefix, unit_name]])
+        if is_atom(canonical_base_unit), do: [canonical_base_unit], else: [prefix, Unit.maybe_translatable_unit(unit_name)]
     end
+  end
+
+  # If we end up with something like [:pow4, :meter] then
+  # what we really wnat is [:square, :cubic_meter] because
+  # we want to preserve the maximal translatable name if possible.
+
+  defp reduce_power_to_translatable_unit(unit_name, power) do
+    Enum.reduce_while(power..2//-1, {unit_name, power}, fn test_power, acc ->
+      test_unit = Prefix.add_prefix(unit_name, test_power)
+
+      if test_unit in Prefix.units_with_power_prefixes() do
+        {:halt, {Unit.maybe_translatable_unit(test_unit), max(power - test_power - 1, 1)}}
+      else
+        {:cont, acc}
+      end
+    end)
   end
 
   @doc false

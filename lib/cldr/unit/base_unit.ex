@@ -366,31 +366,37 @@ defmodule Cldr.Unit.BaseUnit do
     {name_2, power_2} = Conversion.name_and_power(unit_2)
 
     if name_1 == name_2 do
-      cond do
-        # if they are the same power then omit both
-        power_1 == power_2 ->
-          do_reduce_factors({rest_1, rest_2})
-
-        power_1 > power_2 ->
-          power_1 = power_1 - power_2
-          [new_unit] = Conversion.base_unit(name_1, power_1)
-          do_reduce_factors({[new_unit | rest_1], rest_2})
-
-        power_1 < power_2 ->
-          power_2 = power_2 - power_1
-          [new_unit] = Conversion.base_unit(name_1, power_2)
-          do_reduce_factors({rest_1, [new_unit | rest_2]})
-      end
+      reduce_factor({name_1, power_1}, {name_2, power_2}, rest_1, rest_2)
     else
-      cond do
-        compare(unit_1, unit_2) == :lt ->
-          {reduced_1, reduced_2} = do_reduce_factors({rest_1, [unit_2 | rest_2]})
-          {[unit_1 | reduced_1], reduced_2}
+      shift_factor({[unit_1 | rest_1], [unit_2 | rest_2]})
+    end
+  end
 
-        compare(unit_1, unit_2) == :gt ->
-          {reduced_1, reduced_2} = do_reduce_factors({[unit_1 | rest_1], rest_2})
-          {reduced_1, [unit_2 | reduced_2]}
-      end
+  defp reduce_factor({_name_1, power_1}, {_name_2, power_1}, rest_1, rest_2) do
+    do_reduce_factors({rest_1, rest_2})
+  end
+
+  defp reduce_factor({name_1, power_1}, {_name_2, power_2}, rest_1, rest_2) when power_1 > power_2 do
+    power_1 = power_1 - power_2
+    [new_unit] = Conversion.base_unit(name_1, power_1)
+    do_reduce_factors({[new_unit | rest_1], rest_2})
+  end
+
+  defp reduce_factor({name_1, power_1}, {_name_2, power_2}, rest_1, rest_2) when power_2 > power_1 do
+    power_2 = power_2 - power_1
+    [new_unit] = Conversion.base_unit(name_1, power_2)
+    do_reduce_factors({rest_1, [new_unit | rest_2]})
+  end
+
+  defp shift_factor({[unit_1 | rest_1], [unit_2 | rest_2]}) do
+    cond do
+      compare(unit_1, unit_2) == :lt ->
+        {reduced_1, reduced_2} = do_reduce_factors({rest_1, [unit_2 | rest_2]})
+        {[unit_1 | reduced_1], reduced_2}
+
+      compare(unit_1, unit_2) == :gt ->
+        {reduced_1, reduced_2} = do_reduce_factors({[unit_1 | rest_1], rest_2})
+        {reduced_1, [unit_2 | reduced_2]}
     end
   end
 
