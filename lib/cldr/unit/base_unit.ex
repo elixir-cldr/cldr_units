@@ -17,6 +17,8 @@ defmodule Cldr.Unit.BaseUnit do
               |> Map.new()
               |> Map.values()
 
+  @power_units Prefix.power_units() |> Map.keys()
+
   @doc """
   Returns the canonical base unit name
   for a unit.
@@ -247,7 +249,13 @@ defmodule Cldr.Unit.BaseUnit do
   # always sort at the head of the list.
 
   defp base_unit_sorter(unit_a, unit_b) when is_atom(unit_a) and is_atom(unit_b) do
-    Map.fetch!(base_units_in_order(), unit_a) < Map.fetch!(base_units_in_order(), unit_b)
+    with {:ok, order_a} <- Map.fetch(base_units_in_order(), unit_a),
+         {:ok, order_b} <- Map.fetch(base_units_in_order(), unit_b) do
+      order_a < order_b
+    else
+      _other ->
+        unit_a in @power_units
+    end
   end
 
   defp base_unit_sorter(unit_a, [_prefix, unit_b]) when is_atom(unit_a) do
