@@ -2501,10 +2501,6 @@ defmodule Cldr.Unit do
     {:ok, unit_name, Conversions.conversion_for!(unit_name)}
   end
 
-  # def validate_unit(unit_name) when unit_name in @convertible_units do
-  #   {:ok, unit_name, Conversions.conversion_for!(unit_name)}
-  # end
-
   @aliases Alias.aliases() |> Map.keys() |> Enum.sort()
   def validate_unit(unit_name) when unit_name in @aliases do
     unit_name
@@ -2522,7 +2518,7 @@ defmodule Cldr.Unit do
     unit_name
     |> normalize_unit_name()
     |> maybe_translatable_unit()
-    |> return_parsed_unit()
+    |> parse_unit()
   end
 
   def validate_unit(%Unit{unit: unit_name, base_conversion: base_conversion}) do
@@ -2533,11 +2529,11 @@ defmodule Cldr.Unit do
     {:error, unit_error(unknown_unit)}
   end
 
-  defp return_parsed_unit(unit_name) when is_atom(unit_name) do
+  defp parse_unit(unit_name) when is_atom(unit_name) do
     validate_unit(unit_name)
   end
 
-  defp return_parsed_unit(unit_name) do
+  defp parse_unit(unit_name) do
     with {:ok, parsed} <- Parser.parse_unit(unit_name) do
       name =
         parsed
