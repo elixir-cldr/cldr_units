@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.16.5
+
+This is the changelog for Cldr_units v3.16.4 released on April 11th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix spec for `Cldr.Unit.display_name/2`. Thanks to @ryotsu for the report. Closes #43.
+
 ## Cldr_Units v3.16.4
 
 This is the changelog for Cldr_units v3.16.4 released on November 2nd, 2023.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

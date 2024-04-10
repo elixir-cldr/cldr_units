@@ -1604,7 +1604,7 @@ defmodule Cldr.Unit do
       "l"
 
   """
-  @spec display_name(Cldr.Unit.value() | Cldr.Unit.t(), Keyword.t()) ::
+  @spec display_name(translatable_unit() | t(), Keyword.t()) ::
           String.t() | {:error, {module, binary}}
 
   def display_name(unit, options \\ [])
