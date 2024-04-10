@@ -41,11 +41,10 @@ defmodule Cldr.Units.Mixfile do
     [
       {:ex_cldr_numbers, "~> 2.31"},
       {:cldr_utils, "~> 2.24"},
-
       {:ex_cldr_lists, "~> 2.10"},
       {:decimal, "~> 1.6 or ~> 2.0"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.18", optional: true, runtime: false},
+      {:ex_doc, "~> 0.31", optional: true, runtime: false},
       {:jason, "~> 1.0", optional: true},
       {:benchee, "~> 1.0", optional: true, only: :dev}
     ]
