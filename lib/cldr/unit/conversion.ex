@@ -1,14 +1,15 @@
 defmodule Cldr.Unit.Conversion do
   @moduledoc """
   Unit conversion functions for the units defined
-  in `Cldr`.
+  in `CLDR`.
 
   """
 
-  @enforce_keys [:factor, :offset, :base_unit]
-  defstruct factor: 1,
-            offset: 0,
-            base_unit: nil
+  @enforce_keys [:base_unit]
+  defstruct factor: nil,
+            offset: nil,
+            base_unit: nil,
+            special: nil
 
   @type factor :: integer | float
   @type offset :: integer | float
@@ -16,7 +17,8 @@ defmodule Cldr.Unit.Conversion do
   @type t :: %{
           factor: factor(),
           base_unit: [atom(), ...],
-          offset: offset()
+          offset: offset(),
+          special: atom() | nil
         }
 
   alias Cldr.Unit
@@ -25,7 +27,6 @@ defmodule Cldr.Unit.Conversion do
   import Kernel, except: [div: 2]
 
   @decimal_1 Decimal.new(1)
-  @decimal_0 Decimal.new(0)
 
   @doc """
   Returns the conversion that calculates
@@ -94,11 +95,15 @@ defmodule Cldr.Unit.Conversion do
   ## Example
 
       iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_kilometer
-      {
-        :ok,
-        :square_meter,
-        [square_kilometer: %Cldr.Unit.Conversion{base_unit: [:square, :meter], factor: 1000000, offset: 0}]
-      }
+      {:ok, :square_meter,
+       [
+         {"square_kilometer",
+          %Cldr.Unit.Conversion{
+            factor: 1000000,
+            offset: 0,
+            base_unit: [:square, :meter]
+          }}
+       ]}
 
       iex> Cldr.Unit.Conversion.base_unit_and_conversion :square_table
       {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \\"table\\""}}
@@ -123,9 +128,9 @@ defmodule Cldr.Unit.Conversion do
 
   ## Arguments
 
-  * `unit` is any unit returned by `Cldr.Unit.new/2`
+  * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
-  * `to_unit` is any unit name returned by `Cldr.Unit.known_units/0`
+  * `to_unit` is any unit name returned by `Cldr.Unit.known_units/0`.
 
   ## Returns
 
@@ -167,6 +172,11 @@ defmodule Cldr.Unit.Conversion do
     value
   end
 
+  # Special handling for Beaufort
+  defp convert_to_base(value, {_, %__MODULE__{special: :beaufort}}) do
+    mult(0.836, pow(value, 1.5))
+  end
+
   # All conversions are ultimately a list of
   # 2-tuples of the unit and conversion struct
   defp convert_to_base(value, {_, %__MODULE__{} = from}) do
@@ -201,6 +211,14 @@ defmodule Cldr.Unit.Conversion do
     raise ArgumentError, "Conversion not recognised: #{inspect(conversion)}"
   end
 
+  # Special handling for Beaufort
+  defp convert_from_base(value, {_, %__MODULE__{special: :beaufort}}) do
+    # B = (S/0.836)^(2/3)
+    divided = div(value, 0.836)
+    pow(divided, 2 / 3)
+    |> Cldr.Math.round(2)
+  end
+
   defp convert_from_base(value, {_, %__MODULE__{} = to}) do
     %{factor: to_factor, offset: to_offset} = to
 
@@ -230,13 +248,13 @@ defmodule Cldr.Unit.Conversion do
   @doc """
   Convert one unit into another unit of the same
   unit type (length, volume, mass, ...) and raises
-  on a unit type mismatch
+  on a unit type mismatch.
 
   ## Arguments
 
-  * `unit` is any unit returned by `Cldr.Unit.new/2`
+  * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
-  * `to_unit` is any unit name returned by `Cldr.Unit.known_units/0`
+  * `to_unit` is any unit name returned by `Cldr.Unit.known_units/0`.
 
   ## Returns
 
@@ -310,7 +328,7 @@ defmodule Cldr.Unit.Conversion do
 
   @doc """
   Convert a unit into its base unit and
-  raises on error
+  raises on error.
 
   For example, the base unit for `length`
   is `meter`. The base unit is an
@@ -319,7 +337,7 @@ defmodule Cldr.Unit.Conversion do
 
   ## Arguments
 
-  * `unit` is any unit returned by `Cldr.Unit.new/2`
+  * `unit` is any unit returned by `Cldr.Unit.new/2`.
 
   ## Returns
 
@@ -341,160 +359,19 @@ defmodule Cldr.Unit.Conversion do
     end
   end
 
-  #### Math helpers for Decimal and integer
+  # Math Helpers
+  @doc false
+  def add(v1, v2), do: Cldr.Math.add(v1, v2) |> Cldr.Math.maybe_integer()
 
   @doc false
-  def add(any, 0) do
-    maybe_integer(any)
-  end
-
-  def add(any, @decimal_0) do
-    maybe_integer(any)
-  end
-
-  def add(%Decimal{} = a, b) do
-    Decimal.add(a, b)
-    |> maybe_integer()
-  end
-
-  def add(a, %Decimal{} = b) do
-    Decimal.add(a, b)
-    |> maybe_integer()
-  end
-
-  def add(a, b) do
-    maybe_integer(a + b)
-  end
+  def sub(v1, v2), do: Cldr.Math.sub(v1, v2) |> Cldr.Math.maybe_integer()
 
   @doc false
-  def sub(any, 0) do
-    maybe_integer(any)
-  end
-
-  def sub(any, float) when float == 0.0 do
-    maybe_integer(any)
-  end
-
-  def sub(a, %Decimal{} = b) do
-    Decimal.sub(a, b)
-    |> maybe_integer()
-  end
-
-  def sub(%Decimal{} = a, b) do
-    Decimal.sub(a, b)
-    |> maybe_integer()
-  end
-
-  def sub(a, b) do
-    maybe_integer(a - b)
-  end
+  def mult(v1, v2), do: Cldr.Math.mult(v1, v2) |> Cldr.Math.maybe_integer()
 
   @doc false
-  def mult(any, 1) do
-    any
-  end
-
-  def mult(any, @decimal_1) do
-    any
-  end
-
-  def mult(1, b) do
-    maybe_integer(b)
-  end
-
-  def mult(_any, 0) do
-    0
-  end
-
-  def mult(_any, @decimal_0) do
-    0
-  end
-
-  def mult(%Decimal{} = a, b) do
-    Decimal.mult(a, b)
-    |> maybe_integer()
-  end
-
-  def mult(a, %Decimal{} = b) do
-    Decimal.mult(a, b)
-    |> maybe_integer()
-  end
-
-  def mult(a, b) do
-    (a * b)
-    |> maybe_integer()
-  end
-
-  def div(_any, 0) do
-    0
-  end
-
-  def div(_any, @decimal_0) do
-    0
-  end
-
-  def div(any, 1) do
-    maybe_integer(any)
-  end
-
-  def div(any, @decimal_1) do
-    maybe_integer(any)
-  end
-
-  def div(%Decimal{} = a, b) do
-    Decimal.div(a, b)
-    |> maybe_integer()
-  end
-
-  def div(a, %Decimal{} = b) do
-    Decimal.div(a, b)
-    |> maybe_integer()
-  end
-
-  def div(a, b) when is_integer(a) and is_integer(b) do
-    integer_div = Kernel.div(a, b)
-
-    if integer_div * b == a do
-      integer_div
-    else
-      Decimal.div(Decimal.new(a), Decimal.new(b))
-    end
-  end
+  def div(v1, v2), do: Cldr.Math.div(v1, v2) |> Cldr.Math.maybe_integer()
 
   @doc false
-  def pow(_any, @decimal_0) do
-    1
-  end
-
-  def pow(1, _any) do
-    1
-  end
-
-  def pow(a, b) when is_integer(b) do
-    Cldr.Math.power(a, b)
-    |> maybe_integer
-  end
-
-  # Decimal.integer? only on 2.x but we support 1.x
-  # so we have to check the hard way
-
-  def maybe_integer(%Decimal{} = a) do
-    Decimal.to_integer(a)
-  rescue
-    FunctionClauseError ->
-      a
-    ArgumentError ->
-      a
-  end
-
-  def maybe_integer(a) when is_float(a) do
-    case trunc(a) do
-      b when a == b -> b
-      _b -> a
-    end
-  end
-
-  def maybe_integer(a) when is_integer(a) do
-    a
-  end
+  def pow(v1, v2), do: Cldr.Math.pow(v1, v2) |> Cldr.Math.maybe_integer()
 end

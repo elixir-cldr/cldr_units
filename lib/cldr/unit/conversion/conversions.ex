@@ -10,6 +10,9 @@ defmodule Cldr.Unit.Conversions do
                  {k, v} -> {k, struct(Conversion, v)}
                end)
                |> Enum.map(fn
+                 {unit, %{special: special} = conversion} when not is_nil(special) ->
+                   {unit, conversion}
+
                  {unit, %{factor: factor} = conversion} when is_number(factor) ->
                    {unit, conversion}
 
@@ -20,6 +23,9 @@ defmodule Cldr.Unit.Conversions do
                    {unit, %{conversion | factor: Decimal.div(factor.numerator, factor.denominator)}}
                end)
                |> Enum.map(fn
+                 {unit, %{special: special} = conversion} when not is_nil(special) ->
+                   {unit, conversion}
+
                  {unit, %{offset: offset} = conversion} when is_number(offset) ->
                    {unit, conversion}
 

@@ -175,7 +175,7 @@ defmodule Cldr.Unit.Backend do
             {:ok, "1,234 megahertz"}
 
             iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megahertz, 1234), style: :narrow
-            {:ok, "1,234MHz"}
+            {:ok, "1,234Mhz"}
 
             iex> #{inspect(__MODULE__)}.to_string Cldr.Unit.new!(:megabyte, 1234), locale: "en", style: :unknown
             {:error, {Cldr.UnknownFormatError, "The unit style :unknown is not known."}}

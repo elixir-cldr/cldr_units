@@ -301,7 +301,7 @@ defmodule Cldr.Unit.Parser do
   #
   # 1. Replace any aliases
   #
-  # 2. Ignore "square" and "cubic" prefixes, they
+  # 2. Ignore "square", "cubic" and "pown" prefixes, they
   #    are just passed through for later use
   #
   # 3. For each known unit, defined as a key on
@@ -339,6 +339,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, _power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     def split_into_units(<<unquote(prefix) <> "_", rest::binary>>) do
       [unquote(prefix) | split_into_units(rest)]
     end
@@ -394,6 +396,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     defp expand_power_instances([unquote(prefix), unit | rest]) do
       List.duplicate(unit, unquote(power)) ++ expand_power_instances(rest)
     end
@@ -408,7 +412,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   # Reassemble the power units by grouping and
-  # combining with a square or cubic prefix
+  # combining with a square, cubic or pown prefix
   # if there is more than one instance
 
   defp combine_power_instances(units) do
@@ -425,11 +429,7 @@ defmodule Cldr.Unit.Parser do
         "cubic_#{k}"
 
       {k, v} ->
-        raise(
-          Cldr.UnknownUnitError,
-          "Unable to parse more than square and cubic powers. The requested unit " <>
-            "would require a base unit of #{inspect(k)} to the power of #{length(v)}"
-        )
+        "pow#{length(v)}_#{k}"
     end)
   end
 
@@ -442,14 +442,23 @@ defmodule Cldr.Unit.Parser do
   # kilogram is special since its the base unit for mass
   # but also has an SI prefix. We want to keep the original
   # conversion - not calculate it.
+
   defp resolve_base_unit("kilogram" = unit) do
+    hd(Conversions.conversion_for!(unit))
+  end
+
+  defp resolve_base_unit("kilowatt_hour" = unit) do
+    hd(Conversions.conversion_for!(unit))
+  end
+
+  defp resolve_base_unit("kilogram_force" = unit) do
     hd(Conversions.conversion_for!(unit))
   end
 
   for {prefix, scale} <- Prefix.si_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
-        factor = Conversion.mult(conversion.factor, unquote(Macro.escape(scale)))
+        factor = Cldr.Math.mult(conversion.factor, unquote(Macro.escape(scale)))
         {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
@@ -460,7 +469,7 @@ defmodule Cldr.Unit.Parser do
   for {prefix, scale} <- Prefix.binary_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(base_unit) do
-        factor = Conversion.mult(conversion.factor, unquote(Macro.escape(scale)))
+        factor = Cldr.Math.mult(conversion.factor, unquote(Macro.escape(scale)))
         {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
       else
         {:error, {exception, reason}} -> raise(exception, reason)
@@ -469,9 +478,11 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
       with {_, conversion} <- resolve_base_unit(subunit) do
-        factor = Conversion.pow(conversion.factor, unquote(power))
+        factor = Cldr.Math.pow(conversion.factor, unquote(power))
         base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
         {Unit.maybe_translatable_unit(unit), %{conversion | base_unit: base_unit, factor: factor}}
       else
@@ -498,7 +509,7 @@ defmodule Cldr.Unit.Parser do
   defp resolve_base_unit({integer, unit}) do
     {name, unit} = resolve_base_unit(unit)
     name = "#{integer}_#{name}"
-    factor = Conversion.mult(unit.factor, integer)
+    factor = Cldr.Math.mult(unit.factor, integer)
     {name, %{unit | factor: factor}}
   end
 
@@ -525,6 +536,8 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, _power} <- Prefix.power_units() do
+    prefix = to_string(prefix)
+
     defp unit_sort_key({<<unquote(prefix) <> "_", unit::binary>>, conversion}) do
       unit_sort_key({unit, conversion})
     end

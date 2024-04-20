@@ -181,15 +181,15 @@ defmodule Cldr.UnitsTest do
   end
 
   test "create a unit that is directly translatable but has no explicit conversion" do
-    assert {:ok, "1 kilowatt hour"} ==
+    assert {:ok, "1 kilowatt-hour"} ==
              Cldr.Unit.new!(1, :kilowatt_hour) |> Cldr.Unit.Format.to_string()
 
-    assert {:ok, "1 Kilowattstunde"} ==
+    assert {:ok, "1 Kilowatt⋅Stunde"} ==
              Cldr.Unit.new!(1, :kilowatt_hour) |> Cldr.Unit.Format.to_string(locale: "de")
   end
 
   test "that a translatable unit name in binary form gets identified as translatable" do
-    assert {:ok, "1 kilowatt hour"} ==
+    assert {:ok, "1 kilowatt-hour"} ==
              Cldr.Unit.new!(1, "kilowatt_hour") |> Cldr.Unit.Format.to_string()
   end
 

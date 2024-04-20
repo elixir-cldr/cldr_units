@@ -1,5 +1,6 @@
 # Changelog
 
+<<<<<<< HEAD
 ## Cldr_Units v3.16.5
 
 This is the changelog for Cldr_units v3.16.4 released on April 11th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
@@ -7,6 +8,20 @@ This is the changelog for Cldr_units v3.16.4 released on April 11th, 2024.  For 
 ### Bug Fixes
 
 * Fix spec for `Cldr.Unit.display_name/2`. Thanks to @ryotsu for the report. Closes #43.
+
+## Cldr_Units v3.17.0
+
+This is the changelog for Cldr_units v3.17.0 released on April 21st, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes canonical unit name formation. More units can now be resolved to a base unit and therefore compared and converted with other units. The primary change is to add elimination of common factors in "per" units.
+
+### Enhancements
+
+* Add conversion support for Beaufort. This conversion is non linear and therefore cannot be expressed using the normal unit conversion method.
+
+* `Cldr.Unit.Math.mult/2` and `Cldr.Unit.Math.div/2` now support scalar values as the second argument. Its therefore now possible to say `Cldr.Unit.Math.mult(Cldr.Unit.new!(:meter, 10), 2)`.
 
 ## Cldr_Units v3.16.4
 
@@ -30,7 +45,7 @@ This is the changelog for Cldr_units v3.16.2 released on June 15th, 2023.  For o
 
 ### Bug Fixes
 
-* Fix `Cldr.round/1` for float units. Thanks to @doughsay for the report. Closes #38.
+* Fix `Cldr.Unit.round/1` for float units. Thanks to @doughsay for the report. Closes #38.
 
 ## Cldr_Units v3.16.1
 

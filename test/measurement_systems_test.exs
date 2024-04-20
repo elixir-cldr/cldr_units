@@ -24,11 +24,11 @@ defmodule Cldr.Unit.MeasurementSystemTest do
   end
 
   test "Measurement systems for a unit" do
-    assert Cldr.Unit.measurement_systems_for_unit(:hectare) == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit(:liter) == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit("liter") == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit("liter_per_kilometer") == [:metric]
-    assert Cldr.Unit.measurement_systems_for_unit("acre_foot") == [:ussystem, :uksystem]
+    assert Cldr.Unit.measurement_systems_for_unit(:hectare) == [:metric, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit(:liter) == [:metric, :prefixable, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit("liter") == [:metric, :prefixable, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit("liter_per_kilometer") == [:metric, :prefixable, :si_acceptable]
+    assert Cldr.Unit.measurement_systems_for_unit("acre_foot") == [:uksystem, :ussystem]
 
     assert Cldr.Unit.measurement_systems_for_unit(:litdf) ==
              {:error, {Cldr.UnknownUnitError, "The unit :litdf is not known."}}
@@ -43,12 +43,21 @@ defmodule Cldr.Unit.MeasurementSystemTest do
              {:error, {Cldr.UnknownUnitError, "The unit :litdf is not known."}}
   end
 
-  test "All known units resolve measurement systems" do
+  test "All known units (except :unit) resolve measurement systems" do
     errors =
       Cldr.Unit.known_units()
-      |> Enum.map(&Cldr.Unit.measurement_systems_for_unit/1)
+      |> Kernel.--([:unit])
+      |> Enum.map(fn unit ->
+        Cldr.Unit.measurement_systems_for_unit(unit)
+      end)
       |> Enum.filter(fn i -> if is_list(i), do: false, else: true end)
 
     assert errors == []
   end
+
+   test "That measurement systems for :unit returns an error" do
+     assert Cldr.Unit.measurement_systems_for_unit(:unit) ==
+       {:error, {Cldr.Unit.UnknownMeasurementSystemError, "The measurement systems for \"unit\" are not known"}}
+    end
+
 end
