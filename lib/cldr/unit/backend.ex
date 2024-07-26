@@ -74,7 +74,7 @@ defmodule Cldr.Unit.Backend do
           to: Cldr.Unit,
           as: :measurement_system_for_territory
 
-        defdelegate known_units, to: Cldr.Unit
+        defdelegate known_translatable_units, to: Cldr.Unit
         defdelegate known_unit_categories, to: Cldr.Unit
         defdelegate known_styles, to: Cldr.Unit
         defdelegate styles, to: Cldr.Unit, as: :known_styles
@@ -107,14 +107,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+          `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `t:Cldr.Unit` struct
+          the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -195,14 +195,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+          `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `t:Cldr.Unit` struct
+          the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -262,14 +262,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+          `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `t:Cldr.Unit` struct
+          the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -323,14 +323,14 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `list_or_number` is any number (integer, float or Decimal) or a
-          `t:Cldr.Unit` struct or a list of `t:Cldr.Unit` structs
+          `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs
 
         * `options` is a keyword list
 
         ## Options
 
         * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-          the number to be formatted is a `t:Cldr.Unit` struct
+          the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
         * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
           or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -387,7 +387,7 @@ defmodule Cldr.Unit.Backend do
 
         ## Arguments
 
-        * `unit` is any `t:Cldr.Unit` or any
+        * `unit` is any `t:Cldr.Unit.t/0` or any
           unit name returned by `Cldr.Unit.known_units/0`.
 
         * `options` is a keyword list of options.
@@ -502,7 +502,7 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `unit string` is any string to be parsed and if
-          possible used to create a new `t:Cldr.Unit`
+          possible used to create a new `t:Cldr.Unit.t/0`
 
         * `options` is a keyword list of options
 
@@ -640,7 +640,7 @@ defmodule Cldr.Unit.Backend do
         ## Arguments
 
         * `unit string` is any string to be parsed and if
-          possible used to create a new `t:Cldr.Unit`
+          possible used to create a new `t:Cldr.Unit.t/0`
 
         * `options` is a keyword list of options
 

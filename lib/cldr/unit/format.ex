@@ -373,7 +373,10 @@ defmodule Cldr.Unit.Format do
     `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs or a
     `t:Cldr.Unit.Range.t/0` struct.
 
-  * `options` is a keyword list
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module.
+
+  * `options` is a keyword list.
 
   ## Options
 
@@ -381,11 +384,11 @@ defmodule Cldr.Unit.Format do
     the number to be formatted is a `t:Cldr.Unit.t/0` struct
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
 
   * `:style` is one of those returned by `Cldr.Unit.available_styles`.
     The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
+    The default is `style: :long`.
 
   * `:grammatical_case` indicates that a localisation for the given
     locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
@@ -419,6 +422,7 @@ defmodule Cldr.Unit.Format do
   """
   @spec to_iolist(
           Cldr.Unit.value() | Cldr.Unit.t() | Cldr.Unit.Range.t() | [Cldr.Unit.t(), ...],
+          Cldr.backend(),
           Keyword.t() | map()
         ) ::
           {:ok, list()} | {:error, {atom, binary}}
@@ -555,6 +559,9 @@ defmodule Cldr.Unit.Format do
     `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs or a
     `t:Cldr.Unit.Range.t/0` struct.
 
+  * `backend` is any module that includes `use Cldr` and therefore
+    is a `Cldr` backend module.
+
   * `options` is a keyword list
 
   ## Options
@@ -601,6 +608,7 @@ defmodule Cldr.Unit.Format do
   """
   @spec to_iolist!(
           Cldr.Unit.value() | Cldr.Unit.t() | Cldr.Unit.Range.t() | [Cldr.Unit.t(), ...],
+          Cldr.backend(),
           Keyword.t() | map()
         ) ::
           list() | no_return()

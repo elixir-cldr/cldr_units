@@ -198,7 +198,7 @@ defmodule Cldr.Unit do
 
   ## Example
 
-      => Cldr.Unit.known_units
+      => Cldr.Unit.known_translatable_units(:en)
       [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
        :bushel, :byte, :calorie, :carat, :celsius, :centiliter, :centimeter, :century,
        :cubic_centimeter, :cubic_foot, :cubic_inch, :cubic_kilometer, :cubic_meter,
@@ -214,17 +214,43 @@ defmodule Cldr.Unit do
   |> Map.keys()
   |> Kernel.++(Cldr.Unit.Additional.additional_units())
 
-  @units_by_category @unit_tree
-                     |> Map.delete(:compound)
-                     |> Map.delete(:coordinate)
+  @spec known_translatable_units(locale :: Locale.locale_reference(), options :: Keyword.t()) ::
+    [translatable_unit(), ...]
 
-  @spec known_units :: [translatable_unit(), ...]
-  def known_units do
-    @known_units
+  def known_translatable_units(locale \\ Cldr.get_locale(), backend \\ nil) do
+    {locale, backend} = Cldr.locale_and_backend_from(locale, backend)
+
+    with {:ok, locale} <- Cldr.validate_locale(locale, backend) do
+      locale
+      |> units_for(:long, backend)
+      |> Enum.filter(fn {_, translations} -> Map.has_key?(translations, :display_name) end)
+      |> Keyword.keys()
+      |> Kernel.++(Cldr.Unit.Additional.additional_units())
+      |> Enum.sort()
+    end
   end
 
+  @deprecated "Use Cldr.Unit.known_translatable_units/0"
+  defdelegate known_units(), to: __MODULE__, as: :known_translatable_units
+
   @deprecated "Use Cldr.Unit.known_units/0"
-  defdelegate unit(), to: __MODULE__, as: :known_units
+  defdelegate unit(), to: __MODULE__, as: :known_translatable_units
+
+  @doc """
+  Return a list of the known base units.
+
+  All units can be reduced to a base unit and a
+  conversion.
+
+  """
+  @known_base_units @units
+              |> Map.get(:base_units)
+              |> Keyword.values()
+              |> Enum.sort()
+
+  def known_base_units do
+    @known_base_units
+  end
 
   @doc """
   Returns a list of the known unit categories.
@@ -232,57 +258,68 @@ defmodule Cldr.Unit do
   ## Example
 
       iex> Cldr.Unit.known_unit_categories()
-      [:acceleration, :angle, :area, :concentr, :consumption, :digital,
-       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
-       :power, :pressure, :speed, :temperature, :torque, :volume]
+      [:acceleration, :angle, :area, :catalytic_activity, :concentration,
+      :concentration_mass, :consumption, :current_density, :digital, :duration,
+      :electric_capacitance, :electric_charge, :electric_conductance,
+      :electric_current, :electric_inductance, :electric_resistance, :energy, :force,
+      :frequency, :graphics, :illuminance, :ionizing_radiation, :length,
+      :luminous_flux, :luminous_intensity, :magnetic_field_strength, :magnetic_flux,
+      :magnetic_induction, :mass, :mass_density, :mass_fraction, :portion, :power,
+      :pressure, :pressure_per_length, :radioactivity, :resolution, :solid_angle,
+      :specific_volume, :speed, :substance_amount, :temperature, :typewidth, :unit,
+      :voltage, :volume, :wave_number, :year, :year_duration]
 
   """
-  @unit_categories Map.keys(@units_by_category) |> Enum.sort()
+  @unit_categories @units
+        |> Map.get(:base_units)
+        |> Kernel.++(Cldr.Unit.Additional.base_units())
+        |> Keyword.keys()
+        |> Enum.sort()
 
   @spec known_unit_categories :: list(category())
   def known_unit_categories do
     @unit_categories
   end
 
-  @doc """
-  Returns the list of units defined for a given
-  category.
-
-  ## Arguments
-
-  * `category` is any unit category returned by
-    `Cldr.Unit.known_unit_categories/0`.
-
-  See also `Cldr.Unit.known_units_by_category/0`.
-
-  ## Example
-
-      => Cldr.Unit.known_units_for_category :volume
-      {
-        :ok,
-        [
-          :cubic_centimeter,
-          :centiliter,
-          :hectoliter,
-          :cubic_kilometer,
-          :acre_foot,
-          ...
-        ]
-      }
-
-  """
-  @doc since: "3.4.0"
-  @spec known_units_for_category(category()) ::
-          {:ok, [translatable_unit(), ...]} | {:error, {module(), String.t()}}
-
-  def known_units_for_category(category) when category in @unit_categories do
-    units = Map.fetch!(known_units_by_category(), category)
-    {:ok, units}
-  end
-
-  def known_units_for_category(category) do
-    {:error, unit_category_error(category)}
-  end
+  # @doc """
+  # Returns the list of units defined for a given
+  # category.
+  #
+  # ## Arguments
+  #
+  # * `category` is any unit category returned by
+  #   `Cldr.Unit.known_unit_categories/0`.
+  #
+  # See also `Cldr.Unit.known_units_by_category/0`.
+  #
+  # ## Example
+  #
+  #     => Cldr.Unit.known_units_for_category :volume
+  #     {
+  #       :ok,
+  #       [
+  #         :cubic_centimeter,
+  #         :centiliter,
+  #         :hectoliter,
+  #         :cubic_kilometer,
+  #         :acre_foot,
+  #         ...
+  #       ]
+  #     }
+  #
+  # """
+  # @doc since: "3.4.0"
+  # @spec known_units_for_category(category()) ::
+  #         {:ok, [translatable_unit(), ...]} | {:error, {module(), String.t()}}
+  #
+  # def known_units_for_category(category) when category in @unit_categories do
+  #   units = Map.fetch!(known_units_by_category(), category)
+  #   {:ok, units}
+  # end
+  #
+  # def known_units_for_category(category) do
+  #   {:error, unit_category_error(category)}
+  # end
 
   @doc """
   Returns a list of the known grammatical
@@ -676,7 +713,7 @@ defmodule Cldr.Unit do
     The parsed unit must match one of the categories or units in order to
     be valid. This is helpful when disambiguating parsed units. For example,
     parsing "w" could be either `:watt` or `:weeks`. Specifying `only: :duration`
-    would return `:weeks`. Specifying `only: :power` would return `:watt`
+    would return `:weeks`. Specifying `only: :power` would return `:watt`.
 
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
     match the specified unit or category, or unit categories and units.
@@ -773,7 +810,7 @@ defmodule Cldr.Unit do
   # filter for a match. If there is no match its an
   # error. And error could be because the result is
   # ambiguous (multiple results) or because no category
-  # could be derived for a unit
+  # could be derived for a unit.
 
   defp unit_matching_filter(unit, units, only, except) do
     case filter_units(units, only, except) do
@@ -1349,7 +1386,7 @@ defmodule Cldr.Unit do
     new_name =
       new_conversion
       |> Cldr.Unit.Parser.canonical_unit_name()
-      |> maybe_translatable_unit()
+      # |> maybe_translatable_unit()
 
     %{new_unit | unit: new_name}
   end
@@ -2517,7 +2554,7 @@ defmodule Cldr.Unit do
   def validate_unit(unit_name) when is_binary(unit_name) do
     unit_name
     |> normalize_unit_name()
-    |> maybe_translatable_unit()
+    # |> maybe_translatable_unit()
     |> parse_unit()
   end
 
@@ -2538,7 +2575,7 @@ defmodule Cldr.Unit do
       name =
         parsed
         |> Parser.canonical_unit_name()
-        |> maybe_translatable_unit()
+        # |> maybe_translatable_unit()
 
       if Cldr.Unit.BaseUnit.canonical_base_unit!(parsed) do
         {:ok, name, parsed}
