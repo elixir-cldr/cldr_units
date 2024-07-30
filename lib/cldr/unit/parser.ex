@@ -347,7 +347,7 @@ defmodule Cldr.Unit.Parser do
   end
 
   for {prefix, _scale} <- Prefix.si_factors() do
-    def split_into_units(<<unquote(prefix), rest::binary>>) do
+    def split_into_units(<<unquote(prefix), rest::binary>>) when byte_size(rest) > 0 do
       [head | rest] = split_into_units(rest)
       [unquote(prefix) <> head | rest]
     end
