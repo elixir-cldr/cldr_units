@@ -251,6 +251,11 @@ defmodule Cldr.UnitsTest do
               {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
   end
 
+  test "validate unit does not break for SI prefixes only" do
+    assert Cldr.Unit.validate_unit("milli") ==
+             {:error, {Cldr.UnknownUnitError, "Unknown unit was detected at \"milli\""}}
+  end
+
   test "Unit of 1 retrieves a default pattern is plural category pattern does not exist" do
     unit = Cldr.Unit.new!(1, :pascal)
     assert Cldr.Unit.to_string(unit, locale: "de", style: :short) == {:ok, "1 Pa"}
