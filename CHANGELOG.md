@@ -1,5 +1,13 @@
 # Changelog
 
+## Cldr_Units v3.17.1
+
+This is the changelog for Cldr_units v3.17.1 released on July 30th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix parsing prefixes that have no unit. Thanks to @maltoe for the report, the patience and the PR. Closes #47.
+
 ## Cldr_Units v3.17.0
 
 This is the changelog for Cldr_units v3.17.0 released on April 21st, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
