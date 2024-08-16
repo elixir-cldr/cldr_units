@@ -1,13 +1,13 @@
 defmodule Cldr.Units.Mixfile do
   use Mix.Project
 
-  @version "3.17.1"
+  @version "3.17.2"
 
   def project do
     [
       app: :ex_cldr_units,
       version: @version,
-      elixir: "~> 1.11",
+      elixir: "~> 1.12",
       name: "Cldr Units",
       source_url: "https://github.com/elixir-cldr/cldr_units",
       description: description(),
@@ -19,7 +19,14 @@ defmodule Cldr.Units.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore_warnings",
-        plt_add_apps: ~w(inets jason mix)a
+        plt_add_apps: ~w(inets jason mix)a,
+        flags: [
+          :error_handling,
+          :unknown,
+          :underspecs,
+          :extra_return,
+          :missing_return
+        ]
       ]
     ]
   end

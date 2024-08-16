@@ -1,5 +1,15 @@
 # Changelog
 
+**Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
+
+## Cldr_Units v3.17.2
+
+This is the changelog for Cldr_units v3.17.2 released on August 16th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix specs to suport dialyzer flags `:error_handling, :unknown, :underspecs, :extra_return, :missing_return`
+
 ## Cldr_Units v3.17.1
 
 This is the changelog for Cldr_units v3.17.1 released on July 30th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

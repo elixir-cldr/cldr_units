@@ -122,7 +122,7 @@ defmodule Cldr.Unit do
   # Converts a list of atoms into a typespec
   type = &Enum.reduce(&1, fn x, acc -> {:|, [], [x, acc]} end)
 
-  @type translatable_unit :: atom() | list(atom())
+  @type translatable_unit :: atom()
   @type unit :: translatable_unit | String.t()
   @type category :: atom()
   @type usage :: atom()
@@ -177,6 +177,8 @@ defmodule Cldr.Unit do
        }
 
   """
+  @dialyzer {:nowarn_function, known_units_by_category: 0}
+
   @units_by_category @unit_tree
                      |> Map.delete(:compound)
                      |> Map.delete(:coordinate)
@@ -238,7 +240,7 @@ defmodule Cldr.Unit do
   """
   @unit_categories Map.keys(@units_by_category) |> Enum.sort()
 
-  @spec known_unit_categories :: list(category())
+  @spec known_unit_categories :: [category(), ...]
   def known_unit_categories do
     @unit_categories
   end
@@ -1490,7 +1492,7 @@ defmodule Cldr.Unit do
   details.
 
   """
-  @spec localize(t()) :: [t(), ...]
+  @spec localize(t()) :: [t(), ...] | {:error, {module(), String.t()}}
   def localize(%Unit{} = unit) do
     locale = Cldr.get_locale()
     backend = locale.backend
@@ -1542,7 +1544,7 @@ defmodule Cldr.Unit do
       ]
 
   """
-  @spec localize(t(), Cldr.backend(), Keyword.t()) :: [t(), ...]
+  @spec localize(t(), Cldr.backend(), Keyword.t()) :: [t(), ...] | {:error, {module(), String.t()}}
   def localize(unit, backend, options \\ [])
 
   def localize(%Unit{} = unit, options, []) when is_list(options) do
@@ -1879,7 +1881,7 @@ defmodule Cldr.Unit do
       [:astronomical, :jpsystem, :metric, :metric_adjacent, :person_age, :prefixable, :si, :si_acceptable, :uksystem, :ussystem]
 
   """
-  @spec known_measurement_systems() :: list(measurement_system())
+  @spec known_measurement_systems() :: [measurement_system(), ...]
   def known_measurement_systems do
     @system_names
   end
@@ -2101,7 +2103,7 @@ defmodule Cldr.Unit do
                           |> Enum.map(fn {k, v} -> {Kernel.to_string(v), k} end)
                           |> Map.new()
 
-  @spec base_unit_category_map :: map()
+  @spec base_unit_category_map :: %{String.t() => category( )}
   def base_unit_category_map do
     @base_unit_category_map
   end
@@ -2262,6 +2264,7 @@ defmodule Cldr.Unit do
       :long
 
   """
+  @dialyzer {:nowarn_function, default_style: 0}
   @spec default_style :: style()
   def default_style do
     @default_style

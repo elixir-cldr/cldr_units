@@ -22,7 +22,7 @@ defmodule Cldr.Unit.Range do
   as the first unit.
 
   """
-  @type t :: %{first: Cldr.Unit.t(), last: Cldr.Unit.t()}
+  @type t :: %__MODULE__{first: Cldr.Unit.t(), last: Cldr.Unit.t()}
 
   @doc """
   Returns a new Cldr.Unit.Range.

@@ -432,7 +432,7 @@ defmodule Cldr.Unit.Backend do
         details.
 
         """
-        @spec localize(Cldr.Unit.t()) :: [Cldr.Unit.t(), ...]
+        @spec localize(Cldr.Unit.t()) :: [Cldr.Unit.t(), ...] | {:error, {module, String.t()}}
         def localize(%Cldr.Unit{} = unit) do
           Cldr.Unit.localize(unit)
         end
@@ -479,7 +479,9 @@ defmodule Cldr.Unit.Backend do
             ]
 
         """
-        @spec localize(Cldr.Unit.t(), Keyword.t()) :: [Cldr.Unit.t(), ...]
+        @spec localize(Cldr.Unit.t(), Keyword.t()) ::
+            [Cldr.Unit.t(), ...] | {:error, {module, String.t()}}
+
         def localize(unit, options \\ []) do
           Cldr.Unit.localize(unit, unquote(backend), options)
         end
@@ -829,7 +831,7 @@ defmodule Cldr.Unit.Backend do
 
         """
         @spec preferred_units(Cldr.Unit.t(), Keyword.t()) ::
-                {:ok, String.t()} | {:error, {module, binary}}
+                {:ok, [atom(), ...], Keyword.t()} | {:error, {module, binary}}
 
         def preferred_units(unit, options \\ []) do
           Cldr.Unit.Preference.preferred_units(unit, unquote(backend), options)
