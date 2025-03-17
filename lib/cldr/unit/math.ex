@@ -1,8 +1,6 @@
 defmodule Cldr.Unit.Math do
-  @moduledoc """
-  Simple arithmetic functions for the `t.Cldr.Unit.t/0` type.
+  @moduledoc false
 
-  """
   alias Cldr.Unit
   alias Cldr.Unit.Parser
   alias Cldr.Unit.Conversion

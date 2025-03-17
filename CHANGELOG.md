@@ -2,6 +2,16 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.18.0
+
+This is the changelog for Cldr_units v3.18.0 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+### Enhancements / Changes
+
+* The module `Cldr.Unit.Math` is now marked `@moduledoc false`. The implementation of basic math is incorrect in many cases and misleading in others. The entire math of units will be rewritten during 2025.
+
 ## Cldr_Units v3.17.2
 
 This is the changelog for Cldr_units v3.17.2 released on August 16th, 2024.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
