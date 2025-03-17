@@ -173,8 +173,13 @@ defmodule Cldr.Unit.Conversion do
   end
 
   # Special handling for Beaufort
+  defp convert_to_base(%Decimal{} = value, {_, %__MODULE__{special: :beaufort}} = unit) do
+    value = Decimal.to_float(value)
+    convert_to_base(value, unit)
+  end
+
   defp convert_to_base(value, {_, %__MODULE__{special: :beaufort}}) do
-    mult(0.836, pow(value, 1.5))
+    mult(0.836, :math.pow(value, 1.5))
   end
 
   # All conversions are ultimately a list of
@@ -299,7 +304,7 @@ defmodule Cldr.Unit.Conversion do
 
   ## Returns
 
-  * `unit` converted to its base unit as a `t:Unit.t()` or
+  * `unit` converted to its base unit as a `t:Unit.t/0` or
 
   * `{;error, {exception, reason}}` as an error
 
@@ -341,7 +346,7 @@ defmodule Cldr.Unit.Conversion do
 
   ## Returns
 
-  * `unit` converted to its base unit as a `t:Unit.t()` or
+  * `unit` converted to its base unit as a `t:Unit.t/0` or
 
   * raises an exception
 

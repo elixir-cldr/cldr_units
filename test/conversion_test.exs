@@ -3,7 +3,9 @@ defmodule Cldr.Unit.Conversion.Test do
 
   alias Cldr.Unit.Test.ConversionData
 
-  for t <- ConversionData.conversions() do
+  @unsupported_unit [155]
+
+  for t <- ConversionData.conversions(), t.line not in @unsupported_unit do
     test "##{t.line} that #{t.from} is convertible to #{t.to}" do
       {:ok, from} = Cldr.Unit.BaseUnit.canonical_base_unit(unquote(t.from))
       {:ok, to} = Cldr.Unit.BaseUnit.canonical_base_unit(unquote(t.to))
@@ -14,9 +16,11 @@ defmodule Cldr.Unit.Conversion.Test do
   # Test 185 is a Beaufort conversion. That needs special handling we
   # don't have yet. And the test case data is unexpected.
 
-  @just_outside_tolerance [185]
+  @just_outside_tolerance [187]
+  @unsupported_unit [155]
+  @dont_test @just_outside_tolerance ++ @unsupported_unit
 
-  for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance do
+  for t <- ConversionData.conversions(), t.line not in @dont_test do
     test "##{t.line} [Float] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
       unit = Cldr.Unit.new!(unquote(t.from), 1000)
       {expected_result, round_digits, round_significant} = unquote(Macro.escape(t.result))
@@ -35,10 +39,12 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  @just_outside_tolerance_decimal [185]
+  @just_outside_tolerance_decimal [187]
+  @unsupported_unit_decimal [155]
+  @dont_test_decimal @just_outside_tolerance_decimal ++ @unsupported_unit_decimal
 
   @one_thousand Decimal.new(1000)
-  for t <- ConversionData.conversions(), t.line not in @just_outside_tolerance_decimal do
+  for t <- ConversionData.conversions(), t.line not in @dont_test_decimal do
     test "##{t.line} [Decimal] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
       unit = Cldr.Unit.new!(unquote(t.from), @one_thousand)
       {expected_result, round_digits, round_significant} = unquote(Macro.escape(t.result))

@@ -141,12 +141,12 @@ defmodule Cldr.UnitsTest do
 
   test "to_string for a pattern with no substitutions when the unit value is 0, 1 or 2" do
     unit = Cldr.Unit.new!(1, :hour)
-    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "שעה"}
+    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "1 שעה"}
     assert Cldr.Unit.to_string(unit, locale: "ar") == {:ok, "ساعة"}
 
     unit = Cldr.Unit.new!(-1, :hour)
-    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "‎-1 שעות"}
-    assert Cldr.Unit.to_string(unit, locale: "ar") == {:ok, "؜-١ ساعة"}
+    assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "\u200E-1 שעה"}
+    assert Cldr.Unit.to_string(unit, locale: "ar") == {:ok, "\u200E-1 ساعة"}
 
     unit = Cldr.Unit.new!(3, :hour)
     assert Cldr.Unit.to_string(unit, locale: "he") == {:ok, "3 שעות"}

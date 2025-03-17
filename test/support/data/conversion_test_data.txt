@@ -222,10 +222,10 @@ volume	;	cup	;	cubic-meter	;	0.0002365882365 * x	;	0.2365882
 volume	;	cup-metric	;	cubic-meter	;	0.00025 * x	;	0.25
 volume	;	pint	;	cubic-meter	;	0.000473176473 * x	;	0.4731765
 volume	;	pint-metric	;	cubic-meter	;	0.0005 * x	;	0.5
-volume	;	pint-imperial	;	cubic-meter	;	0.00056826125 * x	;	0.5682612
+volume	;	pint-imperial	;	cubic-meter	;	0.00056826125 * x	;	0.568261
 volume	;	quart	;	cubic-meter	;	0.000946352946 * x	;	0.9463529
 volume	;	liter	;	cubic-meter	;	0.001 * x	;	1.0
-volume	;	quart-imperial	;	cubic-meter	;	0.0011365225 * x	;	1.136522
+volume	;	quart-imperial	;	cubic-meter	;	0.0011365225 * x	;	1.13652
 volume	;	gallon	;	cubic-meter	;	0.003785411784 * x	;	3.785412
 volume	;	gallon-imperial	;	cubic-meter	;	0.00454609 * x	;	4.54609
 volume	;	to-jp	;	cubic-meter	;	24.01/1331 * x	;	18.03907

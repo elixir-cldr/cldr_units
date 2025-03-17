@@ -301,7 +301,7 @@ defmodule Cldr.Unit.Parser do
   #
   # 1. Replace any aliases
   #
-  # 2. Ignore "square", "cubic" and "pown" prefixes, they
+  # 2. Ignore "square", "cubic" and "pow-n" prefixes, they
   #    are just passed through for later use
   #
   # 3. For each known unit, defined as a key on
