@@ -50,7 +50,6 @@ defmodule Cldr.Units.Mixfile do
       # {:ex_cldr_numbers, "~> 2.34.0"},
 
       {:cldr_utils, "~> 2.25"},
-
       {:ex_cldr_lists, "~> 2.10"},
 
       {:decimal, "~> 1.6 or ~> 2.0"},

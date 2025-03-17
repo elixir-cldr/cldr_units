@@ -20,7 +20,22 @@ defmodule Cldr.Unit.Format do
 
   @typep grammar_list :: [grammar, ...]
 
-  @known_units Cldr.Unit.known_units()
+  @additional_known_units [
+    :kilojoule,
+    :kilometer,
+    :kilobyte,
+    :kilowatt,
+    :kilopascal,
+    :kilometer_per_hour,
+    :kilohertz,
+    :kilogram,
+    :kilowatt_hour,
+    :kilocalorie,
+    :kilobit,
+    :kilowatt_hour_per_100_kilometer
+  ]
+
+  @known_units Enum.uniq(Cldr.Unit.known_units() ++ @additional_known_units)
   @si_keys Cldr.Unit.Prefix.si_keys()
   @binary_keys Cldr.Unit.Prefix.binary_keys()
   @power_keys Cldr.Unit.Prefix.power_keys()
@@ -460,15 +475,19 @@ defmodule Cldr.Unit.Format do
   end
 
   # Its a compound unit
-  def to_iolist(%Cldr.Unit{} = unit, backend, options) do
-    with {:ok, options} <- normalize_options(backend, options) do
-      options = extract_options!(unit, options)
-      grammar = grammar(unit, locale: options.locale, backend: options.backend)
+  def to_iolist(%Cldr.Unit{unit: name} = unit, backend, options) do
+    if atom_name = known_unit(name) do
+      to_iolist(%{unit | unit: atom_name}, backend, options)
+    else
+      with {:ok, options} <- normalize_options(backend, options) do
+        options = extract_options!(unit, options)
+        grammar = grammar(unit, locale: options.locale, backend: options.backend)
 
-      formatted_number = format_number!(unit, options)
+        formatted_number = format_number!(unit, options)
 
-      to_iolist(unit, grammar, formatted_number, options)
-      |> wrap(:ok)
+        to_iolist(unit, grammar, formatted_number, options)
+        |> wrap(:ok)
+      end
     end
   end
 
@@ -1301,4 +1320,15 @@ defmodule Cldr.Unit.Format do
 
   defp maybe_wrap(list) when is_list(list), do: list
   defp maybe_wrap(elem), do: [elem]
+
+  defp known_unit(name) do
+    atom_name = String.to_existing_atom(name)
+    if atom_name in @known_units do
+      atom_name
+    else
+      nil
+    end
+  rescue ArgumentError ->
+    nil
+  end
 end
