@@ -193,7 +193,8 @@ defmodule Cldr.Unit.Math do
       Cldr.Unit.new!(:pint, 5)
 
   """
-  @spec mult(Unit.t(), Unit.t()) :: Unit.t()
+  @spec mult(Unit.t(), Unit.t()) ::
+      Unit.t() | {:error, {module(), String.t()}}
 
   def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.mult(value_1, value_2))
@@ -243,7 +244,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception.
 
   """
-  @spec mult!(Unit.t(), Unit.t()) :: Unit.t()
+  @spec mult!(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
   def mult!(unit_1, unit_2) do
     mult(unit_1, unit_2)
@@ -281,7 +282,8 @@ defmodule Cldr.Unit.Math do
       Cldr.Unit.new!(:pint, 5)
 
   """
-  @spec div(Unit.t(), Unit.t()) :: Unit.t()
+  @spec div(Unit.t(), Unit.t()) ::
+      Unit.t() | {:error, {module(), String.t()}}
 
   def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.div(value_1, value_2))
@@ -329,7 +331,7 @@ defmodule Cldr.Unit.Math do
   * Raises an exception.
 
   """
-  @spec div!(Unit.t(), Unit.t()) :: Unit.t()
+  @spec div!(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
 
   def div!(unit_1, unit_2) do
     div(unit_1, unit_2)
