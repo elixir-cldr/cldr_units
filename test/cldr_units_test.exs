@@ -245,10 +245,6 @@ defmodule Cldr.UnitsTest do
 
     assert Cldr.Unit.display_name(:invalid, locale: "fr", style: :short) ==
              {:error, {Cldr.UnknownUnitError, "The unit :invalid is not known."}}
-
-    assert Cldr.Unit.display_name("milliliter", locale: "fr", style: :short) ==
-             {:error,
-              {Cldr.Unit.UnitNotTranslatableError, "The unit \"milliliter\" is not translatable"}}
   end
 
   test "validate unit does not break for SI prefixes only" do
@@ -328,5 +324,12 @@ defmodule Cldr.UnitsTest do
   test "That milligram_ofglucose_per_deciliter formats without error" do
     unit = Cldr.Unit.new!("milligram_ofglucose_per_deciliter", "120.5")
     assert "120.5 mg/dL" ==  Cldr.Unit.to_string!(unit, style: :short)
+  end
+
+  test "That display names format for prefixed but atomic units" do
+    assert "millimeters" == MyApp.Cldr.Unit.display_name("millimeter", style: :long)
+    assert "milliliters" == MyApp.Cldr.Unit.display_name("milliliter", style: :long)
+    assert "millibars" == MyApp.Cldr.Unit.display_name("millibar", style: :long)
+    assert "millimeters of mercury" ==  MyApp.Cldr.Unit.display_name("millimeter_ofhg", style: :long)
   end
 end

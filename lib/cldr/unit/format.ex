@@ -20,26 +20,9 @@ defmodule Cldr.Unit.Format do
 
   @typep grammar_list :: [grammar, ...]
 
-  @additional_known_units [
-    :kilojoule,
-    :kilometer,
-    :kilobyte,
-    :kilowatt,
-    :kilopascal,
-    :kilometer_per_hour,
-    :kilohertz,
-    :kilogram,
-    :kilowatt_hour,
-    :kilocalorie,
-    :kilobit,
-    :kilowatt_hour_per_100_kilometer,
-    :milligram_ofglucose_per_deciliter,
-    :millimole_per_liter,
-    :nanometer,
-    :nanosecond
-  ]
 
-  @known_units Enum.uniq(Cldr.Unit.known_units() ++ @additional_known_units)
+
+  @known_units Cldr.Unit.known_units()
   @si_keys Cldr.Unit.Prefix.si_keys()
   @binary_keys Cldr.Unit.Prefix.binary_keys()
   @power_keys Cldr.Unit.Prefix.power_keys()
@@ -1324,7 +1307,8 @@ defmodule Cldr.Unit.Format do
   defp maybe_wrap(list) when is_list(list), do: list
   defp maybe_wrap(elem), do: [elem]
 
-  defp known_unit(name) do
+  @doc false
+  def known_unit(name) do
     atom_name = String.to_existing_atom(name)
     if atom_name in @known_units do
       atom_name

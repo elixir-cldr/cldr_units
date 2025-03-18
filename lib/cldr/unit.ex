@@ -211,9 +211,41 @@ defmodule Cldr.Unit do
        :hour, :inch, ...]
 
   """
+
+  @additional_known_units [
+    :kilojoule,
+    :kilometer,
+    :kilobyte,
+    :kilowatt,
+    :kilopascal,
+    :kilometer_per_hour,
+    :kilohertz,
+    :kilogram,
+    :kilowatt_hour,
+    :kilocalorie,
+    :kilobit,
+    :kilowatt_hour_per_100_kilometer,
+    :milligram_ofglucose_per_deciliter,
+    :millimole_per_liter,
+    :nanometer,
+    :nanosecond,
+    :millimeter,
+    :milliampere,
+    :milliwatt,
+    :milliliter,
+    :millisecond,
+    :milligram,
+    :millimeter_ofhg,
+    :millimeter,
+    :millibar
+  ]
+
   @known_units Cldr.Unit.Conversions.conversions()
   |> Map.keys()
   |> Kernel.++(Cldr.Unit.Additional.additional_units())
+  |> Kernel.++(@additional_known_units)
+  |> Enum.uniq()
+  |> Enum.sort()
 
   @units_by_category @unit_tree
                      |> Map.delete(:compound)
@@ -1621,11 +1653,14 @@ defmodule Cldr.Unit do
     end
   end
 
-  def display_name(unit, _options) do
-    if match?({:ok, _unit, _conversion}, validate_unit(unit)) do
-      {:error, unit_not_translatable_error(unit)}
-    else
-      {:error, unit_error(unit)}
+  def display_name(unit, options) do
+    cond do
+      atom_name = Cldr.Unit.Format.known_unit(unit) ->
+        display_name(atom_name, options)
+      match?({:ok, _unit, _conversion}, validate_unit(unit)) ->
+        {:error, unit_not_translatable_error(unit)}
+      true ->
+        {:error, unit_error(unit)}
     end
   end
 
