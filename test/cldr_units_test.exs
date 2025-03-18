@@ -324,4 +324,9 @@ defmodule Cldr.UnitsTest do
     assert %Decimal{} = Cldr.Unit.div(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
     assert %Decimal{} = Cldr.Unit.div(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
   end
+
+  test "That milligram_ofglucose_per_deciliter formats without error" do
+    unit = Cldr.Unit.new!("milligram_ofglucose_per_deciliter", "120.5")
+    assert "120.5 mg/dL" ==  Cldr.Unit.to_string!(unit, style: :short)
+  end
 end

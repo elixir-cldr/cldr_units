@@ -10,6 +10,8 @@ This is the changelog for Cldr_units v3.18.0 released on ______, 2025.  For olde
 
 * Fix `Cldr.Unit.to_string/2` for units that have an SI prefix but have translations for the full unit, like "kilojoule". Thanks for the issue (and considerable patience) to @fekle. Closes #48.
 
+* Fix `Cldr.Unit.to_string/2` for additional units such as `milligram_ofglucose_per_deciliter`, `millimole_per_liter`, `nanometer` and `nanosecond`. Thanks to @Awlexus for the report and considerable patience. Closes #45.
+
 * Fix math operations to return a Decimal type if either of the operations have a Decimal value. Thanks to @glorieux for even more patience. Closes #49.
 
 ### Enhancements / Changes

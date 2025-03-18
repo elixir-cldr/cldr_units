@@ -32,7 +32,11 @@ defmodule Cldr.Unit.Format do
     :kilowatt_hour,
     :kilocalorie,
     :kilobit,
-    :kilowatt_hour_per_100_kilometer
+    :kilowatt_hour_per_100_kilometer,
+    :milligram_ofglucose_per_deciliter,
+    :millimole_per_liter,
+    :nanometer,
+    :nanosecond
   ]
 
   @known_units Enum.uniq(Cldr.Unit.known_units() ++ @additional_known_units)
@@ -482,7 +486,6 @@ defmodule Cldr.Unit.Format do
       with {:ok, options} <- normalize_options(backend, options) do
         options = extract_options!(unit, options)
         grammar = grammar(unit, locale: options.locale, backend: options.backend)
-
         formatted_number = format_number!(unit, options)
 
         to_iolist(unit, grammar, formatted_number, options)
