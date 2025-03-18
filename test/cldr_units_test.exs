@@ -298,4 +298,9 @@ defmodule Cldr.UnitsTest do
                  "The unit %{:unit => \"kilogram\", \"value\" => 1} is not known."}}
            )
   end
+
+  test "That kiljoules short form is directly translated to kJ" do
+    assert "32 kJ" == Cldr.Unit.to_string!(Cldr.Unit.new!(32, :kilojoule), locale: "de", style: :short)
+    assert "32 kJ" == Cldr.Unit.to_string!(32, unit: :kilojoule, locale: "de", style: :short)
+  end
 end
