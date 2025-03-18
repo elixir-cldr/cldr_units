@@ -51,11 +51,13 @@ defmodule Cldr.Unit.Math do
 
   def add(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: value_2}) do
     %{unit_1 | value: Conversion.add(value_1, value_2)}
+    |> maybe_adjust_value_type(value_1, value_2)
   end
 
   def add(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       add(unit_1, Conversion.convert!(unit_2, unit_category_1))
+      |> maybe_adjust_value_type(unit_1.value, unit_2.value)
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -120,11 +122,13 @@ defmodule Cldr.Unit.Math do
 
   def sub(%Unit{unit: unit, value: value_1} = unit_1, %Unit{unit: unit, value: value_2}) do
     %{unit_1 | value: Conversion.sub(value_1, value_2)}
+    |> maybe_adjust_value_type(value_1, value_2)
   end
 
   def sub(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       sub(unit_1, Conversion.convert!(unit_2, unit_category_1))
+      |> maybe_adjust_value_type(unit_1.value, unit_2.value)
     else
       {:error, incompatible_units_error(unit_1, unit_2)}
     end
@@ -193,20 +197,24 @@ defmodule Cldr.Unit.Math do
 
   def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.mult(value_1, value_2))
+    |> maybe_adjust_value_type(value_1, value_2)
   end
 
   def mult(%Unit{value: value} = unit, number) when is_number(number) do
     %{unit | value: Conversion.mult(value, number)}
+    |> maybe_adjust_value_type(unit.value, number)
   end
 
   def mult(%Unit{value: value} = unit, %Decimal{} = number) do
     %{unit | value: Conversion.mult(value, number)}
+    |> maybe_adjust_value_type(unit.value, number)
   end
 
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       {:ok, converted} = Conversion.convert(unit_2, unit_category_1)
       mult(unit_1, converted)
+      |> maybe_adjust_value_type(unit_1.value, unit_2.value)
     else
       product(unit_1, unit_2)
     end
@@ -277,19 +285,23 @@ defmodule Cldr.Unit.Math do
 
   def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.div(value_1, value_2))
+    |> maybe_adjust_value_type(value_1, value_2)
   end
 
   def div(%Unit{value: value} = unit, number) when is_number(number) do
     %{unit | value: Conversion.div(value, number)}
+    |> maybe_adjust_value_type(unit.value, number)
   end
 
   def div(%Unit{value: value} = unit, %Decimal{} = number) do
     %{unit | value: Conversion.div(value, number)}
+    |> maybe_adjust_value_type(unit.value, number)
   end
 
   def div(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       div(unit_1, Conversion.convert!(unit_2, unit_category_1))
+      |> maybe_adjust_value_type(unit_1.value, unit_2.value)
     else
       product(unit_1, invert(unit_2))
     end
@@ -630,5 +642,21 @@ defmodule Cldr.Unit.Math do
 
   defp combine_power_instances(other) do
     other
+  end
+
+  defp maybe_adjust_value_type(unit, v1, v2) when is_integer(v1) and is_integer(v2) do
+    %{unit | value: Cldr.Math.maybe_integer(unit.value)}
+  end
+
+  defp maybe_adjust_value_type(unit, %Decimal{} = _v1, _v2) do
+    %{unit | value: Decimal.new(unit.value)}
+  end
+
+  defp maybe_adjust_value_type(unit, _v1, %Decimal{} = _v2) do
+    %{unit | value: Decimal.new(unit.value)}
+  end
+
+  defp maybe_adjust_value_type(unit, _v1, _v2) do
+    unit
   end
 end

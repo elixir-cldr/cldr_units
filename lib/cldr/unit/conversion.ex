@@ -379,4 +379,5 @@ defmodule Cldr.Unit.Conversion do
 
   @doc false
   def pow(v1, v2), do: Cldr.Math.pow(v1, v2) |> Cldr.Math.maybe_integer()
+
 end

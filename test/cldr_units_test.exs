@@ -303,4 +303,25 @@ defmodule Cldr.UnitsTest do
     assert "32 kJ" == Cldr.Unit.to_string!(Cldr.Unit.new!(32, :kilojoule), locale: "de", style: :short)
     assert "32 kJ" == Cldr.Unit.to_string!(32, unit: :kilojoule, locale: "de", style: :short)
   end
+
+  test "That Unit math returns a unit with a decimal value if either operand is decimal" do
+    a = Cldr.Unit.new!(:unit, Decimal.new(42))
+    b = Cldr.Unit.new!(:unit, Decimal.new(2))
+
+    assert %Decimal{} = Cldr.Unit.add(a, b) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.add(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.add(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
+
+    assert %Decimal{} = Cldr.Unit.sub(a, b) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.sub(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.sub(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
+
+    assert %Decimal{} = Cldr.Unit.mult(a, b) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.mult(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.mult(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
+
+    assert %Decimal{} = Cldr.Unit.div(a, b) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.div(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.div(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
+  end
 end
