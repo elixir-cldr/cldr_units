@@ -254,7 +254,7 @@ defmodule Cldr.Unit.Preference do
                    {use, chain}
                  end)
                end)
-               |> List.flatten()
+               |> Elixir.List.flatten()
                |> Map.new()
 
   defp usage_chain do
