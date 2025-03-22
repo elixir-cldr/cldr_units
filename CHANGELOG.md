@@ -2,6 +2,33 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.18.1
+
+This is the changelog for Cldr_units v3.18.1 released on March 22nd, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix compilation failures related to compile-time nested alias issues. Thanks to @TimisRobert for the issues. Closes [ex_cldr #256](https://github.com/elixir-cldr/cldr/issues/256).
+
+* Fix `Cldr.Unit.to_string/2` output for additional SI-prefixed units that have atomic translations. Relates to #48. The additions are:
+```elixir
+:megabit,
+:megabyte,
+:megapixel,
+:megawatt,
+:megapascal,
+:megaliter,
+:megahertz,
+:megabit,
+:gigahertz,
+:gigabit,
+:gigabyte,
+:gigawatt,
+:terabit,
+:terabyte,
+:petabyte
+```
+
 ## Cldr_Units v3.18.0
 
 This is the changelog for Cldr_units v3.18.0 released on March 18th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
