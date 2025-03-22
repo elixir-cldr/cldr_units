@@ -332,4 +332,11 @@ defmodule Cldr.UnitsTest do
     assert "millibars" == MyApp.Cldr.Unit.display_name("millibar", style: :long)
     assert "millimeters of mercury" ==  MyApp.Cldr.Unit.display_name("millimeter_ofhg", style: :long)
   end
+
+  test "to_string digital units with SI prefix" do
+    assert "1 MB" == Cldr.Unit.to_string!(1, unit: :megabyte, locale: :de, style: :narrow)
+    assert "1MB" == Cldr.Unit.to_string!(1, unit: :megabyte, locale: :en, style: :narrow)
+    assert "6Mb" == Cldr.Unit.to_string!(6, unit: :megabit, locale: :en, style: :narrow)
+    assert "5kB" == Cldr.Unit.to_string!(5, unit: :kilobyte, locale: :en, style: :narrow)
+  end
 end

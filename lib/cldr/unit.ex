@@ -237,7 +237,22 @@ defmodule Cldr.Unit do
     :milligram,
     :millimeter_ofhg,
     :millimeter,
-    :millibar
+    :millibar,
+    :megabit,
+    :megabyte,
+    :megapixel,
+    :megawatt,
+    :megapascal,
+    :megaliter,
+    :megahertz,
+    :megabit,
+    :gigahertz,
+    :gigabit,
+    :gigabyte,
+    :gigawatt,
+    :terabit,
+    :terabyte,
+    :petabyte
   ]
 
   @known_units Cldr.Unit.Conversions.conversions()
@@ -1174,7 +1189,7 @@ defmodule Cldr.Unit do
       {:ok, "1,234 megahertz"}
 
       iex> Cldr.Unit.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
-      {:ok, "1,234Mhz"}
+      {:ok, "1,234MHz"}
 
       iex> unit = Cldr.Unit.new!(123, :foot)
       iex> Cldr.Unit.to_string unit, MyApp.Cldr

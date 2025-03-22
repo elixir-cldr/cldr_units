@@ -130,7 +130,7 @@ defmodule Cldr.Unit.Format do
       {:ok, "1,234 megahertz"}
 
       iex> Cldr.Unit.Format.to_string Cldr.Unit.new!(:megahertz, 1234), MyApp.Cldr, style: :narrow
-      {:ok, "1,234Mhz"}
+      {:ok, "1,234MHz"}
 
       iex> {:ok, range} = Cldr.Unit.Range.new(Cldr.Unit.new!(:gram, 1), Cldr.Unit.new!(:gram, 5))
       iex> Cldr.Unit.to_string(range, locale: :ja)
