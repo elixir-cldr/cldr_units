@@ -1696,7 +1696,7 @@ defmodule Cldr.Unit do
 
   """
   def zero(%Unit{value: _value} = unit) do
-    %Unit{unit | value: 0}
+    %{unit | value: 0}
   end
 
   @doc """

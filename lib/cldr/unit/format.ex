@@ -941,25 +941,26 @@ defmodule Cldr.Unit.Format do
   ## Merge SI prefixes
   ##
 
-  @merge_SI_prefix ~r/([^\s]+)$/u
+  @merge_SI_prefix "([^\\s]+)$"
+
   defp merge_prefix([prefix, place], [place, string]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
-    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
+    [place, String.replace(string, ~r/#{@merge_SI_prefix}/u, "#{prefix}\\1")]
   end
 
   defp merge_prefix([prefix, place], [string, place]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
-    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
+    [String.replace(string, ~r/#{@merge_SI_prefix}/u, "#{prefix}\\1"), place]
   end
 
   defp merge_prefix([place, prefix], [place, string]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
-    [place, String.replace(string, @merge_SI_prefix, "#{prefix}\\1")]
+    [place, String.replace(string, ~r/#{@merge_SI_prefix}/u, "#{prefix}\\1")]
   end
 
   defp merge_prefix([place, prefix], [string, place]) when is_integer(place) do
     string = maybe_downcase(prefix, string)
-    [String.replace(string, @merge_SI_prefix, "#{prefix}\\1"), place]
+    [String.replace(string, ~r/#{@merge_SI_prefix}/u, "#{prefix}\\1"), place]
   end
 
   defp merge_prefix(prefix_pattern, [unit_pattern | rest]) do
@@ -970,21 +971,21 @@ defmodule Cldr.Unit.Format do
   ## Merge power prefixes (square, cube)
   ##
 
-  @merge_power_prefix ~r/([^\s]+)/u
+  @merge_power_prefix "([^\\s]+)"
   defp merge_power_prefix([prefix, place], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_power_prefix, "#{prefix}\\1")]
+    [place, String.replace(string, ~r/#{@merge_power_prefix}/u, "#{prefix}\\1")]
   end
 
   defp merge_power_prefix([prefix, place], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_power_prefix, "#{prefix}\\1"), place]
+    [String.replace(string, ~r/#{@merge_power_prefix}/u, "#{prefix}\\1"), place]
   end
 
   defp merge_power_prefix([place, prefix], [place, string]) when is_integer(place) do
-    [place, String.replace(string, @merge_power_prefix, "\\1#{prefix}")]
+    [place, String.replace(string, ~r/#{@merge_power_prefix}/u, "\\1#{prefix}")]
   end
 
   defp merge_power_prefix([place, prefix], [string, place]) when is_integer(place) do
-    [String.replace(string, @merge_power_prefix, "\\1#{prefix}"), place]
+    [String.replace(string, ~r/#{@merge_power_prefix}/u, "\\1#{prefix}"), place]
   end
 
   defp merge_power_prefix([place, prefix], list) when is_integer(place) and is_list(list) do

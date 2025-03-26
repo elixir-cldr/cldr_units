@@ -59,12 +59,12 @@ defmodule Cldr.Unit.Test.ConversionData do
       {:factor, factor}
   end
 
-  @float ~r/^([-+]?[0-9]*)\.([0-9]+)([eE]([-+]?[0-9]+))?$/
+  @float "^([-+]?[0-9]*)\.([0-9]+)([eE]([-+]?[0-9]+))?$"
   def transform({:result, result}) do
     result = String.replace(result, ",", "")
 
     result =
-      case Regex.run(@float, result) do
+      case Regex.run(~r/#{@float}/, result) do
         [float, _integer, "0"] ->
           {String.to_float(float), 0, 15}
 

@@ -1,7 +1,7 @@
 defmodule Cldr.Units.Mixfile do
   use Mix.Project
 
-  @version "3.18.1"
+  @version "3.19.0"
 
   def project do
     [
@@ -46,7 +46,7 @@ defmodule Cldr.Units.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr_numbers, "~> 2.34.0"},
+      {:ex_cldr_numbers, "~> 2.35.0"},
 
       {:cldr_utils, "~> 2.25"},
       {:ex_cldr_lists, "~> 2.10"},
@@ -55,7 +55,7 @@ defmodule Cldr.Units.Mixfile do
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.18", optional: true, runtime: false},
       {:jason, "~> 1.0", optional: true},
-      {:benchee, "~> 1.0", optional: true, only: :dev}
+      # {:benchee, "~> 1.0", optional: true, only: :dev}
     ]
   end
 
