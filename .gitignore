@@ -17,3 +17,6 @@ erl_crash.dump
 
 # ASDF config
 .tool-versions
+
+# mise
+mise.toml
