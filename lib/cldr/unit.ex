@@ -1121,7 +1121,7 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs
+    `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs.
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
@@ -1131,14 +1131,20 @@ defmodule Cldr.Unit do
   ## Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
-    the number to be formatted is a `t:Cldr.Unit.t/0` struct
+    the number to be formatted is a `t:Cldr.Unit.t/0` struct.
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/1`
-    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
+    or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
 
-  * `style` is one of those returned by `Cldr.Unit.styles`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
+  * `:format` defines how the *number* part of the unit string is
+    formatted. This option is passed directly to `Cldr.Number.to_string/2`.
+    In particular, note that this option does *not* determine how the
+    unit string itself is formed - see the `:style` option for that purpose.
+    The default is `:medium`.
+
+  * `style` determines how the unit string is composed and is is one of values
+    returned by `Cldr.Unit.styles`. The current styles are `:long`, `:short`
+    and `:narrow`. The default is `style: :long`.
 
   * `:grammatical_case` indicates that a localisation for the given
     locale and given grammatical case should be used. See `Cldr.Unit.known_grammatical_cases/0`
@@ -1157,7 +1163,7 @@ defmodule Cldr.Unit do
     applicable when formatting a list of units.
 
   * Any other options are passed to `Cldr.Number.to_string/2`
-    which is used to format the `number`
+    which is used to format the `number`.
 
   ## Returns
 
@@ -1253,12 +1259,12 @@ defmodule Cldr.Unit do
   ## Arguments
 
   * `number` is any number (integer, float or Decimal) or a
-    `t:Cldr.Unit.t/0` struct
+    `t:Cldr.Unit.t/0` struct.
 
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
 
-  * `options` is a keyword list
+  * `options` is a keyword list.
 
   ## Options
 
@@ -1268,9 +1274,15 @@ defmodule Cldr.Unit do
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
-    The current styles are `:long`, `:short` and `:narrow`.
-    The default is `style: :long`
+  * `:format` defines how the *number* part of the unit string is
+    formatted. This option is passed directly to `Cldr.Number.to_string/2`.
+    In particular, note that this option does *not* determine how the
+    unit string itself is formed - see the `:style` option for that purpose.
+    The default is `:medium`.
+
+  * `style` determines how the unit string is composed and is is one of values
+    returned by `Cldr.Unit.styles`. The current styles are `:long`, `:short`
+    and `:narrow`. The default is `style: :long`.
 
   * Any other options are passed to `Cldr.Number.to_string/2`
     which is used to format the `number`
