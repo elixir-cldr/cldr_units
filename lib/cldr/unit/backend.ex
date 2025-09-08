@@ -84,19 +84,19 @@ defmodule Cldr.Unit.Backend do
         defdelegate validate_style(unit), to: Cldr.Unit
         defdelegate unit_category(unit), to: Cldr.Unit
 
-        defdelegate add(unit_1, unit_2), to: Cldr.Unit.Math
-        defdelegate sub(unit_1, unit_2), to: Cldr.Unit.Math
-        defdelegate mult(unit_1, unit_2), to: Cldr.Unit.Math
-        defdelegate div(unit_1, unit_2), to: Cldr.Unit.Math
+        defdelegate add(unit_1, unit_2), to: Cldr.Unit
+        defdelegate sub(unit_1, unit_2), to: Cldr.Unit
+        defdelegate mult(unit_1, unit_2), to: Cldr.Unit
+        defdelegate div(unit_1, unit_2), to: Cldr.Unit
 
-        defdelegate add!(unit_1, unit_2), to: Cldr.Unit.Math
-        defdelegate sub!(unit_1, unit_2), to: Cldr.Unit.Math
-        defdelegate mult!(unit_1, unit_2), to: Cldr.Unit.Math
-        defdelegate div!(unit_1, unit_2), to: Cldr.Unit.Math
+        defdelegate add!(unit_1, unit_2), to: Cldr.Unit
+        defdelegate sub!(unit_1, unit_2), to: Cldr.Unit
+        defdelegate mult!(unit_1, unit_2), to: Cldr.Unit
+        defdelegate div!(unit_1, unit_2), to: Cldr.Unit
 
-        defdelegate round(unit, places, mode), to: Cldr.Unit.Math
-        defdelegate round(unit, places), to: Cldr.Unit.Math
-        defdelegate round(unit), to: Cldr.Unit.Math
+        defdelegate round(unit, places, mode), to: Cldr.Unit
+        defdelegate round(unit, places), to: Cldr.Unit
+        defdelegate round(unit), to: Cldr.Unit
 
         defdelegate convert(unit_1, to_unit), to: Cldr.Unit.Conversion
         defdelegate convert!(unit_1, to_unit), to: Cldr.Unit.Conversion
