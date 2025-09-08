@@ -52,20 +52,304 @@ defmodule Cldr.Unit do
   defdelegate preferred_units(unit, backend, options), to: Preference
   defdelegate preferred_units!(unit, backend, options), to: Preference
 
+  @doc """
+  Adds two compatible `t:Cldr.Unit.t/0` types
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the sum of `unit_1` and the potentially converted
+    `unit_2`, or
+
+  * `{:error, {IncompatibleUnitError, message}}`.
+
+  ## Examples
+
+      iex> Cldr.Unit.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1)
+      Cldr.Unit.new!(:foot, 2)
+
+      iex> Cldr.Unit.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
+      Cldr.Unit.new!(:foot, 5281)
+
+      iex> Cldr.Unit.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
+      {:error, {Cldr.Unit.IncompatibleUnitsError,
+        "Operations can only be performed between units with the same base unit. Received :foot and :gallon"}}
+
+  """
   defdelegate add(unit_1, unit_2), to: Math
+
+  @doc """
+  Subtracts two compatible `t:Cldr.Unit.t/0` types.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the difference between `unit_1` and the potentially
+    converted `unit_2`, or
+
+  * `{:error, {IncompatibleUnitError, message}}`.
+
+  ## Examples
+
+      iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      Cldr.Unit.new!(:kilogram, "4.54640763")
+
+      iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      Cldr.Unit.new!(:pint, "2.886623581134812676960800627")
+
+      iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      Cldr.Unit.new!(:pint, 4)
+
+  """
   defdelegate sub(unit_1, unit_2), to: Math
+
+  @doc """
+  Multiplies any two `t:Cldr.Unit.t/0` types or a `t:Cldr.Unit.t/0`
+  and a scalar.
+
+  ## Arguments
+
+  * `unit_1` is a unit
+    returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of a type that is the product
+    of `unit_1` and `unit_2` with a value
+    that is the product of `unit_1` and `unit_2`'s
+    values.
+
+  ## Examples
+
+      iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      Cldr.Unit.new!(:kilogram, "2.26796185")
+
+      iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      Cldr.Unit.new!(:pint, "10.56688209432593661519599687")
+
+      iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      Cldr.Unit.new!(:pint, 5)
+
+  """
   defdelegate mult(unit_1, unit_2), to: Math
+
+  @doc """
+  Divides any `t:Cldr.Unit.t/0` type into another or a
+  number into a `t:Cldr.Unit.t/0`.
+
+  ## Options
+
+  * `unit_1` is a unit
+    returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of a type that is the dividend
+    of `unit_1` and `unit_2` with a value
+    that is the dividend of `unit_1` and `unit_2`'s
+    values.
+
+  ## Examples
+
+      iex> Cldr.Unit.Math.div Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      Cldr.Unit.new!(:kilogram, "11.02311310924387903614869007")
+
+      iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      Cldr.Unit.new!(:pint, "2.365882365000000000000000000")
+
+      iex> Cldr.Unit.Math.div Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      Cldr.Unit.new!(:pint, 5)
+
+  """
   defdelegate div(unit_1, unit_2), to: Math
 
+  @doc """
+  Adds two compatible `t:Cldr.Unit.t/0` types
+  and raises on error.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the sum of `unit_1` and the potentially converted
+    `unit_2` or
+
+  * Raises an exception.
+
+  """
   defdelegate add!(unit_1, unit_2), to: Math
+
+  @doc """
+  Subtracts two compatible `t:Cldr.Unit.t/0` types
+  and raises on error.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the difference between `unit_1` and the potentially
+    converted `unit_2` or
+
+  * Raises an exception.
+
+  """
   defdelegate sub!(unit_1, unit_2), to: Math
+
+  @doc """
+  Multiplies two compatible `t:Cldr.Unit.t/0` types
+  and raises on error.
+
+  ## Options
+
+  * `unit_1` is a unit
+    returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the product of `unit_1` and the potentially
+    converted `unit_2` or
+
+  * Raises an exception.
+
+  """
   defdelegate mult!(unit_1, unit_2), to: Math
+
+  @doc """
+  Divides one `t:Cldr.Unit.t/0` type into another.
+  Any unit can be divided by another.
+
+  ## Arguments
+
+  * `unit_1` is a unit
+    returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is a unit
+    returned by `Cldr.Unit.new/2` or
+    a number or Decimal.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the dividend of `unit_1` and the potentially
+    converted `unit_2` or
+
+  * Raises an exception.
+
+  """
   defdelegate div!(unit_1, unit_2), to: Math
 
-  defdelegate round(unit, places, mode), to: Math
-  defdelegate round(unit, places), to: Math
-  defdelegate round(unit), to: Math
+  @doc """
+  Rounds the value of a unit.
 
+  ## Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  * `places` is the number of decimal places to round to.
+    The default is `0`.
+
+  * `mode` is the rounding mode to be applied.  The default
+    is `:half_up`.
+
+  ## Returns
+
+  * A `%Unit{}` of the same type as `unit` with a value
+    that is rounded to the specified number of decimal places.
+
+  ## Rounding modes
+
+  Directed roundings:
+
+  * `:down` - Round towards 0 (truncate), eg 10.9 rounds to 10.0
+
+  * `:up` - Round away from 0, eg 10.1 rounds to 11.0. (Non IEEE algorithm)
+
+  * `:ceiling` - Round toward +∞ - Also known as rounding up or ceiling
+
+  * `:floor` - Round toward -∞ - Also known as rounding down or floor
+
+  Round to nearest:
+
+  * `:half_even` - Round to nearest value, but in a tiebreak, round towards the
+    nearest value with an even (zero) least significant bit, which occurs 50%
+    of the time. This is the default for IEEE binary floating-point and the recommended
+    value for decimal.
+
+  * `:half_up` - Round to nearest value, but in a tiebreak, round away from 0.
+    This is the default algorithm for Erlang's Kernel.round/2
+
+  * `:half_down` - Round to nearest value, but in a tiebreak, round towards 0
+    (Non IEEE algorithm)
+
+  ## Examples
+
+      iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1
+      Cldr.Unit.new!(:yard, "1031.6")
+
+      iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 2
+      Cldr.Unit.new!(:yard, "1031.61")
+
+      iex> Cldr.Unit.round Cldr.Unit.new!(:yard, 1031.61), 1, :up
+      Cldr.Unit.new!(:yard, "1031.7")
+
+  """
+  defdelegate round(unit, places, mode), to: Math
+
+  @doc delegate_to: {Cldr.Unit, :round, 3}
+  def round(unit, places), do: Math.round(unit, places)
+
+  @doc delegate_to: {Cldr.Unit, :round, 3}
+  def round(unit), do: Math.round(unit)
+
+  @doc """
+  Compare two units, converting to a common unit
+  type if required.
+
+  If conversion is performed, the results are both
+  rounded to a single decimal place before
+  comparison.
+
+  Returns `:gt`, `:lt`, or `:eq`.
+
+  ## Example
+
+      iex> x = Cldr.Unit.new!(:kilometer, 1)
+      iex> y = Cldr.Unit.new!(:meter, 1000)
+      iex> Cldr.Unit.Math.compare x, y
+      :eq
+
+  """
   defdelegate compare(unit_1, unit_2), to: Math
 
   @root_locale_name Cldr.Config.root_locale_name()
