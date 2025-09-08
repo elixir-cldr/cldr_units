@@ -106,3 +106,7 @@ jobs:
     # Step: Execute dialyzer.
     - name: Run dialyzer
       run: mix dialyzer
+
+    # Step: Execute `mix docs`
+    - name: Validate documentation
+      run: mix docs --warnings-as-errors
