@@ -10,8 +10,9 @@ defmodule Cldr.Unit do
 
   * `Cldr.Unit.known_units/0` identifies the available units for localization
 
-  * `Cldr.Unit.{add, sub, mult, div}/2` to support basic unit mathematics between
-    units of compatible type (like length or volume)
+  * `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.mult/2`, and
+    `Cldr.Unit.div/2` to support basic unit mathematics between units of
+    compatible type (like length or volume)
 
   * `Cldr.Unit.compare/2` to compare one unit to another unit as long as they
     are convertible.
