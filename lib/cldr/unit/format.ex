@@ -278,7 +278,7 @@ defmodule Cldr.Unit.Format do
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
 
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+  * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`.
 
@@ -385,7 +385,7 @@ defmodule Cldr.Unit.Format do
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
 
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+  * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`
 

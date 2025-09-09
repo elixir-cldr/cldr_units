@@ -12,6 +12,8 @@ This is the changelog for Cldr_units v3.19.1 released on September 10th, 2025.  
 
 * Add documentation for `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.compare/3`, `Cldr.Unit.trunc/1` and `Cldr.Unit.round/3` to `Cldr.Unit`. The remaining functions in `Cldr.Unit.Math` remain undocumented since at least `Cldr.Unit.mult/2` and `Cldr.Unit.div/2` are incorrect in many cases and their use is not advised.
 
+* Fix docmentation of `Cldr.Unit.available_styles/0` to the correct `Cldr.Unit.known_styles/0`. Thanks to @ream88 for the report (and long patience!). Closes #50.
+
 ## Cldr_Units v3.19.0
 
 This is the changelog for Cldr_units v3.19.0 released on March 26th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

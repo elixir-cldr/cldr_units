@@ -1880,7 +1880,7 @@ defmodule Cldr.Unit do
   * `backend` is any module that includes `use Cldr` and therefore
     is a `Cldr` backend module. The default is `Cldr.default_backend!/0`.
 
-  * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+  * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`.
 

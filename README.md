@@ -146,7 +146,7 @@ iex> Cldr.Unit.new "cubic gigalux per inch", 1
     * `:locale` is any configured locale. See `Cldr.known_locale_names/0`. The default
       is `locale: Cldr.get_current_locale()`
 
-    * `:style` is one of those returned by `Cldr.Unit.available_styles`.
+    * `:style` is one of those returned by `Cldr.Unit.known_styles/0`.
       The current styles are `:long`, `:short` and `:narrow`.  The default is `style: :long`
 
     * Any other options are passed to `Cldr.Number.to_string/2` which is used to format the `number`
