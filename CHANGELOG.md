@@ -2,6 +2,16 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.19.1
+
+This is the changelog for Cldr_units v3.19.1 released on September 10th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fixes documentation to remove warnings. Thanks to @Munksgaard for the PR.
+
+* Add documentation for `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.compare/3`, `Cldr.Unit.trunc/1` and `Cldr.Unit.round/3` to `Cldr.Unit`. The remaining functions in `Cldr.Unit.Math` remain undocumented since at least `Cldr.Unit.mult/2` and `Cldr.Unit.div/2` are incorrect in many cases and their use is not advised.
+
 ## Cldr_Units v3.19.0
 
 This is the changelog for Cldr_units v3.19.0 released on March 26th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

@@ -8,8 +8,6 @@ defmodule Cldr.Unit.Math do
   import Kernel, except: [div: 2, round: 1, trunc: 1]
   import Unit, only: [incompatible_units_error: 2]
 
-  @type rounding_mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
-
   @doc false
   defguard is_per_unit(base_conversion)
            when is_tuple(base_conversion) and
@@ -183,13 +181,13 @@ defmodule Cldr.Unit.Math do
 
   ## Examples
 
-      iex> Cldr.Unit.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      iex> Cldr.Unit.Math.mult Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
       Cldr.Unit.new!(:kilogram, "2.26796185")
 
-      iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      iex> Cldr.Unit.Math.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
       Cldr.Unit.new!(:pint, "10.56688209432593661519599687")
 
-      iex> Cldr.Unit.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      iex> Cldr.Unit.Math.mult Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
       Cldr.Unit.new!(:pint, 5)
 
   """
@@ -395,7 +393,7 @@ defmodule Cldr.Unit.Math do
   @spec round(
           unit :: Unit.t() | number() | Decimal.t(),
           places :: non_neg_integer,
-          mode :: rounding_mode()
+          mode :: Unit.rounding_mode()
         ) :: Unit.t() | number() | Decimal.t()
 
   def round(unit, places \\ 0, mode \\ :half_up)

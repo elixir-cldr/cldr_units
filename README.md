@@ -61,8 +61,6 @@ The primary api is defined by three functions:
 
 * `MyApp.Cldr.Unit.localize/3` to localize a unit by converting it to units customary for a given territory
 
-* `MyApp.Cldr.Unit.add/2`, `MyApp.Cldr.Unit.sub/2`, `MyApp.Cldr.Unit.mult/2`, `MyApp.Cldr.Unit.div/2` provide basic arithmetic operations on compatible `Unit.t` structs.
-
 ### Creating a new unit
 
 A `Cldr.Unit.t()` struct is created with the `Cldr.Unit.new/2` function. The two parameters are a unit name and a number (expressed as a `float`, `integer`, `Decimal` or `Ratio`) in either order.
@@ -257,23 +255,23 @@ See `Cldr.Unit.preferred_units/3` to see what mappings are available, in particu
 
 ### Unit arithmetic
 
-Basic arithmetic is provided by `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.mult/2`, `Cldr.Unit.div/2` as well as `Cldr.Unit.round/3`
+Basic arithmetic is provided by `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.trunc/1` and  `Cldr.Unit.round/3`.
 
 ```elixir
-iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1)
+iex> Cldr.Unit.Math.add(Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1))
 #Cldr.Unit<:foot, 2>
 
-iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
+iex> Cldr.Unit.Math.add(Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1))
 #Cldr.Unit<:foot, 5280.945925937846>
 
-iex> Cldr.Unit.Math.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
+iex> Cldr.Unit.Math.add(Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1))
 {:error, {Cldr.Unit.IncompatibleUnitError,
  "Operations can only be performed between units of the same type. Received #Cldr.Unit<:foot, 1> and #Cldr.Unit<:gallon, 1>"}}
 
-iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1
+iex> Cldr.Unit.round(Cldr.Unit.new!(:yard, 1031.61), 1)
 #Cldr.Unit<:yard, 1031.6>
 
-iex> Cldr.Unit.round Cldr.Unit.new(:yard, 1031.61), 1, :up
+iex> Cldr.Unit.round(Cldr.Unit.new!(:yard, 1031.61), 1, :up)
 #Cldr.Unit<:yard, 1031.7>
 
 ```

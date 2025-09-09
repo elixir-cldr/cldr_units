@@ -312,13 +312,13 @@ defmodule Cldr.UnitsTest do
     assert %Decimal{} = Cldr.Unit.sub(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
     assert %Decimal{} = Cldr.Unit.sub(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
 
-    assert %Decimal{} = Cldr.Unit.mult(a, b) |> Cldr.Unit.value()
-    assert %Decimal{} = Cldr.Unit.mult(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
-    assert %Decimal{} = Cldr.Unit.mult(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.Math.mult(a, b) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.Math.mult(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.Math.mult(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
 
-    assert %Decimal{} = Cldr.Unit.div(a, b) |> Cldr.Unit.value()
-    assert %Decimal{} = Cldr.Unit.div(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
-    assert %Decimal{} = Cldr.Unit.div(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.Math.div(a, b) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.Math.div(a, Cldr.Unit.new!(:unit, 1)) |> Cldr.Unit.value()
+    assert %Decimal{} = Cldr.Unit.Math.div(Cldr.Unit.new!(:unit, 1), a) |> Cldr.Unit.value()
   end
 
   test "That milligram_ofglucose_per_deciliter formats without error" do

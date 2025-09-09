@@ -6,13 +6,9 @@ defmodule Cldr.Unit do
   The primary public API defines:
 
   * `Cldr.Unit.to_string/3` which, given a unit or unit list will
-    output a localized string
+    output a localized string.
 
-  * `Cldr.Unit.known_units/0` identifies the available units for localization
-
-  * `Cldr.Unit.add/2`, `Cldr.Unit.sub/2`, `Cldr.Unit.mult/2`, and
-    `Cldr.Unit.div/2` to support basic unit mathematics between units of
-    compatible type (like length or volume)
+  * `Cldr.Unit.known_units/0` identifies the available units for localization.
 
   * `Cldr.Unit.compare/2` to compare one unit to another unit as long as they
     are convertible.
@@ -20,12 +16,15 @@ defmodule Cldr.Unit do
   * `Cldr.Unit.convert/2` to convert one unit to another unit as long as they
     are convertible.
 
+  * `Cldr.Unit.add/2` and `Cldr.Unit.sub/2` will add and subtract units as
+    long as they are convertible.
+
   * `Cldr.Unit.localize/3` will convert a unit into the units preferred for a
-    given locale and usage
+    given locale and usage.
 
   * `Cldr.Unit.preferred_units/3` which, for a given unit and locale,
     will return a list of preferred units that can be applied to
-    `Cldr.Unit.decompose/2`
+    `Cldr.Unit.decompose/2`.
 
   * `Cldr.Unit.decompose/2` to take a unit and return a list of units decomposed
     by a list of smaller units.
@@ -52,21 +51,18 @@ defmodule Cldr.Unit do
   defdelegate preferred_units(unit, backend, options), to: Preference
   defdelegate preferred_units!(unit, backend, options), to: Preference
 
-  defdelegate add(unit_1, unit_2), to: Math
-  defdelegate sub(unit_1, unit_2), to: Math
-  defdelegate mult(unit_1, unit_2), to: Math
-  defdelegate div(unit_1, unit_2), to: Math
+  # @doc false
+  # defdelegate mult(unit_1, unit_2), to: Math
+  #
+  # @doc false
+  # defdelegate div(unit_1, unit_2), to: Math
+  #
+  # @doc false
+  # defdelegate mult!(unit_1, unit_2), to: Math
+  #
+  # @doc false
+  # defdelegate div!(unit_1, unit_2), to: Math
 
-  defdelegate add!(unit_1, unit_2), to: Math
-  defdelegate sub!(unit_1, unit_2), to: Math
-  defdelegate mult!(unit_1, unit_2), to: Math
-  defdelegate div!(unit_1, unit_2), to: Math
-
-  defdelegate round(unit, places, mode), to: Math
-  defdelegate round(unit, places), to: Math
-  defdelegate round(unit), to: Math
-
-  defdelegate compare(unit_1, unit_2), to: Math
 
   @root_locale_name Cldr.Config.root_locale_name()
 
@@ -159,13 +155,15 @@ defmodule Cldr.Unit do
 
   @units Cldr.Config.units()
 
+  @type rounding_mode :: :down | :up | :ceiling | :floor | :half_even | :half_up | :half_down
+
   @doc """
   Returns the units that are defined for
   a given category (such as :volume, :length)
 
   See also `Cldr.Unit.known_unit_categories/0`.
 
-  ## Example
+  ### Example
 
       => Cldr.Unit.known_units_by_category
       %{
@@ -199,7 +197,7 @@ defmodule Cldr.Unit do
   and are used as a key to retrieving that
   content.
 
-  ## Example
+  ### Example
 
       => Cldr.Unit.known_units
       [:acre, :acre_foot, :ampere, :arc_minute, :arc_second, :astronomical_unit, :bit,
@@ -278,7 +276,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns a list of the known unit categories.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.known_unit_categories()
       [:acceleration, :angle, :area, :concentr, :consumption, :digital,
@@ -297,14 +295,14 @@ defmodule Cldr.Unit do
   Returns the list of units defined for a given
   category.
 
-  ## Arguments
+  ### Arguments
 
   * `category` is any unit category returned by
     `Cldr.Unit.known_unit_categories/0`.
 
   See also `Cldr.Unit.known_units_by_category/0`.
 
-  ## Example
+  ### Example
 
       => Cldr.Unit.known_units_for_category :volume
       {
@@ -341,7 +339,7 @@ defmodule Cldr.Unit do
   `Cldr.Unit.to_string/2` in order to localise a unit
   appropriate to the context in which it is used.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.known_grammatical_cases()
       [
@@ -387,7 +385,7 @@ defmodule Cldr.Unit do
   `Cldr.Unit.to_string/2` in order to localise a unit
   appropriate to the context in which it is used.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.known_grammatical_genders()
       [
@@ -409,7 +407,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns a new `Unit.t` struct.
 
-  ## Arguments
+  ### Arguments
 
   * `value` is any float, integer or `Decimal`
 
@@ -418,7 +416,7 @@ defmodule Cldr.Unit do
   * `options` is Keyword list of options. The default
     is `[]`
 
-  ## Options
+  ### Options
 
   * `:usage` is the intended use of the unit. This
     is used during localization to convert the unit
@@ -428,13 +426,13 @@ defmodule Cldr.Unit do
     `Cldr.Unit.unit_category_usage/0` for the known
     usage types for each category.
 
-  ## Returns
+  ### Returns
 
   * `unit` or
 
   * `{:error, {exception, message}}`
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.new(23, :gallon)
       {:ok, Cldr.Unit.new!(:gallon, 23)}
@@ -497,19 +495,19 @@ defmodule Cldr.Unit do
   @doc """
   Returns a new `Unit.t` struct or raises on error.
 
-  ## Arguments
+  ### Arguments
 
   * `value` is any float, integer or `Decimal`
 
   * `unit` is any unit returned by `Cldr.Unit.known_units/0`
 
-  ## Returns
+  ### Returns
 
   * `unit` or
 
   * raises an exception
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.new! 23, :gallon
       Cldr.Unit.new!(:gallon, 23)
@@ -544,17 +542,17 @@ defmodule Cldr.Unit do
   `String.t` or `atom` format (both keys must be of
   the same type).
 
-  ## Arguments
+  ### Arguments
 
   * `map` is a map with the keys `unit` and `value`
 
-  ## Returns
+  ### Returns
 
   * `{:ok, unit}` or
 
   * `{:error, {exception, reason}}`
 
-  ## Examples
+  ### Examples
 
       Cldr.Unit.from_map %{value: 1, unit: "kilogram"}
       => {:ok, #Cldr.Unit<:kilogram, 1>}
@@ -608,14 +606,14 @@ defmodule Cldr.Unit do
   `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
   is the name of a backend module.
 
-  ## Arguments
+  ### Arguments
 
   * `unit string` is any string to be parsed and if
     possible used to create a new `t:Cldr.Unit.t/0`
 
   * `options` is a keyword list of options
 
-  ## Options
+  ### Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -633,13 +631,13 @@ defmodule Cldr.Unit do
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
     match the specified unit or category, or unit categories and units.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, unit}` or
 
   * `{:error, {exception, reason}}`
 
-  ## Notes
+  ### Notes
 
   * When both `:only` and `:except` options are passed, both
     conditions must be true in order to return a parsed result.
@@ -647,7 +645,7 @@ defmodule Cldr.Unit do
   * Only units returned by `Cldr.Unit.known_units/0` can be
     used in the `:only` and `:except` filters.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.parse "1kg"
       Cldr.Unit.new(1, :kilogram)
@@ -707,13 +705,13 @@ defmodule Cldr.Unit do
   `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
   is the name of a backend module.
 
-  ## Arguments
+  ### Arguments
 
   * `unit_name_string` is any string to be parsed and converted into a `unit type`
 
   * `options` is a keyword list of options
 
-  ## Options
+  ### Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `t:Cldr.LanguageTag` struct. The default is `Cldr.get_locale/0`
@@ -730,13 +728,13 @@ defmodule Cldr.Unit do
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
     match the specified unit or category, or unit categories and units.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, unit_name}` or
 
   * `{:error, {exception, reason}}`
 
-  ## Notes
+  ### Notes
 
   * When both `:only` and `:except` options are passed, both
     conditions must be true in order to return a parsed result.
@@ -744,7 +742,7 @@ defmodule Cldr.Unit do
   * Only units returned by `Cldr.Unit.known_units/0` can be
     used in the `:only` and `:except` filters.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.parse_unit_name "kg"
       {:ok, :kilogram}
@@ -877,14 +875,14 @@ defmodule Cldr.Unit do
   `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
   is the name of a backend module.
 
-  ## Arguments
+  ### Arguments
 
   * `unit string` is any string to be parsed and if
     possible used to create a new `t:Cldr.Unit.t/0`
 
   * `options` is a keyword list of options
 
-  ## Options
+  ### Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `t:Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`
@@ -902,7 +900,7 @@ defmodule Cldr.Unit do
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
     match the specified unit or category, or unit categories and units.
 
-  ## Notes
+  ### Notes
 
   * When both `:only` and `:except` options are passed, both
     conditions must be true in order to return a parsed result.
@@ -910,13 +908,13 @@ defmodule Cldr.Unit do
   * Only units returned by `Cldr.Unit.known_units/0` can be
     used in the `:only` and `:except` filters.
 
-  ## Returns
+  ### Returns
 
   * `unit` or
 
   * raises an exception
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.parse! "1kg"
       Cldr.Unit.new!(1, :kilogram)
@@ -954,13 +952,13 @@ defmodule Cldr.Unit do
   `MyApp.Cldr.Unit.unit_strings_for/1` where `MyApp.Cldr`
   is the name of a backend module.
 
-  ## Arguments
+  ### Arguments
 
   * `unit_name_string` is any string to be parsed and converted into a `unit type`
 
   * `options` is a keyword list of options
 
-  ## Options
+  ### Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `t:Cldr.LanguageTag` struct. The default is `Cldr.get_locale/0`
@@ -977,13 +975,13 @@ defmodule Cldr.Unit do
   * `:except` is the oppostte of `:only`. The parsed unit must *not*
     match the specified unit or category, or unit categories and units.
 
-  ## Returns
+  ### Returns
 
   * `unit_name` or
 
   * raises an exception
 
-  ## Notes
+  ### Notes
 
   * When both `:only` and `:except` options are passed, both
     conditions must be true in order to return a parsed result.
@@ -991,7 +989,7 @@ defmodule Cldr.Unit do
   * Only units returned by `Cldr.Unit.known_units/0` can be
     used in the `:only` and `:except` filters.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.parse_unit_name! "kg"
       :kilogram
@@ -1049,6 +1047,245 @@ defmodule Cldr.Unit do
 
       {:ok, unit}
     end
+  end
+
+  @doc """
+  Adds two compatible `t:Cldr.Unit.t/0` types.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the sum of `unit_1` and the potentially converted
+    `unit_2`, or
+
+  * `{:error, {IncompatibleUnitError, message}}`.
+
+  ## Examples
+
+      iex> Cldr.Unit.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:foot, 1)
+      Cldr.Unit.new!(:foot, 2)
+
+      iex> Cldr.Unit.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:mile, 1)
+      Cldr.Unit.new!(:foot, 5281)
+
+      iex> Cldr.Unit.add Cldr.Unit.new!(:foot, 1), Cldr.Unit.new!(:gallon, 1)
+      {:error, {Cldr.Unit.IncompatibleUnitsError,
+        "Operations can only be performed between units with the same base unit. Received :foot and :gallon"}}
+
+  """
+  @spec add(Unit.t(), Unit.t()) :: Unit.t() | {:error, {module(), String.t()}}
+
+  def add(%__MODULE__{} = unit_1, %__MODULE__{} = unit_2) do
+    Cldr.Unit.Math.add(unit_1, unit_2)
+  end
+
+  @doc """
+  Adds two compatible `t:Cldr.Unit.t/0` types
+  and raises on error.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the sum of `unit_1` and the potentially converted
+    `unit_2` or
+
+  * Raises an exception.
+
+  """
+  @spec add!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
+
+  def add!(unit_1, unit_2) do
+    Cldr.Unit.Math.add!(unit_1, unit_2)
+  end
+
+  @doc """
+  Subtracts one compatible `t:Cldr.Unit.t/0` type from
+  another.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the difference between `unit_1` and the potentially
+    converted `unit_2`, or
+
+  * `{:error, {IncompatibleUnitError, message}}`.
+
+  ## Examples
+
+      iex> Cldr.Unit.sub Cldr.Unit.new!(:kilogram, 5), Cldr.Unit.new!(:pound, 1)
+      Cldr.Unit.new!(:kilogram, "4.54640763")
+
+      iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:liter, 1)
+      Cldr.Unit.new!(:pint, "2.886623581134812676960800627")
+
+      iex> Cldr.Unit.sub Cldr.Unit.new!(:pint, 5), Cldr.Unit.new!(:pint, 1)
+      Cldr.Unit.new!(:pint, 4)
+
+  """
+  @spec sub(t(), t()) :: t() | {:error, {module(), String.t()}}
+
+  def sub(%__MODULE__{} = unit_1, %__MODULE__{} = unit_2) do
+    Cldr.Unit.Math.sub(unit_1, unit_2)
+  end
+
+  @doc """
+  Subtracts one compatible `t:Cldr.Unit.t/0` type from
+  another or raises on error.
+
+  ## Arguments
+
+  * `unit_1` and `unit_2` are compatible Units
+    returned by `Cldr.Unit.new/2`.
+
+  ## Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit_1` with a value
+    that is the difference between `unit_1` and the potentially
+    converted `unit_2` or
+
+  * Raises an exception.
+
+  """
+  @spec sub!(Unit.t(), Unit.t()) :: Unit.t() | no_return()
+
+  def sub!(unit_1, unit_2) do
+    Cldr.Unit.Math.sub!(unit_1, unit_2)
+  end
+
+  @doc """
+  Rounds the value of a unit.
+
+  ### Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  * `places` is the number of decimal places to round to.
+    The default is `0`.
+
+  * `mode` is the rounding mode to be applied.  The default
+    is `:half_up`.
+
+  ### Returns
+
+  * A `t:Cldr.Unit.t/0` of the same type as `unit` with a value
+    that is rounded to the specified number of decimal places.
+
+  ### Rounding modes
+
+  Directed roundings:
+
+  * `:down` - Round towards 0 (truncate), eg `10.9` rounds to `10.0`.
+
+  * `:up` - Round away from `0`, eg `10.1` rounds to `11.0`. (Non IEEE algorithm).
+
+  * `:ceiling` - Round toward +∞ - Also known as rounding up or ceiling.
+
+  * `:floor` - Round toward -∞ - Also known as rounding down.
+
+  Round to nearest:
+
+  * `:half_even` - Round to nearest value, but in a tiebreak, round towards the
+    nearest value with an even (zero) least significant bit, which occurs 50%
+    of the time. This is the default for IEEE binary floating-point and the recommended
+    value for decimal.
+
+  * `:half_up` - Round to nearest value, but in a tiebreak, round away from 0.
+    This is the default algorithm for Elixir's Kernel.round/2
+
+  * `:half_down` - Round to nearest value, but in a tiebreak, round towards 0
+    (Non IEEE algorithm)
+
+  ### Examples
+
+      iex> Cldr.Unit.round(Cldr.Unit.new!(:yard, 1031.61), 1)
+      Cldr.Unit.new!(:yard, "1031.6")
+
+      iex> Cldr.Unit.round(Cldr.Unit.new!(:yard, 1031.61), 2)
+      Cldr.Unit.new!(:yard, "1031.61")
+
+      iex> Cldr.Unit.round(Cldr.Unit.new!(:yard, 1031.61), 1, :up)
+      Cldr.Unit.new!(:yard, "1031.7")
+
+  """
+  @spec round(
+          unit :: Unit.t() | number() | Decimal.t(),
+          places :: non_neg_integer,
+          mode :: rounding_mode()
+        ) :: t() | number() | Decimal.t()
+
+  def round(%__MODULE__{} = unit, places \\ 0, mode \\ :half_up) do
+    Cldr.Unit.Math.round(unit, places, mode)
+  end
+
+  @doc """
+  Truncates the value of a unit.
+
+  ### Arguments
+
+  * `unit` is any unit returned by `Cldr.Unit.new/2`
+
+  ### Returns
+
+  * A `t:Cldr.Unit.t/0` with a truncated value.
+
+  ### Example
+
+      iex> {:ok, unit} = Cldr.Unit.new(1.235, :liter)
+      iex> Cldr.Unit.trunc(unit)
+      Cldr.Unit.new!(:liter, 1)
+
+  """
+  @spec trunc(unit_1 :: t()) :: t()
+
+  def trunc(%__MODULE__{} = unit) do
+    Cldr.Unit.Math.trunc(unit)
+  end
+
+  @doc """
+  Compare two units, converting to a common unit
+  type if required.
+
+  If conversion is performed, the results are both
+  rounded to a single decimal place before
+  comparison.
+
+  ### Arguments
+
+  * `unit_1` is any unit returned by `Cldr.Unit.new/2`.
+
+  * `unit_2` is any unit returned by `Cldr.Unit.new/2`.
+
+  ### Returns
+
+  * One of `:gt`, `:lt`, or `:eq`.
+
+  ### Example
+
+      iex> x = Cldr.Unit.new!(:kilometer, 1)
+      iex> y = Cldr.Unit.new!(:meter, 1000)
+      iex> Cldr.Unit.compare(x, y)
+      :eq
+
+  """
+  @spec compare(unit_1 :: t(), unit_2 :: t()) :: :eq | :lt | :gt
+
+  def compare(%__MODULE__{} = unit_1, %__MODULE__{} = unit_2) do
+    Cldr.Unit.Math.compare(unit_1, unit_2)
   end
 
   @doc false
@@ -1119,7 +1356,7 @@ defmodule Cldr.Unit do
   During processing any `:format_options` of a `Unit.t()` are merged with
   `options` with `options` taking precedence.
 
-  ## Arguments
+  ### Arguments
 
   * `list_or_number` is any number (integer, float or Decimal) or a
     `t:Cldr.Unit.t/0` struct or a list of `t:Cldr.Unit.t/0` structs.
@@ -1129,7 +1366,7 @@ defmodule Cldr.Unit do
 
   * `options` is a keyword list of options.
 
-  ## Options
+  ### Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
     the number to be formatted is a `t:Cldr.Unit.t/0` struct.
@@ -1166,13 +1403,13 @@ defmodule Cldr.Unit do
   * Any other options are passed to `Cldr.Number.to_string/2`
     which is used to format the `number`.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, formatted_string}` or
 
   * `{:error, {exception, message}}`
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.to_string Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
       {:ok, "123 gallons"}
@@ -1257,7 +1494,7 @@ defmodule Cldr.Unit do
   During processing any `:format_options` of a `t:Cldr.Unit.t/0` are merged with
   `options` with `options` taking precedence.
 
-  ## Arguments
+  ### Arguments
 
   * `number` is any number (integer, float or Decimal) or a
     `t:Cldr.Unit.t/0` struct.
@@ -1267,7 +1504,7 @@ defmodule Cldr.Unit do
 
   * `options` is a keyword list.
 
-  ## Options
+  ### Options
 
   * `:unit` is any unit returned by `Cldr.Unit.known_units/0`. Ignored if
     the number to be formatted is a `t:Cldr.Unit.t/0` struct
@@ -1288,13 +1525,13 @@ defmodule Cldr.Unit do
   * Any other options are passed to `Cldr.Number.to_string/2`
     which is used to format the `number`
 
-  ## Returns
+  ### Returns
 
   * `formatted_string` or
 
   * raises an exception
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.to_string! Cldr.Unit.new!(:gallon, 123), MyApp.Cldr
       "123 gallons"
@@ -1416,16 +1653,16 @@ defmodule Cldr.Unit do
   Returns a boolean indicating if two units are
   of the same unit category.
 
-  ## Arguments
+  ### Arguments
 
   * `unit_1` and `unit_2` are any units returned by
     `Cldr.Unit.new/2` or a valid unit name.
 
-  ## Returns
+  ### Returns
 
   * `true` or `false`
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.compatible? :foot, :meter
       true
@@ -1452,16 +1689,16 @@ defmodule Cldr.Unit do
   @doc """
   Return the value of the Unit struct
 
-  ## Arguments
+  ### Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  ## Returns
+  ### Returns
 
   * an integer, float or Decimal representing the amount
   of the unit
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.value Cldr.Unit.new!(:kilogram, 23)
       23
@@ -1480,7 +1717,7 @@ defmodule Cldr.Unit do
   is recommended.  For example `[:foot, :inch]`
   or `[:kilometer, :meter, :centimeter, :millimeter]`
 
-  ## Arguments
+  ### Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
@@ -1494,12 +1731,12 @@ defmodule Cldr.Unit do
     `Cldr.Unit.to_string/3` on the `unit`. The
     default is `[]`.
 
-  ## Returns
+  ### Returns
 
   * a list of units after decomposition or an error
     tuple
 
-  ## Examples
+  ### Examples
 
       iex> u = Cldr.Unit.new!(10.3, :foot)
       iex> Cldr.Unit.decompose u, [:foot, :inch]
@@ -1571,7 +1808,7 @@ defmodule Cldr.Unit do
   unit `#Cldr.Unit100, :meter>` might be better
   presented to a US audience as `#Cldr.Unit<328, :foot>`.
 
-  ## Arguments
+  ### Arguments
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
@@ -1580,7 +1817,7 @@ defmodule Cldr.Unit do
 
   * `options` is a keyword list of options
 
-  ## Options
+  ### Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `backend.get_locale/0`.
@@ -1594,7 +1831,7 @@ defmodule Cldr.Unit do
     to be used.  The available `usage` varyies according
     to the unit category.  See `Cldr.Unit.preferred_units/3`.
 
-  ## Examples
+  ### Examples
 
       iex> unit = Cldr.Unit.new!(1.83, :meter)
       iex> Cldr.Unit.localize(unit, usage: :person_height, territory: :US)
@@ -1628,14 +1865,14 @@ defmodule Cldr.Unit do
   for including in UI elements such as
   selection boxes.
 
-  ## Arguments
+  ### Arguments
 
   * `unit` is any `t:Cldr.Unit.t/0` or any
     unit name returned by `Cldr.Unit.known_units/0`.
 
   * `options` is a keyword list of options.
 
-  ## Options
+  ### Options
 
   * `:locale` is any valid locale name returned by `Cldr.known_locale_names/0`
     or a `Cldr.LanguageTag` struct.  The default is `Cldr.get_locale/0`.
@@ -1647,7 +1884,7 @@ defmodule Cldr.Unit do
     The current styles are `:long`, `:short` and `:narrow`.
     The default is `style: :long`.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.display_name :liter
       "liters"
@@ -1696,11 +1933,11 @@ defmodule Cldr.Unit do
   Returns a new unit of the same unit
   type but with a zero value.
 
-  ## Argument
+  ### Argument
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  ## Example
+  ### Example
 
       iex> u = Cldr.Unit.new!(:foot, 23.3)
       Cldr.Unit.new!(:foot, "23.3")
@@ -1716,11 +1953,11 @@ defmodule Cldr.Unit do
   Returns a boolean indicating whether a given unit
   has a zero value.
 
-  ## Argument
+  ### Argument
 
   * `unit` is any unit returned by `Cldr.Unit.new/2`
 
-  ## Examples
+  ### Examples
 
       iex> u = Cldr.Unit.new!(:foot, 23.3)
       Cldr.Unit.new!(:foot, 23.3)
@@ -1755,18 +1992,18 @@ defmodule Cldr.Unit do
   Returns the list of units defined in a given
   measurement system.
 
-  ## Arguments
+  ### Arguments
 
   * `system` is any measurement system returned by
     `Cldr.Unit.known_measurement_systems/0`
 
-  ## Returns
+  ### Returns
 
   * A list of translatable units as atoms or
 
   * `{:error, {exception, message}}`
 
-  ## Example
+  ### Example
 
       => Cldr.Unit.measurement_system_units :uksystem
       [
@@ -1800,19 +2037,19 @@ defmodule Cldr.Unit do
   any of the provided measurement systems
   the return is `true`.
 
-  ## Arguments
+  ### Arguments
 
   * `system` is any measurement system or list
     of measurement systems returned by
     `Cldr.Unit.known_measurement_systems/0`
 
-  ## Returns
+  ### Returns
 
   * `true` or `false` or
 
   * `{:error, {exception, message}}`
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.measurement_system? :foot, :uksystem
       true
@@ -1862,20 +2099,20 @@ defmodule Cldr.Unit do
   Returns the measurement systems for a given
   unit.
 
-  ## Arguments
+  ### Arguments
 
   * `unit` is any `t:Cldr.Unit.t/0` or any unit
     returned by `Cldr.Unit.known_units/0` or a
     string unit name.
 
-  ## Returns
+  ### Returns
 
   * A list of measurement systems to which
     the `unit` belongs.
 
   * `{:error, {exception, message}}`
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.measurement_systems_for_unit :foot
       [:uksystem, :ussystem]
@@ -1938,7 +2175,7 @@ defmodule Cldr.Unit do
   @doc """
   Return a list of known measurement systems.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.known_measurement_systems()
       [:astronomical, :jpsystem, :metric, :metric_adjacent, :person_age, :prefixable, :si, :si_acceptable, :uksystem, :ussystem]
@@ -1955,7 +2192,7 @@ defmodule Cldr.Unit do
 
   See also `Cldr.Unit.known_measurement_systems/0`.
 
-  ## Arguments
+  ### Arguments
 
   * `locale` is any valid locale name returned by
     `Cldr.known_locale_names/0` or a `t:Cldr.LanguageTag`
@@ -1965,7 +2202,7 @@ defmodule Cldr.Unit do
     The known keys are `:default`, `:temperature`
     and `:paper_size`. The default key is `:default`.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.measurement_system_from_locale "en"
       :ussystem
@@ -2051,7 +2288,7 @@ defmodule Cldr.Unit do
   Returns a mapping between Unit categories
   and the uses they define.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.unit_category_usage()
       %{
@@ -2095,18 +2332,18 @@ defmodule Cldr.Unit do
   @doc """
   Returns the base unit for a given unit.
 
-  ## Argument
+  ### Argument
 
   * `unit` is either a `t:Cldr.Unit.t/0`, an `atom` or
     a `t:String.t/0`
 
-  ## Returns
+  ### Returns
 
   * `{:ok, base_unit}` or
 
   * `{:error, {exception, reason}}`
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.base_unit :square_kilometer
       {:ok, :square_meter}
@@ -2145,7 +2382,7 @@ defmodule Cldr.Unit do
     aid identification of preferences for given use
     cases. See `Cldr.Unit.Preference`.
 
-  ## Example
+  ### Example
 
       => Cldr.Unit.base_unit_category_map
       %{
@@ -2183,18 +2420,18 @@ defmodule Cldr.Unit do
   @doc """
   Returns the units category for a given unit
 
-  ## Options
+  ### Options
 
   * `unit` is either a `t:Cldr.Unit.t/0`, an `atom` or
     a `t:String.t/0`
 
-  ## Returns
+  ### Returns
 
   * `{:ok, category}` or
 
   * `{:error, {exception, message}}`
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.unit_category :pint_metric
       {:ok, :volume}
@@ -2263,13 +2500,13 @@ defmodule Cldr.Unit do
   Return the grammatical gender for a
   unit.
 
-  ## Arguments
+  ### Arguments
 
-  ## Options
+  ### Options
 
-  ## Returns
+  ### Returns
 
-  ## Examples
+  ### Examples
 
   """
   @unknown_gender :undefined
@@ -2304,7 +2541,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns the known styles for a unit.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.known_styles()
       [:long, :short, :narrow]
@@ -2321,7 +2558,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns the default formatting style.
 
-  ## Example
+  ### Example
 
       iex> Cldr.Unit.default_style()
       :long
@@ -2405,7 +2642,7 @@ defmodule Cldr.Unit do
   @doc """
   Returns a map of measurement systems by territory.
 
-  ## Example
+  ### Example
 
       => Cldr.Unit.measurement_systems_by_territory
       %{
@@ -2427,7 +2664,7 @@ defmodule Cldr.Unit do
   Returns the default measurement system for a territory
   and a given system key.
 
-  ## Arguments
+  ### Arguments
 
   * `territory` is any valid territory returned by
     `Cldr.validate_territory/1`
@@ -2436,7 +2673,7 @@ defmodule Cldr.Unit do
     The known keys are `:default`, `:temperature`
     and `:paper_size`. The default key is `:default`.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.measurement_system_for_territory :US
       :ussystem
@@ -2499,12 +2736,12 @@ defmodule Cldr.Unit do
     can be converted but are not guaranteed to
     be output as a localized string.
 
-  ## Arguments
+  ### Arguments
 
   * `unit_name` is an `atom()` or `t:String.t/0`, supplied
     as is or as part of an `t:Cldr.Unit.t/0` struct.
 
-  ## Returns
+  ### Returns
 
   * `{:ok, canonical_unit_name, conversion}` where
     `canonical_unit_name` is the normalized unit name
@@ -2513,7 +2750,7 @@ defmodule Cldr.Unit do
 
   * `{:error, {exception, reason}}`
 
-  ## Notes
+  ### Notes
 
   A returned `unit_name` that is an atom is directly
   localisable (CLDR has translation data for the unit).
@@ -2525,7 +2762,7 @@ defmodule Cldr.Unit do
   The difference is an implementation detail and should
   not be of concern to the user of this library.
 
-  ## Examples
+  ### Examples
 
       iex> Cldr.Unit.validate_unit :meter
       {

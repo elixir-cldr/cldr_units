@@ -1,7 +1,7 @@
 defmodule Cldr.Units.Mixfile do
   use Mix.Project
 
-  @version "3.19.0"
+  @version "3.19.1"
 
   def project do
     [
@@ -18,7 +18,6 @@ defmodule Cldr.Units.Mixfile do
       xref: [exclude: [Phoenix.HTML.Safe]],
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
-        ignore_warnings: ".dialyzer_ignore_warnings",
         plt_add_apps: ~w(inets jason mix)a,
         flags: [
           :error_handling,
@@ -46,7 +45,7 @@ defmodule Cldr.Units.Mixfile do
 
   defp deps do
     [
-      {:ex_cldr_numbers, "~> 2.35.0"},
+      {:ex_cldr_numbers, "~> 2.35"},
 
       {:cldr_utils, "~> 2.25"},
       {:ex_cldr_lists, "~> 2.10"},
