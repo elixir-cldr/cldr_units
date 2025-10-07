@@ -2,6 +2,14 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.19.2
+
+This is the changelog for Cldr_units v3.19.2 released on October 7th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Fix the resolution of `:exclude_protocol_implementations`. At compile time this config option is used to determine which of the standard implementations should not be generated. The code was incorrectly resolving the option for `ex_unit` not `ex_cldr_units`. Thanks to `@glorieux` for the report and the PR. Closes #54.
+
 ## Cldr_Units v3.19.1
 
 This is the changelog for Cldr_units v3.19.1 released on September 10th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
