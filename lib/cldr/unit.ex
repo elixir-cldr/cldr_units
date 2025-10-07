@@ -3222,7 +3222,7 @@ defmodule Cldr.Unit do
   @doc false
   def exclude_protocol_implementation(module) do
     exclusions =
-      :ex_unit
+      :ex_cldr_units
       |> Application.get_env(:exclude_protocol_implementations, [])
       |> List.wrap()
 
