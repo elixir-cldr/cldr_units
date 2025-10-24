@@ -14,10 +14,10 @@ defmodule Cldr.Unit.Backend do
           ] do
       # Create an empty additional units module if it wasn't previously
       # defined
-      unless Code.ensure_loaded?(additional_units) do
+      unless Cldr.Code.ensure_compiled?(additional_units) do
         defmodule additional_units do
           @moduledoc false
-          def known_locales do
+          def known_locales_names do
             []
           end
 

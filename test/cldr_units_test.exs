@@ -210,6 +210,7 @@ defmodule Cldr.UnitsTest do
                :graphics,
                :length,
                :light,
+               :magnetic,
                :mass,
                :power,
                :pressure,

@@ -275,7 +275,9 @@ defmodule Cldr.Unit.Additional do
   def __after_compile__(env, _bytecode) do
     additional_module = Module.concat(env.module, Unit.Additional)
     additional_units = additional_module.additional_units()
-    additional_locales = MapSet.new(additional_module.known_locale_names())
+    known_locale_names = additional_module.known_locale_names()
+
+    additional_locales = MapSet.new(known_locale_names)
     backend_locales = MapSet.new(env.module.known_locale_names() -- [@root_locale_name])
     styles = Cldr.Unit.known_styles()
 

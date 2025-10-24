@@ -2,6 +2,14 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.20.0
+
+This is the changelog for Cldr_units v3.20.0 released on ______, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Enhancements
+
+* Updates to [CLDR 48](https://cldr.unicode.org/downloads/cldr-48) data. Note that CLDR now descibes units called "part-per-1e3" and "part-per-1e6". These units are not currently supported.
+
 ## Cldr_Units v3.19.2
 
 This is the changelog for Cldr_units v3.19.2 released on October 7th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

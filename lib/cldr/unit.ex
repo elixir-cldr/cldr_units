@@ -251,7 +251,7 @@ defmodule Cldr.Unit do
     :gigawatt,
     :terabit,
     :terabyte,
-    :petabyte
+    :petabyte,
   ]
 
   @known_units Cldr.Unit.Conversions.conversions()
@@ -280,8 +280,8 @@ defmodule Cldr.Unit do
 
       iex> Cldr.Unit.known_unit_categories()
       [:acceleration, :angle, :area, :concentr, :consumption, :digital,
-       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :mass,
-       :power, :pressure, :speed, :temperature, :torque, :volume]
+       :duration, :electric, :energy, :force, :frequency, :graphics, :length, :light, :magnetic,
+       :mass, :power, :pressure, :speed, :temperature, :torque, :volume]
 
   """
   @unit_categories Map.keys(@units_by_category) |> Enum.sort()

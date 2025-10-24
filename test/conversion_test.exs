@@ -3,7 +3,11 @@ defmodule Cldr.Unit.Conversion.Test do
 
   alias Cldr.Unit.Test.ConversionData
 
-  @unsupported_unit [155]
+  # Test 186 is a Beaufort conversion. The test case data is unexpected
+  # given that tests are expect to run with a source value of 1000.
+  @unsupported_unit [154, 155]
+  @just_outside_tolerance [186]
+  @dont_test @just_outside_tolerance ++ @unsupported_unit
 
   for t <- ConversionData.conversions(), t.line not in @unsupported_unit do
     test "##{t.line} that #{t.from} is convertible to #{t.to}" do
@@ -12,13 +16,6 @@ defmodule Cldr.Unit.Conversion.Test do
       assert from == to
     end
   end
-
-  # Test 185 is a Beaufort conversion. That needs special handling we
-  # don't have yet. And the test case data is unexpected.
-
-  @just_outside_tolerance [187]
-  @unsupported_unit [155]
-  @dont_test @just_outside_tolerance ++ @unsupported_unit
 
   for t <- ConversionData.conversions(), t.line not in @dont_test do
     test "##{t.line} [Float] that #{t.from} converted to #{t.to} is #{inspect(t.result)}" do
@@ -39,8 +36,8 @@ defmodule Cldr.Unit.Conversion.Test do
     end
   end
 
-  @just_outside_tolerance_decimal [187]
-  @unsupported_unit_decimal [155]
+  @just_outside_tolerance_decimal [186]
+  @unsupported_unit_decimal [154, 155]
   @dont_test_decimal @just_outside_tolerance_decimal ++ @unsupported_unit_decimal
 
   @one_thousand Decimal.new(1000)
