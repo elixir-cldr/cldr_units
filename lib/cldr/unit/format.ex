@@ -903,9 +903,17 @@ defmodule Cldr.Unit.Format do
     other
   end
 
+  @ratio_options [:prefer, :max_denominator, :max_iterations, :epsilon]
+
   defp format_number!(unit, options) do
     number_format_options = Keyword.merge(unit.format_options, Map.to_list(options))
-    Cldr.Number.to_string!(unit.value, options.backend, number_format_options)
+
+    if number_format_options[:format] == :ratio do
+      options = Keyword.take(number_format_options, @ratio_options)
+      Cldr.Number.to_ratio_string!(unit.value, MyApp.Cldr, options)
+    else
+      Cldr.Number.to_string!(unit.value, options.backend, number_format_options)
+    end
   end
 
   defp substitute_number([place, unit], formatted_number) when is_integer(place) do
