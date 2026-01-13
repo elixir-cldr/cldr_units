@@ -2,6 +2,14 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.20.1
+
+This is the changelog for Cldr_units v3.20.1 released on January 14th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Restores moduledocs to `Cldr.Unit.Math` with the caveat that `mult/2` and `div/2` are, in particular, known to return incorrect results for many arguments. The update and new release are primarily to remove documentation errors in code using this library.
+
 ## Cldr_Units v3.20.0
 
 This is the changelog for Cldr_units v3.20.0 released on November 6th, 2025.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
