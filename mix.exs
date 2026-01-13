@@ -80,7 +80,7 @@ defmodule Cldr.Units.Mixfile do
       extras: ["README.md", "CHANGELOG.md", "LICENSE.md"],
       logo: "logo.png",
       formatters: ["html"],
-      skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md"]
+      skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md", "README.md"]
     ]
   end
 

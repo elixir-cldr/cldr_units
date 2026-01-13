@@ -1,5 +1,16 @@
 defmodule Cldr.Unit.Math do
-  @moduledoc false
+  @moduledoc """
+  Basic math functions for units of measure.
+
+  Support is limited to the `add/2`, `sub/2` and
+  `round/1` functions.
+
+  Other functions are retained for compatibility with
+  prior releases but the functionality is known to be
+  incorrect in some instances (especially `mult/2` and `div/2`
+  which are flat out incorrect for many arguments.
+
+  """
 
   alias Cldr.Unit
   alias Cldr.Unit.Parser
@@ -160,7 +171,7 @@ defmodule Cldr.Unit.Math do
   end
 
   @doc """
-  Multiplies any two `t:Cldr.Unit.t/0` types or a t:Cldr.Unit.t/0`
+  Multiplies any two `t:Cldr.Unit.t/0` types or a `t:Cldr.Unit.t/0`
   and a scalar.
 
   ## Arguments
