@@ -1,4 +1,4 @@
-require Cldr.Unit.Backend
+{:module, _} = Code.ensure_compiled(Cldr.Unit.Backend)
 
 defmodule MyApp.Cldr do
   use Cldr.Unit.Additional
