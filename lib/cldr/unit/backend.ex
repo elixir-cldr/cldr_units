@@ -6,6 +6,7 @@ defmodule Cldr.Unit.Backend do
     config = Macro.escape(config)
 
     quote location: :keep,
+          generated: true,
           bind_quoted: [
             module: module,
             backend: backend,

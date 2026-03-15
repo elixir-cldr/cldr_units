@@ -52,11 +52,7 @@ defmodule Cldr.Unit.Conversion.Test do
         |> Cldr.Unit.to_decimal_unit()
         |> ConversionData.round(round_digits, round_significant)
 
-      if is_float(expected_result) do
-        assert Cldr.Decimal.compare(result.value, Decimal.from_float(expected_result)) == :eq
-      else
-        assert Cldr.Decimal.compare(result.value, Decimal.new(expected_result)) == :eq
-      end
+      assert Cldr.Decimal.compare(result.value, Decimal.from_float(expected_result)) == :eq
     end
   end
 

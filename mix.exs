@@ -1,7 +1,7 @@
 defmodule Cldr.Units.Mixfile do
   use Mix.Project
 
-  @version "3.20.1"
+  @version "3.20.2"
 
   def project do
     [
@@ -79,7 +79,7 @@ defmodule Cldr.Units.Mixfile do
       main: "readme",
       extras: ["README.md", "CHANGELOG.md", "LICENSE.md"],
       logo: "logo.png",
-      formatters: ["html"],
+      formatters: ["html", "markdown"],
       skip_undefined_reference_warnings_on: ["changelog", "CHANGELOG.md", "README.md"]
     ]
   end
