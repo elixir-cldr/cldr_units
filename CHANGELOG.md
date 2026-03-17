@@ -2,6 +2,14 @@
 
 **Note that `ex_cldr_units` version 3.17.2 and later are supported on Elixir 1.12 and later only.**
 
+## Cldr_Units v3.20.3
+
+This is the changelog for Cldr_units v3.20.3 released on March 18th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+
+### Bug Fixes
+
+* Ensure `unit.format_options` is passed through to unit formatting in `Cldr.Unit.to_string/2`.
+
 ## Cldr_Units v3.20.2
 
 This is the changelog for Cldr_units v3.20.2 released on March 16th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)

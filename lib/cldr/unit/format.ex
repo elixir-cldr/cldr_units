@@ -179,7 +179,7 @@ defmodule Cldr.Unit.Format do
 
   # Backend but no options
   def to_string(list_or_unit, backend, options) when is_atom(backend) and is_list(options) do
-    with {:ok, options} <- normalize_options(backend, options) do
+    with {:ok, options} <- normalize_options(list_or_unit, backend, options) do
       to_string(list_or_unit, backend, options)
     end
   end
@@ -187,7 +187,7 @@ defmodule Cldr.Unit.Format do
   # It's a list of units so we format each of them
   # and combine the list
   def to_string(unit_list, backend, options) when is_list(unit_list) do
-    with {:ok, options} <- normalize_options(backend, options) do
+    with {:ok, options} <- normalize_options(unit_list, backend, options) do
       list_options =
         options
         |> Map.get(:list_options, [])
@@ -321,12 +321,13 @@ defmodule Cldr.Unit.Format do
     end
   end
 
-  defp normalize_options(_backend, options) when is_map(options) do
+  defp normalize_options(_unit, _backend, options) when is_map(options) do
     {:ok, options}
   end
 
-  defp normalize_options(backend, options) when is_list(options) do
+  defp normalize_options(unit, backend, options) when is_list(options) do
     {locale, backend} = Cldr.locale_and_backend_from(options[:locale], backend)
+    options = merge_unit_options(unit, options)
     unit_backend = Module.concat(backend, :Unit)
     style = Keyword.get(options, :style, @default_style)
     grammatical_case = Keyword.get(options, :grammatical_case, @default_case)
@@ -347,6 +348,14 @@ defmodule Cldr.Unit.Format do
       |> Map.put(:backend, backend)
       |> wrap(:ok)
     end
+  end
+
+  defp merge_unit_options(%Cldr.Unit{} = unit, options) do
+    Keyword.merge(unit.format_options, options)
+  end
+
+  defp merge_unit_options(_other, options) do
+    options
   end
 
   @doc """
@@ -435,7 +444,7 @@ defmodule Cldr.Unit.Format do
 
   # Direct formatting of the unit since it is translatable directly
   def to_iolist(%Cldr.Unit{unit: name} = unit, backend, options) when name in @known_units do
-    with {:ok, options} <- normalize_options(backend, options) do
+    with {:ok, options} <- normalize_options(unit, backend, options) do
       options = extract_options!(unit, options)
       unit_grammar = {name, {options.grammatical_case, options.plural}}
       unit_pattern = get_unit_pattern!(unit, unit_grammar, options)
@@ -449,7 +458,7 @@ defmodule Cldr.Unit.Format do
 
   # The unit is a standalone currency
   def to_iolist(%Cldr.Unit{unit: <<@currency_base, _curr::binary-3>>} = unit, backend, options) do
-    with {:ok, options} <- normalize_options(backend, options) do
+    with {:ok, options} <- normalize_options(unit, backend, options) do
       [{currency, _}] = unit.base_conversion
 
       options =
@@ -466,7 +475,7 @@ defmodule Cldr.Unit.Format do
     if atom_name = known_unit(name) do
       to_iolist(%{unit | unit: atom_name}, backend, options)
     else
-      with {:ok, options} <- normalize_options(backend, options) do
+      with {:ok, options} <- normalize_options(unit, backend, options) do
         options = extract_options!(unit, options)
         grammar = grammar(unit, locale: options.locale, backend: options.backend)
         formatted_number = format_number!(unit, options)
@@ -504,7 +513,7 @@ defmodule Cldr.Unit.Format do
   # It's a Cldr.Unit.Range for a basic unit
   def to_iolist(%{first: %{value: v1}, last: %{unit: name, value: v2} = last}, backend, options)
       when name in @known_units do
-    with {:ok, options} <- normalize_options(backend, options) do
+    with {:ok, options} <- normalize_options(last, backend, options) do
       options = extract_options!(last, options)
       unit_grammar = {name, {options.grammatical_case, options.plural}}
       unit_pattern = get_unit_pattern!(last, unit_grammar, options)
@@ -521,7 +530,7 @@ defmodule Cldr.Unit.Format do
 
   # It's a Cldr.Unit.Range for a compound unit
   def to_iolist(%{first: first, last: last}, backend, options) do
-    with {:ok, options} <- normalize_options(backend, options) do
+    with {:ok, options} <- normalize_options(last, backend, options) do
       options = extract_options!(last, options)
       grammar = grammar(last, locale: options.locale, backend: options.backend)
       range = Range.new(first.value, last.value)

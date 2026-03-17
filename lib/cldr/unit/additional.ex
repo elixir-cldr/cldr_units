@@ -272,6 +272,7 @@ defmodule Cldr.Unit.Additional do
   end
 
   @doc false
+  @dialyzer {:nowarn_function, __after_compile__: 2}
   def __after_compile__(env, _bytecode) do
     additional_module = Module.concat(env.module, Unit.Additional)
     additional_units = additional_module.additional_units()

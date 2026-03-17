@@ -129,6 +129,11 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.Format.to_string!(localized) == "300 meters"
   end
 
+  test "that format_options are passed to final string formatting" do
+    {:ok, unit} = Cldr.Unit.new(1, :kilometer, format_options: [style: :narrow])
+    assert {:ok, "1km"} = Cldr.Unit.to_string(unit)
+  end
+
   test "creating a compound unit" do
     assert {:ok, unit} = Cldr.Unit.new("meter_per_kilogram", 1)
     assert unit.usage == :default
