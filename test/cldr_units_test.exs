@@ -1,6 +1,16 @@
 defmodule Cldr.UnitsTest do
   use ExUnit.Case, async: true
 
+  # Pin the Decimal.Context precision so high-precision conversion fixtures
+  # in this module remain stable across Decimal versions whose default context
+  # precision differs (Decimal 2.x = 28; Decimal 3.0 = 34).
+  setup do
+    original = Decimal.Context.get()
+    Decimal.Context.set(%{original | precision: 28})
+    on_exit(fn -> Decimal.Context.set(original) end)
+    :ok
+  end
+
   test "new unit with multiple 'per' clauses" do
     assert Cldr.Unit.new!(2, "curr-usd-per-meter-per-second").unit ==
              "curr_usd_per_meter_per_second"

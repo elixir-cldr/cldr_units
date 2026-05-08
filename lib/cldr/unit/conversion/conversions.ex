@@ -4,6 +4,28 @@ defmodule Cldr.Unit.Conversions do
   alias Cldr.Unit.Conversion
   alias Cldr.Unit.Parser
 
+  # CLDR ships some conversion factors and offsets as decimal strings whose
+  # significant-digit count exceeds Decimal 3.0's default `:max_digits` of 34
+  # (e.g. exact rational expansions of imperial conversions). `Decimal.new/1`
+  # rejects those strings on Decimal 3.0; `Decimal.parse/2` with
+  # `max_digits: :infinity` accepts them and is available since Decimal 2.4.
+  # Older Decimal versions (1.x, 2.0–2.3) have no parse-time digit limit, so
+  # `Decimal.new/1` is fine there.
+  parse_decimal =
+    if function_exported?(Decimal, :parse, 2) do
+      fn string ->
+        case Decimal.parse(string, max_digits: :infinity) do
+          {decimal, ""} ->
+            decimal
+
+          _other ->
+            raise ArgumentError, "Could not parse Decimal: #{inspect(string)}"
+        end
+      end
+    else
+      &Decimal.new/1
+    end
+
   @conversions Map.get(Cldr.Config.units(), :conversions)
                |> Kernel.++(Cldr.Unit.Additional.conversions())
                |> Enum.map(fn
@@ -17,7 +39,7 @@ defmodule Cldr.Unit.Conversions do
                    {unit, conversion}
 
                  {unit, %{factor: factor} = conversion} when is_binary(factor) ->
-                   {unit, %{conversion | factor: Decimal.new(factor)}}
+                   {unit, %{conversion | factor: parse_decimal.(factor)}}
 
                  {unit, %{factor: factor} = conversion} ->
                    {unit, %{conversion | factor: Decimal.div(factor.numerator, factor.denominator)}}
@@ -30,7 +52,7 @@ defmodule Cldr.Unit.Conversions do
                    {unit, conversion}
 
                  {unit, %{offset: offset} = conversion} when is_binary(offset) ->
-                   {unit, %{conversion | offset: Decimal.new(offset)}}
+                   {unit, %{conversion | offset: parse_decimal.(offset)}}
 
                  {unit, %{offset: offset} = conversion} ->
                    {unit, %{conversion | offset: Decimal.div(offset.numerator, offset.denominator)}}
