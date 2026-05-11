@@ -483,7 +483,7 @@ defmodule Cldr.Unit.Backend do
         @spec localize(Cldr.Unit.t(), Keyword.t()) ::
             [Cldr.Unit.t(), ...] | {:error, {module, String.t()}}
 
-        def localize(unit, options \\ []) do
+        def localize(%Cldr.Unit{} = unit, options) when is_list(options) do
           Cldr.Unit.localize(unit, unquote(backend), options)
         end
 
