@@ -312,7 +312,9 @@ defmodule Cldr.UnitsTest do
   end
 
   test "That kiljoules short form is directly translated to kJ" do
-    assert "32 kJ" == Cldr.Unit.to_string!(Cldr.Unit.new!(32, :kilojoule), locale: "de", style: :short)
+    assert "32 kJ" ==
+             Cldr.Unit.to_string!(Cldr.Unit.new!(32, :kilojoule), locale: "de", style: :short)
+
     assert "32 kJ" == Cldr.Unit.to_string!(32, unit: :kilojoule, locale: "de", style: :short)
   end
 
@@ -339,14 +341,14 @@ defmodule Cldr.UnitsTest do
 
   test "That milligram_ofglucose_per_deciliter formats without error" do
     unit = Cldr.Unit.new!("milligram_ofglucose_per_deciliter", "120.5")
-    assert "120.5 mg/dL" ==  Cldr.Unit.to_string!(unit, style: :short)
+    assert "120.5 mg/dL" == Cldr.Unit.to_string!(unit, style: :short)
   end
 
   test "That display names format for prefixed but atomic units" do
     assert "millimeters" == MyApp.Cldr.Unit.display_name("millimeter", style: :long)
     assert "milliliters" == MyApp.Cldr.Unit.display_name("milliliter", style: :long)
     assert "millibars" == MyApp.Cldr.Unit.display_name("millibar", style: :long)
-    assert "millimeters of mercury" ==  MyApp.Cldr.Unit.display_name("millimeter_ofhg", style: :long)
+    assert "millimeters of mercury" == MyApp.Cldr.Unit.display_name("millimeter_ofhg", style: :long)
   end
 
   test "to_string digital units with SI prefix" do

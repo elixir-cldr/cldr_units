@@ -27,7 +27,13 @@ defmodule Cldr.Unit.MeasurementSystemTest do
     assert Cldr.Unit.measurement_systems_for_unit(:hectare) == [:metric, :si_acceptable]
     assert Cldr.Unit.measurement_systems_for_unit(:liter) == [:metric, :prefixable, :si_acceptable]
     assert Cldr.Unit.measurement_systems_for_unit("liter") == [:metric, :prefixable, :si_acceptable]
-    assert Cldr.Unit.measurement_systems_for_unit("liter_per_kilometer") == [:metric, :prefixable, :si_acceptable]
+
+    assert Cldr.Unit.measurement_systems_for_unit("liter_per_kilometer") == [
+             :metric,
+             :prefixable,
+             :si_acceptable
+           ]
+
     assert Cldr.Unit.measurement_systems_for_unit("acre_foot") == [:uksystem, :ussystem]
 
     assert Cldr.Unit.measurement_systems_for_unit(:litdf) ==
@@ -55,9 +61,10 @@ defmodule Cldr.Unit.MeasurementSystemTest do
     assert errors == []
   end
 
-   test "That measurement systems for :unit returns an error" do
-     assert Cldr.Unit.measurement_systems_for_unit(:unit) ==
-       {:error, {Cldr.Unit.UnknownMeasurementSystemError, "The measurement systems for \"unit\" are not known"}}
-    end
-
+  test "That measurement systems for :unit returns an error" do
+    assert Cldr.Unit.measurement_systems_for_unit(:unit) ==
+             {:error,
+              {Cldr.Unit.UnknownMeasurementSystemError,
+               "The measurement systems for \"unit\" are not known"}}
+  end
 end

@@ -18,11 +18,11 @@ defmodule Cldr.Unit.BaseUnit do
   @currencies Cldr.known_currencies()
 
   @inverted_base_units_name Cldr.Config.units()
-              |> Map.get(:base_units)
-              |> Kernel.++(Cldr.Unit.Additional.base_units())
-              |> Enum.uniq()
-              |> Map.new()
-              |> Map.values()
+                            |> Map.get(:base_units)
+                            |> Kernel.++(Cldr.Unit.Additional.base_units())
+                            |> Enum.uniq()
+                            |> Map.new()
+                            |> Map.values()
 
   @doc """
   Returns the canonical base unit name
@@ -329,8 +329,9 @@ defmodule Cldr.Unit.BaseUnit do
   defp is_base_unit(unit) do
     maybe_base_unit = String.to_existing_atom(unit)
     maybe_base_unit in @inverted_base_units_name
-  rescue ArgumentError ->
-    false
+  rescue
+    ArgumentError ->
+      false
   end
 
   # Reduce powers to square and cubic

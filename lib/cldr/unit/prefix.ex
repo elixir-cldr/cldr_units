@@ -8,20 +8,20 @@ defmodule Cldr.Unit.Prefix do
   ##
 
   @si_factors @units
-  |> Map.fetch!(:prefixes)
-  |> Enum.reduce([], fn
-    {prefix, %{base: 10 = base, power: power}}, acc ->
-      abs_factor = Cldr.Math.power(base, abs(power))
+              |> Map.fetch!(:prefixes)
+              |> Enum.reduce([], fn
+                {prefix, %{base: 10 = base, power: power}}, acc ->
+                  abs_factor = Cldr.Math.power(base, abs(power))
 
-      factor =
-        if power < 0, do: Decimal.div(1, abs_factor), else: abs_factor
+                  factor =
+                    if power < 0, do: Decimal.div(1, abs_factor), else: abs_factor
 
-      [{to_string(prefix), factor} | acc]
+                  [{to_string(prefix), factor} | acc]
 
-    _other, acc ->
-      acc
-  end)
-  |> Map.new()
+                _other, acc ->
+                  acc
+              end)
+              |> Map.new()
 
   def si_factors do
     @si_factors
@@ -68,24 +68,24 @@ defmodule Cldr.Unit.Prefix do
   ##
 
   @power_units @units
-  |> Map.fetch!(:components)
-  |> Map.fetch!(:power)
-  |> Enum.with_index(2)
-  |> Enum.map(fn {k, v} ->
-    v = if v > 3, do: v - 2, else: v
-    {String.to_atom(k), v}
-  end)
-  |> Map.new()
+               |> Map.fetch!(:components)
+               |> Map.fetch!(:power)
+               |> Enum.with_index(2)
+               |> Enum.map(fn {k, v} ->
+                 v = if v > 3, do: v - 2, else: v
+                 {String.to_atom(k), v}
+               end)
+               |> Map.new()
 
   def power_units do
     @power_units
   end
 
   @inverse_power_units @power_units
-  |> Enum.map(fn {k, v} -> {v, k} end)
-  |> Map.new()
-  |> Map.put(2, :square)
-  |> Map.put(3, :cubic)
+                       |> Enum.map(fn {k, v} -> {v, k} end)
+                       |> Map.new()
+                       |> Map.put(2, :square)
+                       |> Map.put(3, :cubic)
 
   def inverse_power_units do
     @inverse_power_units
@@ -105,17 +105,17 @@ defmodule Cldr.Unit.Prefix do
   ##
 
   @binary_factors @units
-  |> Map.fetch!(:prefixes)
-  |> Enum.reduce([], fn
-    {prefix, %{base: 2 = base, power: power}}, acc ->
-      factor = Cldr.Math.power(base, power)
+                  |> Map.fetch!(:prefixes)
+                  |> Enum.reduce([], fn
+                    {prefix, %{base: 2 = base, power: power}}, acc ->
+                      factor = Cldr.Math.power(base, power)
 
-      [{to_string(prefix), factor} | acc]
+                      [{to_string(prefix), factor} | acc]
 
-    _other, acc ->
-      acc
-  end)
-  |> Map.new()
+                    _other, acc ->
+                      acc
+                  end)
+                  |> Map.new()
 
   def binary_factors do
     @binary_factors
