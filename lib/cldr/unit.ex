@@ -63,7 +63,6 @@ defmodule Cldr.Unit do
   # @doc false
   # defdelegate div!(unit_1, unit_2), to: Math
 
-
   @root_locale_name Cldr.Config.root_locale_name()
 
   # See https://unicode.org/reports/tr35/tr35-general.html#Case
@@ -113,8 +112,8 @@ defmodule Cldr.Unit do
     :narrow
   ]
 
-  @system_names  Cldr.Config.measurement_systems()
-  |> Enum.sort()
+  @system_names Cldr.Config.measurement_systems()
+                |> Enum.sort()
 
   # Converts a list of atoms into a typespec
   type = &Enum.reduce(&1, fn x, acc -> {:|, [], [x, acc]} end)
@@ -251,15 +250,15 @@ defmodule Cldr.Unit do
     :gigawatt,
     :terabit,
     :terabyte,
-    :petabyte,
+    :petabyte
   ]
 
   @known_units Cldr.Unit.Conversions.conversions()
-  |> Map.keys()
-  |> Kernel.++(Cldr.Unit.Additional.additional_units())
-  |> Kernel.++(@additional_known_units)
-  |> Enum.uniq()
-  |> Enum.sort()
+               |> Map.keys()
+               |> Kernel.++(Cldr.Unit.Additional.additional_units())
+               |> Kernel.++(@additional_known_units)
+               |> Enum.uniq()
+               |> Enum.sort()
 
   @units_by_category @unit_tree
                      |> Map.delete(:compound)
@@ -1922,8 +1921,10 @@ defmodule Cldr.Unit do
     cond do
       atom_name = Cldr.Unit.Format.known_unit(unit) ->
         display_name(atom_name, options)
+
       match?({:ok, _unit, _conversion}, validate_unit(unit)) ->
         {:error, unit_not_translatable_error(unit)}
+
       true ->
         {:error, unit_error(unit)}
     end
@@ -2138,8 +2139,6 @@ defmodule Cldr.Unit do
       :error -> measurement_systems_for_unit(Kernel.to_string(unit))
     end
   end
-
-
 
   # Strip SI and power factors amd try the root
   # unit
@@ -2403,14 +2402,14 @@ defmodule Cldr.Unit do
                           |> Enum.map(fn {k, v} -> {Kernel.to_string(v), k} end)
                           |> Map.new()
 
-  @spec base_unit_category_map :: %{String.t() => category( )}
+  @spec base_unit_category_map :: %{String.t() => category()}
   def base_unit_category_map do
     @base_unit_category_map
   end
 
   @unit_category_inverse_map @units_by_category
-  |> Cldr.Map.invert()
-  |> Cldr.Map.stringify_keys()
+                             |> Cldr.Map.invert()
+                             |> Cldr.Map.stringify_keys()
 
   @doc false
   def unit_category_inverse_map do
@@ -2480,8 +2479,8 @@ defmodule Cldr.Unit do
     with {:ok, base_unit} <- BaseUnit.canonical_base_unit(conversion) do
       category =
         Map.get(@unit_category_inverse_map, Kernel.to_string(unit)) ||
-        Map.get(@unit_category_inverse_map, Kernel.to_string(base_unit)) ||
-        Map.get(@base_unit_category_map, Kernel.to_string(base_unit))
+          Map.get(@unit_category_inverse_map, Kernel.to_string(base_unit)) ||
+          Map.get(@base_unit_category_map, Kernel.to_string(base_unit))
 
       if category do
         {:ok, category}
@@ -3114,7 +3113,7 @@ defmodule Cldr.Unit do
   def no_known_measurement_systems_error(unit) do
     {
       Cldr.Unit.UnknownMeasurementSystemError,
-      "The measurement systems for #{inspect unit} are not known"
+      "The measurement systems for #{inspect(unit)} are not known"
     }
   end
 

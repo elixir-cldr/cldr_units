@@ -203,7 +203,7 @@ defmodule Cldr.Unit.Math do
 
   """
   @spec mult(Unit.t(), Unit.t()) ::
-      Unit.t() | {:error, {module(), String.t()}}
+          Unit.t() | {:error, {module(), String.t()}}
 
   def mult(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.mult(value_1, value_2))
@@ -223,13 +223,13 @@ defmodule Cldr.Unit.Math do
   def mult(%Unit{unit: unit_category_1} = unit_1, %Unit{unit: unit_category_2} = unit_2) do
     if Unit.compatible?(unit_category_1, unit_category_2) do
       {:ok, converted} = Conversion.convert(unit_2, unit_category_1)
+
       mult(unit_1, converted)
       |> maybe_adjust_value_type(unit_1.value, unit_2.value)
     else
       product(unit_1, unit_2)
     end
   end
-
 
   @doc """
   Multiplies two compatible `t:Cldr.Unit.t/0` types
@@ -292,7 +292,7 @@ defmodule Cldr.Unit.Math do
 
   """
   @spec div(Unit.t(), Unit.t()) ::
-      Unit.t() | {:error, {module(), String.t()}}
+          Unit.t() | {:error, {module(), String.t()}}
 
   def div(%Unit{unit: unit, value: value_1}, %Unit{unit: unit, value: value_2}) do
     Unit.new!(unit, Conversion.div(value_1, value_2))

@@ -20,8 +20,6 @@ defmodule Cldr.Unit.Format do
 
   @typep grammar_list :: [grammar, ...]
 
-
-
   @known_units Cldr.Unit.known_units()
   @si_keys Cldr.Unit.Prefix.si_keys()
   @binary_keys Cldr.Unit.Prefix.binary_keys()
@@ -1328,12 +1326,14 @@ defmodule Cldr.Unit.Format do
   @doc false
   def known_unit(name) do
     atom_name = String.to_existing_atom(name)
+
     if atom_name in @known_units do
       atom_name
     else
       nil
     end
-  rescue ArgumentError ->
-    nil
+  rescue
+    ArgumentError ->
+      nil
   end
 end

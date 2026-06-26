@@ -37,21 +37,38 @@ jobs:
     runs-on: ubuntu-latest
     name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
+      fail-fast: false
       # Specify the OTP and Elixir versions to use when building
       # and running the workflow steps.
       matrix:
         include:
-          # minimum required versions
-          - otp: "27.2.4"
-            elixir: "1.18.4-otp-27"
-          - otp: "28.3.1"
-            elixir: "1.18.4-otp-28"
-          - otp: "27.2.4"
-            elixir: "1.19.5-otp-27"
-          - otp: "28.3.1"
-            elixir: "1.19.5-otp-28"
-          - otp: "28.3.1"
-            elixir: "1.20.0-rc.1-otp-28"
+          # Elixir 1.17 — supports OTP 25–27
+          - elixir: "1.17-otp-26"
+            otp: "26"
+          - elixir: "1.17-otp-27"
+            otp: "27"
+
+          # Elixir 1.18 — supports OTP 25–27
+          - elixir: "1.18-otp-26"
+            otp: "26"
+          - elixir: "1.18-otp-27"
+            otp: "27"
+
+          # Elixir 1.19 — supports OTP 26–28
+          - elixir: "1.19-otp-26"
+            otp: "26"
+          - elixir: "1.19-otp-27"
+            otp: "27"
+          - elixir: "1.19-otp-28"
+            otp: "28"
+
+          # Elixir 1.20 — supports OTP 27–29
+          - elixir: "1.20.2-otp-27"
+            otp: "27"
+          - elixir: "1.20.2-otp-28"
+            otp: "28"
+          - elixir: "1.20.2-otp-29"
+            otp: "29"
             lint: true
     steps:
     # Step: Setup Elixir + Erlang image as the base.
@@ -63,34 +80,33 @@ jobs:
 
     # Step: Check out the code.
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
 
     # Step: Define how to cache deps. Restores existing cache if present.
     - name: Cache deps
       id: cache-deps
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       env:
         cache-name: cache-elixir-deps
       with:
         path: deps
-        key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+        key: ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
         restore-keys: |
-          ${{ runner.os }}-mix-${{ env.cache-name }}-
+          ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-
 
     # Step: Define how to cache the `_build` directory. After the first run,
     # this speeds up tests runs a lot. This includes not re-compiling our
     # project's downloaded deps every run.
     - name: Cache compiled build
       id: cache-build
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       env:
         cache-name: cache-compiled-build
       with:
         path: _build
-        key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+        key: ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
         restore-keys: |
-          ${{ runner.os }}-mix-${{ env.cache-name }}-
-          ${{ runner.os }}-mix-
+          ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-
 
     # Step: Download project dependencies. If unchanged, uses
     # the cached version.
@@ -114,6 +130,23 @@ jobs:
     - name: Run tests
       run: mix test
 
-    # Step: Execute dialyzer.
+    # Step: Restore the dialyzer PLT cache. Only the lint job runs
+    # dialyzer, so the PLT is only needed there. Keyed on OTP + Elixir
+    # since a PLT compiled by one toolchain is not valid for another.
+    - name: Restore PLT cache
+      if: matrix.lint
+      id: cache-plt
+      uses: actions/cache@v4
+      env:
+        cache-name: cache-dialyzer-plt
+      with:
+        path: _build/test/dialyxir_*
+        key: ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-otp${{ matrix.otp }}-elixir${{ matrix.elixir }}-mix-${{ env.cache-name }}-
+
+    # Step: Execute dialyzer. Gated to the lint job to avoid running it
+    # redundantly across every entry in the matrix.
     - name: Run dialyzer
+      if: matrix.lint
       run: mix dialyzer

@@ -220,6 +220,7 @@ defmodule Cldr.Unit.Conversion do
   defp convert_from_base(value, {_, %__MODULE__{special: :beaufort}}) do
     # B = (S/0.836)^(2/3)
     divided = div(value, 0.836)
+
     pow(divided, 2 / 3)
     |> Cldr.Math.round(2)
   end
@@ -379,5 +380,4 @@ defmodule Cldr.Unit.Conversion do
 
   @doc false
   def pow(v1, v2), do: Cldr.Math.pow(v1, v2) |> Cldr.Math.maybe_integer()
-
 end
