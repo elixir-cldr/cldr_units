@@ -457,23 +457,17 @@ defmodule Cldr.Unit.Parser do
 
   for {prefix, scale} <- Prefix.si_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
-      with {_, conversion} <- resolve_base_unit(base_unit) do
-        factor = Cldr.Math.mult(conversion.factor, unquote(Macro.escape(scale)))
-        {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
-      else
-        {:error, {exception, reason}} -> raise(exception, reason)
-      end
+      {_, conversion} = resolve_base_unit(base_unit)
+      factor = Cldr.Math.mult(conversion.factor, unquote(Macro.escape(scale)))
+      {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
     end
   end
 
   for {prefix, scale} <- Prefix.binary_factors() do
     defp resolve_base_unit(<<unquote(prefix), base_unit::binary>> = unit) do
-      with {_, conversion} <- resolve_base_unit(base_unit) do
-        factor = Cldr.Math.mult(conversion.factor, unquote(Macro.escape(scale)))
-        {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
-      else
-        {:error, {exception, reason}} -> raise(exception, reason)
-      end
+      {_, conversion} = resolve_base_unit(base_unit)
+      factor = Cldr.Math.mult(conversion.factor, unquote(Macro.escape(scale)))
+      {Unit.maybe_translatable_unit(unit), %{conversion | factor: factor}}
     end
   end
 
@@ -481,13 +475,10 @@ defmodule Cldr.Unit.Parser do
     prefix = to_string(prefix)
 
     defp resolve_base_unit(<<unquote(prefix) <> "_", subunit::binary>> = unit) do
-      with {_, conversion} <- resolve_base_unit(subunit) do
-        factor = Cldr.Math.pow(conversion.factor, unquote(power))
-        base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
-        {Unit.maybe_translatable_unit(unit), %{conversion | base_unit: base_unit, factor: factor}}
-      else
-        {:error, {exception, reason}} -> raise(exception, reason)
-      end
+      {_, conversion} = resolve_base_unit(subunit)
+      factor = Cldr.Math.pow(conversion.factor, unquote(power))
+      base_unit = [String.to_atom(unquote(prefix)) | conversion.base_unit]
+      {Unit.maybe_translatable_unit(unit), %{conversion | base_unit: base_unit, factor: factor}}
     end
   end
 
