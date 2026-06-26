@@ -47,10 +47,12 @@ defmodule Cldr.Units.Mixfile do
     [
       {:ex_cldr_numbers, "~> 2.36"},
       {:ex_cldr_lists, "~> 2.10"},
+      {:digital_token, "~> 1.0"},
+
       {:decimal, "~> 1.6 or ~> 2.0 or ~> 3.0"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.18", optional: true, runtime: false},
-      {:jason, "~> 1.0", optional: true}
+      {:jason, "~> 1.0", optional: true},
       # {:benchee, "~> 1.0", optional: true, only: :dev}
     ]
   end
