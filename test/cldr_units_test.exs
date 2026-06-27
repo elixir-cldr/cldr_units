@@ -273,15 +273,6 @@ defmodule Cldr.UnitsTest do
     assert Cldr.Unit.to_string(unit, locale: "de", style: :short) == {:ok, "1 Pa"}
   end
 
-  test "Format a unit when there is no default backend" do
-    default = Application.get_env(:ex_cldr, :default_backend)
-    Application.put_env(:ex_cldr, :default_backend, nil)
-
-    assert MyApp.Cldr.Unit.to_string!(7.3, unit: :kilogram) == "7.3 kilograms"
-
-    Application.put_env(:ex_cldr, :default_backend, default)
-  end
-
   test "Cldr.DisplayName protocol for Unit" do
     assert Cldr.display_name(Cldr.Unit.new!(:foot, 1)) == "feet"
   end

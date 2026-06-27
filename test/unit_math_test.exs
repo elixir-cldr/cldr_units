@@ -1,5 +1,5 @@
 defmodule Cldr.Unit.Math.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   test "Add with compatible units" do
     u1 = u2 = Cldr.Unit.new!(2, "curr-usd-per-ampere-light-year")
