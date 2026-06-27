@@ -4,7 +4,7 @@
 
 ## Cldr_Units v3.20.5
 
-This is the changelog for Cldr_units v3.20.5 released on June 27th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
+This is the changelog for Cldr_units v3.20.5 released on June 28th, 2026.  For older changelogs please consult the release tag on [GitHub](https://github.com/elixir-cldr/cldr_units/tags)
 
 ### Bug Fixes
 
@@ -13,6 +13,8 @@ This is the changelog for Cldr_units v3.20.5 released on June 27th, 2026.  For o
 * Pin `digital_token` to `"~> 1.0"` to avoid issues with configuring `:json_polyfill` unnecessarily on OTP releases other then OTP 26.
 
 * Fix type warnings on Elixir 1.20.
+
+* Fix race condition in tests that mutate global state.
 
 ## Cldr_Units v3.20.4
 
