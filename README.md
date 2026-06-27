@@ -4,6 +4,13 @@
 [![Hex.pm](https://img.shields.io/hexpm/dw/ex_cldr_units.svg?)](https://hex.pm/packages/ex_cldr_units)
 [![Hex.pm](https://img.shields.io/hexpm/l/ex_cldr_units.svg)](https://hex.pm/packages/ex_cldr_units)
 
+> #### Support for ex_cldr libraries {: .info}
+>
+> Support for `ex_cldr` and related libraries is provided until December 31, 2027.
+> Consumers are encouraged to migrate to the [localize](https://hex.pm/packages/localize)
+> library as a direct replacement. See [future support](https://github.com/elixir-cldr#future-support)
+> for more information.
+
 ## Installation
 
 Note that `:ex_cldr_units` requires Elixir 1.6 or later.
