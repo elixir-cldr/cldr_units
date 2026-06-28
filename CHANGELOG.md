@@ -8,8 +8,6 @@ This is the changelog for Cldr_units v3.20.5 released on June 28th, 2026.  For o
 
 ### Bug Fixes
 
-* Remove spurious `:xref` configuration in `mix.exs`. This removes deprecation warnings on later Elixir versions too.
-
 * Pin `digital_token` to `"~> 1.0"` to avoid issues with configuring `:json_polyfill` unnecessarily on OTP releases other then OTP 26.
 
 * Fix type warnings on Elixir 1.20.
